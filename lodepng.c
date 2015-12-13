@@ -1,5 +1,8 @@
-/*
-LodePNG version 20151024
+/* Modified by Matt Waltz to only compile required elements.
+   See "Added by Matt Waltz" comment below.
+*/
+
+/* LodePNG version 20151024
 
 Copyright (c) 2005-2015 Lode Vandevenne
 
@@ -32,6 +35,11 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 
 #include <stdio.h>
 #include <stdlib.h>
+
+/* Added by Matt Waltz */
+#define LODEPNG_COMPILE_DECODER
+#define LODEPNG_NO_COMPILE_ENCODER
+/* End of additions */
 
 #ifdef LODEPNG_COMPILE_CPP
 #include <fstream>

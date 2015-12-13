@@ -4,13 +4,13 @@ LDFLAGS = -flto
 SOURCES = main.c
 SOURCES += lodepng.c
 OBJECTS = $(SOURCES:.c=.o)
-EXECUTABLE = CIcon
+EXECUTABLE = ConvImage
 
-.PHONY: CIcon clean
+.PHONY: ConvImage clean
 
-all: CIcon
+all: ConvImage
 
-CIcon: $(SOURCES)
+ConvImage: $(SOURCES)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@

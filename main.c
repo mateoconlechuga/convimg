@@ -8,7 +8,7 @@
 
 #include "lodepng.h"
 
-unsigned error;
+int error;
 
 /* global definitions */
 struct output_t {

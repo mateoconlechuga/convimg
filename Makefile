@@ -4,11 +4,11 @@ LDFLAGS = -flto
 SOURCES = main.c
 SOURCES += lodepng.c
 OBJECTS = $(SOURCES:.c=.o)
-EXECUTABLE = ConvImage
+EXECUTABLE = ConvPNG
 
-.PHONY: ConvImage clean
+.PHONY: ConvPNG clean
 
-all: ConvImage
+all: ConvPNG
 
 ConvImage: $(SOURCES)
 

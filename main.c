@@ -196,7 +196,7 @@ int convertImage() {
     
     /* Write some comments */
     if(input.make_c_header) {
-        fprintf(output.file,"/* Converted using ConvImage */\n");
+        fprintf(output.file,"#ifndef %s_h\n#define %s_h\n\n/* Converted using ConvImage */\n",image.name,image.name);
     } else {
         fprintf(output.file,"; Converted using ConvImage ;\n");
     }
@@ -207,7 +207,7 @@ int convertImage() {
         if(input.make_c_header) {
             fprintf(output.file,"\nshort int %s_pal[%d] = {\n",(output.custompalette == true) ? "lcd" : image.name,image.palette.size);
             for(i=0;i<image.palette.size;i++) {  
-                fprintf(output.file,"    0x%04X    /* 0x%02X */\n",image.palette.data[i],i);
+                fprintf(output.file,"    0x%04X%s    /* 0x%02X */\n",image.palette.data[i],(i==image.palette.size-1) ? "" : ",",i);
             }
             fprintf(output.file,"};");
         /* write the palette to the asm file */
@@ -235,7 +235,7 @@ int convertImage() {
 	} else {
         /* write the header information */
         if(input.make_c_header) {
-            fprintf(output.file,"\n%s %s[%d][%d] = {",(input.bppmode==8) ? "unsigned char" : "short int",image.name,image.width,image.height);
+            fprintf(output.file,"\n%s %s[%d] = {",(input.bppmode==8) ? "unsigned char" : "short int",image.name,image.width*image.height);
         } else {
             fprintf(output.file,"\n_%s_start",image.name);
             fprintf(output.file,"\n db %d,%d", image.width, image.height);
@@ -281,7 +281,7 @@ int convertImage() {
 		fprintf(output.file,"\n__icon_end\n");
 	} else {
         if(input.make_c_header) {
-            fprintf(output.file,"\n};\n");
+            fprintf(output.file,"\n};\n\n#endif\n");
         } else {
             fprintf(output.file,"\n_%s_end\n",image.name);
         }

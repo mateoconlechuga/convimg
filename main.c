@@ -205,7 +205,7 @@ int convertImage() {
     if(((output.usepal == true && input.makeicon == false) || (output.write_palette == true)) && (input.bppmode==8)) {
         /* write the palette to the header file */
         if(input.make_c_header) {
-            fprintf(output.file,"\nshort int %s_pal[%d] = {\n",(output.custompalette == true) ? "lcd" : image.name,image.palette.size);
+            fprintf(output.file,"\nuint16_t %s_pal[%d] = {\n",(output.custompalette == true) ? "lcd" : image.name,image.palette.size);
             for(i=0;i<image.palette.size;i++) {  
                 fprintf(output.file,"    0x%04X%s    /* 0x%02X */\n",image.palette.data[i],(i==image.palette.size-1) ? "" : ",",i);
             }
@@ -235,7 +235,7 @@ int convertImage() {
 	} else {
         /* write the header information */
         if(input.make_c_header) {
-            fprintf(output.file,"\n%s %s[%d] = {",(input.bppmode==8) ? "unsigned char" : "short int",image.name,image.width*image.height);
+            fprintf(output.file,"\n%s %s[%d] = {",(input.bppmode==8) ? "uint8_t" : "uint16_t",image.name,image.width*image.height);
         } else {
             fprintf(output.file,"\n_%s_start",image.name);
             fprintf(output.file,"\n db %d,%d", image.width, image.height);

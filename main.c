@@ -61,7 +61,10 @@ static inline unsigned int read24bitInt(const unsigned char* buffer) {
 }
 
 static inline unsigned short irgb1555(const unsigned c) {
-    return (unsigned short)(((c>>9)&0x7C00) | ((c>>6)&0x03E0) | ((c>>16)&0x1F));
+    unsigned char r = (c>>16)&0xFF;
+    unsigned char g = (c>>8)&0xFF;
+    unsigned char b = (c)&0xFF;
+    return (unsigned short)((r >> 3) << 10) | (((g >> 3) << 5) | (b >> 3));
 }
 
 static inline unsigned short rgb565(const unsigned char r, const unsigned char g, const unsigned char b){
@@ -196,9 +199,9 @@ int convertImage() {
     
     /* Write some comments */
     if(input.make_c_header) {
-        fprintf(output.file,"#ifndef %s_h\n#define %s_h\n\n/* Converted using ConvImage */\n",image.name,image.name);
+        fprintf(output.file,"#ifndef %s_h\n#define %s_h\n\n/* Converted using ConvPNG */\n",image.name,image.name);
     } else {
-        fprintf(output.file,"; Converted using ConvImage ;\n");
+        fprintf(output.file,"; Converted using ConvPNG ;\n");
     }
     
     /* write the palette */

@@ -10,6 +10,7 @@
 #include "lodepng.h"
 
 int error;
+const char icon_name[] = "iconc.png";
 
 uint16_t highlow_pal[256] = {
     0x0000,    /* 0x00 */
@@ -348,19 +349,21 @@ int get1555(void) {
     /* get the palette used first */
     offset=0;
     image.palette.size = 1;
+    
     /* using external image as the palette */
     if(input.makeicon) {
-	image.palette.size = 256;
+        image.palette.size = 256;
         image.palette.data = highlow_pal;
-	offset = 0;
+        offset = 0;
         for(i=0;i<image.size;i++) {
             currpixelcolor = irgb1555( read24bitInt(image.rgba_data+offset) );
             for(k=0;k<image.palette.size && image.palette.data[k] != currpixelcolor;++k);
             image.pal_image[i] = k;
             offset += 3;
         }
-	return 0;
+        return 0;
     }
+    
     if( output.custompalette == true ) {
         if((error = lodepng_decode24_file(&image.pal_image_data, &tmp_width, &tmp_height, input.palette_name))) {
             return error;
@@ -450,6 +453,7 @@ int main(int argc, char* argv[]) {
                     input.name = malloc( strlen( optarg )+5 );
                     strcpy(input.name, optarg);
                     output.onlypal = true;
+                    numfilestoconvert=1;
                     break;
                 case 'o':   /* change output name */
                     output.name = optarg;
@@ -461,8 +465,11 @@ int main(int argc, char* argv[]) {
                     input.makeicon = true;
                     input.hilo = true;
                     input.bppmode = 8;
-		    input.icon_description = optarg;
-		    output.overwrite = true;
+                    input.icon_description = optarg;
+                    output.overwrite = true;
+                    input.name = malloc(sizeof(icon_name)+1);
+                    strcpy(input.name,icon_name);
+                    numfilestoconvert=1;
                     break;
                 case 'j':   /* write the palette to the file as well */
                     writting_pal_to_file = true;
@@ -487,7 +494,7 @@ int main(int argc, char* argv[]) {
         printf("\tp <palette>: Use as the palette for <image file>\n");
         printf("\tg <palette>: Just output the palette for <palette image>\n");
         printf("\to <output file>: Write output to <output file>\n");
-	printf("\tc <description>: Create icon for C toolchain (output is written to iconc.asm, along with the description)\n");
+        printf("\tc <description>: Create icon for C toolchain (output is written to iconc.asm, along with the description)\n");
         printf("\t8: Output in 8bpp format (Default is 16bpp)\n");
         printf("\tz: Overwrite output file (Default is append)\n");
         printf("\tj: Use with -p; outputs <palette> as well to file\n");
@@ -498,8 +505,18 @@ int main(int argc, char* argv[]) {
     output.write_palette = writting_pal_to_file;
     
     for(i=0;i<numfilestoconvert;++i) {
-        input.name = malloc(strlen(argv[input.fileindex])+5);
-        strcpy(input.name,argv[input.fileindex]);
+        if(!input.makeicon) {
+            input.name = malloc(strlen(argv[input.fileindex])+5);
+            strcpy(input.name,argv[input.fileindex]);
+        } else {
+            output.file = fopen(input.name,"rb");
+            if(!output.file) {
+                fprintf(stdout,"%s","No icon file found\n");
+                fclose(output.file);
+                return 0;
+            }
+            fclose(output.file);
+        }
         
         /* change the extension if it exists; otherwise create a new one */
         ext = strrchr(input.name,'.');
@@ -524,11 +541,11 @@ int main(int argc, char* argv[]) {
         strcpy(image.name,tmp);
         image.name[(int)(strrchr( image.name, '.' )-image.name)] = '\0';
         
-	/* open the file */
+        /* open the file */
         error = lodepng_decode24_file(&image.rgba_data, &image.width, &image.height, input.name);
         if(error) {
             fprintf(stderr,"error %u: %s\n", error, lodepng_error_text(error));
-	    return error;
+            return error;
         }
         
         /* get the size of the image */
@@ -547,6 +564,7 @@ int main(int argc, char* argv[]) {
             
             if(image.palette.data == NULL) {
                 fprintf(stderr,"%s","error: image uses too many colors\n");
+                remove(output.name);
                 return -1;
             }
         } else {
@@ -600,6 +618,7 @@ int main(int argc, char* argv[]) {
         if(input.makeicon == true) {
             fprintf(output.file,"%s"," define .icon,space=ram\n segment .icon\n xdef __icon_begin\n xdef __icon_end\n xdef __program_description");
             if(image.width > 16 || image.height > 16) {
+                remove(output.name);
                 fprintf(stderr,"%s","error: invalid icon dimensions.\n");
                 return -1;
             }
@@ -661,11 +680,15 @@ int main(int argc, char* argv[]) {
         }
         
         /* print out some things */
-        printf("%s > %s\n", input.name, output.name);
+		if(input.makeicon) {
+            printf("Icon: %s\n", input.name);
+        } else {
+            printf("%s > %s\n", input.name, output.name);
+        }
         
         input.fileindex++;
         free(input.name);
-	fclose(output.file);
+        fclose(output.file);
         free(image.name);
         free(image.pal_image);
         free(image.raw_image);

@@ -136,173 +136,12 @@ int get1555(void) {
     return 0;
 }
 
-int convertImage() {
-    /* variable declarations */
-    unsigned i,x,y;
-    
-    image.name = malloc(strlen(input.name));
-    char *tmp;
-    
-    tmp = strrchr( input.name, '/' );
-    if(tmp == NULL) { tmp = strrchr( input.name, '\\' ); }
-    if(tmp == NULL) { tmp = input.name; }
-    
-    strcpy(image.name,tmp);
-    image.name[(int)(strrchr( image.name, '.' )-image.name)] = '\0';
-    
-    error = lodepng_decode24_file(&image.rgba_data, &image.width, &image.height, input.name);
-    
-    if(error) {
-        printf("error %u: %s\n", error, lodepng_error_text(error));
-    }
-    
-    /* get the size of the image */
-    image.size = image.width*image.height;
-    
-    /* make sure the image isn't too large */
-    if(image.width > 0xFF || image.height > 0xFF) {
-        fprintf(stderr, "error: image too large.\n");
-        return -1;
-    }
-    
-    /* if not 16bpp, we need a palette */
-    if(input.bppmode != 16) {
-        /* allocate block for array */
-        image.pal_image = (unsigned char*)malloc(image.size+1);
-        image.palette.data = (unsigned short*)malloc(0x200);
-        
-        /* convert the image */
-        if((error = get1555())) {
-            return error;
-        }
-        
-        if(image.palette.data == NULL) {
-            printf("error: image uses too many colors\n");
-            return -1;
-        }
-    } else {
-        image.raw_image = (unsigned short*)malloc(image.size<<1);
-        get565();
-    }
-    
-    /* open the output file */
-    output.file = fopen( output.name, (output.overwrite) ? "w" : "a" );
-    if ( !output.file ) {
-        fprintf(stderr, "error: unable to open output file.\n");
-        return -1;
-    }
-    
-    /* if not 16bpp, we need a palette */
-    if(input.bppmode != 16) {
-        output.usepal = true;
-    }
-    
-    /* Write some comments */
-    if(input.make_c_header) {
-        fprintf(output.file,"#ifndef %s_h\n#define %s_h\n\n/* Converted using ConvPNG */\n",image.name,image.name);
-    } else {
-        fprintf(output.file,"; Converted using ConvPNG ;\n");
-    }
-    
-    /* write the palette */
-    if(((output.usepal == true && input.makeicon == false) || (output.write_palette == true)) && (input.bppmode==8)) {
-        /* write the palette to the header file */
-        if(input.make_c_header) {
-            fprintf(output.file,"\nunsigned short int %s_pal[%d] = {\n",(output.custompalette == true) ? "lcd" : image.name,image.palette.size);
-            for(i=0;i<image.palette.size;i++) {
-                fprintf(output.file,"    0x%04X%s    /* 0x%02X */\n",image.palette.data[i],(i==image.palette.size-1) ? "" : ",",i);
-            }
-            fprintf(output.file,"};");
-            /* write the palette to the asm file */
-        } else {
-            fprintf(output.file,"\n_%s_pal_start\n",(output.custompalette == true) ? "lcd" : image.name);
-            for(i=0;i<image.palette.size;i++) {
-                fprintf(output.file," dw 0%04Xh\t; 0x%02X\n",image.palette.data[i],i);
-            }
-            fprintf(output.file,"_%s_pal_end\n",(output.custompalette == true) ? "lcd" : image.name);
-        }
-    }
-    
-    /* return if we only need to generate the palette */
-    if(output.onlypal) {
-        return 0;
-    }
-    
-    if(input.makeicon == true) {
-        fprintf(output.file," segment .icon\n jp __icon_end");
-        if(image.width > 16 || image.height > 16) {
-            fprintf(stderr, "error: invalid icon dimensions.\n");
-            return -1;
-        }
-        fprintf(output.file,"\n db 1\n db %d,%d", image.width, image.height);
-    } else {
-        /* write the header information */
-        if(input.make_c_header) {
-            fprintf(output.file,"\n%s %s[%d] = {",(input.bppmode==8) ? "unsigned char" : "unsigned short int",image.name,image.width*image.height);
-        } else {
-            fprintf(output.file,"\n_%s_start",image.name);
-            fprintf(output.file,"\n db %d,%d", image.width, image.height);
-        }
-    }
-    
-    switch(input.bppmode) {
-        case 8:
-            for(y=0;y<image.height;y++) {
-                if(input.make_c_header) {
-                    fprintf(output.file,"\n    ");
-                    for(x=0;x<image.width;x++) {
-                        fprintf(output.file,"0x%02X%s",image.pal_image[x+(y*image.width)], (y==image.height-1 && x==image.width-1) ? "" : ",");
-                    }
-                } else {
-                    fprintf(output.file,"\n db ");
-                    for(x=0;x<image.width;x++) {
-                        fprintf(output.file,"0%02Xh%s",image.pal_image[x+(y*image.width)],(x==image.width-1) ? "" : ",");
-                    }
-                }
-            }
-            break;
-        case 16:
-            for(y=0;y<image.height;y++) {
-                if(input.make_c_header) {
-                    fprintf(output.file,"\n    ");
-                    for(x=0;x<image.width;x++) {
-                        fprintf(output.file,"0x%04X%s",image.raw_image[x+(y*image.width)],(y==image.height-1 && x==image.width-1) ? "" : ",");
-                    }
-                } else {
-                    fprintf(output.file,"\n dw ");
-                    for(x=0;x<image.width;x++) {
-                        fprintf(output.file,"0%04Xh%s",image.raw_image[x+(y*image.width)],(x==image.width-1) ? "" : ",");
-                    }
-                }
-            }
-            break;
-        default:
-            break;
-    }
-    
-    if(input.makeicon == true) {
-        fprintf(output.file,"\n__icon_end\n");
-    } else {
-        if(input.make_c_header) {
-            fprintf(output.file,"\n};\n\n#endif\n");
-        } else {
-            fprintf(output.file,"\n_%s_end\n",image.name);
-        }
-    }
-    
-    fclose(output.file);
-    free(image.name);
-    free(image.pal_image);
-    free(image.raw_image);
-    free(image.palette.data);
-    return 0;
-}
-
 int main(int argc, char* argv[]) {
     /* variable declarations */
     char *ext;
-    
-    int opt,i,numfilestoconvert;
+    unsigned i,x,y,numfilestoconvert;
+    int opt;
+    char *tmp;
     
     bool writting_pal_to_file = false;
     
@@ -406,11 +245,148 @@ int main(int argc, char* argv[]) {
             strcpy(output.name+(ext-input.name),(input.make_c_header) ? ".h" : ".asm");
         }
         
-        if( (error = convertImage()) ) {
-            if (error == -1) {
-                remove(output.name);
+        image.name = malloc(strlen(input.name));
+        
+        tmp = strrchr( input.name, '/' );
+        if(tmp == NULL) { tmp = strrchr( input.name, '\\' ); }
+        if(tmp == NULL) { tmp = input.name; }
+        
+        strcpy(image.name,tmp);
+        image.name[(int)(strrchr( image.name, '.' )-image.name)] = '\0';
+        
+	/* open the file */
+        error = lodepng_decode24_file(&image.rgba_data, &image.width, &image.height, input.name);
+        if(error) {
+            fprintf(stderr, "error %u: %s\n", error, lodepng_error_text(error));
+	    return error;
+        }
+        
+        /* get the size of the image */
+        image.size = image.width*image.height;
+        
+        /* if not 16bpp, we need a palette */
+        if(input.bppmode != 16) {
+            /* allocate block for array */
+            image.pal_image = (unsigned char*)malloc(image.size+1);
+            image.palette.data = (unsigned short*)malloc(0x200);
+            
+            /* convert the image */
+            if((error = get1555())) {
+                return error;
             }
-            return error;
+            
+            if(image.palette.data == NULL) {
+                fprintf(stderr, "error: image uses too many colors\n");
+                return -1;
+            }
+        } else {
+            image.raw_image = (unsigned short*)malloc(image.size<<1);
+            get565();
+        }
+        
+        /* open the output file */
+        output.file = fopen( output.name, (output.overwrite) ? "w" : "a" );
+        if ( !output.file ) {
+            fprintf(stderr, "error: unable to open output file.\n");
+            return -1;
+        }
+        
+        /* if not 16bpp, we need a palette */
+        if(input.bppmode != 16) {
+            output.usepal = true;
+        }
+        
+        /* Write some comments */
+        if(input.make_c_header) {
+            fprintf(output.file,"#ifndef %s_h\n#define %s_h\n\n/* Converted using ConvPNG */\n",image.name,image.name);
+        } else {
+            fprintf(output.file,"; Converted using ConvPNG ;\n");
+        }
+        
+        /* write the palette */
+        if(((output.usepal == true && input.makeicon == false) || (output.write_palette == true)) && (input.bppmode==8)) {
+            /* write the palette to the header file */
+            if(input.make_c_header) {
+                fprintf(output.file,"\nunsigned short int %s_pal[%d] = {\n",(output.custompalette == true) ? "lcd" : image.name,image.palette.size);
+                for(i=0;i<image.palette.size;i++) {
+                    fprintf(output.file,"    0x%04X%s    /* 0x%02X */\n",image.palette.data[i],(i==image.palette.size-1) ? "" : ",",i);
+                }
+                fprintf(output.file,"};");
+                /* write the palette to the asm file */
+            } else {
+                fprintf(output.file,"\n_%s_pal_start\n",(output.custompalette == true) ? "lcd" : image.name);
+                for(i=0;i<image.palette.size;i++) {
+                    fprintf(output.file," dw 0%04Xh\t; 0x%02X\n",image.palette.data[i],i);
+                }
+                fprintf(output.file,"_%s_pal_end\n",(output.custompalette == true) ? "lcd" : image.name);
+            }
+        }
+        
+        /* return if we only need to generate the palette */
+        if(output.onlypal) {
+            return 0;
+        }
+        
+        if(input.makeicon == true) {
+            fprintf(output.file," segment .icon\n jp __icon_end");
+            if(image.width > 16 || image.height > 16) {
+                fprintf(stderr, "error: invalid icon dimensions.\n");
+                return -1;
+            }
+            fprintf(output.file,"\n db 1\n db %d,%d", image.width, image.height);
+        } else {
+            /* write the header information */
+            if(input.make_c_header) {
+                fprintf(output.file,"\n%s %s[%d] = {",(input.bppmode==8) ? "unsigned char" : "unsigned short int",image.name,image.width*image.height);
+            } else {
+                fprintf(output.file,"\n_%s_start",image.name);
+                fprintf(output.file,"\n db %d,%d", image.width, image.height);
+            }
+        }
+        
+        switch(input.bppmode) {
+            case 8:
+                for(y=0;y<image.height;y++) {
+                    if(input.make_c_header) {
+                        fprintf(output.file,"\n    ");
+                        for(x=0;x<image.width;x++) {
+                            fprintf(output.file,"0x%02X%s",image.pal_image[x+(y*image.width)], (y==image.height-1 && x==image.width-1) ? "" : ",");
+                        }
+                    } else {
+                        fprintf(output.file,"\n db ");
+                        for(x=0;x<image.width;x++) {
+                            fprintf(output.file,"0%02Xh%s",image.pal_image[x+(y*image.width)],(x==image.width-1) ? "" : ",");
+                        }
+                    }
+                }
+                break;
+            case 16:
+                for(y=0;y<image.height;y++) {
+                    if(input.make_c_header) {
+                        fprintf(output.file,"\n    ");
+                        for(x=0;x<image.width;x++) {
+                            fprintf(output.file,"0x%04X%s",image.raw_image[x+(y*image.width)],(y==image.height-1 && x==image.width-1) ? "" : ",");
+                        }
+                    } else {
+                        fprintf(output.file,"\n dw ");
+                        for(x=0;x<image.width;x++) {
+                            fprintf(output.file,"0%04Xh%s",image.raw_image[x+(y*image.width)],(x==image.width-1) ? "" : ",");
+                        }
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        
+        if(input.makeicon == true) {
+            fprintf(output.file,"\n__icon_end\n");
+        } else {
+            if(input.make_c_header) {
+                fprintf(output.file,"\n};\n\n#endif\n");
+            } else {
+                fprintf(output.file,"\n_%s_end\n",image.name);
+            }
         }
         
         /* print out some things */
@@ -418,6 +394,11 @@ int main(int argc, char* argv[]) {
         
         input.fileindex++;
         free(input.name);
+	fclose(output.file);
+        free(image.name);
+        free(image.pal_image);
+        free(image.raw_image);
+        free(image.palette.data);
         output.write_palette = output.overwrite = false;
     }
     

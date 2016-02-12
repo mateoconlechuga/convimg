@@ -616,7 +616,7 @@ int main(int argc, char* argv[]) {
         }
         
         if(input.makeicon == true) {
-            fprintf(output.file,"%s"," define .icon,space=ram\n segment .icon\n xdef __icon_begin\n xdef __icon_end\n xdef __program_description");
+            fprintf(output.file,"%s"," define .icon,space=ram\n segment .icon\n xdef __icon_begin\n xdef __icon_end\n xdef __program_description\n xdef __program_description_end\n");
             if(image.width > 16 || image.height > 16) {
                 remove(output.name);
                 fprintf(stderr,"%s","error: invalid icon dimensions.\n");
@@ -670,7 +670,7 @@ int main(int argc, char* argv[]) {
         
         if(input.makeicon == true) {
             fprintf(output.file,"\n__icon_end:\n__program_description:\n");
-	    fprintf(output.file," db \"%s\",0\n",input.icon_description);
+	    fprintf(output.file," db \"%s\",0\n__program_description_end:\n",input.icon_description);
         } else {
             if(input.make_c_header) {
                 fprintf(output.file,"\n};\n\n#endif\n");

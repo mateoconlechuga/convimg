@@ -430,7 +430,7 @@ int main(int argc, char* argv[]) {
     
     if(argc > 1)
     {
-        while ( (opt = getopt(argc, argv, "8i:p:o:g:c:zjh") ) != -1)
+        while ( (opt = getopt(argc, argv, "8i:p:o:gc:zjh") ) != -1)
         {
             switch (opt)
             {
@@ -451,10 +451,7 @@ int main(int argc, char* argv[]) {
                     output.custompalette = true;
                     break;
                 case 'g':   /* only output the palette of the image */
-                    input.name = malloc( strlen( optarg )+5 );
-                    strcpy(input.name, optarg);
                     output.onlypal = true;
-                    numfilestoconvert=1;
                     break;
                 case 'o':   /* change output name */
                     output.name = optarg;
@@ -500,15 +497,15 @@ int main(int argc, char* argv[]) {
         printf("\tz: Overwrite output file (Default is append)\n");
         printf("\tj: Use with -p; outputs <palette> as well to file\n");
         printf("\th: Create a C header file rather than an ASM file\n");
-        return -1;
+        return 1;
     }
     
-    output.write_palette = writting_pal_to_file;
+    output.write_palette = writting_pal_to_file || output.onlypal;
     
     for(conversion=0;conversion<numfilestoconvert;conversion++) {
         if(!input.makeicon) {
-            input.name = malloc(strlen(argv[input.fileindex])+5);
-            strcpy(input.name,argv[input.fileindex]);
+		input.name = malloc(strlen(argv[input.fileindex])+5);
+		strcpy(input.name,argv[input.fileindex]);
         } else {
             output.file = fopen(input.name,"rb");
             if(!output.file) {
@@ -518,7 +515,7 @@ int main(int argc, char* argv[]) {
             }
             fclose(output.file);
         }
-        
+	
         /* change the extension if it exists; otherwise create a new one */
         ext = strrchr(input.name,'.');
         if( ext == NULL ) {
@@ -616,7 +613,7 @@ int main(int argc, char* argv[]) {
 	
         /* return if we only need to generate the palette */
         if(output.onlypal) {
-            goto loop_exit;
+            goto good_exit;
         }
         
         if(input.makeicon == true) {
@@ -672,6 +669,7 @@ int main(int argc, char* argv[]) {
                 break;
         }
         
+good_exit:
         if(input.makeicon == true) {
             fprintf(output.file,"\n__icon_end:\n__program_description:\n");
 	    fprintf(output.file," db \"%s\",0\n__program_description_end:\n",input.icon_description);

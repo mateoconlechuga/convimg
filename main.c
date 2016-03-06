@@ -484,7 +484,7 @@ int main(int argc, char* argv[]) {
         }
     } else {
     show_help:
-        printf("ConvImage Utility v1.00 - by M. Waltz\n");
+        printf("ConvImage Utility v1.3 - by M. Waltz\n");
         printf("\nGenerates formats useable for the Primecell PL111 controller\n");
         printf("\nUsage:\n\tconvpng [-options]");
         printf("\nOptions:\n");

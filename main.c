@@ -410,10 +410,11 @@ int get1555(void) {
 int main(int argc, char* argv[]) {
     /* variable declarations */
     char *ext;
-    unsigned i,x,y,numfilestoconvert;
+    unsigned i,x,y,numfilestoconvert,conversion;
     int opt;
     char *tmp;
     
+    bool wrote_palette = false;
     bool writting_pal_to_file = false;
     
     /* default is 16bpp */
@@ -438,7 +439,7 @@ int main(int argc, char* argv[]) {
                     break;
                 case 'i':   /* specify input files */
                     optind--;
-                    for( ;optind < argc && ( (*(*(argv+optind)) != '-') && (strlen(argv[optind]) != 2)); optind++){
+                    for( ;optind < argc && ( (*(argv[optind])) != '-') && (strlen(argv[optind]) != 2); optind++){
                         numfilestoconvert++;
                         if(input.fileindex == 0) {
                             input.fileindex = optind;
@@ -504,7 +505,7 @@ int main(int argc, char* argv[]) {
     
     output.write_palette = writting_pal_to_file;
     
-    for(i=0;i<numfilestoconvert;++i) {
+    for(conversion=0;conversion<numfilestoconvert;conversion++) {
         if(!input.makeicon) {
             input.name = malloc(strlen(argv[input.fileindex])+5);
             strcpy(input.name,argv[input.fileindex]);
@@ -513,7 +514,7 @@ int main(int argc, char* argv[]) {
             if(!output.file) {
                 fprintf(stdout,"%s","No icon file found\n");
                 fclose(output.file);
-                return 0;
+                goto loop_exit;
             }
             fclose(output.file);
         }
@@ -545,7 +546,7 @@ int main(int argc, char* argv[]) {
         error = lodepng_decode24_file(&image.rgba_data, &image.width, &image.height, input.name);
         if(error) {
             fprintf(stderr,"error %u: %s\n", error, lodepng_error_text(error));
-            return error;
+            goto loop_exit;
         }
         
         /* get the size of the image */
@@ -559,13 +560,13 @@ int main(int argc, char* argv[]) {
             
             /* convert the image */
             if((error = get1555())) {
-                return error;
+                goto loop_exit;
             }
             
             if(image.palette.data == NULL) {
                 fprintf(stderr,"%s","error: image uses too many colors\n");
                 remove(output.name);
-                return -1;
+                goto loop_exit;
             }
         } else {
             image.raw_image = (uint16_t*)malloc(image.size<<1);
@@ -576,7 +577,7 @@ int main(int argc, char* argv[]) {
         output.file = fopen( output.name, (output.overwrite) ? "w" : "a" );
         if ( !output.file ) {
             fprintf(stderr,"%s","error: unable to open output file.\n");
-            return -1;
+            goto loop_exit;
         }
         
         /* if not 16bpp, we need a palette */
@@ -591,28 +592,31 @@ int main(int argc, char* argv[]) {
             fprintf(output.file,"%s","; Converted using ConvPNG ;\n");
         }
         
-        /* write the palette */
-        if(((output.usepal == true && input.makeicon == false) || (output.write_palette == true)) && (input.bppmode==8)) {
-            /* write the palette to the header file */
-            if(input.make_c_header) {
-                fprintf(output.file,"\nunsigned short int %s_pal[%d] = {\n",(output.custompalette == true) ? "lcd" : image.name,image.palette.size);
-                for(i=0;i<image.palette.size;i++) {
-                    fprintf(output.file,"    0x%04X%s    /* 0x%02X */\n",image.palette.data[i],(i==image.palette.size-1) ? "" : ",",i);
-                }
-                fprintf(output.file,"};");
-                /* write the palette to the asm file */
-            } else {
-                fprintf(output.file,"\n_%s_pal_start\n",(output.custompalette == true) ? "lcd" : image.name);
-                for(i=0;i<image.palette.size;i++) {
-                    fprintf(output.file," dw 0%04Xh\t; 0x%02X\n",image.palette.data[i],i);
-                }
-                fprintf(output.file,"_%s_pal_end\n",(output.custompalette == true) ? "lcd" : image.name);
-            }
-        }
-        
+	if(wrote_palette == false) {
+		/* write the palette */
+		if(((output.usepal == true && input.makeicon == false) || (output.write_palette == true)) && (input.bppmode==8)) {
+		    /* write the palette to the header file */
+		    if(input.make_c_header) {
+			fprintf(output.file,"\nuint16_t %s_pal[%d] = {\n",(output.custompalette == true) ? "lcd" : image.name,image.palette.size);
+			for(i=0;i<image.palette.size;i++) {
+			    fprintf(output.file,"    0x%04X%s    /* 0x%02X */\n",image.palette.data[i],(i==image.palette.size-1) ? " " : ",",i);
+			}
+			fprintf(output.file,"};");
+			/* write the palette to the asm file */
+		    } else {
+			fprintf(output.file,"\n_%s_pal_start\n",(output.custompalette == true) ? "lcd" : image.name);
+			for(i=0;i<image.palette.size;i++) {
+			    fprintf(output.file," dw 0%04Xh\t; 0x%02X\n",image.palette.data[i],i);
+			}
+			fprintf(output.file,"_%s_pal_end\n",(output.custompalette == true) ? "lcd" : image.name);
+		    }
+		    wrote_palette = true;
+		}
+	}
+	
         /* return if we only need to generate the palette */
         if(output.onlypal) {
-            return 0;
+            goto loop_exit;
         }
         
         if(input.makeicon == true) {
@@ -620,13 +624,13 @@ int main(int argc, char* argv[]) {
             if(image.width > 16 || image.height > 16) {
                 remove(output.name);
                 fprintf(stderr,"%s","error: invalid icon dimensions.\n");
-                return -1;
+                goto loop_exit;
             }
             fprintf(output.file,"\n db 1\n db %d,%d\n__icon_begin:", image.width, image.height);
         } else {
             /* write the header information */
             if(input.make_c_header) {
-                fprintf(output.file,"\n%s %s[%d] = {",(input.bppmode==8) ? "unsigned char" : "unsigned short int",image.name,image.width*image.height);
+                fprintf(output.file,"\n%s %s[%d] = {",(input.bppmode==8) ? "uint8_t" : "uint16_t",image.name,image.width*image.height);
             } else {
                 fprintf(output.file,"\n_%s_start",image.name);
                 fprintf(output.file,"\n db %d,%d", image.width, image.height);
@@ -680,12 +684,13 @@ int main(int argc, char* argv[]) {
         }
         
         /* print out some things */
-		if(input.makeicon) {
+	if(input.makeicon) {
             printf("Icon: %s\n", input.name);
         } else {
             printf("%s > %s\n", input.name, output.name);
         }
         
+loop_exit:
         input.fileindex++;
         free(input.name);
         fclose(output.file);

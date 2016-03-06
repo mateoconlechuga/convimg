@@ -591,8 +591,8 @@ int main(int argc, char* argv[]) {
         } else {
             fprintf(output.file,"%s","; Converted using ConvPNG ;\n");
         }
-        
-	if(wrote_palette == false) {
+
+	if(wrote_palette == false && output.write_palette == true) {
 		/* write the palette */
 		if(((output.usepal == true && input.makeicon == false) || (output.write_palette == true)) && (input.bppmode==8)) {
 		    /* write the palette to the header file */
@@ -689,7 +689,7 @@ int main(int argc, char* argv[]) {
         } else {
             printf("%s > %s\n", input.name, output.name);
         }
-        
+
 loop_exit:
         input.fileindex++;
         free(input.name);

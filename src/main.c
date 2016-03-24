@@ -355,17 +355,14 @@ int main(int argc, char **argv) {
             
             if (group[g].mode == MODE_C) {
                 fprintf(outc,"// Converted using ConvPNG\n");
-                fprintf(outc,"#include <stdint.h>\n\n");
+                fprintf(outc,"#include <stdint.h>\n#include \"%s\"\n\n",group[g].outh);
             } else {
                 fprintf(outc,"; Converted using ConvPNG\n\n");
             }
             
             char sp;
             int offset;
-            if (group[g].mode == MODE_C) {
-                fprintf(outc, "uint8_t %s_width = %u;\n",group[g].sprite[s]->name,group[g].sprite[s]->width);
-                fprintf(outc, "uint8_t %s_height = %u;\n\n",group[g].sprite[s]->name,group[g].sprite[s]->height);
-            } else {
+            if (group[g].mode == MODE_ASM) {
                 fprintf(outc,"_%s_width equ %u\n",group[g].sprite[s]->name,group[g].sprite[s]->width);
                 fprintf(outc,"_%s_height equ %u\n",group[g].sprite[s]->name,group[g].sprite[s]->height);
             }
@@ -428,8 +425,8 @@ int main(int argc, char **argv) {
             
             if (group[g].mode == MODE_C) {
                 fprintf(convpng.all_gfx_h, "extern uint8_t %s[%u];\n",group[g].sprite[s]->name,group[g].sprite[s]->size);
-                fprintf(convpng.all_gfx_h, "extern uint8_t %s_width;\n",group[g].sprite[s]->name);
-                fprintf(convpng.all_gfx_h, "extern uint8_t %s_height;\n",group[g].sprite[s]->name);
+                fprintf(convpng.all_gfx_h, "#define %s_width %u\n",group[g].sprite[s]->name,group[g].sprite[s]->width);
+                fprintf(convpng.all_gfx_h, "#define %s_height %u\n",group[g].sprite[s]->name,group[g].sprite[s]->height);
             } else {
                 fprintf(convpng.all_gfx_h, "#include \"%s\" ; %u bytes\n",group[g].sprite[s]->outc,group[g].sprite[s]->size);
             }

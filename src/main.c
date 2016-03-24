@@ -362,6 +362,14 @@ int main(int argc, char **argv) {
             
             char sp;
             int offset;
+            if (group[g].mode == MODE_C) {
+                fprintf(outc, "uint8_t %s_width = %u;\n",group[g].sprite[s]->name,group[g].sprite[s]->width);
+                fprintf(outc, "uint8_t %s_height = %u;\n\n",group[g].sprite[s]->name,group[g].sprite[s]->height);
+            } else {
+                fprintf(outc,"_%s_width equ %u\n",group[g].sprite[s]->name,group[g].sprite[s]->width);
+                fprintf(outc,"_%s_height equ %u\n",group[g].sprite[s]->name,group[g].sprite[s]->height);
+            }
+            
             if (group[g].compression != CMP_NONE) {
                 unsigned compressed_size;
                 uint8_t *data = (uint8_t*)malloc(group[g].sprite[s]->size*2);
@@ -420,7 +428,8 @@ int main(int argc, char **argv) {
             
             if (group[g].mode == MODE_C) {
                 fprintf(convpng.all_gfx_h, "extern uint8_t %s[%u];\n",group[g].sprite[s]->name,group[g].sprite[s]->size);
-                fprintf(convpng.all_gfx_h, "extern uint16_t %s_pal[%u];\n",group[g].name,count);
+                fprintf(convpng.all_gfx_h, "extern uint8_t %s_width;\n",group[g].sprite[s]->name);
+                fprintf(convpng.all_gfx_h, "extern uint8_t %s_height;\n",group[g].sprite[s]->name);
             } else {
                 fprintf(convpng.all_gfx_h, "#include \"%s\" ; %u bytes\n",group[g].sprite[s]->outc,group[g].sprite[s]->size);
             }
@@ -436,6 +445,7 @@ int main(int argc, char **argv) {
             liq_image_destroy(sp_image);
         }
 
+        fprintf(convpng.all_gfx_h, "extern uint16_t %s_pal[%u];\n",group[g].name,count);
         fprintf(convpng.all_gfx_h, "\n#endif\n");
         
         free(convpng.all_rgba);

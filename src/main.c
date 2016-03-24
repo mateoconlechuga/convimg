@@ -127,7 +127,7 @@ void errorf(char *format, ...) {
    va_start(aptr, format);
 
    vsprintf(buffer, format, aptr);
-   fprintf(convpng.log, "[error line %d] %s", convpng.curline, buffer);
+   if (convpng.log) { fprintf(convpng.log, "[error line %d] %s", convpng.curline, buffer); }
    fprintf(stderr, "[error line %d] %s", convpng.curline, buffer);
    
    va_end(aptr);
@@ -141,7 +141,7 @@ void lof(char *format, ...) {
    va_start(aptr, format);
    
    vsprintf(buffer, format, aptr);
-   fprintf(convpng.log, "%s", buffer);
+   if (convpng.log) { fprintf(convpng.log, "%s", buffer); }
    fprintf(stdout, "%s", buffer);
    
    va_end(aptr);
@@ -161,6 +161,8 @@ int main(int argc, char **argv) {
     time_t c1 = time(NULL);
     convpng.iconc = NULL;
     convpng.bad_conversion = false;
+    
+    lof("ConvPNG %d.%d by M.Waltz\n\n", VERSION_MAJOR, VERSION_MINOR);
     
     while ( (opt = getopt(argc, argv, "c:i:") ) != -1) {
         switch (opt) {
@@ -201,9 +203,9 @@ int main(int argc, char **argv) {
         group[s].mode = 0;
     }
     
-    if (!convpng.ini || !convpng.log) { errorf("could not open input/log files for reading/writting"); }
+    if (!convpng.ini) { lof("[error] could not find file '%s'.\nPlease make sure you have created the configuration file",ini_file);  exit(1); }
+    if (!convpng.log) { lof("could not open file '%s'.\nPlease check file permissions",log_file); exit(1); }
     
-    lof("ConvPNG %d.%d by M.Waltz\n\n", VERSION_MAJOR, VERSION_MINOR);
     lof("Opened %s\n", ini_file);
     
     while ((convpng.line = get_line(convpng.ini))) {

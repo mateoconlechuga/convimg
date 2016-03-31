@@ -80,7 +80,7 @@
 static void _RLE_WriteRep( unsigned char *out, unsigned int *outpos,
     unsigned char marker, unsigned char symbol, unsigned int count )
 {
-    unsigned int i, idx;
+    unsigned int idx;
 
     idx = *outpos;
     if( count <= 3 )
@@ -92,6 +92,7 @@ static void _RLE_WriteRep( unsigned char *out, unsigned int *outpos,
         }
         else
         {
+	    unsigned int i;
             for( i = 0; i < count; ++ i )
             {
                 out[ idx ++ ] = symbol;
@@ -156,7 +157,7 @@ static void _RLE_WriteNonRep( unsigned char *out, unsigned int *outpos,
 int RLE_Compress( unsigned char *in, unsigned char *out,
     unsigned int insize )
 {
-    unsigned char byte1, byte2, marker;
+    unsigned char byte1, marker;
     unsigned int  inpos, outpos, count, i, histogram[ 256 ];
 
     /* Do we have anything to compress? */
@@ -197,6 +198,7 @@ int RLE_Compress( unsigned char *in, unsigned char *out,
     /* Are there at least two bytes? */
     if( insize >= 2 )
     {
+	unsigned char byte2;
         byte2 = in[ inpos ++ ];
         count = 2;
 
@@ -269,7 +271,7 @@ int RLE_Compress( unsigned char *in, unsigned char *out,
 void RLE_Uncompress( unsigned char *in, unsigned char *out,
     unsigned int insize )
 {
-    unsigned char marker, symbol;
+    unsigned char marker;
     unsigned int  i, inpos, outpos, count;
 
     /* Do we have anything to uncompress? */
@@ -286,6 +288,7 @@ void RLE_Uncompress( unsigned char *in, unsigned char *out,
     outpos = 0;
     do
     {
+	unsigned char symbol;
         symbol = in[ inpos ++ ];
         if( symbol == marker )
         {

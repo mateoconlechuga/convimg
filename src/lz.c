@@ -118,7 +118,7 @@ static unsigned int _LZ_StringCompare( unsigned char * str1,
 static int _LZ_WriteVarSize( unsigned int x, unsigned char * buf )
 {
     unsigned int y;
-    int num_bytes, i, b;
+    int num_bytes, i;
 
     /* Determine number of bytes needed to store the number x */
     y = x >> 3;
@@ -132,7 +132,7 @@ static int _LZ_WriteVarSize( unsigned int x, unsigned char * buf )
     /* but the last byte. */
     for( i = num_bytes-1; i >= 0; -- i )
     {
-        b = (x >> (i*7)) & 0x0000007f;
+        int b = (x >> (i*7)) & 0x0000007f;
         if( i > 0 )
         {
             b |= 0x00000080;
@@ -193,8 +193,8 @@ int LZ_Compress( unsigned char *in, unsigned char *out,
 {
     unsigned char marker, symbol;
     unsigned int  inpos, outpos, bytesleft, i;
-    unsigned int  maxoffset, offset, bestoffset;
-    unsigned int  maxlength, length, bestlength;
+    unsigned int  maxoffset, offset;
+    unsigned int  maxlength, length;
     unsigned int  histogram[ 256 ];
     unsigned char *ptr1, *ptr2;
 
@@ -235,6 +235,7 @@ int LZ_Compress( unsigned char *in, unsigned char *out,
     bytesleft = insize;
     do
     {
+	unsigned int bestoffset, bestlength;
         /* Determine most distant position */
         if( inpos > LZ_MAX_OFFSET ) maxoffset = LZ_MAX_OFFSET;
         else                        maxoffset = inpos;
@@ -330,11 +331,11 @@ int LZ_CompressFast( unsigned char *in, unsigned char *out,
     unsigned int insize, unsigned int *work )
 {
     unsigned char marker, symbol;
-    unsigned int  inpos, outpos, bytesleft, i, index, symbols;
-    unsigned int  offset, bestoffset;
-    unsigned int  maxlength, length, bestlength;
+    unsigned int  inpos, outpos, bytesleft, i, index;
+    unsigned int  offset;
+    unsigned int  maxlength, length;
     unsigned int  histogram[ 256 ], *lastindex, *jumptable;
-    unsigned char *ptr1, *ptr2;
+    unsigned char *ptr2;
 
     /* Do we have anything to compress? */
     if( insize < 1 )
@@ -360,7 +361,7 @@ int LZ_CompressFast( unsigned char *in, unsigned char *out,
     }
     for( i = 0; i < insize-1; ++ i )
     {
-        symbols = (((unsigned int)in[i]) << 8) | ((unsigned int)in[i+1]);
+	unsigned int symbols = (((unsigned int)in[i]) << 8) | ((unsigned int)in[i+1]);
         index = lastindex[ symbols ];
         lastindex[ symbols ] = i;
         jumptable[ i ] = index;
@@ -398,6 +399,8 @@ int LZ_CompressFast( unsigned char *in, unsigned char *out,
     bytesleft = insize;
     do
     {
+	unsigned char *ptr1;
+	unsigned int bestlength, bestoffset;
         /* Get pointer to current position */
         ptr1 = &in[ inpos ];
 
@@ -489,7 +492,7 @@ int LZ_CompressFast( unsigned char *in, unsigned char *out,
 void LZ_Uncompress( unsigned char *in, unsigned char *out,
     unsigned int insize )
 {
-    unsigned char marker, symbol;
+    unsigned char marker;
     unsigned int  i, inpos, outpos, length, offset;
 
     /* Do we have anything to uncompress? */
@@ -506,6 +509,7 @@ void LZ_Uncompress( unsigned char *in, unsigned char *out,
     outpos = 0;
     do
     {
+	unsigned char symbol;
         symbol = in[ inpos ++ ];
         if( symbol == marker )
         {

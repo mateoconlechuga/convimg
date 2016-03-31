@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +18,7 @@
 #include "lz.h"
 
 #define VERSION_MAJOR 2
-#define VERSION_MINOR 0
+#define VERSION_MINOR 1
 
 void errorf(char *format, ...);
 void lof(char *format, ...);
@@ -147,6 +149,16 @@ void lof(char *format, ...) {
    va_end(aptr);
 }
 
+static char *strtolower(char *sPtr) {
+    while(*sPtr != '\0') {
+        if (isupper(*sPtr)) {
+            *sPtr = tolower(*sPtr);
+        }
+        ++sPtr;
+    }
+    return sPtr;
+}
+
 inline uint16_t rgb1555(const uint8_t r8, const uint8_t g8, const uint8_t b8) {
     uint8_t r5 = round((int)r8 * 31 / 255.0);
     uint8_t g6 = round((int)g8 * 63 / 255.0);
@@ -184,7 +196,6 @@ int main(int argc, char **argv) {
 
     int s,g;
     unsigned j,k;
-    unsigned count;
     const char *ini_file = ini ? ini : ini_file_name;
     const char *log_file = log_file_name;
     FILE *outc;
@@ -210,7 +221,9 @@ int main(int argc, char **argv) {
     
     while ((convpng.line = get_line(convpng.ini))) {
         int num = parse_input();
-        free_args(&convpng.line, &convpng.argv, num);
+        free_args(convpng.line, convpng.argv, num);
+	free(convpng.argv);
+	convpng.argv = NULL;
     }
     fclose(convpng.ini);
 
@@ -218,6 +231,7 @@ int main(int argc, char **argv) {
     
     /* Convert all the groups */
     for(g = 0; g < convpng.numgroups; g++) {
+	unsigned count;
         liq_image *image = NULL;
         liq_result *res = NULL;
         liq_attr *attr = NULL;
@@ -272,11 +286,11 @@ int main(int argc, char **argv) {
             fprintf(convpng.all_gfx_c, "#include <stdint.h>\n");
             fprintf(convpng.all_gfx_c, "#include \"%s\"\n\n",group[g].outh);
             if (group[g].tindex >= 0) {
-                fprintf(convpng.all_gfx_c, "uint8_t %s_transpcolor_index = %u;\n\n",group[g].name,group[g].tindex);
+                fprintf(convpng.all_gfx_c, "uint8_t %s_transpcolor_index = %d;\n\n",group[g].name,group[g].tindex);
             }
             fprintf(convpng.all_gfx_c, "uint16_t %s_pal[%u] = {\n",group[g].name,count);
             for(j = 0; j < count; j++) {
-                fprintf(convpng.all_gfx_c, " 0x%04X%c  // %02d :: rgba(%u,%u,%u,%u)\n", rgb1555(pal->entries[j].r,pal->entries[j].g,pal->entries[j].b),j==255 ? ' ' : ',', j,pal->entries[j].r,pal->entries[j].g,pal->entries[j].b,pal->entries[j].a);
+                fprintf(convpng.all_gfx_c, " 0x%04X%c  // %02u :: rgba(%u,%u,%u,%u)\n", rgb1555(pal->entries[j].r,pal->entries[j].g,pal->entries[j].b),j==255 ? ' ' : ',', j,pal->entries[j].r,pal->entries[j].g,pal->entries[j].b,pal->entries[j].a);
             }
             fprintf(convpng.all_gfx_c, "};");
 
@@ -293,7 +307,7 @@ int main(int argc, char **argv) {
             fprintf(convpng.all_gfx_c, "_%s_pal_size equ %u\n",group[g].name,count<<1);
             fprintf(convpng.all_gfx_c, "_%s_pal:\n",group[g].name);
             for(j = 0; j < count; j++) {
-                fprintf(convpng.all_gfx_c, " dw 0%04Xh ; %02d :: rgba(%u,%u,%u,%u)\n", rgb1555(pal->entries[j].r,pal->entries[j].g,pal->entries[j].b),j,pal->entries[j].r,pal->entries[j].g,pal->entries[j].b,pal->entries[j].a);
+                fprintf(convpng.all_gfx_c, " dw 0%04Xh ; %02u :: rgba(%u,%u,%u,%u)\n", rgb1555(pal->entries[j].r,pal->entries[j].g,pal->entries[j].b),j,pal->entries[j].r,pal->entries[j].g,pal->entries[j].b,pal->entries[j].a);
             }
 
             fprintf(convpng.all_gfx_h, "; Converted using ConvPNG\n");
@@ -301,7 +315,7 @@ int main(int argc, char **argv) {
             fprintf(convpng.all_gfx_h, "#ifndef %s_H\n#define %s_H\n\n",group[g].name,group[g].name);
             fprintf(convpng.all_gfx_h, "; ZDS sillyness\n#define db .db\n#define dw .dw\n#define dl .dl\n\n");
             if (group[g].tindex >= 0){
-                fprintf(convpng.all_gfx_h, "%s_transpcolor_index equ %u\n\n",group[g].name,group[g].tindex);
+                fprintf(convpng.all_gfx_h, "%s_transpcolor_index equ %d\n\n",group[g].name,group[g].tindex);
             }
             fprintf(convpng.all_gfx_h, "#include \"%s\"\n",group[g].outc);
         }
@@ -360,8 +374,6 @@ int main(int argc, char **argv) {
                 fprintf(outc,"; Converted using ConvPNG\n\n");
             }
             
-            char sp;
-            int offset;
             if (group[g].mode == MODE_ASM) {
                 fprintf(outc,"_%s_width equ %u\n",group[g].sprite[s]->name,group[g].sprite[s]->width);
                 fprintf(outc,"_%s_height equ %u\n",group[g].sprite[s]->name,group[g].sprite[s]->height);
@@ -400,18 +412,18 @@ int main(int argc, char **argv) {
             } else {
                 lof(" (%s)\n",group[g].sprite[s]->outc);
                 if (group[g].mode == MODE_C) {
-                    fprintf(outc,"uint8_t %s[%u] = {\n ",group[g].sprite[s]->name,group[g].sprite[s]->size);
+                    fprintf(outc,"uint8_t %s[%zu] = {\n ",group[g].sprite[s]->name,group[g].sprite[s]->size);
                 } else {
-                    fprintf(outc,"_%s: ; %u bytes\n db ",group[g].sprite[s]->name,group[g].sprite[s]->size);
+                    fprintf(outc,"_%s: ; %zu bytes\n db ",group[g].sprite[s]->name,group[g].sprite[s]->size);
                 }
                 for(j = 0; j < group[g].sprite[s]->height ; j++) {
-                    offset = j*group[g].sprite[s]->width;
+                    int offset = j*group[g].sprite[s]->width;
                     for(k = 0; k < group[g].sprite[s]->width ; k++) {
                         if (group[g].mode == MODE_C) {
-                            sp = (j+1 == group[g].sprite[s]->height && k+1 == group[g].sprite[s]->width) ? ' ' : ',';
+                            char sp = (j+1 == group[g].sprite[s]->height && k+1 == group[g].sprite[s]->width) ? ' ' : ',';
                             fprintf(outc,"0x%02X%c",group[g].sprite[s]->data[k+offset],sp);
                         } else {
-                            sp = k+1 == group[g].sprite[s]->width ? ' ' : ',';
+                            char sp = k+1 == group[g].sprite[s]->width ? ' ' : ',';
                             fprintf(outc,"0%02Xh%c",group[g].sprite[s]->data[k+offset],sp);
                         }
                     }
@@ -424,11 +436,11 @@ int main(int argc, char **argv) {
             }
             
             if (group[g].mode == MODE_C) {
-                fprintf(convpng.all_gfx_h, "extern uint8_t %s[%u];\n",group[g].sprite[s]->name,group[g].sprite[s]->size);
+                fprintf(convpng.all_gfx_h, "extern uint8_t %s[%zu];\n",group[g].sprite[s]->name,group[g].sprite[s]->size);
                 fprintf(convpng.all_gfx_h, "#define %s_width %u\n",group[g].sprite[s]->name,group[g].sprite[s]->width);
                 fprintf(convpng.all_gfx_h, "#define %s_height %u\n",group[g].sprite[s]->name,group[g].sprite[s]->height);
             } else {
-                fprintf(convpng.all_gfx_h, "#include \"%s\" ; %u bytes\n",group[g].sprite[s]->outc,group[g].sprite[s]->size);
+                fprintf(convpng.all_gfx_h, "#include \"%s\" ; %zu bytes\n",group[g].sprite[s]->outc,group[g].sprite[s]->size);
             }
 
             /* close the outputs */
@@ -461,6 +473,7 @@ int main(int argc, char **argv) {
     if(convpng.bad_conversion) {
         lof("[warning] the quality may be too low. (90+%% reccomended).\nPlease try grouping similar images or reducing image colors.\n\n");
     }
+    free(ini);
     lof("Finished!\n");
     
     return 0;
@@ -469,20 +482,16 @@ int main(int argc, char **argv) {
 /**
  * frees the allocated memory for later use
  */
-void free_args(char **args, char ***argv, unsigned argc) {
-    unsigned i;
-    
+void free_args(char *args, char **argv, unsigned argc) {
     if (argv) {
+	unsigned i;
         for(i=0; i<argc; i++) {
-            free((*argv)[i]);
-            (*argv)[i] = NULL;
+            free(argv[i]);
+            argv[i] = NULL;
         }
-        free(*argv);
-        *argv = NULL;
     }
-    if (*args) {
-        free(*args);
-        *args = NULL;
+    if (args) {
+        free(args);
     }
 }
 
@@ -490,7 +499,6 @@ void free_args(char **args, char ***argv, unsigned argc) {
  * recieve string
  */
 char *get_line(FILE *stream) {   
-    int i = 0, c = EOF;
     char *line = (char*)malloc(sizeof(char));
     
     if (feof(stream)) {
@@ -499,6 +507,7 @@ char *get_line(FILE *stream) {
     }
 
     if (line) {
+	int i = 0, c = EOF;
         while (c) {
             c = fgetc(stream);
             
@@ -508,7 +517,13 @@ char *get_line(FILE *stream) {
             
             if (c != ' ') {
                 line[i++] = (char)c;
-                line = realloc(line, sizeof(char)*(i+1));
+		void *tmp = realloc(line, sizeof(char)*(i+1));
+		if (NULL == tmp) {
+		  free(line);
+		  lof("fatal error.\n");
+		} else {
+		  line = tmp;
+		}
             }
         }
         convpng.curline++;
@@ -521,7 +536,6 @@ char *get_line(FILE *stream) {
  * makes a character string pointer array
  */
 int make_args(char *s, char ***args, const char *delim) {
-    size_t strl;
     unsigned argc = 0;
     char *token = strtok(s, delim);
     
@@ -533,7 +547,7 @@ int make_args(char *s, char ***args, const char *delim) {
     
     /* while there is a space present */
     while(token != NULL) {
-        strl = strlen(token);
+        size_t strl = strlen(token);
         
         /* allocate the memory then copy it in */
         *args = realloc(*args, sizeof(char*) * (argc + 1));
@@ -615,7 +629,9 @@ int parse_input(void) {
                 group[g].tindex = 0;
                 
                 /* Free the allocated memory */
-                free_args(&convpng.argv[1], &colors, num);
+                free_args(convpng.argv[1], colors, num);
+		free(colors);
+                colors = NULL;
             }
             
             if (!strcmp(convpng.argv[0], "#Sprites")) {
@@ -678,7 +694,6 @@ void add_rgba(uint8_t *pal, size_t size) {
 int create_icon(void) {
     uint8_t *rgb;
     unsigned width,height,size,error,i,k,o,x,y;
-    uint16_t pxlcolor;
     uint8_t *image;
     error = lodepng_decode24_file(&rgb, &width, &height, "iconc.png");
     if(error) { errorf("%s", lodepng_error_text(error)); }
@@ -690,7 +705,7 @@ int create_icon(void) {
     image = (uint8_t*)malloc(sizeof(uint8_t)*size);
     
     for(i = 0; i < size; i++) {
-            pxlcolor = rgb1555(rgb[o],rgb[o+1],rgb[o+2]);
+            uint16_t pxlcolor = rgb1555(rgb[o],rgb[o+1],rgb[o+2]);
             for(k = 0; k < 256 && hilo[k] != pxlcolor; ++k);
             image[i] = k;
             o += 3;
@@ -699,7 +714,7 @@ int create_icon(void) {
     FILE *out = fopen("iconc.asm","w");
     fprintf(out," define .icon,space=ram\n segment .icon\n xdef __icon_begin\n xdef __icon_end\n xdef __program_description\n xdef __program_description_end\n");
     
-    fprintf(out,"\n db 1\n db %d,%d\n__icon_begin:\n db ",width,height);
+    fprintf(out,"\n db 1\n db %u,%u\n__icon_begin:\n db ",width,height);
     for(y = 0; y < height; y++) {
         fputs("\n db ",out);
         for(x = 0; x < width; x++) {
@@ -711,6 +726,7 @@ int create_icon(void) {
     fprintf(out," db \"%s\",0\n__program_description_end:\n",convpng.iconc);
 
     free(convpng.iconc);
+    free(image);
     fclose(out);
     return 0;
 }

@@ -306,10 +306,9 @@ static void string_cleanup(char** out)
 
 static void string_set(char** out, const char* in)
 {
-  size_t insize = strlen(in);
+  size_t insize = strlen(in), i;
   if(string_resize(out, insize))
   {
-    size_t i;
     for(i = 0; i != insize; ++i)
     {
       (*out)[i] = in[i];
@@ -595,6 +594,7 @@ static unsigned HuffmanTree_makeFromLengths2(HuffmanTree* tree)
   uivector blcount;
   uivector nextcode;
   unsigned error = 0;
+  unsigned bits, n;
 
   uivector_init(&blcount);
   uivector_init(&nextcode);
@@ -608,7 +608,6 @@ static unsigned HuffmanTree_makeFromLengths2(HuffmanTree* tree)
 
   if(!error)
   {
-    unsigned bits,n;
     /*step 1: count number of instances of each code length*/
     for(bits = 0; bits != tree->numcodes; ++bits) ++blcount.data[tree->lengths[bits]];
     /*step 2: generate the nextcode values*/
@@ -679,12 +678,12 @@ typedef struct BPMLists
 /*creates a new chain node with the given parameters, from the memory in the lists */
 static BPMNode* bpmnode_create(BPMLists* lists, int weight, unsigned index, BPMNode* tail)
 {
+  unsigned i;
   BPMNode* result;
 
   /*memory full, so garbage collect*/
   if(lists->nextfree >= lists->numfree)
   {
-    unsigned i;
     /*mark only those that are in use*/
     for(i = 0; i != lists->memsize; ++i) lists->memory[i].in_use = 0;
     for(i = 0; i != lists->listsize; ++i)
@@ -909,9 +908,10 @@ static unsigned generateFixedDistanceTree(HuffmanTree* tree)
 returns the code, or (unsigned)(-1) if error happened
 inbitlength is the length of the complete buffer, in bits (so its byte length times 8)
 */
-static unsigned huffmanDecodeSymbol(const unsigned char* in, size_t* bp, const HuffmanTree* codetree, size_t inbitlength)
+static unsigned huffmanDecodeSymbol(const unsigned char* in, size_t* bp,
+                                    const HuffmanTree* codetree, size_t inbitlength)
 {
-  unsigned treepos = 0;
+  unsigned treepos = 0, ct;
   for(;;)
   {
     if(*bp >= inbitlength) return (unsigned)(-1); /*error: end of input memory reached without endcode*/
@@ -919,7 +919,7 @@ static unsigned huffmanDecodeSymbol(const unsigned char* in, size_t* bp, const H
     decode the symbol from the tree. The "readBitFromStream" code is inlined in
     the expression below because this is the biggest bottleneck while decoding
     */
-    unsigned ct = codetree->tree2d[(treepos << 1) + READBIT(*bp, in)];
+    ct = codetree->tree2d[(treepos << 1) + READBIT(*bp, in)];
     ++(*bp);
     if(ct < codetree->numcodes) return ct; /*the symbol is decoded, return it*/
     else treepos = ct - codetree->numcodes; /*symbol not yet decoded, instead move tree position*/
@@ -1121,7 +1121,7 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
     {
       unsigned code_d, distance;
       unsigned numextrabits_l, numextrabits_d; /*extra bits for length and distance*/
-      size_t start, backward, length;
+      size_t start, forward, backward, length;
 
       /*part 1: get length base*/
       length = LENGTHBASE[code_ll - FIRST_LENGTH_CODE_INDEX];
@@ -1158,7 +1158,6 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
 
       if(!ucvector_resize(out, (*pos) + length)) ERROR_BREAK(83 /*alloc fail*/);
       if (distance < length) {
-	size_t forward;
         for(forward = 0; forward < length; ++forward)
         {
           out->data[(*pos)++] = out->data[backward++];
@@ -5187,20 +5186,16 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     size_t sum[5];
     unsigned char* attempt[5]; /*five filtering attempts, one for each filter type*/
     size_t smallest = 0;
-    unsigned char type
+    unsigned char type, bestType = 0;
 
     for(type = 0; type != 5; ++type)
     {
       attempt[type] = (unsigned char*)lodepng_malloc(linebytes);
-      if(!attempt[type]) {
-	      error = 83;
-	      return error; /*alloc fail*/
-      }
+      if(!attempt[type]) return 83; /*alloc fail*/
     }
 
     if(!error)
     {
-      unsigned char bestType = 0;
       for(y = 0; y != h; ++y)
       {
         /*try the 5 filter types*/

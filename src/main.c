@@ -24,7 +24,7 @@ void errorf(char *format, ...);
 void lof(char *format, ...);
 char *get_line(FILE *stream);
 int make_args(char *s, char ***args, const char *delim);
-void free_args(char **args, char ***argv, unsigned argc);
+void free_args(char *args, char **argv, unsigned argc);
 void print_sprites(void);
 void add_sprite(char *line);
 int parse_input(void);

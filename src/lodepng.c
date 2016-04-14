@@ -5187,7 +5187,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     size_t sum[5];
     unsigned char* attempt[5]; /*five filtering attempts, one for each filter type*/
     size_t smallest = 0;
-    unsigned char type
+    unsigned char type;
 
     for(type = 0; type != 5; ++type)
     {

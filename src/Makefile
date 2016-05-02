@@ -15,7 +15,7 @@ all: $(TARGET)
 $(TARGET) : $(SOURCES)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ -lm
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@

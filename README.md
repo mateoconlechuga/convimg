@@ -17,6 +17,6 @@ Sample `convpng.ini` file:
 
 `TranspColor `: (Transparent color: r,g,b,a - a will most always be 255)
 
-Options:
+`Options `:
     -c <description>: Create icon for C toolchain (output is written to icon.asm)
     -i <inifile>: Use inifile as input rather than convpng.ini

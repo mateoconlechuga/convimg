@@ -14,6 +14,7 @@ Sample `convpng.ini` file:
 ```
 
 `Compression `: (Compression type: none, rle, lz77)
+
 `TranspColor `: (Transparent color: r,g,b,a - a will most always be 255)
 
 Options:

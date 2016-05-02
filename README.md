@@ -19,4 +19,5 @@ Sample `convpng.ini` file:
 
 `Options `:
     -c <description>: Create icon for C toolchain (output is written to icon.asm)
+    
     -i <inifile>: Use inifile as input rather than convpng.ini

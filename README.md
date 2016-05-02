@@ -6,12 +6,15 @@ Sample `convpng.ini` file:
 
 ```
 #GroupC            : gfx_group_1
-#Compression       : none                 (Compression type: none, rle, lz77)
-#TranspColor       : 255,255,255,255      (Transparent color: r,g,b,a - a will most always be 255)
-#Sprites           :                      (List of sprites for this group to convert)
+#Compression       : none
+#TranspColor       : 255,255,255,255
+#Sprites           :
  image1
  image2
 ```
+
+`Compression `: (Compression type: none, rle, lz77)
+`TranspColor `: (Transparent color: r,g,b,a - a will most always be 255)
 
 Options:
     -c <description>: Create icon for C toolchain (output is written to icon.asm)

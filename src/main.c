@@ -75,7 +75,7 @@ typedef struct c_st {
     FILE *all_gfx_c;
     FILE *all_gfx_h;
     uint8_t *all_rgba;
-    size_t all_rgba_size;
+    int all_rgba_size;
     char *iconc;
     bool bad_conversion;
 } convpng_t;
@@ -167,7 +167,6 @@ int main(int argc, char **argv) {
             case 'c':	/* generate an icon header file useable with the C toolchain */
                 convpng.iconc = strdup(optarg);
                 return create_icon();
-                break;
             case 'i':	/* change the ini file input */
                 ini = (char*)malloc(sizeof(char)*(strlen(optarg)+5));
                 strcpy(ini, optarg);
@@ -245,7 +244,8 @@ int main(int argc, char **argv) {
         }
         
         attr = liq_attr_create();
-
+	if(!attr) { errorf("could not create image attributes."); }
+	
         /* build the palette */
         image = liq_image_create_rgba(attr, convpng.all_rgba, convpng.all_rgba_size/4, 1, 0);
         if (group[g].tindex >= 0) {
@@ -338,7 +338,7 @@ int main(int argc, char **argv) {
                 liq_image_add_fixed_color(sp_image,pal->entries[j]);
             }
             sp_res = liq_quantize_image(attr, sp_image);
-            if (!res) {errorf("could not quantize image."); }
+            if (!sp_res) {errorf("could not quantize image."); }
             
             liq_write_remapped_image(sp_res, sp_image, group[g].sprite[s]->data, group[g].sprite[s]->size);
 

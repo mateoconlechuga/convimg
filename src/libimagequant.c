@@ -778,11 +778,11 @@ LIQ_EXPORT LIQ_NONNULL void liq_image_destroy(liq_image *input_image)
 LIQ_EXPORT LIQ_NONNULL liq_result *liq_quantize_image(liq_attr *attr, liq_image *img)
 {
     if (!CHECK_STRUCT_TYPE(attr, liq_attr)) {
-        printf("UM.\n");
+	liq_log_error(attr, "invalid attr pointer");
         return NULL;
     }
     if (!CHECK_STRUCT_TYPE(img, liq_image)) {
-        liq_log_error(attr, "invalid image pointer");
+	liq_log_error(attr, "invalid image pointer");
         return NULL;
     }
 
@@ -1145,7 +1145,7 @@ LIQ_NONNULL static void remap_to_palette_floyd(liq_image *input_image, unsigned 
     for (unsigned int row = 0; row < rows; ++row) {
         memset(nexterr, 0, (cols + 2) * sizeof(*nexterr));
 
-        unsigned int col = (fs_direction) ? 0 : (cols - 1);
+        int col = (fs_direction) ? 0 : (cols - 1);
         const f_pixel *const row_pixels = liq_image_get_row_f(input_image, row);
 
         do {

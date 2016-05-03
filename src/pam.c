@@ -34,7 +34,7 @@ LIQ_PRIVATE bool pam_computeacolorhash(struct acolorhash_table *acht, const rgba
 
     const unsigned int stacksize = sizeof(acht->freestack)/sizeof(acht->freestack[0]);
     struct acolorhist_arr_item **freestack = acht->freestack;
-    unsigned int freestackp=acht->freestackp;
+    int freestackp=acht->freestackp;
 
     /* Go through the entire image, building a hash table of colors. */
     for(unsigned long row = 0; row < rows; ++row) {

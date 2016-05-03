@@ -1,7 +1,7 @@
 TARGET := convpng
 CC := gcc
-CFLAGS := -Wall -Wextra -fPIE -O3 -flto -std=c99 -I.
-LDFLAGS := -lm -flto
+CFLAGS := -Wall -Wextra -fPIE -O3 -std=c11 -I.
+LDFLAGS := -flto
 SOURCES := $(wildcard *.c)
 OBJECTS := $(SOURCES:.c=.o)
 ifeq ($(OS),Windows_NT)

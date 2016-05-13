@@ -54,6 +54,8 @@ typedef struct s_st {
 
 typedef struct g_st {
     char *name;
+    char *palette_name;
+    unsigned palette_length;
     sprite_t **sprite;
     int numsprites;
     char *outh;
@@ -84,40 +86,43 @@ convpng_t convpng;
 group_t group[NUM_GROUPS];
 
 /* xlibc color palette */
-uint16_t hilo[] = {
- 0x0000, 0x0081, 0x0102, 0x0183, 0x0204, 0x0285, 0x0306, 0x0387,
- 0x0408, 0x0489, 0x050A, 0x058B, 0x060C, 0x068D, 0x070E, 0x078F,
- 0x0810, 0x0891, 0x0912, 0x0993, 0x0A14, 0x0A95, 0x0B16, 0x0B97,
- 0x0C18, 0x0C99, 0x0D1A, 0x0D9B, 0x0E1C, 0x0E9D, 0x0F1E, 0x0F9F,
- 0x9000, 0x9081, 0x9102, 0x9183, 0x9204, 0x9285, 0x9306, 0x9387,
- 0x9408, 0x9489, 0x950A, 0x958B, 0x960C, 0x968D, 0x970E, 0x978F,
- 0x9810, 0x9891, 0x9912, 0x9993, 0x9A14, 0x9A95, 0x9B16, 0x9B97,
- 0x9C18, 0x9C99, 0x9D1A, 0x9D9B, 0x9E1C, 0x9E9D, 0x9F1E, 0x9F9F,
- 0x2020, 0x20A1, 0x2122, 0x21A3, 0x2224, 0x22A5, 0x2326, 0x23A7,
- 0x2428, 0x24A9, 0x252A, 0x25AB, 0x262C, 0x26AD, 0x272E, 0x27AF,
- 0x2830, 0x28B1, 0x2932, 0x29B3, 0x2A34, 0x2AB5, 0x2B36, 0x2BB7,
- 0x2C38, 0x2CB9, 0x2D3A, 0x2DBB, 0x2E3C, 0x2EBD, 0x2F3E, 0x2FBF,
- 0xB020, 0xB0A1, 0xB122, 0xB1A3, 0xB224, 0xB2A5, 0xB326, 0xB3A7,
- 0xB428, 0xB4A9, 0xB52A, 0xB5AB, 0xB62C, 0xB6AD, 0xB72E, 0xB7AF,
- 0xB830, 0xB8B1, 0xB932, 0xB9B3, 0xBA34, 0xBAB5, 0xBB36, 0xBBB7,
- 0xBC38, 0xBCB9, 0xBD3A, 0xBDBB, 0xBE3C, 0xBEBD, 0xBF3E, 0xBFBF,
- 0x4040, 0x40C1, 0x4142, 0x41C3, 0x4244, 0x42C5, 0x4346, 0x43C7,
- 0x4448, 0x44C9, 0x454A, 0x45CB, 0x464C, 0x46CD, 0x474E, 0x47CF,
- 0x4850, 0x48D1, 0x4952, 0x49D3, 0x4A54, 0x4AD5, 0x4B56, 0x4BD7,
- 0x4C58, 0x4CD9, 0x4D5A, 0x4DDB, 0x4E5C, 0x4EDD, 0x4F5E, 0x4FDF,
- 0xD040, 0xD0C1, 0xD142, 0xD1C3, 0xD244, 0xD2C5, 0xD346, 0xD3C7,
- 0xD448, 0xD4C9, 0xD54A, 0xD5CB, 0xD64C, 0xD6CD, 0xD74E, 0xD7CF,
- 0xD850, 0xD8D1, 0xD952, 0xD9D3, 0xDA54, 0xDAD5, 0xDB56, 0xDBD7,
- 0xDC58, 0xDCD9, 0xDD5A, 0xDDDB, 0xDE5C, 0xDEDD, 0xDF5E, 0xDFDF,
- 0x6060, 0x60E1, 0x6162, 0x61E3, 0x6264, 0x62E5, 0x6366, 0x63E7,
- 0x6468, 0x64E9, 0x656A, 0x65EB, 0x666C, 0x66ED, 0x676E, 0x67EF,
- 0x6870, 0x68F1, 0x6972, 0x69F3, 0x6A74, 0x6AF5, 0x6B76, 0x6BF7,
- 0x6C78, 0x6CF9, 0x6D7A, 0x6DFB, 0x6E7C, 0x6EFD, 0x6F7E, 0x6FFF,
- 0xF060, 0xF0E1, 0xF162, 0xF1E3, 0xF264, 0xF2E5, 0xF366, 0xF3E7,
- 0xF468, 0xF4E9, 0xF56A, 0xF5EB, 0xF66C, 0xF6ED, 0xF76E, 0xF7EF,
- 0xF870, 0xF8F1, 0xF972, 0xF9F3, 0xFA74, 0xFAF5, 0xFB76, 0xFBF7,
- 0xFC78, 0xFCF9, 0xFD7A, 0xFDFB, 0xFE7C, 0xFEFD, 0xFF7E, 0xFFFF 
+uint16_t xlibc_1555[] = {
+     0x0000, 0x0081, 0x0102, 0x0183, 0x0204, 0x0285, 0x0306, 0x0387,
+     0x0408, 0x0489, 0x050A, 0x058B, 0x060C, 0x068D, 0x070E, 0x078F,
+     0x0810, 0x0891, 0x0912, 0x0993, 0x0A14, 0x0A95, 0x0B16, 0x0B97,
+     0x0C18, 0x0C99, 0x0D1A, 0x0D9B, 0x0E1C, 0x0E9D, 0x0F1E, 0x0F9F,
+     0x9000, 0x9081, 0x9102, 0x9183, 0x9204, 0x9285, 0x9306, 0x9387,
+     0x9408, 0x9489, 0x950A, 0x958B, 0x960C, 0x968D, 0x970E, 0x978F,
+     0x9810, 0x9891, 0x9912, 0x9993, 0x9A14, 0x9A95, 0x9B16, 0x9B97,
+     0x9C18, 0x9C99, 0x9D1A, 0x9D9B, 0x9E1C, 0x9E9D, 0x9F1E, 0x9F9F,
+     0x2020, 0x20A1, 0x2122, 0x21A3, 0x2224, 0x22A5, 0x2326, 0x23A7,
+     0x2428, 0x24A9, 0x252A, 0x25AB, 0x262C, 0x26AD, 0x272E, 0x27AF,
+     0x2830, 0x28B1, 0x2932, 0x29B3, 0x2A34, 0x2AB5, 0x2B36, 0x2BB7,
+     0x2C38, 0x2CB9, 0x2D3A, 0x2DBB, 0x2E3C, 0x2EBD, 0x2F3E, 0x2FBF,
+     0xB020, 0xB0A1, 0xB122, 0xB1A3, 0xB224, 0xB2A5, 0xB326, 0xB3A7,
+     0xB428, 0xB4A9, 0xB52A, 0xB5AB, 0xB62C, 0xB6AD, 0xB72E, 0xB7AF,
+     0xB830, 0xB8B1, 0xB932, 0xB9B3, 0xBA34, 0xBAB5, 0xBB36, 0xBBB7,
+     0xBC38, 0xBCB9, 0xBD3A, 0xBDBB, 0xBE3C, 0xBEBD, 0xBF3E, 0xBFBF,
+     0x4040, 0x40C1, 0x4142, 0x41C3, 0x4244, 0x42C5, 0x4346, 0x43C7,
+     0x4448, 0x44C9, 0x454A, 0x45CB, 0x464C, 0x46CD, 0x474E, 0x47CF,
+     0x4850, 0x48D1, 0x4952, 0x49D3, 0x4A54, 0x4AD5, 0x4B56, 0x4BD7,
+     0x4C58, 0x4CD9, 0x4D5A, 0x4DDB, 0x4E5C, 0x4EDD, 0x4F5E, 0x4FDF,
+     0xD040, 0xD0C1, 0xD142, 0xD1C3, 0xD244, 0xD2C5, 0xD346, 0xD3C7,
+     0xD448, 0xD4C9, 0xD54A, 0xD5CB, 0xD64C, 0xD6CD, 0xD74E, 0xD7CF,
+     0xD850, 0xD8D1, 0xD952, 0xD9D3, 0xDA54, 0xDAD5, 0xDB56, 0xDBD7,
+     0xDC58, 0xDCD9, 0xDD5A, 0xDDDB, 0xDE5C, 0xDEDD, 0xDF5E, 0xDFDF,
+     0x6060, 0x60E1, 0x6162, 0x61E3, 0x6264, 0x62E5, 0x6366, 0x63E7,
+     0x6468, 0x64E9, 0x656A, 0x65EB, 0x666C, 0x66ED, 0x676E, 0x67EF,
+     0x6870, 0x68F1, 0x6972, 0x69F3, 0x6A74, 0x6AF5, 0x6B76, 0x6BF7,
+     0x6C78, 0x6CF9, 0x6D7A, 0x6DFB, 0x6E7C, 0x6EFD, 0x6F7E, 0x6FFF,
+     0xF060, 0xF0E1, 0xF162, 0xF1E3, 0xF264, 0xF2E5, 0xF366, 0xF3E7,
+     0xF468, 0xF4E9, 0xF56A, 0xF5EB, 0xF66C, 0xF6ED, 0xF76E, 0xF7EF,
+     0xF870, 0xF8F1, 0xF972, 0xF9F3, 0xFA74, 0xFAF5, 0xFB76, 0xFBF7,
+     0xFC78, 0xFCF9, 0xFD7A, 0xFDFB, 0xFE7C, 0xFEFD, 0xFF7E, 0xFFFF 
 };
+
+extern uint8_t xlibc_palette[];
+extern uint8_t rgb332_palette[];
 
 char buffer[512];
 void errorf(char *format, ...) {
@@ -217,9 +222,12 @@ int main(int argc, char **argv) {
     
     /* Convert all the groups */
     for(g = 0; g < convpng.numgroups; g++) {
+        double diff;
+        liq_palette custom_pal;
         liq_image *image = NULL;
         liq_result *res = NULL;
         liq_attr *attr = NULL;
+        liq_palette *pal = NULL;
         
         lof("--- Group %s (%s) ---\n",group[g].name,group[g].mode == MODE_ASM ? "ASM" : "C");
         
@@ -227,38 +235,109 @@ int main(int argc, char **argv) {
         convpng.all_gfx_h = fopen(group[g].outh,"w");
         if (!convpng.all_gfx_c || !convpng.all_gfx_h) { errorf("could not open %s for output.", group[g].name); }
         
-        lof("Building Palette...\n");
-        
-        for(s = 0; s < group[g].numsprites; s++) {
-            unsigned error;
-            
-            /* open the file */
-            error = lodepng_decode32_file(&group[g].sprite[s]->rgba, &group[g].sprite[s]->width, &group[g].sprite[s]->height, group[g].sprite[s]->in);
-            if(error) { errorf("%s: %s", lodepng_error_text(error),group[g].sprite[s]->in); }
-            
-            group[g].sprite[s]->size = group[g].sprite[s]->width*group[g].sprite[s]->height;
-            add_rgba(group[g].sprite[s]->rgba, group[g].sprite[s]->size<<2);
-            
-            /* free the opened image */
-            free(group[g].sprite[s]->rgba);
-        }
-        
         attr = liq_attr_create();
-	if(!attr) { errorf("could not create image attributes."); }
-	
-        /* build the palette */
-        image = liq_image_create_rgba(attr, convpng.all_rgba, convpng.all_rgba_size/4, 1, 0);
-        if (group[g].tindex >= 0) {
-            liq_image_add_fixed_color(image,group[g].tcolor);
-        }
-        if (!image) { errorf("could not create palette."); }
-        res = liq_quantize_image(attr, image);
-        if (!res) {errorf("could not quantize palette."); }
-        liq_palette *pal = (liq_palette *)liq_get_palette(res);
+        if(!attr) { errorf("could not create image attributes."); }
         
-	/* find the transparent color */
+        group[g].palette_length = 256;
+        
+        /* build the palette */
+        liq_set_max_colors(attr, group[g].palette_length);
+        
+        /* check if we need a custom palette */
+        if (group[g].palette_name != NULL) {
+            if (!strcmp(group[g].palette_name, "xlibc")) {
+                unsigned h;
+                liq_color rgba_color;
+                
+                for(h = 0; h < 256; h++) {
+                    rgba_color.r = xlibc_palette[(h * 3) + 0];
+                    rgba_color.g = xlibc_palette[(h * 3) + 1];
+                    rgba_color.b = xlibc_palette[(h * 3) + 2];
+                    rgba_color.a = 0xFF;
+                    
+                    custom_pal.entries[h] = rgba_color;
+                }
+                lof("Using built-in xlibc palette...\n");
+            } else if (!strcmp(group[g].palette_name, "rgb332")) {
+                unsigned h;
+                liq_color rgba_color;
+                
+                for(h = 0; h < 256; h++) {
+                    rgba_color.r = rgb332_palette[(h * 3) + 0];
+                    rgba_color.g = rgb332_palette[(h * 3) + 1];
+                    rgba_color.b = rgb332_palette[(h * 3) + 2];
+                    rgba_color.a = 0xFF;
+                    
+                    custom_pal.entries[h] = rgba_color;
+                }
+                lof("Using built-in rgb332 palette...\n");
+           } else {
+                /* some variables */
+                uint8_t *rgba;
+                unsigned width, height, size;
+                
+                /* decode the palette */
+                unsigned error = lodepng_decode32_file(&rgba, &width, &height, group[g].palette_name);
+                if(error) { errorf("%s: %s", lodepng_error_text(error), group[g].palette_name); }
+                if(height > 1 || width > 256 || width < 3) { errorf("palette not formatted correctly"); }
+                
+                size = (width * height) << 2;
+                add_rgba(rgba, size);
+                
+                /* free the opened image */
+                free(rgba);
+                group[g].palette_length = width;
+                lof("Found custom palette; using %s\n", group[g].palette_name);
+                
+                unsigned h;
+                liq_color rgba_color;
+                custom_pal.count = group[g].palette_length;
+                
+                for(h = 0; h < group[g].palette_length; h++) {
+                    rgba_color.r = convpng.all_rgba[(h * 4) + 0];
+                    rgba_color.g = convpng.all_rgba[(h * 4) + 1];
+                    rgba_color.b = convpng.all_rgba[(h * 4) + 2];
+                    rgba_color.a = convpng.all_rgba[(h * 4) + 3];
+                    
+                    custom_pal.entries[h] = rgba_color;
+                }
+            }
+            pal = &custom_pal;
+        } else {
+            lof("Building Palette...\n");
+            for(s = 0; s < group[g].numsprites; s++) {
+                unsigned error;
+		    
+                /* open the file */
+                error = lodepng_decode32_file(&group[g].sprite[s]->rgba, &group[g].sprite[s]->width, &group[g].sprite[s]->height, group[g].sprite[s]->in);
+                if(error) { errorf("%s: %s", lodepng_error_text(error),group[g].sprite[s]->in); }
+                
+                group[g].sprite[s]->size = group[g].sprite[s]->width*group[g].sprite[s]->height;
+                add_rgba(group[g].sprite[s]->rgba, group[g].sprite[s]->size<<2);
+                
+                /* free the opened image */
+                free(group[g].sprite[s]->rgba);
+            }
+            
+            image = liq_image_create_rgba(attr, convpng.all_rgba, convpng.all_rgba_size/4, 1, 0);
+            if (group[g].tindex >= 0) {
+                liq_image_add_fixed_color(image,group[g].tcolor);
+            }
+            if (!image) { errorf("could not create palette."); }
+            res = liq_quantize_image(attr, image);
+            if (!res) {errorf("could not quantize palette."); }
+            pal = (liq_palette*)liq_get_palette(res);
+            diff = liq_get_quantization_error(res);
+            if (diff > 12) {
+                convpng.bad_conversion = true;
+            }
+            
+            lof("Palette quality : %.2f%%\n",100-diff);
+        }
+        
+        /* find the transparent color */
         if (group[g].tindex >= 0) {
-            for (j = 0; j < 256 ; j++) {
+            for (j = 0; j < group[g].palette_length ; j++) {
                 if (group[g].tcolor_converted == rgb1555(pal->entries[j].r,pal->entries[j].g,pal->entries[j].b)) {
                     group[g].tindex = j;
                 }
@@ -269,7 +348,9 @@ int main(int argc, char **argv) {
             pal->entries[0] = tmpp;
         }
         
-        unsigned count = (unsigned)(group[g].tindex == -1) ? 256 : group[g].tindex+1;
+        /* get the number of entires */
+        unsigned count = (unsigned)(group[g].tindex == -1) ? group[g].palette_length : (unsigned)(group[g].tindex + 1);
+        
         /* now, write the all_gfx output */
         if (group[g].mode == MODE_C) {
             fprintf(convpng.all_gfx_c, "// Converted using ConvPNG\n");
@@ -286,7 +367,6 @@ int main(int argc, char **argv) {
             fprintf(convpng.all_gfx_h, "// This file contains all the graphics sources for easier inclusion in a project\n");
             fprintf(convpng.all_gfx_h, "#ifndef %s_H\n#define %s_H\n",group[g].name,group[g].name);
             fprintf(convpng.all_gfx_h, "#include <stdint.h>\n\n");
-	    // group[g].tindex
         } else {
             fprintf(convpng.all_gfx_c, "; Converted using ConvPNG\n");
             fprintf(convpng.all_gfx_c, "; This file contains all the graphics for easier inclusion in a project\n\n");
@@ -307,17 +387,13 @@ int main(int argc, char **argv) {
             fprintf(convpng.all_gfx_h, "#include \"%s\"\n",group[g].outc);
         }
         
-        double diff = liq_get_quantization_error(res);
-        if (diff > 10) {
-            convpng.bad_conversion = true;
-        }
-	
-        lof("Palette quality : %.2f%%\n",100-diff);
         if (group[g].tindex >= 0) {
             lof("TranspColorIndex : 0x00\n");
-            lof("TranspColor : 0x%04X\n%d:\n",group[g].tcolor_converted,group[g].numsprites);
+            lof("TranspColor : 0x%04X\n",group[g].tcolor_converted);
         }
 
+        lof("%d:\n",group[g].numsprites);
+        
         /* okay, now we have the palette used for all the images. Let's fix them to the attributes */
         for(s = 0; s < group[g].numsprites; s++) {
             unsigned error;
@@ -332,23 +408,28 @@ int main(int argc, char **argv) {
             group[g].sprite[s]->size = group[g].sprite[s]->width*group[g].sprite[s]->height;
             group[g].sprite[s]->data = (uint8_t*)malloc(group[g].sprite[s]->size+1);
             
+            liq_set_max_colors(sp_attr, group[g].palette_length);
             sp_image = liq_image_create_rgba(sp_attr, group[g].sprite[s]->rgba, group[g].sprite[s]->width, group[g].sprite[s]->height, 0);
             if (!sp_image) { errorf("could not create image."); }
-            for(j = 0; j < 256; j++) {
+            for(j = 0; j < group[g].palette_length; j++) {
                 liq_image_add_fixed_color(sp_image,pal->entries[j]);
             }
             sp_res = liq_quantize_image(attr, sp_image);
             if (!sp_res) {errorf("could not quantize image."); }
             
             liq_write_remapped_image(sp_res, sp_image, group[g].sprite[s]->data, group[g].sprite[s]->size);
-
-            diff = liq_get_quantization_error(sp_res);
-            if (diff > 12) {
+            
+            if(group[g].palette_name == NULL) {
+                diff = liq_get_remapping_error(sp_res);
+                if (diff > 12) {
+                    convpng.bad_conversion = true;
+                }
+                lof(" %s : %.2f%%",group[g].sprite[s]->name,100-diff);
+            } else {
+                lof(" %s : Converted!",group[g].sprite[s]->name);
                 convpng.bad_conversion = true;
             }
-        
-            lof(" %s quality : %.2f%%",group[g].sprite[s]->name,100-diff);
-	    
+            
             /* open the outputs */
             outc = fopen(group[g].sprite[s]->outc,"w");
 
@@ -424,7 +505,7 @@ int main(int argc, char **argv) {
             
             if (group[g].mode == MODE_C) {
                 fprintf(convpng.all_gfx_h, "extern uint8_t %s_data[%u];\n",group[g].sprite[s]->name,group[g].sprite[s]->size+2);
-		fprintf(convpng.all_gfx_h, "#define %s ((gfx_sprite_t*)%s_data)\n",group[g].sprite[s]->name,group[g].sprite[s]->name);
+                fprintf(convpng.all_gfx_h, "#define %s ((gfx_sprite_t*)%s_data)\n",group[g].sprite[s]->name,group[g].sprite[s]->name);
             } else {
                 fprintf(convpng.all_gfx_h, "#include \"%s\" ; %u bytes\n",group[g].sprite[s]->outc,group[g].sprite[s]->size);
             }
@@ -447,6 +528,7 @@ int main(int argc, char **argv) {
         free(group[g].name);
         free(group[g].outc);
         free(group[g].outh);
+        free(group[g].palette_name);
         liq_attr_destroy(attr);
         liq_image_destroy(image);
         fclose(convpng.all_gfx_h);
@@ -457,7 +539,7 @@ int main(int argc, char **argv) {
     }
     lof("Converted in %u s\n\n",(unsigned)(time(NULL)-c1));
     if(convpng.bad_conversion) {
-        lof("[warning] the quality may be too low. (90+%% reccomended).\nPlease try grouping similar images or reducing image colors.\n\n");
+        lof("[warning] image quality *may* be too low.\nPlease try grouping similar images or reducing image colors.\n\n");
     }
     free(ini);
     lof("Finished!\n");
@@ -632,8 +714,14 @@ int parse_input(void) {
                 }
             }
             
+            if (!strcmp(convpng.argv[0], "#Palette")) {
+                group[convpng.numgroups-1].palette_name = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
+                strcpy(group[convpng.numgroups-1].palette_name,convpng.argv[1]);
+            }
+            
             if (!strcmp(convpng.argv[0], "#GroupC")) {
                 int g = convpng.numgroups;
+                group[g].palette_name = NULL;
                 group[g].name = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
                 strcpy(group[g].name,convpng.argv[1]);
                 group[g].outh = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+3));
@@ -648,6 +736,7 @@ int parse_input(void) {
             
             if (!strcmp(convpng.argv[0], "#GroupASM")) {
                 int g = convpng.numgroups;
+                group[g].palette_name = NULL;
                 group[g].name = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
                 strcpy(group[g].name,convpng.argv[1]);
                 group[g].outh = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+5));
@@ -659,7 +748,7 @@ int parse_input(void) {
                 group[convpng.numgroups].mode = MODE_ASM;
                 convpng.numgroups++;
             }
-            
+	    
         } else {
             add_sprite(convpng.line);
         }
@@ -692,7 +781,7 @@ int create_icon(void) {
     
     for(i = 0; i < size; i++) {
             uint16_t pxlcolor = rgb1555(rgb[o],rgb[o+1],rgb[o+2]);
-            for(k = 0; k < 256 && hilo[k] != pxlcolor; ++k);
+            for(k = 0; k < 256 && xlibc_1555[k] != pxlcolor; ++k);
             image[i] = k;
             o += 3;
     }

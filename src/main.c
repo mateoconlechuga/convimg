@@ -461,7 +461,7 @@ int main(int argc, char **argv) {
                         if(group[g].mode == MODE_C) {
                             fprintf(outc,"0x%02X,",data[j]);
                         } else {
-                            fprintf(outc,"%02X%c",data[j],j+1 == compressed_size ? ' ' : ',');
+                            fprintf(outc,"0%02Xh%c",data[j],j+1 == compressed_size ? ' ' : ',');
                         }
                     }
                     if(group[g].mode == MODE_C) {
@@ -670,10 +670,10 @@ int main(int argc, char **argv) {
                         fprintf(convpng.all_gfx_h, "extern uint8_t %s_data[%u];\n",group[g].image[s]->name,group[g].image[s]->size + 2);
                         fprintf(convpng.all_gfx_h, "#define %s ((gfx_image_t*)%s_data)\n",group[g].image[s]->name,group[g].image[s]->name);
                     } else {
-                        fprintf(convpng.all_gfx_h, "extern uint8_t %s_data_compressed[%u];\n",group[g].image[s]->name,group[g].image[s]->size + 2);
+                        fprintf(convpng.all_gfx_h, "extern uint8_t %s_data_compressed[%u];\n",group[g].image[s]->name,group[g].image[s]->size);
                     }
                 } else {
-                    fprintf(convpng.all_gfx_h, "#include \"%s\" ; %u bytes\n",group[g].image[s]->outc, group[g].image[s]->size + 2);
+                    fprintf(convpng.all_gfx_h, "#include \"%s\" ; %u bytes\n",group[g].image[s]->outc, group[g].image[s]->size);
                 }
             }
             

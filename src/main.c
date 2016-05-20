@@ -442,20 +442,25 @@ int main(int argc, char **argv) {
                 unsigned compressed_size;
                 
                 if(group[g].convert_to_tilemap == false) {
-                    uint8_t *data = (uint8_t*)malloc(group[g].image[s]->size * 2);
+                    uint8_t *tmp_data = (uint8_t*)malloc(group[g].image[s]->size + 3);   
+                    tmp_data[0] = group[g].image[s]->width;
+                    tmp_data[1] = group[g].image[s]->height;
+                
+                    memcpy(&tmp_data[2], group[g].image[s]->data, group[g].image[s]->size);
+                    uint8_t *data = (uint8_t*)malloc((group[g].image[s]->size * 2) + 4);
                     switch(group[g].compression) {
                         case CMP_LZ:
-                            compressed_size = (unsigned)LZ_Compress(group[g].image[s]->data,data,group[g].image[s]->size);
+                            compressed_size = (unsigned)LZ_Compress(tmp_data,data,group[g].image[s]->size);
                             break;
                         default:
-                            compressed_size = (unsigned)RLE_Compress(group[g].image[s]->data,data,group[g].image[s]->size);
+                            compressed_size = (unsigned)RLE_Compress(tmp_data,data,group[g].image[s]->size);
                             break;
                     }
                     if(group[g].mode == MODE_C) {
-                        fprintf(outc,"uint8_t %s_compressed[%u] = {\n ",group[g].image[s]->name,compressed_size);
+                        fprintf(outc,"uint8_t %s_data_compressed[%u] = {\n ",group[g].image[s]->name,compressed_size);
                     } else {
-                        fprintf(outc,"_%s_compressed_size equ %u\n",group[g].image[s]->name,compressed_size);
-                        fprintf(outc,"_%s_compressed:\n db ",group[g].image[s]->name);
+                        fprintf(outc,"_%s_data_compressed_size equ %u\n",group[g].image[s]->name,compressed_size);
+                        fprintf(outc,"_%s_data_compressed:\n db ",group[g].image[s]->name);
                     }
                     for(j = 0; j < compressed_size; j++) {
                         if(group[g].mode == MODE_C) {
@@ -469,6 +474,7 @@ int main(int argc, char **argv) {
                     }
                     lof(" (compression: %u -> %d bytes) (%s)\n",group[g].image[s]->size,compressed_size,group[g].image[s]->outc);
                     group[g].image[s]->size = compressed_size;
+                    free(tmp_data);
                     free(data);
                 } else {
                     unsigned curr_tile, q;

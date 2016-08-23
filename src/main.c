@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <string.h>
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -132,6 +133,12 @@ inline uint16_t rgb1555(const uint8_t r8, const uint8_t g8, const uint8_t b8) {
     return ((g6 & 1) << 15) | (r5 << 10) | ((g6 >> 1) << 5) | b5;
 }
 
+char *str_dup(const char *s) {
+    char *d = malloc (strlen (s) + 1);   // Allocate memory
+    if (d != NULL) strcpy (d,s);         // Copy string if okay
+    return d;                            // Return new memory
+}
+
 int main(int argc, char **argv) {
     char opt;
     char *ini = NULL;
@@ -143,11 +150,11 @@ int main(int argc, char **argv) {
     while ( (opt = getopt(argc, argv, "c:i:j:") ) != -1) {
         switch (opt) {
             case 'c':	// generate an icon header file useable with the C toolchain
-                convpng.iconc = strdup(optarg);
+                convpng.iconc = str_dup(optarg);
                 convpng.icon_zds = true;
                 return create_icon();
             case 'j':	// generate an icon for asm programs
-                convpng.iconc = strdup(optarg);
+                convpng.iconc = str_dup(optarg);
                 convpng.icon_zds = false;
                 return create_icon();
             case 'i':	// change the ini file input
@@ -457,9 +464,9 @@ int main(int argc, char **argv) {
                             break;
                     }
                     if(group[g].mode == MODE_C) {
-                        fprintf(outc,"uint8_t %s_data_compressed[%u] = {\n ",group[g].image[s]->name,compressed_size);
+                        fprintf(outc,"uint8_t %s_data_compressed[%u] = {\n 0x%02X,0x%02X,\n ",group[g].image[s]->name,compressed_size + 2,compressed_size & 0xFF,(compressed_size >> 8) & 0xFF);
                     } else {
-                        fprintf(outc,"_%s_data_compressed_size equ %u\n",group[g].image[s]->name,compressed_size);
+                        fprintf(outc,"_%s_data_compressed_size equ %u\n",group[g].image[s]->name,compressed_size + 2);
                         fprintf(outc,"_%s_data_compressed:\n db ",group[g].image[s]->name);
                     }
                     for(j = 0; j < compressed_size; j++) {
@@ -472,8 +479,8 @@ int main(int argc, char **argv) {
                     if(group[g].mode == MODE_C) {
                         fprintf(outc,"\n};\n");
                     }
-                    lof(" (compression: %u -> %d bytes) (%s)\n",group[g].image[s]->size,compressed_size,group[g].image[s]->outc);
-                    group[g].image[s]->size = compressed_size;
+                    lof(" (compression: %u -> %d bytes) (%s)\n",group[g].image[s]->size,compressed_size + 2,group[g].image[s]->outc);
+                    group[g].image[s]->size = compressed_size + 2;
                     free(tmp_data);
                     free(data);
                 } else {
@@ -509,9 +516,9 @@ int main(int argc, char **argv) {
                                 break;
                         }
                         if(group[g].mode == MODE_C) {
-                            fprintf(outc,"uint8_t %s_tile_%u_data_compressed[%u] = {\n ",group[g].image[s]->name,curr_tile,compressed_size);
+                            fprintf(outc,"uint8_t %s_tile_%u_data_compressed[%u] = {\n 0x%02X,0x%02X,\n ",group[g].image[s]->name,curr_tile,compressed_size + 2,(compressed_size+2) & 0xFF,((compressed_size+2) >> 8) & 0xFF);
                         } else {
-                            fprintf(outc,"_%s_tile_%u_size equ %u\n",group[g].image[s]->name,curr_tile,compressed_size);
+                            fprintf(outc,"_%s_tile_%u_size equ %u\n",group[g].image[s]->name,curr_tile,compressed_size + 2);
                             fprintf(outc,"_%s_tile_%u_compressed:\n db ",group[g].image[s]->name,curr_tile);
                         }
                         for(j = 0; j < compressed_size; j++) {
@@ -524,6 +531,7 @@ int main(int argc, char **argv) {
                         if(group[g].mode == MODE_C) {
                             fprintf(outc,"\n};\n");
                         }
+			compressed_size += 2;
                         lof("\n %s_tile_%u_compressed (compression: %u -> %d bytes) (%s)",group[g].image[s]->name,curr_tile,group[g].tile_size,compressed_size,group[g].image[s]->outc);
                         group[g].image[s]->size = compressed_size;
                         

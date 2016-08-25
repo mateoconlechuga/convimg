@@ -21,11 +21,37 @@ ConvPNG uses `convpng.ini` to convert files. A sample one may look like this: (*
 
 *OPTIONAL*  `Compression `: (Compression type: none, rle, lz77)
 
-*OPTIONAL* `Palette`: (Use a built-in palette or a custom one: xlibc, rgb332, or specify the name of the palette, i.e. palette.png. Custom palettes should be 1 pixel in height, and one pixel width per color entry, up to 256 colors)
+*OPTIONAL*  `Palette`: (Use a built-in palette or a custom one: xlibc, rgb332, or specify the name of the palette, i.e. palette.png. Custom palettes should be 1 pixel in height, and one pixel width per color entry, up to 256 colors)
 
-*OPTIONAL*  `Tilemap` : (Create a tilemap from the image; 1st argument is tile width, 2nd argument is tile height, 3rd argument is to output a table with pointers to each tile)
+*OPTIONAL*  `Tilemap`: (Create a tilemap from the image; 1st argument is tile width, 2nd argument is tile height, 3rd argument is to output a table with pointers to each tile)
 
-*OPTIONAL*  `TranspColor `: (Transparent color: r,g,b,a - a will most always be 255) This is optional, transparent colors will also be moved to palette entry 0.
+*OPTIONAL*  `TranspColor`: (Transparent color: r,g,b,a - a will most always be 255) This is optional, transparent colors will also be moved to palette entry 0.
+
+*OPTIONAL*  `NoPaletteArray`: Don't output the array to the group source file. This can be used if you are using the same palette across multiple groups
+
+*OPTIONAL*  `OutputPaletteImage`: Output an image of the palette in png format of the group. The image is written to [group_name]_pal.png
+
+Another option available is `CreateGlobalPalette`, used to build global palettes for use across multiple groups. Choose some images you wish to set your palette to, as shown in the example convpng.ini below:
+
+```
+#CreateGlobalPalette : main_palette
+#PNGImages           :
+ apple
+ dice
+
+#GroupC              : dice_gfx
+#Palette             : main_palette
+#OutputPaletteImage  :
+#PNGImages           :
+ dice
+
+#GroupC              : apple_gfx
+#Palette             : main_palette
+#Compression         : lz77
+#NoPaletteArray      :
+#PNGImages           :
+ apple
+```
 
 `Command Line Options `:
 

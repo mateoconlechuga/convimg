@@ -526,7 +526,14 @@ int main(int argc, char **argv) {
                             fprintf(outc,"_%s_data_compressed_size equ %u\n",group[g].image[s]->name,compressed_size + 2);
                             fprintf(outc,"_%s_data_compressed:\n db ",group[g].image[s]->name);
                         }
+			
+                        unsigned y = 0;
+			
                         for(j = 0; j < compressed_size; j++) {
+                            if(y++ == 20) {
+                                y = 0;
+                                fputc('\n',outc);
+                            }
                             if(group[g].mode == MODE_C) {
                                 fprintf(outc,"0x%02X,",data[j]);
                             } else {
@@ -578,7 +585,14 @@ int main(int argc, char **argv) {
                                 fprintf(outc,"_%s_tile_%u_size equ %u\n",group[g].image[s]->name,curr_tile,compressed_size + 2);
                                 fprintf(outc,"_%s_tile_%u_compressed:\n db ",group[g].image[s]->name,curr_tile);
                             }
+                            
+                            unsigned y = 0;
+                            
                             for(j = 0; j < compressed_size; j++) {
+                                if(y++ == 20) {
+                                    y = 0;
+                                    fputc('\n',outc);
+                                }
                                 if(group[g].mode == MODE_C) {
                                     fprintf(outc,"0x%02X,",data[j]);
                                 } else {

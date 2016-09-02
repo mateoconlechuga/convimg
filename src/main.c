@@ -530,21 +530,27 @@ int main(int argc, char **argv) {
                         unsigned y = 0;
 			
                         for(j = 0; j < compressed_size; j++) {
-                            if(y++ == 20) {
-                                y = 0;
-                                fputc('\n',outc);
-                            }
                             if(group[g].mode == MODE_C) {
                                 fprintf(outc,"0x%02X,",data[j]);
                             } else {
                                 fprintf(outc,"0%02Xh%c",data[j],j+1 == compressed_size ? ' ' : ',');
                             }
+			    if(y++ == 20) {
+                                y = 0;
+                                fputs("\n ",outc);
+                            }
                         }
                         if(group[g].mode == MODE_C) {
                             fprintf(outc,"\n};\n");
                         }
-                        lof(" (compression: %u -> %d bytes) (%s)\n",group[g].image[s]->size,compressed_size + 2,group[g].image[s]->outc);
-                        group[g].image[s]->size = compressed_size + 2;
+			compressed_size += 2;
+                        lof(" (compression: %u -> %d bytes) (%s)\n",group[g].image[s]->size + 2,compressed_size,group[g].image[s]->outc);
+                        group[g].image[s]->size = compressed_size;
+			
+                        if (compressed_size > group[g].image[s]->size + 2) {
+                            lof(" #warning!");
+                        }
+			    
                         free(tmp_data);
                         free(data);
                     } else {
@@ -589,23 +595,27 @@ int main(int argc, char **argv) {
                             unsigned y = 0;
                             
                             for(j = 0; j < compressed_size; j++) {
-                                if(y++ == 20) {
-                                    y = 0;
-                                    fputc('\n',outc);
-                                }
                                 if(group[g].mode == MODE_C) {
                                     fprintf(outc,"0x%02X,",data[j]);
                                 } else {
                                     fprintf(outc,"%02X%c",data[j],j+1 == compressed_size ? ' ' : ',');
                                 }
+				if(y++ == 20) {
+				    y = 0;
+				    fputs("\n ",outc);
+				}
                             }
                             if(group[g].mode == MODE_C) {
                                 fprintf(outc,"\n};\n");
                             }
-                compressed_size += 2;
+			    compressed_size += 2;
                             lof("\n %s_tile_%u_compressed (compression: %u -> %d bytes) (%s)",group[g].image[s]->name,curr_tile,group[g].tile_size,compressed_size,group[g].image[s]->outc);
                             group[g].image[s]->size = compressed_size;
                             
+                            if (compressed_size > group[g].tile_size) {
+                                lof(" #warning!");
+                            }
+			    
                             // move to the correct data location
                             if((x_offset += group[g].tile_width) > group[g].image[s]->width - 1) {
                                 x_offset = 0;

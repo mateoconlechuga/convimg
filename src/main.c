@@ -40,6 +40,7 @@ const char log_file_name[] = "convpng.log";
 
 #define MODE_C       0               // group is C
 #define MODE_ASM     1               // group is asm
+#define MODE_SPRITES 2               // group is sprites v3.3 format
 #define CMP_NONE     0               // no compression
 #define CMP_RLE      1               // rle compression
 #define CMP_LZ       3               // lz77 compression
@@ -414,7 +415,7 @@ int main(int argc, char **argv) {
                     fprintf(convpng.all_gfx_c, "_%s_pal_size equ %u\n",group[g].name,count<<1);
                     fprintf(convpng.all_gfx_c, "_%s_pal:\n",group[g].name);
                 
-                    for(j = 1; j < count; j++) {
+                    for(j = 0; j < count; j++) {
                         fprintf(convpng.all_gfx_c, " dw 0%04Xh ; %02u :: rgba(%u,%u,%u,%u)\n", rgb1555(pal->entries[j].r,pal->entries[j].g,pal->entries[j].b),j,pal->entries[j].r,pal->entries[j].g,pal->entries[j].b,pal->entries[j].a);
                     }
                 }

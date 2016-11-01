@@ -18,7 +18,7 @@
 
 // version information
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 0
+#define VERSION_MINOR 1
 
 // prototypes
 void errorf(char *format, ...);
@@ -26,7 +26,6 @@ void lof(char *format, ...);
 char *get_line(FILE *stream);
 int make_args(char *s, char ***args, const char *delim);
 void free_args(char **args, char ***argv, unsigned argc);
-void print_images(void);
 void add_image(char *line);
 int parse_input(void);
 void add_rgba(uint8_t *pal, size_t size);
@@ -50,9 +49,6 @@ typedef struct s_st {
     char *in;                        // name of image on disk
     char *outc;                      // output file name (.c, .asm)
     char *name;                      // name of image
-    uint8_t *rgba;                   // pointer to large rgba array for quantization
-    uint8_t *data;                   // pointer to image data
-    uint8_t *pal;                    // pointer to image palette
     unsigned width,height;           // width of image, height of image
     size_t size;                     // total size of the image
 } image_t;
@@ -77,6 +73,7 @@ typedef struct g_st {
     bool create_tilemap_ptrs;        // should we create an array of pointers to the tiles?
     bool output_palette_image;       // does the user want an image of the palette?
     bool output_palette_array;       // does the user want an array of the palette?
+    uint8_t bpp;                     // bits per pixel in each image
     
     // for creating global palettes
     bool is_global_palette;          // should we just build a palette rather than a group?
@@ -132,16 +129,23 @@ void lof(char *format, ...) {
    va_end(aptr);
 }
 
-inline uint16_t rgb1555(const uint8_t r8, const uint8_t g8, const uint8_t b8) {
+uint16_t rgb1555(const uint8_t r8, const uint8_t g8, const uint8_t b8) {
     uint8_t r5 = round((int)r8 * 31 / 255.0);
     uint8_t g6 = round((int)g8 * 63 / 255.0);
     uint8_t b5 = round((int)b8 * 31 / 255.0);
     return ((g6 & 1) << 15) | (r5 << 10) | ((g6 >> 1) << 5) | b5;
 }
 
+uint16_t rgb565(const uint8_t r8, const uint8_t g8, const uint8_t b8) {
+    uint8_t r5 = round(((int)r8 * 31 + 127) / 255.0);
+    uint8_t g6 = round(((int)g8 * 63 + 127) / 255.0);
+    uint8_t b5 = round(((int)b8 * 31 + 127) / 255.0);
+    return (b5 << 11) | (g6 << 5) | r5;
+}
+
 char *str_dup(const char *s) {
-    char *d = malloc (strlen (s) + 1);   // Allocate memory
-    if (d != NULL) strcpy (d,s);         // Copy string if okay
+    char *d = malloc(strlen(s)+1);       // Allocate memory
+    if (d) strcpy(d, s);                 // Copy string if okay
     return d;                            // Return new memory
 }
 
@@ -161,7 +165,7 @@ void encodePNG(const char* filename, const unsigned char* image, unsigned width,
 
 // builds an image of the palette
 void build_image_palette(const liq_palette *pal, const unsigned length, const char *filename) {
-    unsigned char* image = (unsigned char*)malloc(length * 4);
+    unsigned char* image = malloc(length * 4);
     unsigned x;
     for(x = 0; x < length; x++) {
         image[4 * x + 0] = pal->entries[x].r;
@@ -193,7 +197,7 @@ int main(int argc, char **argv) {
                 convpng.icon_zds = false;
                 return create_icon();
             case 'i':	// change the ini file input
-                ini = (char*)malloc(sizeof(char)*(strlen(optarg)+5));
+                ini = malloc(sizeof(char)*(strlen(optarg)+5));
                 strcpy(ini, optarg);
                 ext = strrchr(ini,'.');
                 if(ext == NULL) {
@@ -248,139 +252,171 @@ int main(int argc, char **argv) {
         liq_result *res = NULL;
         liq_attr *attr = NULL;
         liq_palette *pal = NULL;
+        unsigned count = 0;
+        bool is_16_bpp = group[g].bpp == 16;
+        uint8_t shift_amt, lob, out_byte;
+        unsigned inc_amt;
+        
+        switch(group[g].bpp) {
+            case 4:
+                shift_amt = 1;
+                break;
+            case 2:
+                shift_amt = 2;
+                break;
+            case 1:
+                shift_amt = 3;
+                break;
+            default:
+                shift_amt = 0;
+                break;
+        }
+        inc_amt = pow(2, shift_amt);
+        
+        if(is_16_bpp) {
+            group[g].tindex = -1;
+            group[g].is_global_palette =
+            group[g].output_palette_array = 
+            group[g].output_palette_image = false;
+        }
         
         if(group[g].is_global_palette) {
-            lof("--- Global Palette %s ---\n",group[g].name);
+            lof("--- Global Palette %s ---\n", group[g].name);
         } else {
-            lof("--- Group %s (%s) ---\n",group[g].name,group[g].mode == MODE_ASM ? "ASM" : "C");
-            convpng.all_gfx_c = fopen(group[g].outc,"w");
-            convpng.all_gfx_h = fopen(group[g].outh,"w");
+            lof("--- Group %s (%s) ---\n", group[g].name, group[g].mode == MODE_ASM ? "ASM" : "C");
+            convpng.all_gfx_c = fopen(group[g].outc, "w");
+            convpng.all_gfx_h = fopen(group[g].outh, "w");
             if(!convpng.all_gfx_c || !convpng.all_gfx_h) { errorf("could not open %s for output.", group[g].name); }
         }
         
         attr = liq_attr_create();
         if(!attr) { errorf("could not create image attributes."); }
         
-        group[g].palette_length = 256;
-        
-        /* build the palette */
-        liq_set_max_colors(attr, group[g].palette_length);
-        
-        /* check if we need a custom palette */
-        if(group[g].palette_name != NULL) {
-            if(!strcmp(group[g].palette_name, "xlibc")) {
-                unsigned h;
-                liq_color rgba_color;
-                
-                for(h = 0; h < 256; h++) {
-                    rgba_color.r = xlibc_palette[(h * 3) + 0];
-                    rgba_color.g = xlibc_palette[(h * 3) + 1];
-                    rgba_color.b = xlibc_palette[(h * 3) + 2];
-                    rgba_color.a = 0xFF;
-                    
-                    custom_pal.entries[h] = rgba_color;
-                }
-                lof("Using built-in xlibc palette...\n");
-            } else if(!strcmp(group[g].palette_name, "rgb332")) {
-                unsigned h;
-                liq_color rgba_color;
-                
-                for(h = 0; h < 256; h++) {
-                    rgba_color.r = rgb332_palette[(h * 3) + 0];
-                    rgba_color.g = rgb332_palette[(h * 3) + 1];
-                    rgba_color.b = rgb332_palette[(h * 3) + 2];
-                    rgba_color.a = 0xFF;
-                    
-                    custom_pal.entries[h] = rgba_color;
-                }
-                lof("Using built-in rgb332 palette...\n");
-           } else {
-                // some variables
-                uint8_t *rgba;
-                unsigned width, height, size;
-                
-                // decode the palette
-                unsigned error = lodepng_decode32_file(&rgba, &width, &height, group[g].palette_name);
-                if(error) { errorf("%s: %s", lodepng_error_text(error), group[g].palette_name); }
-                if(height > 1 || width > 256 || width < 3) { errorf("palette not formatted correctly."); }
-                
-                size = (width * height) << 2;
-                add_rgba(rgba, size);
-                
-                // free the opened image
-                free(rgba);
-                group[g].palette_length = width;
-                lof("Using defined palette %s...\n", group[g].palette_name);
-                
-                unsigned h;
-                liq_color rgba_color;
-                custom_pal.count = group[g].palette_length;
-                
-                for(h = 0; h < group[g].palette_length; h++) {
-                    rgba_color.r = convpng.all_rgba[(h * 4) + 0];
-                    rgba_color.g = convpng.all_rgba[(h * 4) + 1];
-                    rgba_color.b = convpng.all_rgba[(h * 4) + 2];
-                    rgba_color.a = convpng.all_rgba[(h * 4) + 3];
-                    
-                    custom_pal.entries[h] = rgba_color;
-                }
-            }
-            pal = &custom_pal;
-        } else {
-            lof("Building Palette...\n");
-            for(s = 0; s < group[g].numimages; s++) {
-                unsigned error;
-		    
-                // open the file
-                error = lodepng_decode32_file(&group[g].image[s]->rgba, &group[g].image[s]->width, &group[g].image[s]->height, group[g].image[s]->in);
-                if(error) { errorf("%s: %s", lodepng_error_text(error),group[g].image[s]->in); }
-                
-                group[g].image[s]->size = group[g].image[s]->width*group[g].image[s]->height;
-                add_rgba(group[g].image[s]->rgba, group[g].image[s]->size << 2);
-                
-                // free the opened image
-                free(group[g].image[s]->rgba);
-            }
+        if(!is_16_bpp) {
+            // set the maximum colors for the palette
+            group[g].palette_length = pow(2, group[g].bpp);
+            liq_set_max_colors(attr, group[g].palette_length);
             
-            image = liq_image_create_rgba(attr, convpng.all_rgba, convpng.all_rgba_size/4, 1, 0);
+            // check if we need a custom palette
+            if(group[g].palette_name) {
+                if(!strcmp(group[g].palette_name, "xlibc")) {
+                    unsigned h;
+                    liq_color rgba_color;
+                    
+                    for(h = 0; h < group[g].palette_length; h++) {
+                        rgba_color.r = xlibc_palette[(h * 3) + 0];
+                        rgba_color.g = xlibc_palette[(h * 3) + 1];
+                        rgba_color.b = xlibc_palette[(h * 3) + 2];
+                        rgba_color.a = 0xFF;
+                        
+                        custom_pal.entries[h] = rgba_color;
+                    }
+                    lof("Using built-in xlibc palette...\n");
+                } else if(!strcmp(group[g].palette_name, "rgb332")) {
+                    unsigned h;
+                    liq_color rgba_color;
+                    
+                    for(h = 0; h < group[g].palette_length; h++) {
+                        rgba_color.r = rgb332_palette[(h * 3) + 0];
+                        rgba_color.g = rgb332_palette[(h * 3) + 1];
+                        rgba_color.b = rgb332_palette[(h * 3) + 2];
+                        rgba_color.a = 0xFF;
+                        
+                        custom_pal.entries[h] = rgba_color;
+                    }
+                    lof("Using built-in rgb332 palette...\n");
+                } else {
+                    // some variables
+                    uint8_t *rgba;
+                    unsigned width, height, size;
+                    
+                    // decode the palette
+                    unsigned error = lodepng_decode32_file(&rgba, &width, &height, group[g].palette_name);
+                    if(error) { errorf("%s: %s", lodepng_error_text(error), group[g].palette_name); }
+                    if(height > 1 || width > group[g].palette_length || width < 3) { errorf("palette not formatted correctly."); }
+                    
+                    size = (width * height) << 2;
+                    add_rgba(rgba, size);
+                    
+                    // free the opened image
+                    free(rgba);
+                    group[g].palette_length = width;
+                    lof("Using defined palette %s...\n", group[g].palette_name);
+                    
+                    unsigned h;
+                    liq_color rgba_color;
+                    custom_pal.count = group[g].palette_length;
+                    
+                    for(h = 0; h < group[g].palette_length; h++) {
+                        rgba_color.r = convpng.all_rgba[(h * 4) + 0];
+                        rgba_color.g = convpng.all_rgba[(h * 4) + 1];
+                        rgba_color.b = convpng.all_rgba[(h * 4) + 2];
+                        rgba_color.a = convpng.all_rgba[(h * 4) + 3];
+                        
+                        custom_pal.entries[h] = rgba_color;
+                    }
+                }
+                pal = &custom_pal;
+            } else {
+                lof("Building palette with [%u] indexes...\n", group[g].palette_length);
+                for(s = 0; s < group[g].numimages; s++) {
+                    unsigned error;
+                    unsigned pal_image_width, pal_image_height, pal_image_size;
+                    uint8_t *pal_image_rgba;
+                    
+                    // open the file
+                    error = lodepng_decode32_file(&pal_image_rgba, &pal_image_width, &pal_image_height, group[g].image[s]->in);
+                    if(error) { errorf("%s: %s", lodepng_error_text(error),group[g].image[s]->in); }
+                    
+                    // get the size of the image
+                    pal_image_size = pal_image_width * pal_image_height;
+                    add_rgba(pal_image_rgba, pal_image_size << 2);
+                    
+                    // free the opened image
+                    free(pal_image_rgba);
+                }
+                
+                image = liq_image_create_rgba(attr, convpng.all_rgba, convpng.all_rgba_size/4, 1, 0);
+                if(group[g].tindex >= 0) {
+                    liq_image_add_fixed_color(image, group[g].tcolor);
+                }
+                if(!image) { errorf("could not create palette."); }
+                res = liq_quantize_image(attr, image);
+                if(!res) {errorf("could not quantize palette."); }
+                pal = (liq_palette*)liq_get_palette(res);
+                diff = liq_get_quantization_error(res);
+                if(diff > 13) {
+                    convpng.bad_conversion = true;
+                }
+                
+                lof("Palette quality : %.2f%%\n",100-diff);
+            }
+
+            // find the transparent color
             if(group[g].tindex >= 0) {
-                liq_image_add_fixed_color(image,group[g].tcolor);
-            }
-            if(!image) { errorf("could not create palette."); }
-            res = liq_quantize_image(attr, image);
-            if(!res) {errorf("could not quantize palette."); }
-            pal = (liq_palette*)liq_get_palette(res);
-            diff = liq_get_quantization_error(res);
-            if(diff > 12) {
-                convpng.bad_conversion = true;
+                for (j = 0; j < group[g].palette_length ; j++) {
+                    if(group[g].tcolor_converted == rgb1555(pal->entries[j].r,pal->entries[j].g,pal->entries[j].b)) {
+                        group[g].tindex = j;
+                    }
+                }
+                    
+                // move transparent color to index 0
+                liq_color tmpp = pal->entries[group[g].tindex];
+                pal->entries[group[g].tindex] = pal->entries[0];
+                pal->entries[0] = tmpp;
             }
             
-            lof("Palette quality : %.2f%%\n",100-diff);
-        }
-        
-        // find the transparent color
-        if(group[g].tindex >= 0) {
-            for (j = 0; j < group[g].palette_length ; j++) {
-                if(group[g].tcolor_converted == rgb1555(pal->entries[j].r,pal->entries[j].g,pal->entries[j].b)) {
-                    group[g].tindex = j;
-                }
+            // get the number of entires
+            count = (unsigned)(group[g].tindex == -1) ? group[g].palette_length : (unsigned)(group[g].tindex + 1);
+            
+            // output an image of the palette
+            if (group[g].output_palette_image) {
+                char *png_file = malloc(sizeof(char)*(strlen(group[g].name)+10));
+                strcpy(png_file, group[g].name);
+                strcat(png_file, "_pal.png");
+                build_image_palette(pal, group[g].palette_length, png_file);
+                free(png_file);
             }
-	    // move transparent color to index 0
-	    liq_color tmpp = pal->entries[group[g].tindex];
-            pal->entries[group[g].tindex] = pal->entries[0];
-            pal->entries[0] = tmpp;
-        }
-        
-        // get the number of entires
-        unsigned count = (unsigned)(group[g].tindex == -1) ? group[g].palette_length : (unsigned)(group[g].tindex + 1);
-        
-        // output an image of the palette
-        if (group[g].output_palette_image) {
-            char *png_file = (char*)malloc(sizeof(char)*(strlen(group[g].name)+10));
-            strcpy(png_file, group[g].name);
-            strcat(png_file, "_pal.png");
-            build_image_palette(pal, group[g].palette_length, png_file);
-            free(png_file);
         }
         
         // check and see if we need to build a global palette
@@ -395,7 +431,7 @@ int main(int argc, char **argv) {
                 fprintf(convpng.all_gfx_c, "#include \"%s\"\n\n",group[g].outh);
                 
                 if (group[g].output_palette_array) {
-                    fprintf(convpng.all_gfx_c, "uint16_t %s_pal[%u] = {\n",group[g].name,count);
+                    fprintf(convpng.all_gfx_c, "uint16_t %s_pal[%u] = {\n", group[g].name, count);
             
                     for(j = 0; j < count; j++) {
                         fprintf(convpng.all_gfx_c, " 0x%04X%c  // %02u :: rgba(%u,%u,%u,%u)\n", rgb1555(pal->entries[j].r,pal->entries[j].g,pal->entries[j].b),j==255 ? ' ' : ',', j,pal->entries[j].r,pal->entries[j].g,pal->entries[j].b,pal->entries[j].a);
@@ -434,61 +470,73 @@ int main(int argc, char **argv) {
                 lof("TranspColorIndex : 0x00\n");
                 lof("TranspColor : 0x%04X\n",group[g].tcolor_converted);
             }
-
+            
             lof("%d:\n",group[g].numimages);
             
             // okay, now we have the palette used for all the images. Let's fix them to the attributes
             for(s = 0; s < group[g].numimages; s++) {
-                unsigned error;
+                unsigned error, total_image_size, image_width, image_height, image_size;
+                char *image_name = group[g].image[s]->name;
+                uint8_t *image_rgba, *image_data;
                 liq_image *sp_image = NULL;
                 liq_result *sp_res = NULL;
                 liq_attr *sp_attr = liq_attr_create();
                 
                 // open the file
-                error = lodepng_decode32_file(&group[g].image[s]->rgba, &group[g].image[s]->width, &group[g].image[s]->height, group[g].image[s]->in);
+                error = lodepng_decode32_file(&image_rgba, &group[g].image[s]->width, &group[g].image[s]->height, group[g].image[s]->in);
                 if(error) { errorf("%s: %s", lodepng_error_text(error),group[g].image[s]->in); }
                 
-                group[g].image[s]->size = group[g].image[s]->width * group[g].image[s]->height;
+                image_width = group[g].image[s]->width;
+                image_height = group[g].image[s]->height;
                 
+                image_size = group[g].image[s]->size = image_width * image_height;
+                total_image_size = ((is_16_bpp) ? image_size << 1 : image_size >> shift_amt) + 2;
+
                 if(group[g].convert_to_tilemap) {
-                    group[g].total_tiles = (group[g].image[s]->width / group[g].tile_width) * (group[g].image[s]->height / group[g].tile_height);
+                    group[g].total_tiles = (image_width / group[g].tile_width) * (image_height / group[g].tile_height);
                 }
                 
                 if(group[g].convert_to_tilemap == true) {
-                    if((group[g].image[s]->width % group[g].tile_width) || (group[g].image[s]->height % group[g].tile_height)) {
+                    if((image_width % group[g].tile_width) || (image_height % group[g].tile_height)) {
                         errorf("image dimensions do not match tile width and/or height values.");
                     }
                 }
                 
-                group[g].image[s]->data = (uint8_t*)malloc(group[g].image[s]->size + 1);
-                
-                liq_set_max_colors(sp_attr, group[g].palette_length);
-                sp_image = liq_image_create_rgba(sp_attr, group[g].image[s]->rgba, group[g].image[s]->width, group[g].image[s]->height, 0);
-                if(!sp_image) { errorf("could not create image."); }
-                for(j = 0; j < group[g].palette_length; j++) {
-                    liq_image_add_fixed_color(sp_image,pal->entries[j]);
-                }
-                sp_res = liq_quantize_image(attr, sp_image);
-                if(!sp_res) {errorf("could not quantize image."); }
-                
-                liq_write_remapped_image(sp_res, sp_image, group[g].image[s]->data, group[g].image[s]->size);
-                
-                if(group[g].palette_name == NULL) {
-                    diff = liq_get_remapping_error(sp_res);
-                    if(diff > 12) {
-                        convpng.bad_conversion = true;
-                    }
-                    lof(" %s : %.2f%%",group[g].image[s]->name,100-diff);
-                } else {
-                    lof(" %s : Converted!",group[g].image[s]->name);
-                    convpng.bad_conversion = true;
-                }
-                
                 // open the outputs
-                if(!(outc = fopen(group[g].image[s]->outc,"w"))) { 
+                if(!(outc = fopen(group[g].image[s]->outc, "w"))) { 
                     errorf("opening file for output.");
                 }
                 
+                // quatize the image if not 16 bpp
+                image_data = NULL;
+                if(!is_16_bpp) {
+                    image_data = malloc(image_size + 1);
+                    liq_set_max_colors(sp_attr, group[g].palette_length);
+                    sp_image = liq_image_create_rgba(sp_attr, image_rgba, image_width, image_height, 0);
+                    if(!sp_image) { errorf("could not create image."); }
+                    for(j = 0; j < group[g].palette_length; j++) {
+                        liq_image_add_fixed_color(sp_image, pal->entries[j]);
+                    }
+                    sp_res = liq_quantize_image(attr, sp_image);
+                    if(!sp_res) {errorf("could not quantize image."); }
+                    
+                    liq_write_remapped_image(sp_res, sp_image, image_data, image_size);
+                    
+                    if(group[g].palette_name == NULL) {
+                        diff = 100-liq_get_remapping_error(sp_res);
+                        if(diff < 75) {
+                            convpng.bad_conversion = true;
+                        }
+                        lof(" %s : %.2f%%", image_name, diff < 0 ? 0 : diff);
+                    } else {
+                        lof(" %s : Converted!", image_name);
+                        convpng.bad_conversion = true;
+                    }
+                } else {
+                    lof(" %s : Converted!", image_name);
+                    convpng.bad_conversion = false;
+                }
+
                 if(group[g].mode == MODE_C) {
                     fprintf(outc,"// Converted using ConvPNG\n");
                     fprintf(outc,"#include <stdint.h>\n#include \"%s\"\n\n",group[g].outh);
@@ -498,57 +546,59 @@ int main(int argc, char **argv) {
                 
                 if(group[g].mode == MODE_ASM) {
                     if(group[g].convert_to_tilemap == false) {
-                            fprintf(outc,"_%s_width equ %u\n",group[g].image[s]->name,group[g].image[s]->width);
-                            fprintf(outc,"_%s_height equ %u\n",group[g].image[s]->name,group[g].image[s]->height);
+                            fprintf(outc,"_%s_width equ %u\n", image_name, image_width);
+                            fprintf(outc,"_%s_height equ %u\n", image_name, image_height);
                     }
                 }
                 
-                if(group[g].compression != CMP_NONE) {
+                if(group[g].compression != CMP_NONE) { // some kind of compression
                     unsigned compressed_size;
                     
                     if(group[g].convert_to_tilemap == false) {
-                        uint8_t *tmp_data = (uint8_t*)malloc(group[g].image[s]->size + 3);   
-                        tmp_data[0] = group[g].image[s]->width;
-                        tmp_data[1] = group[g].image[s]->height;
+                        uint8_t *tmp_data = malloc(total_image_size + 1);   
+                        tmp_data[0] = image_width;
+                        tmp_data[1] = image_height;
                     
-                        memcpy(&tmp_data[2], group[g].image[s]->data, group[g].image[s]->size);
-                        uint8_t *data = (uint8_t*)malloc((group[g].image[s]->size * 2) + 4);
+                        memcpy(&tmp_data[2], image_data, image_size);
+                        uint8_t *data = malloc((group[g].image[s]->size << 1) + 4);
                         switch(group[g].compression) {
                             case CMP_LZ:
-                                compressed_size = (unsigned)LZ_Compress(tmp_data,data,group[g].image[s]->size);
+                                compressed_size = (unsigned)LZ_Compress(tmp_data,data, image_size);
                                 break;
                             default:
-                                compressed_size = (unsigned)RLE_Compress(tmp_data,data,group[g].image[s]->size);
+                                compressed_size = (unsigned)RLE_Compress(tmp_data,data, image_size);
                                 break;
                         }
                         if(group[g].mode == MODE_C) {
-                            fprintf(outc,"uint8_t %s_data_compressed[%u] = {\n 0x%02X,0x%02X,\n ",group[g].image[s]->name,compressed_size + 2,compressed_size & 0xFF,(compressed_size >> 8) & 0xFF);
+                            fprintf(outc,"uint8_t %s_data_compressed[%u] = {\n 0x%02X,0x%02X,\n ", image_name,
+                                                                                                   compressed_size + 2,
+                                                                                                   compressed_size & 0xFF,
+                                                                                                   (compressed_size >> 8) & 0xFF);
                         } else {
-                            fprintf(outc,"_%s_data_compressed_size equ %u\n",group[g].image[s]->name,compressed_size + 2);
-                            fprintf(outc,"_%s_data_compressed:\n db ",group[g].image[s]->name);
+                            fprintf(outc,"_%s_data_compressed_size equ %u\n", image_name, compressed_size + 2);
+                            fprintf(outc,"_%s_data_compressed:\n db ", image_name);
                         }
 			
                         unsigned y = 0;
 			
                         for(j = 0; j < compressed_size; j++) {
                             if(group[g].mode == MODE_C) {
-                                fprintf(outc,"0x%02X,",data[j]);
+                                fprintf(outc,"0x%02X,", data[j]);
                             } else {
-                                fprintf(outc,"0%02Xh%c",data[j],j+1 == compressed_size ? ' ' : ',');
+                                fprintf(outc,"0%02Xh%c", data[j],j+1 == compressed_size ? ' ' : ',');
                             }
-			    if(y++ == 20) {
-                                y = 0;
-                                fputs("\n ",outc);
+                            if(y++ == 20) {
+                                y = 0; fputs("\n ",outc);
                             }
                         }
                         if(group[g].mode == MODE_C) {
                             fprintf(outc,"\n};\n");
                         }
-			compressed_size += 2;
-                        lof(" (compression: %u -> %d bytes) (%s)\n",group[g].image[s]->size + 2,compressed_size,group[g].image[s]->outc);
+                        compressed_size += 2;
+                        lof(" (compression: %u -> %d bytes) (%s)\n", total_image_size, compressed_size, group[g].image[s]->outc);
                         group[g].image[s]->size = compressed_size;
-			
-                        if (compressed_size > group[g].image[s]->size + 2) {
+                        
+                        if (compressed_size > total_image_size) {
                             lof(" #warning!");
                         }
 			    
@@ -557,8 +607,8 @@ int main(int argc, char **argv) {
                     } else {
                         unsigned curr_tile, q;
                         unsigned x_offset, y_offset, offset;
-                        uint8_t *data = (uint8_t*)malloc(group[g].tile_size * 2);
-                        uint8_t *tmp_data = (uint8_t*)malloc(group[g].tile_size + 3);
+                        uint8_t *data = malloc(group[g].tile_size << 1);
+                        uint8_t *tmp_data = malloc(group[g].tile_size + 3);
                         
                         x_offset = y_offset = 0;
                         
@@ -569,28 +619,32 @@ int main(int argc, char **argv) {
                             
                             // convert a single tile
                             for(j = 0; j < group[g].tile_height; j++) {
-                                offset = j * group[g].image[s]->width;
+                                offset = j * image_width;
                                 for(k = 0; k < group[g].tile_width; k++) {
-                                    tmp_data[q++] = group[g].image[s]->data[k + x_offset + y_offset + offset];
+                                    tmp_data[q++] = image_data[k + x_offset + y_offset + offset];
                                 }
                             }
                             
                             switch(group[g].compression) {
                                 case CMP_LZ:
-                                    compressed_size = (unsigned)LZ_Compress(tmp_data,data,group[g].tile_size);
+                                    compressed_size = (unsigned)LZ_Compress(tmp_data,data, group[g].tile_size);
                                     break;
                                 case CMP_RLE:
-                                    compressed_size = (unsigned)RLE_Compress(tmp_data,data,group[g].tile_size);
+                                    compressed_size = (unsigned)RLE_Compress(tmp_data,data, group[g].tile_size);
                                     break;
                                 default:
                                     errorf("unexpected compression mode.");
                                     break;
                             }
                             if(group[g].mode == MODE_C) {
-                                fprintf(outc,"uint8_t %s_tile_%u_data_compressed[%u] = {\n 0x%02X,0x%02X,\n ",group[g].image[s]->name,curr_tile,compressed_size + 2,(compressed_size+2) & 0xFF,((compressed_size+2) >> 8) & 0xFF);
+                                fprintf(outc,"uint8_t %s_tile_%u_data_compressed[%u] = {\n 0x%02X,0x%02X,\n ", image_name,
+                                                                                                               curr_tile,
+                                                                                                               compressed_size + 2,
+                                                                                                               (compressed_size+2) & 0xFF,
+                                                                                                               ((compressed_size+2) >> 8) & 0xFF);
                             } else {
-                                fprintf(outc,"_%s_tile_%u_size equ %u\n",group[g].image[s]->name,curr_tile,compressed_size + 2);
-                                fprintf(outc,"_%s_tile_%u_compressed:\n db ",group[g].image[s]->name,curr_tile);
+                                fprintf(outc,"_%s_tile_%u_size equ %u\n", image_name, curr_tile, compressed_size + 2);
+                                fprintf(outc,"_%s_tile_%u_compressed:\n db ", image_name, curr_tile);
                             }
                             
                             unsigned y = 0;
@@ -599,19 +653,24 @@ int main(int argc, char **argv) {
                                 if(group[g].mode == MODE_C) {
                                     fprintf(outc,"0x%02X,",data[j]);
                                 } else {
-                                    fprintf(outc,"%02X%c",data[j],j+1 == compressed_size ? ' ' : ',');
+                                    fprintf(outc,"%02X%c",data[j], j+1 == compressed_size ? ' ' : ',');
                                 }
-				if(y++ == 20) {
-				    y = 0;
-				    fputs("\n ",outc);
-				}
+                                if(y++ == 20) {
+                                    y = 0;
+                                    fputs("\n ",outc);
+                                }
                             }
                             if(group[g].mode == MODE_C) {
                                 fprintf(outc,"\n};\n");
                             }
-			    compressed_size += 2;
-                            lof("\n %s_tile_%u_compressed (compression: %u -> %d bytes) (%s)",group[g].image[s]->name,curr_tile,group[g].tile_size,compressed_size,group[g].image[s]->outc);
-                            group[g].image[s]->size = compressed_size;
+                            
+                            compressed_size += 2;
+                            lof("\n %s_tile_%u_compressed (compression: %u -> %d bytes) (%s)", image_name,
+                                                                                               curr_tile,
+                                                                                               group[g].tile_size,
+                                                                                               compressed_size,
+                                                                                               group[g].image[s]->outc);
+                            image_size = compressed_size;
                             
                             if (compressed_size > group[g].tile_size) {
                                 lof(" #warning!");
@@ -628,15 +687,15 @@ int main(int argc, char **argv) {
                         // build the tilemap table
                         if(group[g].create_tilemap_ptrs) {
                             if(group[g].mode == MODE_C) {
-                                fprintf(outc,"uint8_t *%s_tiles_data_compressed[%u] = {\n",group[g].image[s]->name, group[g].total_tiles);
+                                fprintf(outc,"uint8_t *%s_tiles_data_compressed[%u] = {\n", image_name, group[g].total_tiles);
                                 for(curr_tile = 0; curr_tile < group[g].total_tiles; curr_tile++) {
-                                    fprintf(outc," %s_tile_%u_data_compressed,\n",group[g].image[s]->name, curr_tile);
+                                    fprintf(outc," %s_tile_%u_data_compressed,\n", image_name, curr_tile);
                                 }
                                 fprintf(outc,"};\n");
                             } else {
-                                fprintf(outc,"_%s_tiles_compressed: ; %u tiles\n",group[g].image[s]->name, group[g].total_tiles);
+                                fprintf(outc,"_%s_tiles_compressed: ; %u tiles\n", image_name, group[g].total_tiles);
                                 for(curr_tile = 0; curr_tile < group[g].total_tiles; curr_tile++) {
-                                    fprintf(outc," dl _%s_tile_%u_compressed\n",group[g].image[s]->name, curr_tile);
+                                    fprintf(outc," dl _%s_tile_%u_compressed\n", image_name, curr_tile);
                                 }
                             }
                         }
@@ -644,40 +703,39 @@ int main(int argc, char **argv) {
                         free(tmp_data);
                         free(data);
                     }
-                } else {
+                } else { // no compression
                     unsigned curr_tile;
                     unsigned x_offset, y_offset, offset;
                     
                     x_offset = y_offset = 0;
                     
-                    lof(" (%s)\n",group[g].image[s]->outc);
+                    lof(" (%s)\n", group[g].image[s]->outc);
                     
                     if(group[g].convert_to_tilemap == true) {
                         // convert the file with the tilemap formatting
                         for(curr_tile = 0; curr_tile < group[g].total_tiles; curr_tile++) {
                             if(group[g].mode == MODE_C) {
-                                fprintf(outc,"uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ", group[g].image[s]->name,
+                                fprintf(outc,"uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ", image_name,
                                                                                                                               curr_tile,
-                                                                                                                              group[g].tile_size,
+                                                                                                                              group[g].tile_size>>shift_amt,
                                                                                                                               group[g].tile_width,
                                                                                                                               group[g].tile_height);
                             } else {
-                                fprintf(outc,"_%s_tile_%u: ; %u bytes\n db %u,%u ; width,height\n db ", group[g].image[s]->name,
+                                fprintf(outc,"_%s_tile_%u: ; %u bytes\n db %u,%u ; width,height\n db ", image_name,
                                                                                                         curr_tile,
-                                                                                                        group[g].tile_size,
+                                                                                                        group[g].tile_size>>shift_amt,
                                                                                                         group[g].tile_width,
                                                                                                         group[g].tile_height);
                             }
                             
                             // convert a single tile
                             for(j = 0; j < group[g].tile_height; j++) {
-                                offset = j * group[g].image[s]->width;
+                                offset = j * image_width;
                                 for(k = 0; k < group[g].tile_width; k++) {
                                     if(group[g].mode == MODE_C) {
-                                        fprintf(outc,"0x%02X%c",group[g].image[s]->data[k + x_offset + y_offset + offset],',');
+                                        fprintf(outc,"0x%02X%c", image_data[k + x_offset + y_offset + offset], ',');
                                     } else {
-                                        fprintf(outc,"0%02Xh%c", group[g].image[s]->data[k + x_offset + y_offset + offset],
-                                                k+1 == group[g].tile_width ? ' ' : ',');
+                                        fprintf(outc,"0%02Xh%c", image_data[k + x_offset + y_offset + offset], k+1 == group[g].tile_width ? ' ' : ',');
                                     }
                                 }
                                 // check if at the end
@@ -698,42 +756,65 @@ int main(int argc, char **argv) {
                         // build the tilemap table
                         if(group[g].create_tilemap_ptrs) {
                             if(group[g].mode == MODE_C) {
-                                fprintf(outc,"uint8_t *%s_tiles_data[%u] = {\n",group[g].image[s]->name, group[g].total_tiles);
+                                fprintf(outc,"uint8_t *%s_tiles_data[%u] = {\n", image_name, group[g].total_tiles);
                                 for(curr_tile = 0; curr_tile < group[g].total_tiles; curr_tile++) {
-                                    fprintf(outc," %s_tile_%u_data,\n",group[g].image[s]->name, curr_tile);
+                                    fprintf(outc," %s_tile_%u_data,\n", image_name, curr_tile);
                                 }
                                 fprintf(outc,"};\n");
                             } else {
-                                fprintf(outc,"_%s_tiles: ; %u tiles\n",group[g].image[s]->name, group[g].total_tiles);
+                                fprintf(outc,"_%s_tiles: ; %u tiles\n", image_name, group[g].total_tiles);
                                 for(curr_tile = 0; curr_tile < group[g].total_tiles; curr_tile++) {
-                                    fprintf(outc," dl _%s_tile_%u\n",group[g].image[s]->name, curr_tile);
+                                    fprintf(outc," dl _%s_tile_%u\n", image_name, curr_tile);
                                 }
                             }
                         }
-                    } else {
-                        // convert the file with the standard formatting
+                    } else { // not a tilemap, just a normal image
                         if(group[g].mode == MODE_C) {
-                            fprintf(outc,"uint8_t %s_data[%u] = {\n %u,\t/* width */\n %u,\t/* height */\n ",group[g].image[s]->name,group[g].image[s]->size+2,group[g].image[s]->width,group[g].image[s]->height);
+                            fprintf(outc,"// %u bpp image\nuint8_t %s_data[%u] = {\n %u,%u,  // width,height\n ", group[g].bpp,
+                                                                                                                  image_name,
+                                                                                                                  total_image_size,
+                                                                                                                  image_width,
+                                                                                                                  image_height);
                         } else {
-                            fprintf(outc,"_%s: ; %u bytes\n db ",group[g].image[s]->name, group[g].image[s]->size + 2);
-                        }
-                        for(j = 0; j < group[g].image[s]->height ; j++) {
-                            int offset = j*group[g].image[s]->width;
-                            for(k = 0; k < group[g].image[s]->width ; k++) {
-                                if(group[g].mode == MODE_C) {
-                                    fprintf(outc,"0x%02X%c",group[g].image[s]->data[k+offset],',');
-                                } else {
-                                    char sp = k+1 == group[g].image[s]->width ? ' ' : ',';
-                                    fprintf(outc,"0%02Xh%c",group[g].image[s]->data[k+offset],sp);
-                                }
-                            }
-                            if(group[g].mode == MODE_C) {
-                                fprintf(outc,"\n%s",j+1 != group[g].image[s]->height ? " " : "};\n");
-                            } else {
-                                fprintf(outc,"\n%s",j+1 != group[g].image[s]->height ? " db " : "\n");
-                            }
+                            fprintf(outc,"_%s: ; %u bytes\n db ", image_name, total_image_size);
                         }
                         
+                        if(!is_16_bpp) { // output the data to the file
+                            uint8_t curr_inc;
+                            for(j = 0; j < image_height; j++) {
+                                int offset = j * image_width;
+                                for(k = 0; k < image_width; k += inc_amt) {
+                                    for(curr_inc = inc_amt, out_byte = 0, lob = 0; lob < inc_amt; lob++)
+                                        out_byte |= (image_data[k + offset + lob] << --curr_inc);
+                                    if(group[g].mode == MODE_C) {
+                                        fprintf(outc,"0x%02X,", out_byte);
+                                    } else {
+                                        fprintf(outc,"0%02Xh%c", out_byte, (k + inc_amt == image_width) ? ' ' : ',');
+                                    }
+                                }
+                                fprintf(outc,"\n%s", (group[g].mode == MODE_C) ? ((j+1 != image_height) ? " " : "};\n") 
+                                                                               : ((j+1 != image_height) ? " db " : "\n"));
+                            }
+                        } else { // 16 bpp
+                            uint8_t out_byte_high, out_byte_low;
+                            for(j = 0; j < image_height; j++) {
+                                int offset = j * image_width;
+                                for(k = 0; k < image_width; k++) {
+                                    uint16_t out_short = rgb565(image_rgba[offset + k + 0], 
+                                                                image_rgba[offset + k + 1],
+                                                                image_rgba[offset + k + 2]);
+                                    out_byte_high = out_short >> 8;
+                                    out_byte_low = out_short & 255;
+                                    if(group[g].mode == MODE_C) {
+                                        fprintf(outc,"0x%02X,0x%02X,", out_byte_high, out_byte_low);
+                                    } else {
+                                        fprintf(outc,"0%02Xh,0%02Xh%c", out_byte_high, out_byte_low, (k+1 == image_width) ? ' ' : ',');
+                                    }
+                                }
+                                fprintf(outc,"\n%s", (group[g].mode == MODE_C) ? ((j+1 != image_height) ? " " : "};\n") 
+                                                                               : ((j+1 != image_height) ? " db " : "\n"));
+                            }
+                        }
                     }
                 }
                 
@@ -742,34 +823,34 @@ int main(int argc, char **argv) {
                     if(group[g].mode == MODE_C) {
                         for(; curr_tile < group[g].total_tiles; curr_tile++) {
                             if(group[g].compression == CMP_NONE) {
-                                fprintf(convpng.all_gfx_h,"extern uint8_t %s_tile_%u_data[%u];\n",group[g].image[s]->name, curr_tile, group[g].tile_size);
-                                fprintf(convpng.all_gfx_h, "#define %s_tile_%u ((gfx_image_t*)%s_tile_%u_data)\n",group[g].image[s]->name,curr_tile,group[g].image[s]->name,curr_tile);
+                                fprintf(convpng.all_gfx_h,"extern uint8_t %s_tile_%u_data[%u];\n", image_name, curr_tile, group[g].tile_size);
+                                fprintf(convpng.all_gfx_h, "#define %s_tile_%u ((gfx_image_t*)%s_tile_%u_data)\n", image_name, curr_tile, image_name, curr_tile);
                             } else {
-                                fprintf(convpng.all_gfx_h,"extern uint8_t %s_tile_%u_data_compressed[];\n",group[g].image[s]->name, curr_tile);
+                                fprintf(convpng.all_gfx_h,"extern uint8_t %s_tile_%u_data_compressed[];\n", image_name, curr_tile);
                             }
                         }
 
                         if(group[g].create_tilemap_ptrs) {
                             if(group[g].compression == CMP_NONE) {
-                                fprintf(convpng.all_gfx_h, "extern uint8_t *%s_tiles_data[%u];\n",group[g].image[s]->name,group[g].total_tiles);
-                                fprintf(convpng.all_gfx_h, "#define %s_tiles ((gfx_image_t**)%s_tiles_data)\n",group[g].image[s]->name,group[g].image[s]->name);
+                                fprintf(convpng.all_gfx_h, "extern uint8_t *%s_tiles_data[%u];\n", image_name, group[g].total_tiles);
+                                fprintf(convpng.all_gfx_h, "#define %s_tiles ((gfx_image_t**)%s_tiles_data)\n", image_name, image_name);
                             } else {
-                                fprintf(convpng.all_gfx_h, "extern uint8_t *%s_tiles_data_compressed[%u];\n",group[g].image[s]->name,group[g].total_tiles);
+                                fprintf(convpng.all_gfx_h, "extern uint8_t *%s_tiles_data_compressed[%u];\n", image_name, group[g].total_tiles);
                             }
                         }
-                    } else {
-                        fprintf(convpng.all_gfx_h, "#include \"%s\"\n",group[g].image[s]->outc);
+                    } else { // asm output
+                        fprintf(convpng.all_gfx_h, "#include \"%s\"\n", group[g].image[s]->outc);
                     }
-                } else {
+                } else { // not a tilemap
                     if(group[g].mode == MODE_C) {
                         if(group[g].compression == CMP_NONE) {
-                            fprintf(convpng.all_gfx_h, "extern uint8_t %s_data[%u];\n",group[g].image[s]->name,group[g].image[s]->size + 2);
-                            fprintf(convpng.all_gfx_h, "#define %s ((gfx_image_t*)%s_data)\n",group[g].image[s]->name,group[g].image[s]->name);
-                        } else {
-                            fprintf(convpng.all_gfx_h, "extern uint8_t %s_data_compressed[%u];\n",group[g].image[s]->name,group[g].image[s]->size);
+                            fprintf(convpng.all_gfx_h, "extern uint8_t %s_data[%u];\n", image_name, total_image_size);
+                            fprintf(convpng.all_gfx_h, "#define %s ((gfx_image_t*)%s_data)\n", image_name, image_name);
+                        } else { // some kind of compression
+                            fprintf(convpng.all_gfx_h, "extern uint8_t %s_data_compressed[%u];\n", image_name, total_image_size);
                         }
-                    } else {
-                        fprintf(convpng.all_gfx_h, "#include \"%s\" ; %u bytes\n",group[g].image[s]->outc, group[g].image[s]->size);
+                    } else { // asm output
+                        fprintf(convpng.all_gfx_h, "#include \"%s\" ; %u bytes\n", group[g].image[s]->outc, total_image_size);
                     }
                 }
                 
@@ -777,16 +858,18 @@ int main(int argc, char **argv) {
                 fclose(outc);
                 
                 // free the opened image
-                free(group[g].image[s]->rgba);
-                free(group[g].image[s]->data);
+                free(group[g].image[s]->name);
+                free(image_rgba);
+                free(image_data);
+                free(group[g].image[s]);
                 liq_attr_destroy(sp_attr);
                 liq_result_destroy(sp_res);
                 liq_image_destroy(sp_image);
             }
-        
+            
             if (group[g].output_palette_array) {
                 if (group[g].mode == MODE_C) {
-                    fprintf(convpng.all_gfx_h, "extern uint16_t %s_pal[%u];\n",group[g].name,count);
+                    fprintf(convpng.all_gfx_h, "extern uint16_t %s_pal[%u];\n", group[g].name, count);
                 }
             }
             fprintf(convpng.all_gfx_h, "\n#endif\n");
@@ -816,9 +899,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-/**
- * frees the allocated memory for later use
- */
+// free allocated memory
 void free_args(char **args, char ***argv, unsigned argc) {
     if(argv) {
 	unsigned i;
@@ -835,11 +916,9 @@ void free_args(char **args, char ***argv, unsigned argc) {
     }
 }
 
-/**
- * receive string
- */
+// get a string
 char *get_line(FILE *stream) {   
-    char *line = (char*)malloc(sizeof(char));
+    char *line = malloc(sizeof(char));
     char *tmp;
     if(feof(stream)) {
         free(line);
@@ -871,9 +950,7 @@ char *get_line(FILE *stream) {
     return line;
 }
 
-/**
- * makes a character string pointer array
- */
+// makes a character string pointer array
 int make_args(char *s, char ***args, const char *delim) {
     unsigned argc = 0;
     char *token = strtok(s, delim);
@@ -890,7 +967,7 @@ int make_args(char *s, char ***args, const char *delim) {
         
         // allocate the memory then copy it in
         *args = realloc(*args, sizeof(char*) * (argc + 1));
-        (*args)[argc] = (char*)malloc(sizeof(char ) * (strl + 1));
+        (*args)[argc] = malloc(sizeof(char ) * (strl + 1));
         memcpy((*args)[argc], token, strl+1);
         
         // increment the argument number
@@ -904,6 +981,7 @@ int make_args(char *s, char ***args, const char *delim) {
     return argc;
 }
 
+// adds an image to the indexed array
 void add_image(char *line) {
     int g = convpng.numgroups - 1;
     int s = group[g].numimages;
@@ -911,10 +989,9 @@ void add_image(char *line) {
     size_t strl = strlen(line) + 1;
     
     if(!(group[g].image = realloc(group[g].image, sizeof(image_t*) * (s + 1))))         goto err;
-    if(!(group[g].image[s] = (image_t*)malloc(sizeof(image_t))))                        goto err;
-    if(!(group[g].image[s]->pal = (uint8_t*)malloc(256)))                               goto err;
+    if(!(group[g].image[s] = malloc(sizeof(image_t))))                                  goto err;
     
-    if(!(group[g].image[s]->in = (char*)malloc(sizeof(char)*(strl+5))))                 goto err;
+    if(!(group[g].image[s]->in = malloc(sizeof(char)*(strl+5))))                        goto err;
     strcpy(group[g].image[s]->in, line);
     ext = strrchr(group[g].image[s]->in,'.');
     if(ext == NULL) {
@@ -922,11 +999,11 @@ void add_image(char *line) {
         ext = strrchr(group[g].image[s]->in,'.');
     }
  
-    if(!(group[g].image[s]->outc = (char*)malloc(sizeof(char)*(strlen(group[g].image[s]->in)+5))))  goto err;
+    if(!(group[g].image[s]->outc = malloc(sizeof(char)*(strlen(group[g].image[s]->in)+5))))  goto err;
     strcpy(group[g].image[s]->outc,group[g].image[s]->in);
     strcpy(group[g].image[s]->outc+(ext-group[g].image[s]->in),group[g].mode == MODE_C ? ".c" : ".asm");
     
-    if(!(group[g].image[s]->name = (char*)malloc(sizeof(char)*(strlen(group[g].image[s]->in)+1))))  goto err;
+    if(!(group[g].image[s]->name = malloc(sizeof(char)*(strlen(group[g].image[s]->in)+1))))  goto err;
     strcpy(group[g].image[s]->name, group[g].image[s]->in);
     group[g].image[s]->name[(int)(strrchr(group[g].image[s]->name,'.')-group[g].image[s]->name)] = '\0';
     
@@ -938,14 +1015,7 @@ err:
     errorf("internal memory allocation error. please contact developer.\n");
 }
 
-void print_images(void) {
-    int i;
-    
-    for (i = 0; i < group[0].numimages; i++) {
-        lof("  %d  %s\n", i+1, group[0].image[i]->in);
-    }
-}
-
+// parse the ini file
 int parse_input(void) {
     int num = 0;
     if(convpng.line[0] != '\0') {   
@@ -991,14 +1061,14 @@ int parse_input(void) {
                 group[g].convert_to_tilemap = false;
                 group[convpng.numgroups].mode = MODE_C;
                 group[g].output_palette_image = false;
-                group[g].name = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
+                group[g].name = malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
                 strcpy(group[g].name,convpng.argv[1]);
                 convpng.numgroups++;
             }
 	    
             if(!strcmp(convpng.argv[0], "#Palette")) {
-                group[convpng.numgroups-1].palette_name = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
-                strcpy(group[convpng.numgroups-1].palette_name,convpng.argv[1]);
+                group[convpng.numgroups-1].palette_name = malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
+                strcpy(group[convpng.numgroups-1].palette_name, convpng.argv[1]);
             }
             
             if(!strcmp(convpng.argv[0], "#OutputPaletteImage")) {
@@ -1027,6 +1097,18 @@ int parse_input(void) {
                 group[g].convert_to_tilemap = true;
             }
 	    
+            if(!strcmp(convpng.argv[0], "#BitsPerPixel")) {
+                uint8_t bpp = atoi(convpng.argv[1]);
+                switch(bpp) {
+                    case 1: case 2: case 4: case 8: case 16:
+                        break;
+                    default:
+                        errorf("unsupported bpp mode selected.");
+                        break;
+                }
+                group[convpng.numgroups - 1].bpp = bpp;
+            }
+            
             if(!strcmp(convpng.argv[0], "#GroupC")) {
                 int g = convpng.numgroups;
                 group[g].output_palette_image = false;
@@ -1035,15 +1117,16 @@ int parse_input(void) {
                 group[g].compression = CMP_NONE;
                 group[g].convert_to_tilemap = false;
                 group[g].output_palette_array = true;
-                group[g].name = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
+                group[g].name = malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
                 strcpy(group[g].name,convpng.argv[1]);
-                group[g].outh = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+3));
+                group[g].outh = malloc(sizeof(char)*(strlen(convpng.argv[1])+3));
                 strcpy(group[g].outh,convpng.argv[1]);
                 strcat(group[g].outh,".h");
-                group[g].outc = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+3));
+                group[g].outc = malloc(sizeof(char)*(strlen(convpng.argv[1])+3));
                 strcpy(group[g].outc,convpng.argv[1]);
                 strcat(group[g].outc,".c");
-                group[convpng.numgroups].mode = MODE_C;
+                group[g].mode = MODE_C;
+                group[g].bpp = 8;
                 convpng.numgroups++;
             }
             
@@ -1055,15 +1138,16 @@ int parse_input(void) {
                 group[g].palette_name = NULL;
                 group[g].compression = CMP_NONE;
                 group[g].convert_to_tilemap = false;
-                group[g].name = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
+                group[g].name = malloc(sizeof(char)*(strlen(convpng.argv[1])+1));
                 strcpy(group[g].name,convpng.argv[1]);
-                group[g].outh = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+5));
+                group[g].outh = malloc(sizeof(char)*(strlen(convpng.argv[1])+5));
                 strcpy(group[g].outh,convpng.argv[1]);
                 strcat(group[g].outh,".inc");
-                group[g].outc = (char*)malloc(sizeof(char)*(strlen(convpng.argv[1])+5));
+                group[g].outc = malloc(sizeof(char)*(strlen(convpng.argv[1])+5));
                 strcpy(group[g].outc,convpng.argv[1]);
                 strcat(group[g].outc,".asm");
-                group[convpng.numgroups].mode = MODE_ASM;
+                group[g].mode = MODE_ASM;
+                group[g].bpp = 8;
                 convpng.numgroups++;
             }
 	    
@@ -1119,7 +1203,7 @@ int create_icon(void) {
         liq_image_add_fixed_color(image,custom_pal.entries[j]);
     }
     
-    data = (uint8_t*)malloc(size + 1);
+    data = malloc(size + 1);
     res = liq_quantize_image(attr, image);
     if(!res) {errorf("could not quantize icon."); }
     liq_write_remapped_image(res, image, data, size);

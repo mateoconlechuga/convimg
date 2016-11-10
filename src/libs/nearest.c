@@ -120,7 +120,8 @@ static vp_node *vp_create_node(mempool *m, vp_sort_tmp *indexes, int num_indexes
 LIQ_PRIVATE struct nearest_map *nearest_init(const colormap *map, const bool fast) {
     mempool m = NULL;
     struct nearest_map *handle = mempool_create(&m, sizeof(handle[0]), sizeof(handle[0]) + sizeof(vp_node)*map->colors+16, map->malloc, map->free);
-
+    (void)fast;
+    
     vp_sort_tmp indexes[map->colors];
 
     for(unsigned int i=0; i < map->colors; i++) {
@@ -150,7 +151,7 @@ static void vp_search_node(const vp_node *node, const f_pixel *const needle, vp_
     do {
         const float distance = sqrtf(colordifference(node->vantage_point, *needle));
 
-        if (distance < best_candidate->distance && best_candidate->exclude != node->idx) {
+        if (distance < best_candidate->distance && best_candidate->exclude != (int)(node->idx)) {
             best_candidate->distance = distance;
             best_candidate->idx = node->idx;
         }

@@ -115,7 +115,7 @@ LIQ_PRIVATE bool pam_computeacolorhash(struct acolorhash_table *acht, const rgba
                     } else {
                         // simply reallocs and copies array to larger capacity
                         capacity = achl->capacity*2 + 16;
-                        if (freestackp < stacksize-1) {
+                        if (freestackp < (int)(stacksize-1)) {
                             freestack[freestackp++] = other_items;
                         }
                         const size_t mempool_size = ((acht->rows + rows-row) * 2 * colors / (acht->rows + row + 1) + 32*capacity) * sizeof(struct acolorhist_arr_item);

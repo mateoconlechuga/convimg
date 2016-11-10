@@ -379,7 +379,7 @@ LIQ_PRIVATE colormap *mediancut(histogram *hist, unsigned int newcolors, const d
         // hist_item_sort_halfvar sorts and sums lowervar at the same time
         // returns item to break at …minus one, which does smell like an off-by-one error.
         hist_item *break_p = hist_item_sort_halfvar(&achv[indx], clrs, &lowervar, halfvar);
-        unsigned int break_at = MIN(clrs-1, break_p - &achv[indx] + 1);
+        unsigned int break_at = MIN((int)(clrs-1), break_p - &achv[indx] + 1);
 
         /*
          ** Split the box.

@@ -1,8 +1,9 @@
 TARGET := convpng
 CC := gcc
-CFLAGS := -Wall -Wextra -fPIE -O3 -std=c11 -I.
+CFLAGS := -Wall -Wextra -O3 -std=c11 -I.
 LDFLAGS := -flto
 SOURCES := $(wildcard *.c)
+SOURCES += $(wildcard libs/*.c)
 OBJECTS := $(SOURCES:.c=.o)
 ifeq ($(OS),Windows_NT)
 RM = del /F

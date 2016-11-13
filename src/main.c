@@ -29,10 +29,6 @@ char *log_main_name = "convpng.log";
 convpng_t convpng;
 group_t group[NUM_GROUPS];
 
-void add_rgba(uint8_t *pal, size_t size);
-void init_convpng_struct(void);
-void free_rgba(void);
-
 int main(int argc, char **argv) {
     // init some variables
     char opt;
@@ -304,7 +300,13 @@ int main(int argc, char **argv) {
             
             // find the transparent color, move by default to index 0
             if(group_use_tcolor) {
-                for (j = 0; j < group_pal_len ; j++) {
+                
+                // if the user wants the index to be elsewhere, expand the array
+                if(group_tindex > group_pal_len) {
+                    group_pal_len = group_tindex+1;
+                }
+                
+                for(j = 0; j < group_pal_len ; j++) {
                     if(group_tcolor_cv == rgb1555(pal.entries[j].r, pal.entries[j].g, pal.entries[j].b))
                         break;
                 }
@@ -320,7 +322,7 @@ int main(int argc, char **argv) {
         }
         
         // output an image of the palette
-        if (group_out_pal_img) {
+        if(group_out_pal_img) {
             char *png_file_name = malloc(strlen(group_name)+10);
             strcpy(png_file_name, group_name);
             strcat(png_file_name, "_pal.png");
@@ -339,7 +341,7 @@ int main(int argc, char **argv) {
                 fprintf(group_outc, "#include <stdint.h>\n");
                 fprintf(group_outc, "#include \"%s\"\n\n", group_outh_name);
                 
-                if (group_out_pal_arr) {
+                if(group_out_pal_arr) {
                     fprintf(group_outc, "uint16_t %s_pal[%u] = {\n", group_name, group_pal_len);
             
                     for(j = 0; j < group_pal_len; j++) {
@@ -359,15 +361,15 @@ int main(int argc, char **argv) {
                 fprintf(group_outh, "#ifndef %s_H\n#define %s_H\n", group_name, group_name);
                 fprintf(group_outh, "#include <stdint.h>\n\n");
                 if(use_transpcolor)
-                    fprintf(group_outh, "#define %s_TranspColorIndex %u\n\n", group_name, group_tindex);
+                    fprintf(group_outh, "#define %s_transpcolor_index %u\n\n", group_name, group_tindex);
                 
             // write to asm output file
             } else
-            if (group_mode_asm) {
+            if(group_mode_asm) {
                 fprintf(group_outc, "; Converted using ConvPNG\n");
                 fprintf(group_outc, "; This file contains all the graphics for easier inclusion in a project\n\n");
                 
-                if (group_out_pal_arr) {
+                if(group_out_pal_arr) {
                     fprintf(group_outc, "_%s_pal_size equ %u\n", group_name, group_pal_len*2);
                     fprintf(group_outc, "_%s_pal:\n", group_name);
                     
@@ -384,13 +386,13 @@ int main(int argc, char **argv) {
                 
                 fprintf(group_outh, "; Converted using ConvPNG\n");
                 fprintf(group_outh, "; This file contains all the graphics for easier inclusion in a project\n");
-                fprintf(group_outh, "#ifndef %s_H\n#define %s_H\n\n", group_name, group_name);
+                fprintf(group_outh, "#ifndef %s_H\n#define %s_INC\n\n", group_name, group_name);
                 fprintf(group_outh, "; ZDS sillyness\n#define db .db\n#define dw .dw\n#define dl .dl\n\n");
                 fprintf(group_outh, "#include \"%s\"\n", group_outc_name);
                 if(use_transpcolor)
-                    fprintf(group_outh, "%s_TranspColorIndex equ %d\n\n", group_name, group_tindex);
+                    fprintf(group_outh, "%s_transpcolor_index equ %d\n\n", group_name, group_tindex);
             } else
-            if (group_mode_ice) {
+            if(group_mode_ice) {
             }
             
             // log transparent color things
@@ -526,21 +528,14 @@ int main(int argc, char **argv) {
                         }
 			
                         // output the compressed data array
-                        for(k = j = 0; j < compressed_size; j++) {
-                            if(group_mode_c)
-                                fprintf(image_outc, "0x%02X,", compressed_data[j]);
-                            else
-                                fprintf(image_outc, "0%02Xh%c", compressed_data[j], j+1 == compressed_size ? ' ' : ',');
-                            if(j & 31) { fputs("\n ", image_outc); }
-                        }
-                        if(group_mode_c) { fprintf(image_outc, "\n};\n"); }
+                        output_compressed_array(image_outc, compressed_data, &compressed_size, group_mode);
                         
                         // log the compression ratios
-                        compressed_size += 2;
                         lof(" (compress: %u -> %d bytes)\n", total_image_size, compressed_size);
                         
                         // if compression just makes a bigger image, say something about it
-                        if (compressed_size > total_image_size) { lof(" #warning!"); }
+                        if(compressed_size > total_image_size) { lof(" #warning!"); }
+                        total_image_size = compressed_size;
                         
                         // free the temporary arrays
                         free(orig_data);
@@ -589,25 +584,17 @@ int main(int argc, char **argv) {
                             }
                             
                             // output the compressed data array
-                            for(k = j = 0; j < compressed_size; j++) {
-                                if(group_mode_c)
-                                    fprintf(image_outc, "0x%02X,", compressed_data[j]);
-                                else
-                                    fprintf(image_outc, "0%02Xh%c", compressed_data[j], j+1 == compressed_size ? ' ' : ',');
-                                if(j & 31) { fputs("\n ", image_outc); }
-                            }
-                            if(group_mode_c) { fprintf(image_outc, "\n};\n"); }
+                            output_compressed_array(image_outc, compressed_data, &compressed_size, group_mode);
                             
                             // log the new size of the tile
-                            compressed_size += 2;
                             lof("\n %s_tile_%u_compressed (compress: %u -> %d bytes) (%s)", image_name,
-                                                                                             curr_tile,
-                                                                                             group_total_tile_size,
-                                                                                             image_size = compressed_size,
-                                                                                             group_outc_name);
+                                                                                            curr_tile,
+                                                                                            group_total_tile_size,
+                                                                                            image_size = compressed_size,
+                                                                                            group_outc_name);
                             
                             // if compression just makes a bigger image, say something about it
-                            if (compressed_size > group_total_tile_size) { lof(" #warning!"); }
+                            if(compressed_size > group_total_tile_size) { lof(" #warning!"); }
                             
                             // move to the correct data location
                             if((x_offset += group_tile_width) > image_width - 1) {
@@ -673,7 +660,8 @@ int main(int argc, char **argv) {
                                 // check if at the end
                                 if(group_mode_c) {
                                     fprintf(image_outc, "\n%s", j+1 != group_tile_height ? " " : "};\n\n");
-                                } else {
+                                } else
+                                if(group_mode_asm) {
                                     fprintf(image_outc, "\n%s", j+1 != group_tile_height ? " db " : "\n\n");
                                 }
                             }
@@ -814,8 +802,8 @@ int main(int argc, char **argv) {
                 liq_attr_destroy(image_attr);
             }
             
-            if (group_out_pal_arr) {
-                if (group_mode_c) {
+            if(group_out_pal_arr) {
+                if(group_mode_c) {
                     fprintf(group_outh, "extern uint16_t %s_pal[%u];\n", group_name, group_pal_len);
                 }
             }
@@ -882,4 +870,32 @@ void free_rgba(void) {
     free(convpng.all_rgba);
     convpng.all_rgba = NULL;
     convpng.all_rgba_size = 0;
+}
+
+void output_compressed_array(FILE *outfile, uint8_t *compressed_data, unsigned *len, unsigned mode) {
+    unsigned j, k;
+    
+    /* write the whole array in a big block */
+    for(k = j = 0; j < *len; j++, k++) {
+        if(mode == MODE_C) {
+            fprintf(outfile, "0x%02X,", compressed_data[j]);
+        } else
+        if(mode == MODE_ASM) {
+            fprintf(outfile, "0%02Xh%c", compressed_data[j], j+1 == *len || (k+1) & 32 ? ' ' : ',');
+        }
+        
+        if((k+1) & 32 && j+1 < *len) {
+            k = -1;
+            if(mode == MODE_C) {
+                fprintf(outfile, "\n ");
+            } else
+            if(mode == MODE_ASM) {
+                fprintf(outfile, "\n db ");
+            }
+        }
+    }
+    if(mode == MODE_C) { fprintf(outfile, "\n};\n"); }
+    
+    /* plus the width/height */
+    *len += 2;
 }

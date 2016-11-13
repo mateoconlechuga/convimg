@@ -13,6 +13,12 @@
 #define MAX_PAL_LEN   256
 #define NUM_GROUPS    256            // total number of groups able to create
 
+// function prototypes
+void output_compressed_array(FILE *outfile, uint8_t *compressed_data, unsigned *len, unsigned mode);
+void add_rgba(uint8_t *pal, size_t size);
+void init_convpng_struct(void);
+void free_rgba(void);
+
 enum mode_t { MODE_C = 0, MODE_ASM, MODE_ICE };                  // group is c, asm, sprites v3.3
 enum compression_t { COMPRESS_NONE = 0, COMPRESS_RLE, COMPRESS_LZ }; // no compression, rle compression, lz compression
 

@@ -537,7 +537,7 @@ int main(int argc, char **argv) {
                                                                                                           (compressed_size >> 8) & 255);
                         } else
                         if(group_mode_asm) {
-                            fprintf(image_outc, "_%s_data_compressed_size equ %u\n", image_name, compressed_size + 2);
+                            fprintf(image_outc, "_%s_data_compressed_size equ %u\n", image_name, compressed_size);
                             fprintf(image_outc, "_%s_data_compressed:\n db ", image_name);
                         }
 			
@@ -590,10 +590,11 @@ int main(int argc, char **argv) {
                                 fprintf(image_outc, "uint8_t %s_tile_%u_data_compressed[%u] = {\n 0x%02X,0x%02X,\n ", image_name,
                                                                                                                       curr_tile,
                                                                                                                       compressed_size + 2,
-                                                                                                                      (compressed_size+2) & 0xFF,
-                                                                                                                      ((compressed_size+2) >> 8) & 0xFF);
-                            } else {
-                                fprintf(image_outc, "_%s_tile_%u_size equ %u\n", image_name, curr_tile, compressed_size + 2);
+                                                                                                                      compressed_size & 255,
+                                                                                                                      (compressed_size >> 8) & 255);
+                            } else
+                            if(group_mode_asm) {
+                                fprintf(image_outc, "_%s_tile_%u_size equ %u\n", image_name, curr_tile, compressed_size);
                                 fprintf(image_outc, "_%s_tile_%u_compressed:\n db ", image_name, curr_tile);
                             }
                             

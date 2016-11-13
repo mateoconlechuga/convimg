@@ -146,6 +146,14 @@ int main(int argc, char **argv) {
         bool       group_mode_asm = group_mode == MODE_ASM;
         bool       group_mode_ice = group_mode == MODE_ICE;
         
+        // ICE needs specific outputs
+        if(group_mode_ice) {
+            group_compression = COMPRESS_NONE;
+            group_conv_to_tiles = false;
+            group_is_gpal = false;
+            group_bpp = 8;
+        }
+        
         switch(group_bpp) {
             case 4:
                 shift_amt = 1;
@@ -160,15 +168,14 @@ int main(int argc, char **argv) {
                 shift_amt = 0;
                 break;
         }
-
-        if(group_mode_ice) {
-            group_compression = COMPRESS_NONE;
-            group_conv_to_tiles = false;
-        }
         
+        // force some things if the user is an idiot
         if(is_16_bpp) {
             group_is_gpal = false;
             group_compression = COMPRESS_NONE;
+            use_transpcolor = false;
+            group_use_tcolor = false;
+            group_use_tindex = false;
         }
         
         inc_amt = pow(2, shift_amt);
@@ -632,20 +639,20 @@ int main(int argc, char **argv) {
                     
                     x_offset = y_offset = 0;
                     
-                    lof(" (%s)\n", group_outc_name);
+                    lof(" (%s)\n", image_outc_name);
                     
                     if(group_conv_to_tiles) {
                         // convert the file with the tilemap formatting
                         for(curr_tile = 0; curr_tile < image_total_tiles; curr_tile++) {
                             if(group_mode_c) {
-                                fprintf(group_outc, "uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ", image_name,
+                                fprintf(image_outc, "uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ", image_name,
                                                                                                                                      curr_tile,
                                                                                                                                      group_tile_size>>shift_amt,
                                                                                                                                      group_tile_width,
                                                                                                                                      group_tile_height);
                             } else
                             if(group_mode_asm) {
-                                fprintf(group_outc, "_%s_tile_%u: ; %u bytes\n db %u,%u ; width,height\n db ", image_name,
+                                fprintf(image_outc, "_%s_tile_%u: ; %u bytes\n db %u,%u ; width,height\n db ", image_name,
                                                                                                                curr_tile,
                                                                                                                group_tile_size>>shift_amt,
                                                                                                                group_tile_width,
@@ -657,17 +664,17 @@ int main(int argc, char **argv) {
                                 offset = j * image_width;
                                 for(k = 0; k < group_tile_width; k++) {
                                     if(group_mode_c) {
-                                        fprintf(group_outc, "0x%02X%c", image_data[k + x_offset + y_offset + offset], ',');
+                                        fprintf(image_outc, "0x%02X%c", image_data[k + x_offset + y_offset + offset], ',');
                                     } else
                                     if(group_mode_asm) {
-                                        fprintf(group_outc, "0%02Xh%c", image_data[k + x_offset + y_offset + offset], k+1 == group_tile_width ? ' ' : ',');
+                                        fprintf(image_outc, "0%02Xh%c", image_data[k + x_offset + y_offset + offset], k+1 == group_tile_width ? ' ' : ',');
                                     }
                                 }
                                 // check if at the end
                                 if(group_mode_c) {
-                                    fprintf(group_outc, "\n%s", j+1 != group_tile_height ? " " : "};\n\n");
+                                    fprintf(image_outc, "\n%s", j+1 != group_tile_height ? " " : "};\n\n");
                                 } else {
-                                    fprintf(group_outc, "\n%s", j+1 != group_tile_height ? " db " : "\n\n");
+                                    fprintf(image_outc, "\n%s", j+1 != group_tile_height ? " db " : "\n\n");
                                 }
                             }
                             
@@ -681,15 +688,15 @@ int main(int argc, char **argv) {
                         // build the tilemap table
                         if(curr->create_tilemap_ptrs) {
                             if(group_mode_c) {
-                                fprintf(group_outc, "uint8_t *%s_tiles_data[%u] = {\n", image_name, image_total_tiles);
+                                fprintf(image_outc, "uint8_t *%s_tiles_data[%u] = {\n", image_name, image_total_tiles);
                                 for(curr_tile = 0; curr_tile < image_total_tiles; curr_tile++) {
-                                    fprintf(group_outc, " %s_tile_%u_data,\n", image_name, curr_tile);
+                                    fprintf(image_outc, " %s_tile_%u_data,\n", image_name, curr_tile);
                                 }
-                                fprintf(group_outc, "};\n");
+                                fprintf(image_outc, "};\n");
                             } else {
-                                fprintf(group_outc, "_%s_tiles: ; %u tiles\n", image_name, image_total_tiles);
+                                fprintf(image_outc, "_%s_tiles: ; %u tiles\n", image_name, image_total_tiles);
                                 for(curr_tile = 0; curr_tile < image_total_tiles; curr_tile++) {
-                                    fprintf(group_outc, " dl _%s_tile_%u\n", image_name, curr_tile);
+                                    fprintf(image_outc, " dl _%s_tile_%u\n", image_name, curr_tile);
                                 }
                             }
                         }
@@ -697,17 +704,17 @@ int main(int argc, char **argv) {
                     // not a tilemap, just a normal image
                     } else {
                         if(group_mode_c) {
-                            fprintf(group_outc, "// %u bpp image\nuint8_t %s_data[%u] = {\n %u,%u,  // width,height\n ", group_bpp,
+                            fprintf(image_outc, "// %u bpp image\nuint8_t %s_data[%u] = {\n %u,%u,  // width,height\n ", group_bpp,
                                                                                                                          image_name,
                                                                                                                          total_image_size,
                                                                                                                          image_width,
                                                                                                                          image_height);
                         } else
                         if(group_mode_asm) {
-                            fprintf(group_outc, "_%s: ; %u bytes\n db %u,%u\n db ", image_name, total_image_size, image_width, image_height);
+                            fprintf(image_outc, "_%s: ; %u bytes\n db %u,%u\n db ", image_name, total_image_size, image_width, image_height);
                         } else
                         if(group_mode_ice) {
-                            fprintf(group_outc, "%s | %u bytes\n\"%02X%02X", image_name, total_image_size, image_width, image_height);
+                            fprintf(group_outc, "%s | %u bytes\n%u,%u,\"", image_name, total_image_size, image_width, image_height);
                         }
                         
                         // output the data to the file
@@ -719,16 +726,16 @@ int main(int argc, char **argv) {
                                     for(curr_inc = inc_amt, out_byte = lob = 0; lob < inc_amt; lob++)
                                         out_byte |= (image_data[k + offset + lob] << --curr_inc);
                                     if(group_mode_c)
-                                        fprintf(group_outc,"0x%02X,", out_byte);
+                                        fprintf(image_outc,"0x%02X,", out_byte);
                                     else
                                     if(group_mode_asm)
-                                        fprintf(group_outc,"0%02Xh%c", out_byte, k + inc_amt == image_width ? ' ' : ',');
+                                        fprintf(image_outc,"0%02Xh%c", out_byte, k + inc_amt == image_width ? ' ' : ',');
                                     else
                                     if(group_mode_ice)
                                         fprintf(group_outc,"%02X", out_byte);
                                 }
                                 if(!group_mode_ice)
-                                    fprintf(group_outc, "\n%s", (group_mode_c) ? ((j+1 != image_height) ? " " : "};\n") 
+                                    fprintf(image_outc, "\n%s", (group_mode_c) ? ((j+1 != image_height) ? " " : "};\n") 
                                                                                : ((j+1 != image_height) ? " db " : "\n"));
                             }
                             if(group_mode_ice) {
@@ -745,11 +752,11 @@ int main(int argc, char **argv) {
                                     out_byte_high = out_short >> 8;
                                     out_byte_low = out_short & 255;
                                     if(group_mode_c)
-                                        fprintf(group_outc, "0x%02X,0x%02X,", out_byte_high, out_byte_low);
+                                        fprintf(image_outc, "0x%02X,0x%02X,", out_byte_high, out_byte_low);
                                     else
-                                        fprintf(group_outc, "0%02Xh,0%02Xh%c", out_byte_high, out_byte_low, k + 1 == image_width ? ' ' : ',');
+                                        fprintf(image_outc, "0%02Xh,0%02Xh%c", out_byte_high, out_byte_low, k + 1 == image_width ? ' ' : ',');
                                 }
-                                fprintf(group_outc, "\n%s", (group_mode_c) ? ((j+1 != image_height) ? " " : "};\n") 
+                                fprintf(image_outc, "\n%s", (group_mode_c) ? ((j+1 != image_height) ? " " : "};\n") 
                                                                            : ((j+1 != image_height) ? " db " : "\n"));
                             }
                         }

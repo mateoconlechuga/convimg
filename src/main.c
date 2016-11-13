@@ -390,9 +390,23 @@ int main(int argc, char **argv) {
                 fprintf(group_outh, "; ZDS sillyness\n#define db .db\n#define dw .dw\n#define dl .dl\n\n");
                 fprintf(group_outh, "#include \"%s\"\n", group_outc_name);
                 if(use_transpcolor)
-                    fprintf(group_outh, "%s_transpcolor_index equ %d\n\n", group_name, group_tindex);
+                    fprintf(group_outh, "%s_transpcolor_index equ %u\n\n", group_name, group_tindex);
             } else
-            if(group_mode_ice) {
+            if(group_mode_ice && group_pal_name) {
+                fprintf(group_outc, "Converted using ConvPNG\n");
+                fprintf(group_outc, "This file contains all the converted graphics\n\n");
+                
+                if(group_out_pal_arr) {
+                    if(use_transpcolor)
+                        fprintf(group_outc, "%s_transpcolor_index | %u\n\n", group_name, group_tindex);
+                    fprintf(group_outc, "%s_pal | %u bytes\n\"", group_name, group_pal_len*2);
+                    
+                    for(j = 0; j < group_pal_len; j++) {
+                        fprintf(group_outc, "%04X", rgb1555(pal.entries[j].r, pal.entries[j].g, pal.entries[j].b));
+                    }
+                    
+                    fprintf(group_outc, "\"\n\n");
+                }
             }
             
             // log transparent color things

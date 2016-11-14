@@ -8,13 +8,13 @@
 #include "libs/lodepng.h"
 
 #define VERSION_MAJOR 5              // version information
-#define VERSION_MINOR 4              // minor version
+#define VERSION_MINOR 5              // minor version
 
-#define MAX_PAL_LEN   256
+#define MAX_PAL_LEN   256 
 #define NUM_GROUPS    256            // total number of groups able to create
 
 // function prototypes
-void output_compressed_array(FILE *outfile, uint8_t *compressed_data, unsigned *len, unsigned mode);
+void output_compressed_array(FILE *outfile, uint8_t *compressed_data, unsigned len, unsigned mode);
 void add_rgba(uint8_t *pal, size_t size);
 void init_convpng_struct(void);
 void free_rgba(void);

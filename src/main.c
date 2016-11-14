@@ -504,6 +504,8 @@ int main(int argc, char **argv) {
                 // using some kind of compression?
                 if(group_compression) {
                     unsigned compressed_size = 0;
+                    unsigned total_compressed_size = 0;
+                    uint8_t compressed_size_high, compressed_size_low;
                     
                     if(!group_conv_to_tiles) {
                         // allocate the datas
@@ -529,46 +531,51 @@ int main(int argc, char **argv) {
                                 break;
                         }
                         
+                        total_compressed_size = compressed_size + 2;
+                        compressed_size_low = compressed_size & 255;
+                        compressed_size_high = (compressed_size >> 8) & 255;
+                        
                         // ouput the compressed data array start
                         if(group_mode_c) {
-                            fprintf(image_outc, "uint8_t %s_data_compressed[%u] = {\n 0x%02X,0x%02X,\n ", image_name,
-                                                                                                          compressed_size + 2,
-                                                                                                          compressed_size & 255,
-                                                                                                          (compressed_size >> 8) & 255);
+                            fprintf(image_outc, "uint8_t %s_data_compressed[%u] = {\n 0x%02X,0x%02X, // compressed size\n ", image_name,
+                                                                                                                             total_compressed_size,
+                                                                                                                             compressed_size_low,
+                                                                                                                             compressed_size_high);
                         } else
                         if(group_mode_asm) {
-                            fprintf(image_outc, "_%s_data_compressed_size equ %u\n", image_name, compressed_size);
-                            fprintf(image_outc, "_%s_data_compressed:\n db ", image_name);
+                            fprintf(image_outc, "_%s_data_compressed_size equ %u\n", image_name, total_compressed_size);
+                            fprintf(image_outc, "_%s_data_compressed:\n db 0%02Xh,0%02Xh ; compressed size\n db ", image_name, compressed_size_low, compressed_size_high);
                         }
-			
+                        
                         // output the compressed data array
-                        output_compressed_array(image_outc, compressed_data, &compressed_size, group_mode);
+                        output_compressed_array(image_outc, compressed_data, compressed_size, group_mode);
                         
                         // log the compression ratios
-                        lof(" (compress: %u -> %d bytes)\n", total_image_size, compressed_size);
+                        lof(" (compress: %u -> %d bytes)\n", total_image_size, total_compressed_size);
                         
                         // if compression just makes a bigger image, say something about it
-                        if(compressed_size > total_image_size) { lof(" #warning!"); }
-                        total_image_size = compressed_size;
+                        if(total_compressed_size > total_image_size) { lof(" #warning!"); }
+                        total_image_size = total_compressed_size;
                         
                         // free the temporary arrays
                         free(orig_data);
                         free(compressed_data);
                     } else {
                         unsigned curr_tile;
-                        unsigned x_offset, y_offset, offset;
+                        unsigned x_offset, y_offset, offset, index;
                         uint8_t *orig_data = malloc(total_image_size);
                         uint8_t *compressed_data = malloc((total_image_size << 1) + 1);
                         
                         for(x_offset = y_offset = curr_tile = 0; curr_tile < image_total_tiles; curr_tile++) {
-                            *orig_data++ = group_tile_width;
-                            *orig_data++ = group_tile_height;
+                            orig_data[0] = group_tile_width;
+                            orig_data[1] = group_tile_height;
+                            index = 2;
                             
                             // convert a single tile
                             for(j = 0; j < group_tile_height; j++) {
                                 offset = j * image_width;
                                 for(k = 0; k < group_tile_width; k++) {
-                                    *orig_data++ = image_data[k + x_offset + y_offset + offset];
+                                    orig_data[index++] = image_data[k + x_offset + y_offset + offset];
                                 }
                             }
                             
@@ -585,31 +592,38 @@ int main(int argc, char **argv) {
                                     break;
                             }
                             
+                            total_compressed_size = compressed_size + 2;
+                            compressed_size_low = compressed_size & 255;
+                            compressed_size_high = (compressed_size >> 8) & 255;
+                        
                             // output to c or asm file
                             if(group_mode_c) {
-                                fprintf(image_outc, "uint8_t %s_tile_%u_data_compressed[%u] = {\n 0x%02X,0x%02X,\n ", image_name,
-                                                                                                                      curr_tile,
-                                                                                                                      compressed_size + 2,
-                                                                                                                      compressed_size & 255,
-                                                                                                                      (compressed_size >> 8) & 255);
+                                fprintf(image_outc, "uint8_t %s_tile_%u_data_compressed[%u] = {\n 0x%02X,0x%02X, // compressed size\n ", image_name,
+                                                                                                                                         curr_tile,
+                                                                                                                                         total_compressed_size,
+                                                                                                                                         compressed_size_low,
+                                                                                                                                         compressed_size_high);
                             } else
                             if(group_mode_asm) {
-                                fprintf(image_outc, "_%s_tile_%u_size equ %u\n", image_name, curr_tile, compressed_size);
-                                fprintf(image_outc, "_%s_tile_%u_compressed:\n db ", image_name, curr_tile);
+                                fprintf(image_outc, "_%s_tile_%u_size equ %u\n", image_name, curr_tile, total_compressed_size);
+                                fprintf(image_outc, "_%s_tile_%u_compressed:\n db 0%02Xh,0%02Xh ; compressed size\n db ", image_name, 
+                                                                                                                          curr_tile,
+                                                                                                                          compressed_size_low,
+                                                                                                                          compressed_size_high);
                             }
                             
                             // output the compressed data array
-                            output_compressed_array(image_outc, compressed_data, &compressed_size, group_mode);
+                            output_compressed_array(image_outc, compressed_data, compressed_size, group_mode);
                             
                             // log the new size of the tile
                             lof("\n %s_tile_%u_compressed (compress: %u -> %d bytes) (%s)", image_name,
                                                                                             curr_tile,
                                                                                             group_total_tile_size,
-                                                                                            image_size = compressed_size,
-                                                                                            group_outc_name);
+                                                                                            total_compressed_size,
+                                                                                            image_outc_name);
                             
                             // if compression just makes a bigger image, say something about it
-                            if(compressed_size > group_total_tile_size) { lof(" #warning!"); }
+                            if(total_compressed_size > group_total_tile_size) { lof(" #warning!"); }
                             
                             // move to the correct data location
                             if((x_offset += group_tile_width) > image_width - 1) {
@@ -649,14 +663,14 @@ int main(int argc, char **argv) {
                             if(group_mode_c) {
                                 fprintf(image_outc, "uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ", image_name,
                                                                                                                                      curr_tile,
-                                                                                                                                     group_tile_size>>shift_amt,
+                                                                                                                                     group_tile_size + 2,
                                                                                                                                      group_tile_width,
                                                                                                                                      group_tile_height);
                             } else
                             if(group_mode_asm) {
                                 fprintf(image_outc, "_%s_tile_%u: ; %u bytes\n db %u,%u ; width,height\n db ", image_name,
                                                                                                                curr_tile,
-                                                                                                               group_tile_size>>shift_amt,
+                                                                                                               group_tile_size + 2,
                                                                                                                group_tile_width,
                                                                                                                group_tile_height);
                             }
@@ -771,7 +785,7 @@ int main(int argc, char **argv) {
                     if(group_mode_c) {
                         for(curr_tile = 0; curr_tile < image_total_tiles; curr_tile++) {
                             if(group_compression == COMPRESS_NONE) {
-                                fprintf(group_outh,"extern uint8_t %s_tile_%u_data[%u];\n", image_name, curr_tile, group_tile_size);
+                                fprintf(group_outh,"extern uint8_t %s_tile_%u_data[%u];\n", image_name, curr_tile, group_tile_size + 2);
                                 fprintf(group_outh, "#define %s_tile_%u ((gfx_image_t*)%s_tile_%u_data)\n", image_name, curr_tile, image_name, curr_tile);
                             } else {
                                 fprintf(group_outh,"extern uint8_t %s_tile_%u_data_compressed[];\n", image_name, curr_tile);
@@ -887,19 +901,19 @@ void free_rgba(void) {
     convpng.all_rgba_size = 0;
 }
 
-void output_compressed_array(FILE *outfile, uint8_t *compressed_data, unsigned *len, unsigned mode) {
+void output_compressed_array(FILE *outfile, uint8_t *compressed_data, unsigned len, unsigned mode) {
     unsigned j, k;
     
     /* write the whole array in a big block */
-    for(k = j = 0; j < *len; j++, k++) {
+    for(k = j = 0; j < len; j++, k++) {
         if(mode == MODE_C) {
             fprintf(outfile, "0x%02X,", compressed_data[j]);
         } else
         if(mode == MODE_ASM) {
-            fprintf(outfile, "0%02Xh%c", compressed_data[j], j+1 == *len || (k+1) & 32 ? ' ' : ',');
+            fprintf(outfile, "0%02Xh%c", compressed_data[j], j+1 == len || (k+1) & 32 ? ' ' : ',');
         }
         
-        if((k+1) & 32 && j+1 < *len) {
+        if((k+1) & 32 && j+1 < len) {
             k = -1;
             if(mode == MODE_C) {
                 fprintf(outfile, "\n ");
@@ -910,7 +924,4 @@ void output_compressed_array(FILE *outfile, uint8_t *compressed_data, unsigned *
         }
     }
     if(mode == MODE_C) { fprintf(outfile, "\n};\n"); }
-    
-    /* plus the width/height */
-    *len += 2;
 }

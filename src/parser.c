@@ -176,11 +176,8 @@ int parse_input(char *line) {
             }
            
             if(!strcmp(*convpng.argv, "#Compression")) {
-                if(!strcmp(convpng.argv[1], "rle")) {
-                    g->compression = COMPRESS_RLE;
-                }
-                if(!strcmp(convpng.argv[1], "lz77")) {
-                    g->compression = COMPRESS_LZ;
+                if(!strcmp(convpng.argv[1], "zx7")) {
+                    g->compression = COMPRESS_ZX7;
                 }
             }
             

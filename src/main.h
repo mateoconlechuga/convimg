@@ -20,7 +20,7 @@ void init_convpng_struct(void);
 void free_rgba(void);
 
 enum mode_t { MODE_C = 0, MODE_ASM, MODE_ICE };                  // group is c, asm, sprites v3.3
-enum compression_t { COMPRESS_NONE = 0, COMPRESS_RLE, COMPRESS_LZ }; // no compression, rle compression, lz compression
+enum compression_t { COMPRESS_NONE = 0, COMPRESS_RLE, COMPRESS_ZX7 }; // no compression, rle compression, lz compression
 
 typedef struct s_st {
     char *in;                        // name of image on disk

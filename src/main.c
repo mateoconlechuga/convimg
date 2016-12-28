@@ -13,8 +13,7 @@
 
 #include "libs/libimagequant.h"
 #include "libs/lodepng.h"
-#include "libs/rle.h"
-#include "libs/lz.h"
+#include "libs/zx7.h"
 
 #include "main.h"
 #include "misc.h"
@@ -172,6 +171,8 @@ int main(int argc, char **argv) {
             use_transpcolor = false;
             group_use_tcolor = false;
             group_use_tindex = false;
+            group_pal_name = NULL;
+            group_out_pal_arr = false;
         }
         
         inc_amt = pow(2, shift_amt);
@@ -253,7 +254,7 @@ int main(int argc, char **argv) {
             
             free_rgba();
         // build the palette using maths
-        } else {
+        } else if (!is_16_bpp) {
             lof("Building palette with [%u] available indices ...\n", group_pal_len);
             for(s = 0; s < group_numimages; s++) {
                 // some variables
@@ -320,7 +321,7 @@ int main(int argc, char **argv) {
             // free all the things
             free_rgba();
         }
-        
+
         // output an image of the palette
         if(group_out_pal_img) {
             char *png_file_name = malloc(strlen(group_name)+10);
@@ -387,7 +388,7 @@ int main(int argc, char **argv) {
                 fprintf(group_outh, "; Converted using ConvPNG\n");
                 fprintf(group_outh, "; This file contains all the graphics for easier inclusion in a project\n");
                 fprintf(group_outh, "#ifndef %s_H\n#define %s_INC\n\n", group_name, group_name);
-                fprintf(group_outh, "; ZDS sillyness\n#define db .db\n#define dw .dw\n#define dl .dl\n\n");
+                fprintf(group_outh, "; assembler defines\n#define db .db\n#define dw .dw\n#define dl .dl\n\n");
                 fprintf(group_outh, "#include \"%s\"\n", group_outc_name);
                 if(use_transpcolor)
                     fprintf(group_outh, "%s_transpcolor_index equ %u\n\n", group_name, group_tindex);
@@ -461,26 +462,30 @@ int main(int argc, char **argv) {
                     }
                 }
                 
-                // allocate and decode the image
-                image_data = malloc(image_size + 2);
-                liq_set_max_colors(image_attr, group_pal_len);
-                image_image = liq_image_create_rgba(image_attr, image_rgba, image_width, image_height, 0);
-                if(!image_image) { errorf("could not create image."); }
+                if (!is_16_bpp) {
+                    // allocate and decode the image
+                    image_data = malloc(image_size + 2);
+                    liq_set_max_colors(image_attr, group_pal_len);
+                    image_image = liq_image_create_rgba(image_attr, image_rgba, image_width, image_height, 0);
+                    if(!image_image) { errorf("could not create image."); }
+                    
+                    // add all the palette colors
+                    for(j = 0; j < group_pal_len; j++) { liq_image_add_fixed_color(image_image, pal.entries[j]); }
+                    
+                    // quantize image against palette
+                    if(!(image_res = liq_quantize_image(image_attr, image_image))) {errorf("could not quantize image."); }
+                    liq_write_remapped_image(image_res, image_image, image_data, image_size);
                 
-                // add all the palette colors
-                for(j = 0; j < group_pal_len; j++) { liq_image_add_fixed_color(image_image, pal.entries[j]); }
-                
-                // quantize image against palette
-                if(!(image_res = liq_quantize_image(image_attr, image_image))) {errorf("could not quantize image."); }
-                liq_write_remapped_image(image_res, image_image, image_data, image_size);
-                
-                // if custom palette, hard to compute accuratly
-                if(group_pal_name) {
-                    lof(" %s : converted!", image_name);
-                    convpng.bad_conversion = true;
+                    // if custom palette, hard to compute accuratly
+                    if(group_pal_name) {
+                        lof(" %s : converted!", image_name);
+                        convpng.bad_conversion = true;
+                    } else {
+                        if((diff = liq_get_remapping_error(image_res)) > 15) { convpng.bad_conversion = true; }
+                        lof(" %s : %.2f%%", image_name, 100-diff > 0 ? 100-diff : 0);
+                    }
                 } else {
-                    if((diff = liq_get_remapping_error(image_res)) > 15) { convpng.bad_conversion = true; }
-                    lof(" %s : %.2f%%", image_name, 100-diff > 0 ? 100-diff : 0);
+                    lof(" %s : output image.", image_name);
                 }
                 
                 // open the outputs
@@ -503,15 +508,14 @@ int main(int argc, char **argv) {
                 
                 // using some kind of compression?
                 if(group_compression) {
-                    unsigned compressed_size = 0;
-                    unsigned total_compressed_size = 0;
-                    uint8_t compressed_size_high, compressed_size_low;
+                    unsigned compressed_size;
                     
                     if(!group_conv_to_tiles) {
                         // allocate the datas
                         uint8_t *orig_data = malloc(total_image_size);
-                        uint8_t *compressed_data = malloc((total_image_size << 1) + 1);
-
+                        uint8_t *compressed_data = NULL; 
+                        long delta;
+                        
                         // store the width and height as well
                         orig_data[0] = image_width;
                         orig_data[1] = image_height;
@@ -521,41 +525,32 @@ int main(int argc, char **argv) {
                         
                         // compress the data
                         switch(group_compression) {
-                            case COMPRESS_LZ:
-                                compressed_size = (unsigned)LZ_Compress(orig_data, compressed_data, total_image_size);
-                                break;
-                            case COMPRESS_RLE:
-                                compressed_size = (unsigned)RLE_Compress(orig_data, compressed_data, total_image_size);
+                            case COMPRESS_ZX7:
+                                compressed_data = compress(optimize(orig_data, total_image_size), orig_data, total_image_size, &compressed_size, &delta);
                                 break;
                             default:
+                                errorf("unexpected compression mode.");
                                 break;
                         }
                         
-                        total_compressed_size = compressed_size + 2;
-                        compressed_size_low = compressed_size & 255;
-                        compressed_size_high = (compressed_size >> 8) & 255;
-                        
                         // ouput the compressed data array start
                         if(group_mode_c) {
-                            fprintf(image_outc, "uint8_t %s_data_compressed[%u] = {\n 0x%02X,0x%02X, // compressed size\n ", image_name,
-                                                                                                                             total_compressed_size,
-                                                                                                                             compressed_size_low,
-                                                                                                                             compressed_size_high);
+                            fprintf(image_outc, "uint8_t %s_compressed[%u] = {\n ", image_name, compressed_size);
                         } else
                         if(group_mode_asm) {
-                            fprintf(image_outc, "_%s_data_compressed_size equ %u\n", image_name, total_compressed_size);
-                            fprintf(image_outc, "_%s_data_compressed:\n db 0%02Xh,0%02Xh ; compressed size\n db ", image_name, compressed_size_low, compressed_size_high);
+                            fprintf(image_outc, "_%s_compressed_size equ %u\n", image_name, compressed_size);
+                            fprintf(image_outc, "_%s_compressed:\n db ", image_name);
                         }
                         
                         // output the compressed data array
                         output_compressed_array(image_outc, compressed_data, compressed_size, group_mode);
                         
                         // log the compression ratios
-                        lof(" (compress: %u -> %d bytes)\n", total_image_size, total_compressed_size);
+                        lof(" (compress: %u -> %d bytes)\n", total_image_size, compressed_size);
                         
                         // if compression just makes a bigger image, say something about it
-                        if(total_compressed_size > total_image_size) { lof(" #warning!"); }
-                        total_image_size = total_compressed_size;
+                        if(compressed_size > total_image_size) { lof(" #warning!"); }
+                        total_image_size = compressed_size;
                         
                         // free the temporary arrays
                         free(orig_data);
@@ -564,7 +559,8 @@ int main(int argc, char **argv) {
                         unsigned curr_tile;
                         unsigned x_offset, y_offset, offset, index;
                         uint8_t *orig_data = malloc(total_image_size);
-                        uint8_t *compressed_data = malloc((total_image_size << 1) + 1);
+                        uint8_t *compressed_data = NULL;
+                        long delta;
                         
                         for(x_offset = y_offset = curr_tile = 0; curr_tile < image_total_tiles; curr_tile++) {
                             orig_data[0] = group_tile_width;
@@ -581,35 +577,23 @@ int main(int argc, char **argv) {
                             
                             // select the compression mode
                             switch(group_compression) {
-                                case COMPRESS_LZ:
-                                    compressed_size = (unsigned)LZ_Compress(orig_data, compressed_data, group_total_tile_size);
-                                    break;
-                                case COMPRESS_RLE:
-                                    compressed_size = (unsigned)RLE_Compress(orig_data, compressed_data, group_total_tile_size);
+                                case COMPRESS_ZX7:
+                                    compressed_data = compress(optimize(orig_data, group_total_tile_size), orig_data, group_total_tile_size, &compressed_size, &delta);
                                     break;
                                 default:
                                     errorf("unexpected compression mode.");
                                     break;
                             }
                             
-                            total_compressed_size = compressed_size + 2;
-                            compressed_size_low = compressed_size & 255;
-                            compressed_size_high = (compressed_size >> 8) & 255;
-                        
                             // output to c or asm file
                             if(group_mode_c) {
-                                fprintf(image_outc, "uint8_t %s_tile_%u_data_compressed[%u] = {\n 0x%02X,0x%02X, // compressed size\n ", image_name,
-                                                                                                                                         curr_tile,
-                                                                                                                                         total_compressed_size,
-                                                                                                                                         compressed_size_low,
-                                                                                                                                         compressed_size_high);
+                                fprintf(image_outc, "uint8_t %s_tile_%u_compressed[%u] = {\n \n ", image_name,
+                                                                                                        curr_tile,
+                                                                                                        compressed_size);
                             } else
                             if(group_mode_asm) {
-                                fprintf(image_outc, "_%s_tile_%u_size equ %u\n", image_name, curr_tile, total_compressed_size);
-                                fprintf(image_outc, "_%s_tile_%u_compressed:\n db 0%02Xh,0%02Xh ; compressed size\n db ", image_name, 
-                                                                                                                          curr_tile,
-                                                                                                                          compressed_size_low,
-                                                                                                                          compressed_size_high);
+                                fprintf(image_outc, "_%s_tile_%u_size equ %u\n", image_name, curr_tile, compressed_size);
+                                fprintf(image_outc, "_%s_tile_%u_compressed:\n db ", image_name, curr_tile);
                             }
                             
                             // output the compressed data array
@@ -619,11 +603,11 @@ int main(int argc, char **argv) {
                             lof("\n %s_tile_%u_compressed (compress: %u -> %d bytes) (%s)", image_name,
                                                                                             curr_tile,
                                                                                             group_total_tile_size,
-                                                                                            total_compressed_size,
+                                                                                            compressed_size,
                                                                                             image_outc_name);
                             
                             // if compression just makes a bigger image, say something about it
-                            if(total_compressed_size > group_total_tile_size) { lof(" #warning!"); }
+                            if(compressed_size > group_total_tile_size) { lof(" #warning!"); }
                             
                             // move to the correct data location
                             if((x_offset += group_tile_width) > image_width - 1) {
@@ -634,9 +618,9 @@ int main(int argc, char **argv) {
                         // build the tilemap table
                         if(curr->create_tilemap_ptrs) {
                             if(group_mode_c) {
-                                fprintf(image_outc, "uint8_t *%s_tiles_data_compressed[%u] = {\n", image_name, image_total_tiles);
+                                fprintf(image_outc, "uint8_t *%s_tiles_compressed[%u] = {\n", image_name, image_total_tiles);
                                 for(curr_tile = 0; curr_tile < image_total_tiles; curr_tile++)
-                                    fprintf(image_outc, " %s_tile_%u_data_compressed,\n", image_name, curr_tile);
+                                    fprintf(image_outc, " %s_tile_%u_compressed,\n", image_name, curr_tile);
                                 fprintf(image_outc, "};\n");
                             } else {
                                 fprintf(image_outc, "_%s_tiles_compressed: ; %u tiles\n", image_name, image_total_tiles);
@@ -723,12 +707,12 @@ int main(int argc, char **argv) {
                         if(group_mode_c) {
                             fprintf(image_outc, "// %u bpp image\nuint8_t %s_data[%u] = {\n %u,%u,  // width,height\n ", group_bpp,
                                                                                                                          image_name,
-                                                                                                                         total_image_size,
+                                                                                                                         total_image_size  << (unsigned)is_16_bpp,
                                                                                                                          image_width,
                                                                                                                          image_height);
                         } else
                         if(group_mode_asm) {
-                            fprintf(image_outc, "_%s: ; %u bytes\n db %u,%u\n db ", image_name, total_image_size, image_width, image_height);
+                            fprintf(image_outc, "_%s: ; %u bytes\n db %u,%u\n db ", image_name, total_image_size << (unsigned)is_16_bpp, image_width, image_height);
                         } else
                         if(group_mode_ice) {
                             fprintf(group_outc, "%s | %u bytes\n%u,%u,\"", image_name, total_image_size, image_width, image_height);
@@ -788,7 +772,7 @@ int main(int argc, char **argv) {
                                 fprintf(group_outh,"extern uint8_t %s_tile_%u_data[%u];\n", image_name, curr_tile, group_tile_size + 2);
                                 fprintf(group_outh, "#define %s_tile_%u ((gfx_image_t*)%s_tile_%u_data)\n", image_name, curr_tile, image_name, curr_tile);
                             } else {
-                                fprintf(group_outh,"extern uint8_t %s_tile_%u_data_compressed[];\n", image_name, curr_tile);
+                                fprintf(group_outh,"extern uint8_t %s_tile_%u_compressed[];\n", image_name, curr_tile);
                             }
                         }
 
@@ -797,7 +781,7 @@ int main(int argc, char **argv) {
                                 fprintf(group_outh, "extern uint8_t *%s_tiles_data[%u];\n", image_name, image_total_tiles);
                                 fprintf(group_outh, "#define %s_tiles ((gfx_image_t**)%s_tiles_data)\n", image_name, image_name);
                             } else {
-                                fprintf(group_outh, "extern uint8_t *%s_tiles_data_compressed[%u];\n", image_name, image_total_tiles);
+                                fprintf(group_outh, "extern uint8_t *%s_tiles_compressed[%u];\n", image_name, image_total_tiles);
                             }
                         }
                     } else { // asm output
@@ -809,7 +793,7 @@ int main(int argc, char **argv) {
                             fprintf(group_outh, "extern uint8_t %s_data[%u];\n", image_name, total_image_size);
                             fprintf(group_outh, "#define %s ((gfx_image_t*)%s_data)\n", image_name, image_name);
                         } else { // some kind of compression
-                            fprintf(group_outh, "extern uint8_t %s_data_compressed[%u];\n", image_name, total_image_size);
+                            fprintf(group_outh, "extern uint8_t %s_compressed[%u];\n", image_name, total_image_size);
                         }
                     } else
                     if(group_mode_asm) { // asm output

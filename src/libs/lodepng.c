@@ -28,6 +28,7 @@ The manual and changelog are in the header file "lodepng.h"
 Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for C.
 */
 
+#include "../misc.h"
 #include "lodepng.h"
 
 #include <stdio.h>
@@ -65,7 +66,7 @@ from here.*/
 #ifdef LODEPNG_COMPILE_ALLOCATORS
 static void* lodepng_malloc(size_t size)
 {
-  return malloc(size);
+  return safe_malloc(size);
 }
 
 static void* lodepng_realloc(void* ptr, size_t new_size)
@@ -339,8 +340,9 @@ static void lodepng_set32bitInt(unsigned char* buffer, unsigned value)
 #ifdef LODEPNG_COMPILE_ENCODER
 static void lodepng_add32bitInt(ucvector* buffer, unsigned value)
 {
-  ucvector_resize(buffer, buffer->size + 4); /*todo: give error if resize failed*/
-  lodepng_set32bitInt(&buffer->data[buffer->size - 4], value);
+  if(ucvector_resize(buffer, buffer->size + 4)) { /*todo: give error if resize failed*/
+    lodepng_set32bitInt(&buffer->data[buffer->size - 4], value);
+  }
 }
 #endif /*LODEPNG_COMPILE_ENCODER*/
 
@@ -1080,7 +1082,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
     if(error) break;
     error = HuffmanTree_makeFromLengths(tree_d, bitlen_d, NUM_DISTANCE_SYMBOLS, 15);
 
-    break; /*end of error-while*/
+    break; /*end of error-while*/ //-V612
   }
 
   lodepng_free(bitlen_cl);
@@ -1104,7 +1106,7 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
   HuffmanTree_init(&tree_d);
 
   if(btype == 1) getTreeInflateFixed(&tree_ll, &tree_d);
-  else if(btype == 2) error = getTreeInflateDynamic(&tree_ll, &tree_d, in, bp, inlength);
+  else error = getTreeInflateDynamic(&tree_ll, &tree_d, in, bp, inlength);
 
   while(!error) /*decode all symbols until end reached, breaks at end code*/
   {
@@ -1135,7 +1137,7 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
       code_d = huffmanDecodeSymbol(in, bp, &tree_d, inbitlength);
       if(code_d > 29)
       {
-        if(code_ll == (unsigned)(-1)) /*huffmanDecodeSymbol returns (unsigned)(-1) in case of error*/
+        if(code_d == (unsigned)(-1)) /*huffmanDecodeSymbol returns (unsigned)(-1) in case of error*/
         {
           /*return error code 10 or 11 depending on the situation that happened in huffmanDecodeSymbol
           (10=no endcode, 11=wrong jump outside of tree)*/
@@ -1912,7 +1914,7 @@ static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash,
     /*write the end code*/
     addHuffmanSymbol(bp, out, HuffmanTree_getCode(&tree_ll, 256), HuffmanTree_getLength(&tree_ll, 256));
 
-    break; /*end of error-while*/
+    break; /*end of error-while*/ //-V612
   }
 
   /*cleanup*/
@@ -4268,7 +4270,7 @@ static unsigned readChunk_tEXt(LodePNGInfo* info, const unsigned char* data, siz
 
     error = lodepng_add_text(info, key, str);
 
-    break;
+    break; //-V612
   }
 
   lodepng_free(key);
@@ -4317,7 +4319,7 @@ static unsigned readChunk_zTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 
     error = lodepng_add_text(info, key, (char*)decoded.data);
 
-    break;
+    break; //-V612
   }
 
   lodepng_free(key);
@@ -4409,7 +4411,7 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 
     error = lodepng_add_itext(info, key, langtag, transkey, (char*)decoded.data);
 
-    break;
+    break; //-V612
   }
 
   lodepng_free(key);
@@ -5452,7 +5454,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
   {
     *outsize = h + (h * ((w * bpp + 7) / 8)); /*image size plus an extra byte per scanline + possible padding bits*/
     *out = (unsigned char*)lodepng_malloc(*outsize);
-    if(!(*out) && (*outsize)) error = 83; /*alloc fail*/
+    if(!*out) error = 83; /*alloc fail*/
 
     if(!error)
     {
@@ -5488,7 +5490,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
     if(!(*out)) error = 83; /*alloc fail*/
 
     adam7 = (unsigned char*)lodepng_malloc(passstart[7]);
-    if(!adam7 && passstart[7]) error = 83; /*alloc fail*/
+    if(!adam7) error = 83; /*alloc fail*/
 
     if(!error)
     {
@@ -5744,7 +5746,7 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
     addChunk_IEND(&outv);
 
-    break; /*this isn't really a while loop; no error happened so break out now!*/
+    break; /*this isn't really a while loop; no error happened so break out now!*/ //-V612
   }
 
   lodepng_info_cleanup(&info);

@@ -26,9 +26,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../misc.h"
 #include "zx7.h"
 
-unsigned char* output_data;
+uint8_t *output_data;
 size_t output_index;
 size_t bit_index;
 int bit_mask;
@@ -36,8 +37,9 @@ long diff;
 
 void read_bytes(int n, long *delta) {
    diff += n;
-   if (diff > *delta)
+   if (diff > *delta) {
        *delta = diff;
+   }
 }
 
 void write_byte(int value) {
@@ -46,7 +48,7 @@ void write_byte(int value) {
 }
 
 void write_bit(int value) {
-    if (bit_mask == 0) {
+    if (!bit_mask) {
         bit_mask = 128;
         bit_index = output_index;
         write_byte(0);
@@ -68,7 +70,7 @@ void write_elias_gamma(int value) {
     }
 }
 
-unsigned char *compress(Optimal *optimal, unsigned char *input_data, size_t input_size, size_t *output_size, long *delta) {
+unsigned char *compress(Optimal *optimal, uint8_t *input_data, size_t input_size, size_t *output_size, long *delta) {
     size_t input_index;
     size_t input_prev;
     int offset1;
@@ -78,11 +80,7 @@ unsigned char *compress(Optimal *optimal, unsigned char *input_data, size_t inpu
     /* calculate and allocate output buffer */
     input_index = input_size-1;
     *output_size = (optimal[input_index].bits+18+7)/8;
-    output_data = (unsigned char *)malloc(*output_size);
-    if (!output_data) {
-         fprintf(stderr, "Error: Insufficient memory\n");
-         exit(1);
-    }
+    output_data = safe_malloc(*output_size);
 
     /* initialize delta */
     diff = *output_size - input_size;

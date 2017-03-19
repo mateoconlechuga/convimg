@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../misc.h"
 #include "libimagequant.h"
 #include "pam.h"
 #include "mempool.h"
@@ -184,15 +185,19 @@ LIQ_PRIVATE struct acolorhash_table *pam_allocacolorhash(unsigned int maxcolors,
 
 LIQ_PRIVATE histogram *pam_acolorhashtoacolorhist(const struct acolorhash_table *acht, const double gamma, void* (*malloc)(size_t), void (*free)(void*))
 {
+    if (!acht) return NULL;
     histogram *hist = malloc(sizeof(hist[0]));
-    if (!hist || !acht) return NULL;
+    if (!hist) return NULL;
     *hist = (histogram){
-        .achv = malloc(acht->colors * sizeof(hist->achv[0])),
+        .achv = safe_malloc(acht->colors * sizeof(hist->achv[0])),
         .size = acht->colors,
         .free = free,
         .ignorebits = acht->ignorebits,
     };
-    if (!hist->achv) return NULL;
+    if (!hist->achv) {
+        free(hist);
+        return NULL;
+    }
 
     float gamma_lut[256];
     to_f_set_gamma(gamma_lut, gamma);
@@ -233,16 +238,16 @@ LIQ_PRIVATE void pam_freeacolorhist(histogram *hist)
     hist->free(hist);
 }
 
-LIQ_PRIVATE colormap *pam_colormap(unsigned int colors, void* (*malloc)(size_t), void (*free)(void*))
+LIQ_PRIVATE colormap *pam_colormap(unsigned int colors, void* (*mallocme)(size_t), void (*free)(void*))
 {
     assert(colors > 0 && colors < 65536);
 
     colormap *map;
     const size_t colors_size = colors * sizeof(map->palette[0]);
-    map = malloc(sizeof(colormap) + colors_size);
+    map = mallocme(sizeof(colormap) + colors_size);
     if (!map) return NULL;
     *map = (colormap){
-        .malloc = malloc,
+        .malloc = safe_malloc,
         .free = free,
         .colors = colors,
     };

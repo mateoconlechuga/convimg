@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../misc.h"
 #include "zx7.h"
 
 int elias_gamma_bits(int value) {
@@ -58,16 +59,11 @@ Optimal* optimize(unsigned char *input_data, size_t input_size) {
     size_t i;
 
     /* allocate all data structures at once */
-    min = (size_t *)calloc(MAX_OFFSET+1, sizeof(size_t));
-    max = (size_t *)calloc(MAX_OFFSET+1, sizeof(size_t));
-    matches = (size_t *)calloc(256*256, sizeof(size_t));
-    match_slots = (size_t *)calloc(input_size, sizeof(size_t));
-    optimal = (Optimal *)calloc(input_size, sizeof(Optimal));
-
-    if (!min || !max || !matches || !match_slots || !optimal) {
-         fprintf(stderr, "Error: Insufficient memory\n");
-         exit(1);
-    }
+    min = safe_calloc(MAX_OFFSET+1, sizeof(size_t));
+    max = safe_calloc(MAX_OFFSET+1, sizeof(size_t));
+    matches = safe_calloc(256*256, sizeof(size_t));
+    match_slots = safe_calloc(input_size, sizeof(size_t));
+    optimal = safe_calloc(input_size, sizeof(Optimal));
 
     /* first byte is always literal */
     optimal[0].bits = 8;
@@ -111,8 +107,11 @@ Optimal* optimize(unsigned char *input_data, size_t input_size) {
         matches[match_index] = i;
     }
 
-    /* save time by releasing the largest block only, the O.S. will clean everything else later */
+    /* save time by releasing the largest block only, the O.S. will clean everything else later -- um what dude I need all the mem I can have*/
     free(match_slots);
-
+    free(matches);
+    free(min);
+    free(max);
+    
     return optimal;
 }

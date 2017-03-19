@@ -8,7 +8,7 @@
 #include "libs/lodepng.h"
 
 #define VERSION_MAJOR 5              // version information
-#define VERSION_MINOR 5              // minor version
+#define VERSION_MINOR 6              // minor version
 
 #define MAX_PAL_LEN   256 
 #define NUM_GROUPS    256            // total number of groups able to create

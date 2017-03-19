@@ -43,21 +43,21 @@ int main(int argc, char **argv) {
     // read all the options from the command line
     while ( (opt = getopt(argc, argv, "c:i:j:") ) != -1) {
         switch (opt) {
-            case 'c':	// generate an icon header file useable with the C toolchain
+            case 'c':    // generate an icon header file useable with the C toolchain
                 convpng.iconc = str_dup(optarg);
                 convpng.icon_zds = true;
                 return create_icon();
-            case 'j':	// generate an icon for asm programs
+            case 'j':    // generate an icon for asm programs
                 convpng.iconc = str_dup(optarg);
                 convpng.icon_zds = false;
                 return create_icon();
-            case 'i':	// change the ini file input
-                ini_file_name = malloc(strlen(optarg)+5);
+            case 'i':    // change the ini file input
+                ini_file_name = safe_malloc(strlen(optarg)+5);
                 strcpy(ini_file_name, optarg);
                 if(!strrchr(ini_file_name, '.')) strcat(ini_file_name, ".ini");
                 break;
-            case 'l':	// change the log file output
-                log_file_name = malloc(strlen(optarg)+5);
+            case 'l':    // change the log file output
+                log_file_name = safe_malloc(strlen(optarg)+5);
                 strcpy(log_file_name, optarg);
                 if(!strrchr(log_file_name, '.')) strcat(log_file_name, ".log");
                 break;
@@ -324,7 +324,7 @@ int main(int argc, char **argv) {
 
         // output an image of the palette
         if(group_out_pal_img) {
-            char *png_file_name = malloc(strlen(group_name)+10);
+            char *png_file_name = safe_malloc(strlen(group_name)+10);
             strcpy(png_file_name, group_name);
             strcat(png_file_name, "_pal.png");
             build_image_palette(&pal, group_pal_len, png_file_name);
@@ -464,7 +464,7 @@ int main(int argc, char **argv) {
                 
                 if (!is_16_bpp) {
                     // allocate and decode the image
-                    image_data = malloc(image_size + 2);
+                    image_data = safe_malloc(image_size + 2);
                     liq_set_max_colors(image_attr, group_pal_len);
                     image_image = liq_image_create_rgba(image_attr, image_rgba, image_width, image_height, 0);
                     if(!image_image) { errorf("could not create image."); }
@@ -512,7 +512,7 @@ int main(int argc, char **argv) {
                     
                     if(!group_conv_to_tiles) {
                         // allocate the datas
-                        uint8_t *orig_data = malloc(total_image_size);
+                        uint8_t *orig_data = safe_malloc(total_image_size);
                         uint8_t *compressed_data = NULL; 
                         long delta;
                         
@@ -558,7 +558,7 @@ int main(int argc, char **argv) {
                     } else {
                         unsigned curr_tile;
                         unsigned x_offset, y_offset, offset, index;
-                        uint8_t *orig_data = malloc(total_image_size);
+                        uint8_t *orig_data = safe_malloc(total_image_size);
                         uint8_t *compressed_data = NULL;
                         long delta;
                         
@@ -810,9 +810,9 @@ int main(int argc, char **argv) {
                 free(image_name);
                 free(image_in_name);
                 free(image_outc_name);
-                liq_result_destroy(image_res);
-                liq_image_destroy(image_image);
-                liq_attr_destroy(image_attr);
+                if (image_res)   { liq_result_destroy(image_res);  }
+                if (image_image) { liq_image_destroy(image_image); }
+                if (image_attr)  { liq_attr_destroy(image_attr);   }
             }
             
             if(group_out_pal_arr) {
@@ -831,8 +831,8 @@ int main(int argc, char **argv) {
         free(group_outc_name);
         free(group_outh_name);
         free(group_pal_name);
-        liq_attr_destroy(attr);
-        liq_image_destroy(image);
+        if (attr)  { liq_attr_destroy(attr);   }
+        if (image) { liq_image_destroy(image); }
         lof("\n");
     }
     
@@ -872,8 +872,7 @@ void init_convpng_struct(void) {
 
 // add an rgba color to the main palette
 void add_rgba(uint8_t *pal, size_t size) {
-    convpng.all_rgba = realloc(convpng.all_rgba, convpng.all_rgba_size + size);
-    if(!convpng.all_rgba) { errorf("memory allocation."); }
+    convpng.all_rgba = safe_realloc(convpng.all_rgba, convpng.all_rgba_size + size);
     memcpy(&convpng.all_rgba[convpng.all_rgba_size], pal, size);
     convpng.all_rgba_size += size;
 }

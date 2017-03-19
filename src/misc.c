@@ -13,6 +13,24 @@
 #include "logging.h"
 #include "palettes.h"
 
+void *safe_malloc(size_t n) {
+    void* p = malloc(n);
+    if (!p) { errorf("out of memory."); }
+    return p;
+}
+
+void *safe_calloc(size_t n, size_t m) {
+    void* p = calloc(n, m);
+    if (!p) { errorf("out of memory."); }
+    return p;
+}
+
+void *safe_realloc(void *a, size_t n) {
+    void* p = realloc(a, n);
+    if (!p) { errorf("out of memory."); }
+    return p;
+}
+
 uint16_t rgb1555(const uint8_t r8, const uint8_t g8, const uint8_t b8) {
     uint8_t r5 = round((int)r8 * 31 / 255.0);
     uint8_t g6 = round((int)g8 * 63 / 255.0);
@@ -28,7 +46,7 @@ uint16_t rgb565(const uint8_t r8, const uint8_t g8, const uint8_t b8) {
 }
 
 char *str_dup(const char *s) {
-    char *d = malloc(strlen(s)+1);       // Allocate memory
+    char *d = safe_malloc(strlen(s)+1);  // Allocate memory
     if (d) strcpy(d, s);                 // Copy string if okay
     return d;                            // Return new memory
 }
@@ -49,13 +67,14 @@ void encodePNG(const char* filename, const unsigned char* image, unsigned width,
 
 // builds an image of the palette
 void build_image_palette(const liq_palette *pal, const unsigned length, const char *filename) {
-    unsigned char* image = malloc(length * 4);
-    unsigned x;
+    uint8_t *image = safe_malloc(length * 4);
+    unsigned int x;
     for(x = 0; x < length; x++) {
-        image[4 * x + 0] = pal->entries[x].r;
-        image[4 * x + 1] = pal->entries[x].g;
-        image[4 * x + 2] = pal->entries[x].b;
-        image[4 * x + 3] = 255;
+    unsigned int o = 4 * x;
+        image[o + 0] = pal->entries[x].r;
+        image[o + 1] = pal->entries[x].g;
+        image[o + 2] = pal->entries[x].b;
+        image[o + 3] = 255;
     }
     encodePNG(filename, image, length, 1);
     free(image);
@@ -100,38 +119,38 @@ int create_icon(void) {
         liq_image_add_fixed_color(image,custom_pal.entries[j]);
     }
     
-    data = malloc(size + 1);
+    data = safe_malloc(size + 1);
     res = liq_quantize_image(attr, image);
     if(!res) {errorf("could not quantize icon."); }
     liq_write_remapped_image(res, image, data, size);
 
     FILE *out = fopen("iconc.asm","w");
     if (convpng.icon_zds) {
-        fprintf(out," define .icon,space=ram\n segment .icon\n xdef __icon_begin\n xdef __icon_end\n xdef __program_description\n xdef __program_description_end\n");
+        fprintf(out, " define .icon,space=ram\n segment .icon\n xdef __icon_begin\n xdef __icon_end\n xdef __program_description\n xdef __program_description_end\n");
     
         fprintf(out,"\n db 1\n db %u,%u\n__icon_begin:",width,height);
         for(y = 0; y < height; y++) {
             fputs("\n db ",out);
             for(x = 0; x < width; x++) {
-                fprintf(out,"0%02Xh%s",data[x+(y*width)], x + 1 == width ? "" : ",");
+                fprintf(out, "0%02Xh%s", data[x+(y*width)], x + 1 == width ? "" : ",");
             }
         }
 
         fprintf(out,"\n__icon_end:\n__program_description:\n");
-        fprintf(out," db \"%s\",0\n__program_description_end:\n",icon_options[1]);
-        lof("Converted icon '%s'\n",icon_options[0]);
+        fprintf(out," db \"%s\",0\n__program_description_end:\n", icon_options[1]);
+        lof("Converted icon '%s'\n", icon_options[0]);
     } else {
-        fprintf(out,"__icon_begin:\n .db 1,%u,%u",width,height);
+        fprintf(out, "__icon_begin:\n .db 1,%u,%u", width, height);
         for(y = 0; y < height; y++) {
             fputs("\n .db ",out);
             for(x = 0; x < width; x++) {
-                fprintf(out,"0%02Xh%s",data[x+(y*width)], x + 1 == width ? "" : ",");
+                fprintf(out, "0%02Xh%s", data[x+(y*width)], x + 1 == width ? "" : ",");
             }
         }
 
-        fprintf(out,"\n__icon_end:\n__program_description:\n");
-        fprintf(out," .db \"%s\",0\n__program_description_end:\n",icon_options[1]);
-        lof("Converted icon '%s' -> 'iconc.asm'\n",icon_options[0]);
+        fprintf(out, "\n__icon_end:\n__program_description:\n");
+        fprintf(out, " .db \"%s\",0\n__program_description_end:\n", icon_options[1]);
+        lof("Converted icon '%s' -> 'iconc.asm'\n", icon_options[0]);
     }
     
     liq_attr_destroy(attr);

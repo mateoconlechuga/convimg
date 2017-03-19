@@ -210,7 +210,7 @@ LIQ_EXPORT bool liq_crash_if_invalid_pointer_given(void *pointer)
     // Force a read from the given (potentially invalid) memory location in order to check early whether this crashes the program or not.
     // It doesn't matter what value is read, the code here is just to shut the compiler up about unused read.
     char test_access = *((volatile char *)pointer);
-    return test_access || true;
+    return true || test_access;
 }
 
 LIQ_NONNULL static void liq_log_error(const liq_attr *attr, const char *msg)
@@ -778,11 +778,11 @@ LIQ_EXPORT LIQ_NONNULL void liq_image_destroy(liq_image *input_image)
 LIQ_EXPORT LIQ_NONNULL liq_result *liq_quantize_image(liq_attr *attr, liq_image *img)
 {
     if (!CHECK_STRUCT_TYPE(attr, liq_attr)) {
-	liq_log_error(attr, "invalid attr pointer");
+        liq_log_error(attr, "invalid attr pointer");
         return NULL;
     }
     if (!CHECK_STRUCT_TYPE(img, liq_image)) {
-	liq_log_error(attr, "invalid image pointer");
+        liq_log_error(attr, "invalid image pointer");
         return NULL;
     }
 

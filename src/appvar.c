@@ -41,8 +41,8 @@ void output_appvar_init(appvar_t *a, int num_images) {
     memcpy(a->output, header, sizeof header);
     
     // compute storage for image offsets
-    a->offset = 0x4A + num_images * 2;
-    a->offsets[0] = num_images * 2;
+    a->offset = 0x4A + num_images * sizeof(uint16_t);
+    a->offsets[0] = num_images * sizeof(uint16_t);
     a->max_images = num_images;
     a->curr_image = 0;
 }
@@ -81,6 +81,9 @@ void output_appvar_complete(appvar_t *a) {
     // write name
     lof("exporting appvar: %s.8xp\n", a->name);
     memcpy(&output[0x3C], a->name, strlen(a->name));
+    
+    // write the offsets to the data structures
+    memcpy(&output[0x4A], a->offsets, a->max_images * sizeof(uint16_t));
     
     // write config bytes
     output[0x37] = 0x0D;

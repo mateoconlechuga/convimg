@@ -46,9 +46,9 @@ uint16_t rgb565(const uint8_t r8, const uint8_t g8, const uint8_t b8) {
 }
 
 char *str_dup(const char *s) {
-    char *d = safe_malloc(strlen(s)+1);  // Allocate memory
-    if (d) strcpy(d, s);                 // Copy string if okay
-    return d;                            // Return new memory
+    char *d = safe_malloc(strlen(s)+1);  // allocate memory
+    if (d) strcpy(d, s);                 // copy string if okay
+    return d;                            // return new memory
 }
 
 // encodes a PNG image (used for creating global palettes)
@@ -69,8 +69,8 @@ void encodePNG(const char* filename, const unsigned char* image, unsigned width,
 void build_image_palette(const liq_palette *pal, const unsigned length, const char *filename) {
     uint8_t *image = safe_malloc(length * 4);
     unsigned int x;
-    for(x = 0; x < length; x++) {
-    unsigned int o = 4 * x;
+    for (x = 0; x < length; x++) {
+        unsigned int o = x << 2;
         image[o + 0] = pal->entries[x].r;
         image[o + 1] = pal->entries[x].g;
         image[o + 2] = pal->entries[x].b;
@@ -83,13 +83,12 @@ void build_image_palette(const liq_palette *pal, const unsigned length, const ch
 
 // create an icon for the C toolchain
 int create_icon(void) {
-    liq_palette custom_pal;
     liq_image *image = NULL;
     liq_result *res = NULL;
     liq_attr *attr = NULL;
-    uint8_t *rgba;
-    uint8_t *data;
-    unsigned width,height,size,error,x,y,h,j;
+    uint8_t *rgba = NULL;
+    uint8_t *data = NULL;
+    unsigned int width,height,size,error,x,y,h;
     liq_color rgba_color;
     char **icon_options;
     
@@ -98,25 +97,23 @@ int create_icon(void) {
     
     error = lodepng_decode32_file(&rgba, &width, &height, icon_options[0]);
     if(error) { lof("[error] could not open %s for conversion\n", icon_options[0]); exit(1); }
-    if(width != 16 || height != 16) { errorf("icon image dimensions are not 16x16."); }
+    if(width != ICON_WIDTH || height != ICON_HEIGHT) { errorf("icon image dimensions are not 16x16."); }
     
     attr = liq_attr_create();
     if(!attr) { errorf("could not create image attributes."); }
-    image = liq_image_create_rgba(attr, rgba, 16, 16, 0);
+    image = liq_image_create_rgba(attr, rgba, ICON_WIDTH, ICON_HEIGHT, 0);
     if(!image) { errorf("could not create icon."); }
 
     size = width * height;
 
-    for(h = 0; h < 256; h++) {
-        rgba_color.r = xlibc_palette[(h * 3) + 0];
-        rgba_color.g = xlibc_palette[(h * 3) + 1];
-        rgba_color.b = xlibc_palette[(h * 3) + 2];
-        rgba_color.a = 0xFF;
+    for (h = 0; h < MAX_PAL_LEN; h++) {
+        unsigned int o = h << 2;
+        rgba_color.r = xlibc_palette[o + 0];
+        rgba_color.g = xlibc_palette[o + 1];
+        rgba_color.b = xlibc_palette[o + 2];
+        rgba_color.a = xlibc_palette[o + 3];
         
-        custom_pal.entries[h] = rgba_color;
-    }
-    for(j = 0; j < 256; j++) {
-        liq_image_add_fixed_color(image,custom_pal.entries[j]);
+        liq_image_add_fixed_color(image, rgba_color);
     }
     
     data = safe_malloc(size + 1);
@@ -124,14 +121,14 @@ int create_icon(void) {
     if(!res) {errorf("could not quantize icon."); }
     liq_write_remapped_image(res, image, data, size);
 
-    FILE *out = fopen("iconc.asm","w");
+    FILE *out = fopen("iconc.asm", "w");
     if (convpng.icon_zds) {
         fprintf(out, " define .icon,space=ram\n segment .icon\n xdef __icon_begin\n xdef __icon_end\n xdef __program_description\n xdef __program_description_end\n");
     
         fprintf(out,"\n db 1\n db %u,%u\n__icon_begin:",width,height);
-        for(y = 0; y < height; y++) {
+        for (y = 0; y < height; y++) {
             fputs("\n db ",out);
-            for(x = 0; x < width; x++) {
+            for (x = 0; x < width; x++) {
                 fprintf(out, "0%02Xh%s", data[x+(y*width)], x + 1 == width ? "" : ",");
             }
         }
@@ -141,9 +138,9 @@ int create_icon(void) {
         lof("Converted icon '%s'\n", icon_options[0]);
     } else {
         fprintf(out, "__icon_begin:\n .db 1,%u,%u", width, height);
-        for(y = 0; y < height; y++) {
+        for (y = 0; y < height; y++) {
             fputs("\n .db ",out);
-            for(x = 0; x < width; x++) {
+            for (x = 0; x < width; x++) {
                 fprintf(out, "0%02Xh%s", data[x+(y*width)], x + 1 == width ? "" : ",");
             }
         }

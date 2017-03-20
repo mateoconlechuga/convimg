@@ -13,14 +13,17 @@
 #define MAX_PAL_LEN   256 
 #define NUM_GROUPS    256            // total number of groups able to create
 
+#define ICON_WIDTH    16
+#define ICON_HEIGHT   16
+
 // function prototypes
 void output_compressed_array(FILE *outfile, uint8_t *compressed_data, unsigned len, unsigned mode);
 void add_rgba(uint8_t *pal, size_t size);
 void init_convpng_struct(void);
 void free_rgba(void);
 
-enum mode_t { MODE_C = 0, MODE_ASM, MODE_ICE };                  // group is c, asm, sprites v3.3
-enum compression_t { COMPRESS_NONE = 0, COMPRESS_RLE, COMPRESS_ZX7 }; // no compression, rle compression, lz compression
+enum mode_t { MODE_C = 0, MODE_ASM, MODE_ICE, MODE_APPVAR };  // type of mode for the group
+enum compression_t { COMPRESS_NONE = 0, COMPRESS_ZX7 };       // no compression, zx7 compression
 
 typedef struct s_st {
     char *in;                        // name of image on disk
@@ -57,18 +60,17 @@ typedef struct g_st {
 } group_t;
 
 typedef struct c_st {
-    unsigned numgroups;
     FILE *ini;
     FILE *log;
-    char **argv;
-    unsigned curline;
     FILE *all_gfx_c;
     FILE *all_gfx_h;
-    uint8_t *all_rgba;
-    unsigned all_rgba_size;
-    char *iconc;
+    unsigned numgroups;
+    unsigned numappvars;
+    unsigned curline;
     bool bad_conversion;
     bool icon_zds;
+    char **argv;
+    char *iconc;
 } convpng_t;
 
 extern convpng_t convpng;

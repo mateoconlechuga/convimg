@@ -9,13 +9,14 @@
 
 #include "main.h"
 #include "misc.h"
+#include "appvar.h"
 #include "logging.h"
 
 // free allocated memory
 void free_args(char **args, char ***argv, unsigned argc) {
     if(argv) {
         unsigned i;
-        for(i=0; i<argc; i++) {
+        for (i=0; i<argc; i++) {
             free((*argv)[i]);
             (*argv)[i] = NULL;
         }
@@ -149,7 +150,7 @@ int parse_input(char *line) {
                 g->use_tcolor = true;
                 
                 // free the allocated memory
-                free_args(&convpng.argv[1], &colors, num);
+                free_args(NULL, &colors, num);
             }
             
             // add a transparent index color
@@ -164,13 +165,17 @@ int parse_input(char *line) {
                 g->use_tindex = true;
                 
                 // free the allocated memory
-                free_args(&convpng.argv[1], &index, num);
+                free_args(NULL, &index, num);
             }
             
             if(!strcmp(*convpng.argv, "#AppVar")) {
-            }
-           
-        if(!strcmp(*convpng.argv, "#PNGImages")) {
+                appvar_t *a = &appvar[convpng.numappvars];
+                a->g = g = &group[convpng.numgroups];
+                g->mode = MODE_APPVAR;
+                memset(a->name, 0, 9);
+                strncpy(a->name, convpng.argv[1], 8);
+                convpng.numappvars++;
+                convpng.numgroups++;
             }
         
             if(!strcmp(*convpng.argv, "#Compression")) {
@@ -215,7 +220,7 @@ int parse_input(char *line) {
                 g->convert_to_tilemap = true;
                 
                 /* Free the allocated memory */
-                free_args(&convpng.argv[1], &tilemap_options, num);
+                free_args(NULL, &tilemap_options, num);
             }
         
             if(!strcmp(*convpng.argv, "#BitsPerPixel")) {

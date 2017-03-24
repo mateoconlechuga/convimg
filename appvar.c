@@ -96,7 +96,7 @@ void output_appvar_complete(appvar_t *a) {
     output[0x35] = len_low;
     output[0x36] = len_high;
 
-    data_size = offset-0x4A;
+    data_size = offset - 0x4A;
     len_high = mr8(data_size);
     len_low = m8(data_size);
     output[0x48] = len_low;

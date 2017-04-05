@@ -4,16 +4,18 @@ CFLAGS := -Wall -Wextra -O3 -std=c11 -I.
 LDFLAGS := -flto
 SOURCES := $(wildcard *.c)
 SOURCES += $(wildcard libs/*.c)
-OBJECTS := $(SOURCES:.c=.o)
+
 ifeq ($(OS),Windows_NT)
-RM = del /F
+NATIVEPATH = $(subst /,\,$(1))
+RM = del /f 2>nul
+SOURCES := $(call NATIVEPATH,$(SOURCES))
 else
 RM = rm -f
 endif
 
-all: $(TARGET)
+OBJECTS := $(SOURCES:.c=.o)
 
-$(TARGET) : $(SOURCES)
+all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ -lm
@@ -24,4 +26,4 @@ $(TARGET): $(OBJECTS)
 clean:
 	$(RM) $(TARGET) $(OBJECTS)
     
-.PHONY: $(TARGET) clean
+.PHONY: clean

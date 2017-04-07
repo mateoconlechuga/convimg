@@ -1,6 +1,6 @@
 TARGET := convpng
 CC := gcc
-CFLAGS := -Wall -Wextra -O3 -std=c11 -I.
+CFLAGS := -Wall -Wextra -O3 -std=c99 -I.
 LDFLAGS := -flto
 SOURCES := $(wildcard *.c)
 SOURCES += $(wildcard libs/*.c)

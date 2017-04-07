@@ -69,7 +69,6 @@ typedef struct c_st {
     unsigned curline;
     bool bad_conversion;
     bool icon_zds;
-    char **argv;
     char *iconc;
 } convpng_t;
 

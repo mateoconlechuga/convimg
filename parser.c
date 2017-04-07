@@ -12,34 +12,18 @@
 #include "appvar.h"
 #include "logging.h"
 
-// free allocated memory
-void free_args(char **args, char ***argv, unsigned argc) {
-    if(argv) {
-        unsigned i;
-        for (i=0; i<argc; i++) {
-            free((*argv)[i]);
-            (*argv)[i] = NULL;
-        }
-        free(*argv);
-        *argv = NULL;
-    }
-    if(*args) {
-        free(*args);
-        *args = NULL;
-    }
-}
-
 // get a string
 char *get_line(FILE *stream) {   
-    char *line = safe_malloc(sizeof(char));
+    char *line = safe_malloc(1);
     char *tmp;
+
     if(feof(stream)) {
         free(line);
         return NULL;
     }
 
     if(line) {
-    int i = 0, c = EOF;
+        int i = 0, c = EOF;
         while (c) {
             c = fgetc(stream);
             
@@ -49,9 +33,9 @@ char *get_line(FILE *stream) {
             
             if(c != ' ') {
                 line[i++] = (char)c;
-                tmp = safe_realloc(line, sizeof(char)*(i+1));
-                if(tmp == NULL) {
-                    errorf("fatal error. this is bad; really bad.");
+                tmp = safe_realloc(line, i+1);
+                if(!tmp) {
+                    errorf("memory error.");
                 } else {
                     line = tmp;
                 }
@@ -63,35 +47,38 @@ char *get_line(FILE *stream) {
     return line;
 }
 
-// makes a character string pointer array
-int make_args(char *s, char ***args, const char *delim) {
-    unsigned argc = 0;
-    char *token = strtok(s, delim);
-    
-    *args = NULL;
-    
-    if(token == NULL) {
-        return -1;
-    }
-    
-    // while there is a space present
-    while(token != NULL) {
-        size_t strl = strlen(token);
-        
-        // allocate the memory then copy it in
-        *args = safe_realloc(*args, sizeof(char*) * (argc + 1));
-        (*args)[argc] = safe_malloc(sizeof(char ) * (strl + 1));
-        memcpy((*args)[argc], token, strl+1);
-        
-        // increment the argument number
-        argc++;
+int separate_args(char *srcstr, char ***output, const char sep) {
+	int i, len = strlen(srcstr);
+	int numparts = 0;
+	char **currentpart;
 
-        // get the next token
-        token = strtok(NULL, delim);
-    }
-    *args = safe_realloc(*args, sizeof(char*) * (argc + 1));
-    (*args)[argc] = NULL;
-    return argc;
+	for (i = 0; i < len; i++)
+	{
+		if (srcstr[i] == sep)
+		{
+			srcstr[i] = '\0';	
+			numparts++;
+		}
+	}
+
+	numparts++;
+	*output = malloc(numparts*sizeof(char*));
+
+	if (*output == NULL) {
+		errorf("memory error.");
+	}
+	
+	currentpart = *output;
+	*currentpart = srcstr;
+
+	for (i = 0; i < len; i++) {
+		if (srcstr[i] == '\0') {
+			currentpart++;
+			*currentpart = &(srcstr[i+1]);
+		}
+	}
+	
+	return numparts; 
 }
 
 // adds an image to the indexed array
@@ -131,15 +118,16 @@ int parse_input(char *line) {
     int num = 0;
     if(*line != '\0') {   
         if(*line == '#') {
+            char **argv;
             group_t *g = &group[convpng.numgroups - 1];
-            num = make_args(line, &convpng.argv, ":");
-            
+            num = separate_args(line, &argv, ':');
+
             // set the transparent color
-            if(!strcmp(*convpng.argv, "#TranspColor")) {
+            if(!strcmp(*argv, "#TranspColor")) {
                 char **colors;
                 
                 if(num <= 1) { errorf("parsing line %d", convpng.curline); }
-                num = make_args(convpng.argv[1], &colors, ",");
+                num = separate_args(argv[1], &colors, ',');
                 if(num < 4) { errorf("not enough transparency colors."); }
 
                 g->tcolor.r = (uint8_t)strtol(colors[0], NULL, 10);
@@ -150,67 +138,65 @@ int parse_input(char *line) {
                 g->use_tcolor = true;
                 
                 // free the allocated memory
-                free_args(NULL, &colors, num);
+                free(colors);
             }
             
             // add a transparent index color
-            if(!strcmp(*convpng.argv, "#TranspIndex")) {
+            if(!strcmp(*argv, "#TranspIndex")) {
                 char **index;
                 
                 if(num <= 1) { errorf("parsing line %d", convpng.curline); }
-                num = make_args(convpng.argv[1], &index, ",");
+                num = separate_args(argv[1], &index, ',');
                 if(num < 1) { errorf("invalid transparency index"); }
                 
                 g->tindex = (unsigned)strtol(*index, NULL, 10);
                 g->use_tindex = true;
                 
                 // free the allocated memory
-                free_args(NULL, &index, num);
+                free(index);
             }
             
-            if(!strcmp(*convpng.argv, "#AppVar")) {
+            if(!strcmp(*argv, "#AppVar")) {
                 appvar_t *a = &appvar[convpng.numappvars];
                 a->g = g = &group[convpng.numgroups];
                 g->mode = MODE_APPVAR;
                 memset(a->name, 0, 9);
-                strncpy(a->name, convpng.argv[1], 8);
+                strncpy(a->name, argv[1], 8);
                 convpng.numappvars++;
                 convpng.numgroups++;
             }
         
-            if(!strcmp(*convpng.argv, "#Compression")) {
-                if(!strcmp(convpng.argv[1], "zx7")) {
+            if(!strcmp(*argv, "#Compression")) {
+                if(!strcmp(argv[1], "zx7")) {
                     g->compression = COMPRESS_ZX7;
                 }
             }
             
-            if(!strcmp(*convpng.argv, "#CreateGlobalPalette")) {
+            if(!strcmp(*argv, "#CreateGlobalPalette")) {
                 g = &group[convpng.numgroups];
+                g->name = str_dup(argv[1]);
                 g->is_global_palette = true;
                 g->mode = MODE_C;
-                g->name = safe_malloc(strlen(convpng.argv[1])+1);
-                strcpy(g->name, convpng.argv[1]);
                 convpng.numgroups++;
             }
         
-            if(!strcmp(*convpng.argv, "#Palette")) {
-                g->palette_name = safe_malloc(strlen(convpng.argv[1])+1);
-                strcpy(g->palette_name, convpng.argv[1]);
+            if(!strcmp(*argv, "#Palette")) {
+                g->palette_name = str_dup(argv[1]);
             }
             
-            if(!strcmp(*convpng.argv, "#OutputPaletteImage")) {
+            if(!strcmp(*argv, "#OutputPaletteImage")) {
                 g->output_palette_image = true;
             }
             
-            if(!strcmp(*convpng.argv, "#NoPaletteArray")) {
+            if(!strcmp(*argv, "#NoPaletteArray")) {
                 g->output_palette_array = false;
             }
             
-            if(!strcmp(*convpng.argv, "#Tilemap")) {
+            if(!strcmp(*argv, "#Tilemap")) {
                 char **tilemap_options;
         
                 if(num <= 1) { errorf("parsing line %d", convpng.curline); }
-                num = make_args(convpng.argv[1], &tilemap_options, ",");
+                num = separate_args(argv[1], &tilemap_options, ',');
                 if(num < 3) { errorf("not enough options specified (tile_width,tile_hieght)."); }
                 
                 g->tile_width = (unsigned)strtol(tilemap_options[0], NULL, 10);
@@ -219,12 +205,12 @@ int parse_input(char *line) {
                 g->tile_size = g->tile_width * g->tile_height + 2;
                 g->convert_to_tilemap = true;
                 
-                /* Free the allocated memory */
-                free_args(NULL, &tilemap_options, num);
+                // free the allocated memory
+                free(tilemap_options);
             }
         
-            if(!strcmp(*convpng.argv, "#BitsPerPixel")) {
-                uint8_t bpp = (uint8_t)strtol(convpng.argv[1], NULL, 10);
+            if(!strcmp(*argv, "#BitsPerPixel")) {
+                uint8_t bpp = (uint8_t)strtol(argv[1], NULL, 10);
                 switch(bpp) {
                     case 1: case 2: case 4: case 8: case 16:
                         break;
@@ -236,50 +222,38 @@ int parse_input(char *line) {
             }
             
             // A C conversion type
-            if(!strcmp(*convpng.argv, "#GroupC")) {
+            if(!strcmp(*argv, "#GroupC")) {
                 g = &group[convpng.numgroups];
-                g->name = safe_malloc(strlen(convpng.argv[1])+1);
-                strcpy(g->name,convpng.argv[1]);
-                g->outh = safe_malloc(strlen(convpng.argv[1])+3);
-                strcpy(g->outh,convpng.argv[1]);
-                strcat(g->outh,".h");
-                g->outc = safe_malloc(strlen(convpng.argv[1])+3);
-                strcpy(g->outc,convpng.argv[1]);
-                strcat(g->outc,".c");
+                g->name = str_dup(argv[1]);
+                g->outh = str_dupcat(argv[1], ".h");
+                g->outc = str_dupcat(argv[1], ".c");
                 g->mode = MODE_C;
                 convpng.numgroups++;
             }
 
             // An ASM group
-            if(!strcmp(*convpng.argv, "#GroupASM")) {
+            if(!strcmp(*argv, "#GroupASM")) {
                 g = &group[convpng.numgroups];
-                g->name = safe_malloc(strlen(convpng.argv[1])+1);
-                strcpy(g->name,convpng.argv[1]);
-                g->outh = safe_malloc(strlen(convpng.argv[1])+5);
-                strcpy(g->outh,convpng.argv[1]);
-                strcat(g->outh,".inc");
-                g->outc = safe_malloc(strlen(convpng.argv[1])+5);
-                strcpy(g->outc,convpng.argv[1]);
-                strcat(g->outc,".asm");
+                g->name = str_dup(argv[1]);
+                g->outh = str_dupcat(argv[1], ".inc");
+                g->outc = str_dupcat(argv[1], ".asm");
                 g->mode = MODE_ASM;
                 convpng.numgroups++;
             }
             
             // output in ICE format
-            if(!strcmp(*convpng.argv, "#GroupICE")) {
+            if(!strcmp(*argv, "#GroupICE")) {
                 g = &group[convpng.numgroups];
-                g->name = safe_malloc(strlen(convpng.argv[1])+1);
-                strcpy(g->name,convpng.argv[1]);
-                g->outh = safe_malloc(strlen(convpng.argv[1])+5);
-                strcpy(g->outh,convpng.argv[1]);
-                strcat(g->outh,".txt");
-                g->outc = safe_malloc(strlen(convpng.argv[1])+5);
-                strcpy(g->outc,convpng.argv[1]);
-                strcat(g->outc,".txt");
+                g->name = str_dup(argv[1]);
+                g->outh = str_dupcat(argv[1], ".txt");
+                g->outc = str_dupcat(argv[1], ".txt");
                 g->mode = MODE_ICE;
                 convpng.numgroups++;
             }
-        
+            
+            // free the args
+            free(argv);
+
         } else {
             add_image(line);
         }

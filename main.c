@@ -86,9 +86,11 @@ int main(int argc, char **argv) {
     lof("Opened %s\n", ini_file_name);
     
     // parse the input file
-    while ((line = get_line(convpng.ini)))
-        free_args(&line, &convpng.argv, parse_input(line));
-    
+    while ((line = get_line(convpng.ini))) {
+        parse_input(line);
+        free(line);
+    }
+
     fclose(convpng.ini);
 
     // add an extra newline for kicks
@@ -103,7 +105,6 @@ int main(int argc, char **argv) {
         // init some vars
         liq_palette pal;
         liq_image *image = NULL;
-        liq_result *res = NULL;
         liq_attr *attr = NULL;
         double diff;
         unsigned inc_amt;
@@ -157,19 +158,16 @@ int main(int argc, char **argv) {
             group_bpp = 8;
         }
         
+        // select the correct bits per pixel
         switch (group_bpp) {
             case 4:
-                shift_amt = 1;
-                break;
+                shift_amt = 1; break;
             case 2:
-                shift_amt = 2;
-                break;
+                shift_amt = 2; break;
             case 1:
-                shift_amt = 3;
-                break;
+                shift_amt = 3; break;
             default:
-                shift_amt = 0;
-                break;
+                shift_amt = 0; break;
         }
         
         // force some things if the user is an idiot
@@ -256,6 +254,7 @@ int main(int argc, char **argv) {
             free(custom_pal);
         // build the palette using maths
         } else if (!is_16_bpp) {
+            liq_result *res = NULL;
             liq_histogram *hist = liq_histogram_create(attr);
             lof("Building palette with [%u] available indices ...\n", group_pal_len);
             for (s = 0; s < group_numimages; s++) {
@@ -273,7 +272,8 @@ int main(int argc, char **argv) {
                 
                 pal_image = liq_image_create_rgba(attr, pal_rgba, pal_width, pal_height, 0);
                 liq_histogram_add_image(hist, attr, pal_image);
-                
+                liq_image_destroy(pal_image);
+
                 // free the opened image
                 free(pal_rgba);
             }
@@ -318,6 +318,10 @@ int main(int argc, char **argv) {
                 pal.entries[j] = pal.entries[group_tindex];
                 pal.entries[group_tindex] = tmpc;
             }
+            
+            // free the histogram
+            if (res)  { liq_result_destroy(res);     }
+            if (hist) { liq_histogram_destroy(hist); }
         }
 
         // output an image of the palette
@@ -422,12 +426,12 @@ int main(int argc, char **argv) {
                 FILE *image_outc = NULL;
                 
                 // get the address of the current working image
-                image_t *curr_image = curr->image[s];
+                image_t *image_curr = curr->image[s];
                 
                 // init the things for each image
-                char       *image_outc_name      = curr_image->outc;
-                char       *image_in_name        = curr_image->in;
-                char       *image_name           = curr_image->name;
+                char       *image_outc_name      = image_curr->outc;
+                char       *image_in_name        = image_curr->in;
+                char       *image_name           = image_curr->name;
                 unsigned    image_width;
                 unsigned    image_height;
                 unsigned    image_size;
@@ -863,6 +867,7 @@ int main(int argc, char **argv) {
                 fclose(image_outc);
                 
                 // free the opened image
+                free(image_curr);
                 free(image_rgba);
                 free(image_data);
                 free(image_name);
@@ -885,12 +890,13 @@ int main(int argc, char **argv) {
         }
         
         // free *everything*
+        free(curr->image);
         free(group_name);
         free(group_outc_name);
         free(group_outh_name);
         free(group_pal_name);
-        if (attr)  { liq_attr_destroy(attr);   }
-        if (image) { liq_image_destroy(image); }
+        if (attr)  { liq_attr_destroy(attr);      }
+        if (image) { liq_image_destroy(image);    }
         lof("\n");
     }
     
@@ -905,7 +911,8 @@ int main(int argc, char **argv) {
         lof("[warning] image quality might be too low.\nplease try grouping similar images, reducing image colors, \nor selecting a better palette if conversion is not ideal.\n\n");
     }
     lof("Finished!\n");
-    
+    fclose(convpng.log);
+
     return 0;
 }
 

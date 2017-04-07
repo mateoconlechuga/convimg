@@ -51,6 +51,13 @@ char *str_dup(const char *s) {
     return d;                            // return new memory
 }
 
+char *str_dupcat(const char *s, const char *c) {
+    char *d = safe_malloc(strlen(s)+strlen(c)+1);
+    if (d) { strcpy(d, s); strcat(d, c); }
+    return d;
+}
+
+
 // encodes a PNG image (used for creating global palettes)
 void encodePNG(const char* filename, const unsigned char* image, unsigned width, unsigned height) {
     unsigned char* png;
@@ -92,7 +99,7 @@ int create_icon(void) {
     liq_color rgba_color;
     char **icon_options;
     
-    int num = make_args(convpng.iconc, &icon_options, ",");
+    int num = separate_args(convpng.iconc, &icon_options, ',');
     if(num < 2) { errorf("not enough options."); }
     
     error = lodepng_decode32_file(&rgba, &width, &height, icon_options[0]);
@@ -152,7 +159,8 @@ int create_icon(void) {
     
     liq_attr_destroy(attr);
     liq_image_destroy(image);
-    free_args(&convpng.iconc, &icon_options, num);
+    free(convpng.iconc);
+    free(icon_options);
     free(data);
     free(rgba);
     fclose(out);

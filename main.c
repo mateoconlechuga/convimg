@@ -522,7 +522,7 @@ int main(int argc, char **argv) {
                         // compress the data
                         switch (group_compression) {
                             case COMPRESS_ZX7:
-                                compressed_data = compress(optimize(orig_data, total_image_size), orig_data, total_image_size, &compressed_size, &delta);
+                                compressed_data = compress(optimize(orig_data, total_image_size), orig_data, total_image_size, (size_t*)&compressed_size, &delta);
                                 break;
                             default:
                                 errorf("unexpected compression mode.");
@@ -581,7 +581,7 @@ int main(int argc, char **argv) {
                             // select the compression mode
                             switch (group_compression) {
                                 case COMPRESS_ZX7:
-                                    compressed_data = compress(optimize(orig_data, group_total_tile_size), orig_data, group_total_tile_size, &compressed_size, &delta);
+                                    compressed_data = compress(optimize(orig_data, group_total_tile_size), orig_data, group_total_tile_size, (size_t*)&compressed_size, &delta);
                                     break;
                                 default:
                                     errorf("unexpected compression mode.");

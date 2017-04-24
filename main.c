@@ -647,8 +647,11 @@ int main(int argc, char **argv) {
                     
                     x_offset = y_offset = 0;
                     
-                    lof(" (%s)\n", image_outc_name);
-                    
+                    if (!group_mode_ice)
+                        lof(" (%s)\n", image_outc_name);
+                    else
+                        lof("\n");
+
                     if (group_conv_to_tiles) {
                         // allocate temporary array for writing to appvar
                         if (image_num_appvars) {
@@ -864,7 +867,8 @@ int main(int argc, char **argv) {
                 }
                 
                 // close the outputs
-                fclose(image_outc);
+                if (image_outc)
+                    fclose(image_outc);
                 
                 // free the opened image
                 free(image_curr);

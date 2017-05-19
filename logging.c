@@ -19,8 +19,8 @@ void errorf(char *format, ...) {
    va_start(aptr, format);
 
    vsprintf(buffer, format, aptr);
-   if(convpng.log) { fprintf(convpng.log, "[error line %d] %s", convpng.curline, buffer); }
-   fprintf(stderr, "[error line %d] %s", convpng.curline, buffer);
+   if(convpng.log) { fprintf(convpng.log, "[error] %s\n", buffer); }
+   fprintf(stderr, "[error] %s\n", buffer);
    
    va_end(aptr);
    exit(1);

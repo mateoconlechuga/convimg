@@ -22,8 +22,14 @@ void add_rgba(uint8_t *pal, size_t size);
 void init_convpng_struct(void);
 void free_rgba(void);
 
-enum mode_t { MODE_C = 0, MODE_ASM, MODE_ICE, MODE_APPVAR };  // type of mode for the group
-enum compression_t { COMPRESS_NONE = 0, COMPRESS_ZX7 };       // no compression, zx7 compression
+// type of mode for the group
+enum mode_t { MODE_C = 0, MODE_ASM, MODE_ICE, MODE_APPVAR };
+
+// no compression, zx7 compression
+enum compression_t { COMPRESS_NONE = 0, COMPRESS_ZX7 };
+
+// style modes
+enum style_t { STYLE_NONE = 0, STYLE_TRANSPARENT };
 
 typedef struct s_st {
     char *in;                        // name of image on disk
@@ -45,6 +51,7 @@ typedef struct g_st {
     bool use_tcolor;                 // bool to tell if to compute transparent color
     bool use_tindex;                 // bool to use a new index
     unsigned mode;                   // either asm or c style conversion
+    unsigned style;                  // Style of ouput conversion
     unsigned compression;            // compression type
     unsigned tile_width,tile_height; // for use creating tilemaps
     unsigned tile_size;              // tile_height * tile_width + 2
@@ -76,3 +83,4 @@ extern convpng_t convpng;
 extern group_t group[NUM_GROUPS];
 
 #endif
+

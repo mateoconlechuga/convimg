@@ -149,7 +149,8 @@ int main(int argc, char **argv) {
         bool       group_mode_c = group_mode == MODE_C;
         bool       group_mode_asm = group_mode == MODE_ASM;
         bool       group_mode_ice = group_mode == MODE_ICE;
-        
+        bool       group_style_tp = curr->style == STYLE_TRANSPARENT;
+
         // ICE needs specific outputs
         if (group_mode_ice) {
             group_compression = COMPRESS_NONE;
@@ -170,6 +171,13 @@ int main(int argc, char **argv) {
                 shift_amt = 0; break;
         }
         
+        // check if valid values
+        if (group_style_tp) {
+            if (group_bpp != 8) {
+                errorf("transparent compression only supported for 8bpp mode");
+            }
+        }
+
         // force some things if the user is an idiot
         if (is_16_bpp) {
             group_is_gpal = false;
@@ -502,6 +510,54 @@ int main(int argc, char **argv) {
                     }
                 }
                 
+                // is the group using the weird transparent compression format?
+                if (group_style_tp && (group_conv_to_tiles)) {
+                    errorf("unsupported mode combined with transparent style");
+                }
+
+                if (group_style_tp) {
+                    uint8_t *rle_data = safe_calloc(total_image_size*2, sizeof(uint8_t));
+                    unsigned rle_size = 0;
+                    
+                    for (j = 0; j < image_height; j++) {
+                        unsigned offset = j * image_width, left = image_width;
+                        while (left) {
+                            unsigned o = 0, t = 0;
+                            while (group_tindex == image_data[t + offset] && t < left) {
+                                t++;
+                            }
+                            rle_data[rle_size++] = t;
+                            if ((left -= t)) {
+                                uint8_t *fix = &rle_data[rle_size++];
+                                while (group_tindex != image_data[t + o + offset] && o < left) {
+                                    rle_data[rle_size++] = image_data[t + o + offset];
+                                    o++;
+                                }
+                                *fix = o;
+                                left -= o;
+                            }
+                            offset += o + t;
+                        }
+                    }
+                    
+                    // output rle image statistics
+                    if (group_mode_c) {
+                        fprintf(image_outc, "// %u bpp image\nuint8_t %s_data[%u] = {\n %u,%u,  // width,height\n ", group_bpp,
+                                                                                                                     image_name,
+                                                                                                                     rle_size,
+                                                                                                                     image_width,
+                                                                                                                     image_height);
+                    } else
+                    if (group_mode_asm) {
+                        fprintf(image_outc, "_%s: ; %u bytes\n db %u,%u\n db ", image_name, rle_size, image_width, image_height);
+                    } else
+                    if (group_mode_ice) {
+                        fprintf(group_outc, "%s | %u bytes\n%u,%u,\"", image_name, rle_size, image_width, image_height);
+                    }
+                    
+                    output_compressed_array(image_outc, rle_data, rle_size, group_mode);
+                }
+
                 // using some kind of compression?
                 if (group_compression) {
                     unsigned compressed_size;
@@ -741,8 +797,8 @@ int main(int argc, char **argv) {
                         }
                     
                     // not a tilemap, just a normal image
-                    } else {
-                        unsigned tmp_total_image_size = total_image_size  << (unsigned)is_16_bpp;
+                    } else if (!group_style_tp) {
+                        unsigned tmp_total_image_size = total_image_size << (unsigned)is_16_bpp;
                         uint8_t *tmp_image_appvar_dat = NULL;
                         
                         if (image_num_appvars) {
@@ -936,6 +992,7 @@ void init_convpng_struct(void) {
         g->output_palette_image = false;
         g->is_global_palette = false;
         g->compression = COMPRESS_NONE;
+        g->style = STYLE_NONE;
         g->convert_to_tilemap = false;
         g->numimages = 0;
         g->tindex = 0;
@@ -968,3 +1025,4 @@ void output_compressed_array(FILE *outfile, uint8_t *compressed_data, unsigned l
     }
     if (mode == MODE_C) { fprintf(outfile, "\n};\n"); }
 }
+

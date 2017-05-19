@@ -82,7 +82,7 @@ int separate_args(char *srcstr, char ***output, const char sep) {
 }
 
 // adds an image to the indexed array
-static void add_image(char *line) {
+static void add_image(char *line) { 
     group_t *g = &group[convpng.numgroups - 1]; image_t *s;
     unsigned k = g->numimages;
     char *ext;
@@ -99,6 +99,8 @@ static void add_image(char *line) {
         ext = strrchr(s->in,'.');
     }
  
+    // check if relative or absolute file path
+
     // do the whole thing where you create output names
     s->outc = safe_malloc(strlen(s->in)+5);
     strcpy(s->outc, s->in);
@@ -172,6 +174,12 @@ int parse_input(char *line) {
                 }
             }
             
+            if(!strcmp(*argv, "#Style")) {
+                if(!strcmp(argv[1], "transparent")) {
+                    g->style = STYLE_TRANSPARENT;
+                }
+            }
+
             if(!strcmp(*argv, "#CreateGlobalPalette")) {
                 g = &group[convpng.numgroups];
                 g->name = str_dup(argv[1]);

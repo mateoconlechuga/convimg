@@ -10,12 +10,11 @@
 
 static void ice_open_output(output_t *out, const char *input, bool header) {
     if (input) {
-        FILE *file;
-        if (!(file = fopen(input, "w"))) {
-            errorf("opening %s for output.", input);
-        }
-
         if (!header) {
+            FILE *file;
+            if (!(file = fopen(input, "w"))) {
+                errorf("opening %s for output.", input);
+            }
             out->txt = file;
         }
     }
@@ -39,7 +38,7 @@ static void ice_print_header_header(output_t *out, const char *group_name) {
 }
 
 static void ice_print_palette(output_t *out, const char *group_name, liq_palette *pal, const unsigned int pal_len) {
-    fprintf(out->txt, "%s_pal | %u bytes\n\"", group_name, pal_len << 1);
+    fprintf(out->txt, "%s_pallete | %u bytes\n\"", group_name, pal_len << 1);
     
     for (unsigned int j = 0; j < pal_len; j++) {
         liq_color *c = &pal->entries[j];
@@ -91,7 +90,7 @@ static void ice_print_image(output_t *out, uint8_t bpp, const char *i_name, cons
 
 static void ice_print_compressed_image(output_t *out, uint8_t bpp, const char *i_name, const unsigned int size) {
     (void)bpp;
-    fprintf(out->txt, "%s_compressed | %u bytes\n0,0,\"", i_name, size);
+    fprintf(out->txt, "%s_compressed | %u bytes\n\"", i_name, size);
 }
 
 static void ice_print_tiles_header(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
@@ -109,6 +108,13 @@ static void ice_print_tiles_ptrs_header(output_t *out, const char *i_name, unsig
 }
 
 static void ice_print_image_header(output_t *out, const char *i_name, unsigned int size, bool compressed) {
+    (void)out;
+    (void)i_name;
+    (void)size;
+    (void)compressed;
+}
+
+static void ice_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, bool compressed) {
     (void)out;
     (void)i_name;
     (void)size;
@@ -143,6 +149,7 @@ const format_t ice_format = {
     .print_tiles_header = ice_print_tiles_header,
     .print_tiles_ptrs_header = ice_print_tiles_ptrs_header,
     .print_image_header = ice_print_image_header,
+    .print_transparent_image_header = ice_print_transparent_image_header,
     .print_palette_header = ice_print_palette_header,
     .print_end_header = ice_print_end_header
 };

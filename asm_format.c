@@ -132,6 +132,11 @@ static void asm_print_image_header(output_t *out, const char *i_name, unsigned i
     fprintf(out->h, "#include \"%s.asm\" ; %u bytes\n", i_name, size);
 }
 
+static void asm_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, bool compressed) {
+    (void)compressed;
+    fprintf(out->h, "#include \"%s.asm\" ; %u bytes\n", i_name, size);
+}
+
 static void asm_print_palette_header(output_t *out, const char *name, uint8_t len) {
     (void)out;
     (void)name;
@@ -160,6 +165,7 @@ const format_t asm_format = {
     .print_tiles_header = asm_print_tiles_header,
     .print_tiles_ptrs_header = asm_print_tiles_ptrs_header,
     .print_image_header = asm_print_image_header,
+    .print_transparent_image_header = asm_print_transparent_image_header,
     .print_palette_header = asm_print_palette_header,
     .print_end_header = asm_print_end_header
 };

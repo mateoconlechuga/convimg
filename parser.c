@@ -125,17 +125,23 @@ int parse_input(char *line) {
             num = separate_args(line, &argv, ':');
 
             // set the transparent color
-            if(!strcmp(*argv, "#TranspColor")) {
+            if(!strcmp(*argv, "#TransparentColor") || !strcmp(*argv, "#TranspColor")) {
                 char **colors;
                 
                 if(num <= 1) { errorf("parsing line %d", convpng.curline); }
                 num = separate_args(argv[1], &colors, ',');
-                if(num < 4) { errorf("not enough transparency colors."); }
-
+                if(num == 3) {
+                    g->tcolor.a = 255;
+                    goto add_other_colors;
+                } else if(num < 4) {
+                    errorf("not enough transparency colors.");
+                }
+                
+                g->tcolor.a = (uint8_t)strtol(colors[3], NULL, 10);
+add_other_colors:
                 g->tcolor.r = (uint8_t)strtol(colors[0], NULL, 10);
                 g->tcolor.g = (uint8_t)strtol(colors[1], NULL, 10);
                 g->tcolor.b = (uint8_t)strtol(colors[2], NULL, 10);
-                g->tcolor.a = (uint8_t)strtol(colors[3], NULL, 10);
                 g->tcolor_converted = rgb1555(g->tcolor.r, g->tcolor.g, g->tcolor.b);
                 g->use_tcolor = true;
                 
@@ -144,7 +150,7 @@ int parse_input(char *line) {
             }
             
             // add a transparent index color
-            if(!strcmp(*argv, "#TranspIndex")) {
+            if(!strcmp(*argv, "#TransparentIndex") || !strcmp(*argv, "#TranspIndex")) {
                 char **index;
                 
                 if(num <= 1) { errorf("parsing line %d", convpng.curline); }

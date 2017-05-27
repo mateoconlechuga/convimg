@@ -79,9 +79,10 @@ void build_image_palette(const liq_palette *pal, const unsigned length, const ch
     unsigned int x;
     for (x = 0; x < length; x++) {
         unsigned int o = x << 2;
-        image[o + 0] = pal->entries[x].r;
-        image[o + 1] = pal->entries[x].g;
-        image[o + 2] = pal->entries[x].b;
+        liq_color *c = &pal->entries[x];
+        image[o + 0] = c->r;
+        image[o + 1] = c->g;
+        image[o + 2] = c->b;
         image[o + 3] = 255;
     }
     encodePNG(filename, image, length, 1);
@@ -133,6 +134,85 @@ uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode) {
             break;
     }
     return ret;
+}
+
+void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_buffer, unsigned int *width, uint8_t height, unsigned int *size) {
+    unsigned int j,k,i = 0;
+    
+    if (bpp == 16) {
+        for (j = 0; j < height; j++) {
+            unsigned int o = j * *width;
+            for (k = 0; k < *width; k++) {
+                unsigned int l = o + k;
+                uint16_t out_short = rgb565(rgba[l + 0], rgba[l + 1], rgba[l + 2]);
+                data_buffer[i++] = out_short >> 8;
+                data_buffer[i++] = out_short & 255;
+            }
+        }
+        *width *= 2;
+    } else {
+        uint8_t lob, shift_amt = 1;
+        switch (bpp) {
+            case 1:
+                shift_amt = 3; break;
+            case 2:
+                shift_amt = 2; break;
+            case 4:
+                shift_amt = 1; break;
+            default:
+                errorf("unexpected bpp mode");
+                break;
+        }
+
+        uint8_t inc_amt = pow(2, shift_amt);
+
+        for (j = 0; j < height; j++) {
+            unsigned int o = j * *width;
+            for (k = 0; k < *width; k += inc_amt) {
+                uint8_t curr_inc = inc_amt;
+                uint8_t byte = 0;
+                for (lob = 0; lob < inc_amt; lob++) {
+                    byte |= data[k + o + lob] << --curr_inc;
+                }
+                data_buffer[i++] = byte;
+            }
+        }
+
+        *width /= inc_amt;
+    }
+    *size = *width * height;
+}
+
+unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer, uint8_t width, uint8_t height, uint8_t tp_index) {
+    unsigned int size = 0;
+    unsigned int j = 0;
+    
+    for (; j < height; j++) {
+        unsigned int offset = j * width, left = width;
+        while (left) {
+            unsigned int o = 0, t = 0;
+            while (tp_index == data[t + offset] && t < left) {
+                t++;
+            }
+            data_buffer[size++] = t;
+            if ((left -= t)) {
+                uint8_t *fix = &data_buffer[size++];
+                while (tp_index != data[t + o + offset] && o < left) {
+                    data_buffer[size++] = data[t + o + offset];
+                    o++;
+                }
+                *fix = o;
+                left -= o;
+            }
+            offset += o + t;
+        }
+    }
+    return size;
+}
+
+
+output_t *output_create(void) {
+    return safe_malloc(sizeof(output_t));
 }
 
 // create an icon for the C toolchain

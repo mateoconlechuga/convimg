@@ -97,25 +97,26 @@ typedef union {
 } output_t;
 
 typedef struct {
-	void (*open_output)(output_t *out, const char *input, bool header);
-	void (*close_output)(output_t *out, bool header);
-	void (*print_source_header)(output_t *out, const char *header_file_name);
-	void (*print_header_header)(output_t *out, const char *group_name);
-	void (*print_palette)(output_t *out, const char *group_name, liq_palette *pal, const unsigned int pal_len);
-	void (*print_transparent_index)(output_t *out, const char *group_name, const unsigned int index);
-	void (*print_image_source_header)(output_t *out, const char *group_header_file_name);
-	void (*print_tile)(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, uint8_t width, uint8_t height);
-	void (*print_compressed_tile)(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size);
-	void (*print_tile_ptrs)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
-	void (*print_byte)(output_t *out, uint8_t byte, bool need_comma);
-	void (*print_next_array_line)(output_t *out, bool is_end);
-	void (*print_image)(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const uint8_t width, const uint8_t height);
-	void (*print_compressed_image)(output_t *out, uint8_t bpp, const char *i_name, unsigned int size);
-	void (*print_tiles_header)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
-	void (*print_tiles_ptrs_header)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
-	void (*print_image_header)(output_t *out, const char *i_name, unsigned int size, bool compressed);
-	void (*print_palette_header)(output_t *out, const char *name, uint8_t len);
-	void (*print_end_header)(output_t *out);
+    void (*open_output)(output_t *out, const char *input, bool header);
+    void (*close_output)(output_t *out, bool header);
+    void (*print_source_header)(output_t *out, const char *header_file_name);
+    void (*print_header_header)(output_t *out, const char *group_name);
+    void (*print_palette)(output_t *out, const char *group_name, liq_palette *pal, const unsigned int pal_len);
+    void (*print_transparent_index)(output_t *out, const char *group_name, const unsigned int index);
+    void (*print_image_source_header)(output_t *out, const char *group_header_file_name);
+    void (*print_tile)(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, uint8_t width, uint8_t height);
+    void (*print_compressed_tile)(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size);
+    void (*print_tile_ptrs)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
+    void (*print_byte)(output_t *out, uint8_t byte, bool need_comma);
+    void (*print_next_array_line)(output_t *out, bool is_end);
+    void (*print_image)(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const uint8_t width, const uint8_t height);
+    void (*print_compressed_image)(output_t *out, uint8_t bpp, const char *i_name, unsigned int size);
+    void (*print_tiles_header)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
+    void (*print_tiles_ptrs_header)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
+    void (*print_image_header)(output_t *out, const char *i_name, unsigned int size, bool compressed);
+    void (*print_transparent_image_header)(output_t *out, const char *i_name, unsigned int size, bool compressed);
+    void (*print_palette_header)(output_t *out, const char *name, uint8_t len);
+    void (*print_end_header)(output_t *out);
 } format_t;
 
 extern convpng_t convpng;

@@ -77,6 +77,10 @@ unsigned char *compress(Optimal *optimal, uint8_t *input_data, size_t input_size
     int mask;
     int i;
 
+    if (!optimal || !input_data) {
+        return NULL;
+    }
+	
     /* calculate and allocate output buffer */
     input_index = input_size-1;
     *output_size = (optimal[input_index].bits+18+7)/8;

@@ -23,4 +23,9 @@ void output_compressed_array(const format_t *format, output_t *out, uint8_t *com
 void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned int width, unsigned int height);
 uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode);
 
+void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_buffer, unsigned int *width, uint8_t height, unsigned int *size);
+output_t *output_create(void);
+
+unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer, uint8_t width, uint8_t height, uint8_t tp_index);
+
 #endif

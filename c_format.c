@@ -144,6 +144,15 @@ static void c_print_image_header(output_t *out, const char *i_name, unsigned int
     }
 }
 
+static void c_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, bool compressed) {
+    if (compressed) {
+        fprintf(out->h, "extern uint8_t %s_compressed[%u];\n", i_name, size);
+    } else {
+        fprintf(out->h, "extern uint8_t %s_data[%u];\n", i_name, size);
+        fprintf(out->h, "#define %s ((gfx_timage_t*)%s_data)\n", i_name, i_name);
+    }
+}
+
 static void c_print_palette_header(output_t *out, const char *name, uint8_t len) {
     fprintf(out->h, "extern uint16_t %s_pal[%u];\n", name, len);
 }
@@ -171,6 +180,7 @@ const format_t c_format = {
     .print_tiles_header = c_print_tiles_header,
     .print_tiles_ptrs_header = c_print_tiles_ptrs_header,
     .print_image_header = c_print_image_header,
+    .print_transparent_image_header = c_print_transparent_image_header,
     .print_palette_header = c_print_palette_header,
     .print_end_header = c_print_end_header
 }; 

@@ -28,7 +28,7 @@ group_t group[NUM_GROUPS];
                         
 int main(int argc, char **argv) {
     char *line = NULL;
-    unsigned s,g,j,k,a;
+    unsigned int s,g,j,k;
     time_t c1 = time(NULL);
     
     // print out version information
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
         liq_image *image = NULL;
         liq_attr *attr = NULL;
         const format_t *format = NULL;
-        output_t *g_output = safe_malloc(sizeof(output_t));
+        output_t *g_output = output_create();
         double diff;
         
         // get current group pointer
@@ -92,6 +92,7 @@ int main(int argc, char **argv) {
         bool       g_use_transpcolor   = g_use_tcolor || g_use_tindex;
         bool       g_style_tp          = curr->style == STYLE_TRANSPARENT;
         
+        // determine the output format
         if (g_mode_c) {
             format = &c_format;
         } else
@@ -100,6 +101,23 @@ int main(int argc, char **argv) {
         } else
         if (g_mode_ice) {
             format = &ice_format;
+        }
+        
+        if (g_style_tp) {
+            if (g_bpp != 8) {
+                errorf("unsupported bpp for current style");
+            }
+        }
+        
+        // force inputs if 16 bpp image group
+        if (g_is_16_bpp) {
+            free(g_pal_name);
+            g_pal_name        = NULL;
+            g_is_global_pal   = false;
+            g_use_transpcolor = false;
+            g_use_tcolor      = false;
+            g_use_tindex      = false;
+            g_out_pal_arr     = false;
         }
         
         // log the messages while opening the output files
@@ -263,12 +281,9 @@ int main(int argc, char **argv) {
                 format->print_palette(g_output, g_name, &pal, g_pal_len);
             }
             
-            if (g_use_transpcolor) {
-                format->print_transparent_index(g_output, g_name, g_tindex);
-            }
-            
             // log transparent color things
             if (g_use_transpcolor) {
+                format->print_transparent_index(g_output, g_name, g_tindex);
                 lof("Transparent Color Index : %u\n", g_tindex);
                 lof("Transparent Color : 0x%04X\n", g_tcolor_cv);
             }
@@ -293,6 +308,8 @@ int main(int argc, char **argv) {
                 char         *i_source_name = i_curr->outc;
                 char         *i_in_name     = i_curr->in;
                 char         *i_name        = i_curr->name;
+                uint8_t       i_bpp         = g_bpp;
+                uint8_t       i_tindex      = g_tindex;
                 unsigned int  i_tile_width  = g_tile_width;
                 unsigned int  i_tile_height = g_tile_height;
                 unsigned int  i_num_tiles   = 0;
@@ -343,7 +360,7 @@ int main(int argc, char **argv) {
                 output_t *i_output;
                 
                 if (!g_mode_ice) {
-                    i_output = safe_malloc(sizeof(output_t));
+                    i_output = output_create();
                     format->open_output(i_output, i_source_name, OUTPUT_SOURCE);
                 } else {
                     i_output = g_output;
@@ -416,19 +433,35 @@ int main(int argc, char **argv) {
                     // store the width and height as well
                     i_data_buffer[0] = i_width;
                     i_data_buffer[1] = i_height;
-                    memcpy(&i_data_buffer[2], i_data, i_size);
                     i_size = i_width * i_height;
                     i_size_total = i_size + 2;
                     
+                    // handle bpp mode here
+                    if (i_bpp == 8) {
+                        memcpy(&i_data_buffer[2], i_data, i_size);
+                    } else {
+                        force_image_bpp(i_bpp, i_rgba, i_data, &i_data_buffer[2], &i_width, i_height, &i_size);
+                        i_size_total = i_size + 2;
+                    }
+                    
                     // output the image
+                    if (g_style_tp) {
+                        i_size = group_style_transparent_output(i_data, &i_data_buffer[2], i_width, i_height, i_tindex);
+                        i_size_total = i_size + 2;
+                    }
+                    
                     if (g_compression) {
                         uint8_t *c_data = compress_image(i_data_buffer, &i_size_total, g_compression);
-                        format->print_compressed_image(i_output, g_bpp, i_name, i_size_total);
+                        format->print_compressed_image(i_output, i_bpp, i_name, i_size_total);
                         output_compressed_array(format, i_output, c_data, i_size_total);
                         free(c_data);
                     } else {
-                        format->print_image(i_output, g_bpp, i_name, i_size_total, i_width, i_height);
-                        output_array(format, i_output, &i_data_buffer[2], i_width, i_height);
+                        format->print_image(i_output, i_bpp, i_name, i_size_total, i_width, i_height);
+                        if (g_style_tp) {
+                            output_compressed_array(format, i_output, &i_data_buffer[2], i_size);
+                        } else {
+                            output_array(format, i_output, &i_data_buffer[2], i_width, i_height);
+                        }
                     }
                 }
                 
@@ -439,7 +472,11 @@ int main(int argc, char **argv) {
                         format->print_tiles_ptrs_header(g_output, i_name, i_num_tiles, g_compression);
                     }
                 } else {
-                    format->print_image_header(g_output, i_name, i_size_total, g_compression);
+                    if (g_style_tp) {
+                        format->print_transparent_image_header(g_output, i_name, i_size_total, g_compression);
+                    } else {
+                        format->print_image_header(g_output, i_name, i_size_total, g_compression);
+                    }
                 }
                 
                 // newline for next image

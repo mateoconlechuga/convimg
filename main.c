@@ -322,7 +322,8 @@ int main(int argc, char **argv) {
                 
                 // open the file and make a rgba array
                 i_error = lodepng_decode32_file(&i_rgba, &i_width, &i_height, i_in_name);
-                if (i_error) { errorf("decoding %s", i_in_name); }
+                if (i_error == LODEPNG_ERR_OPEN) { errorf("could not open '%s'", i_in_name); }
+                if (i_error) { errorf("decoding '%s'", i_in_name); }
                 
                 // get the actual size of the image
                 i_size = i_width * i_height;

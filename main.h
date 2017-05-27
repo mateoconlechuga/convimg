@@ -8,14 +8,16 @@
 #include "libs/libimagequant.h"
 #include "libs/lodepng.h"
 
-#define VERSION_MAJOR 5              // version information
-#define VERSION_MINOR 6              // minor version
+#define VERSION_MAJOR 6              // version information
+#define VERSION_MINOR 0              // minor version
 
 #define MAX_PAL_LEN   256 
 #define NUM_GROUPS    256            // total number of groups able to create
 
 #define ICON_WIDTH    16
 #define ICON_HEIGHT   16
+
+#define LODEPNG_ERR_OPEN 78
 
 // function prototypes
 void add_rgba(uint8_t *pal, size_t size);

@@ -118,16 +118,21 @@ void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned
 
 uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode) {
     long delta;
+    Optimal *opt;
+    uint8_t *ret = NULL;
     
     // select the compression mode
     switch (mode) {
         case COMPRESS_ZX7:
-            return compress(optimize(image, *size), image, *size, (size_t*)size, &delta);
+            opt = optimize(image, *size);
+            ret = compress(opt, image, *size, (size_t*)size, &delta);
+            free(opt);
+            break;
         default:
             errorf("unexpected compression mode.");
             break;
     }
-    return NULL;
+    return ret;
 }
 
 // create an icon for the C toolchain

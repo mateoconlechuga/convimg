@@ -253,8 +253,8 @@ int parse_input(char *line) {
             if(!strcmp(*argv, "#GroupICE")) {
                 g = &group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
-                g->outh = str_dupcat(argv[1], ".txt");
                 g->outc = str_dupcat(argv[1], ".txt");
+                g->outh = NULL;
                 g->mode = MODE_ICE;
                 convpng.numgroups++;
             }

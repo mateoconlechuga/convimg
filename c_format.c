@@ -66,29 +66,29 @@ static void c_print_image_source_header(output_t *out, const char *group_header_
     fprintf(out->c, "#include \"%s\"\n\n", group_header_file_name);
 }
 
-static void c_print_tile(output_t *out, const char *image_name, unsigned int tile_num, unsigned int size, uint8_t width, uint8_t height) {
-    fprintf(out->c, "uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ", image_name, tile_num, size, width, height);
+static void c_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, uint8_t width, uint8_t height) {
+    fprintf(out->c, "uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ", i_name, tile_num, size, width, height);
 }
 
-static void c_print_tile_ptrs(output_t *out, const char *image_name, unsigned int num_tiles, bool compressed) {
+static void c_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
     unsigned int i = 0;
 
     if (compressed) {
-        fprintf(out->c, "uint8_t *%s_tiles_compressed[%u] = {\n", image_name, num_tiles);
+        fprintf(out->c, "uint8_t *%s_tiles_compressed[%u] = {\n", i_name, num_tiles);
         for (; i < num_tiles; i++) {
-            fprintf(out->c, " %s_tile_%u_compressed,\n", image_name, i);
+            fprintf(out->c, " %s_tile_%u_compressed,\n", i_name, i);
         }
     } else {
-        fprintf(out->c, "uint8_t *%s_tiles_data[%u] = {\n", image_name, num_tiles);
+        fprintf(out->c, "uint8_t *%s_tiles_data[%u] = {\n", i_name, num_tiles);
         for (; i < num_tiles; i++) {
-            fprintf(out->c, " %s_tile_%u_data,\n", image_name, i);
+            fprintf(out->c, " %s_tile_%u_data,\n", i_name, i);
         }
     }
     fprintf(out->c, "};\n");
 }
 
-static void c_print_compressed_tile(output_t *out, const char *image_name, unsigned int tile_num, unsigned int size) {
-    fprintf(out->c, "uint8_t %s_tile_%u_compressed[%u] = {\n", image_name, tile_num, size);
+static void c_print_compressed_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size) {
+    fprintf(out->c, "uint8_t %s_tile_%u_compressed[%u] = {\n", i_name, tile_num, size);
 }
 
 static void c_print_byte(output_t *out, uint8_t byte, bool need_comma) {
@@ -104,43 +104,43 @@ static void c_print_next_array_line(output_t *out, bool at_end) {
     }
 }
 
-static void c_print_image(output_t *out, uint8_t bpp, const char *image_name, unsigned int size, const uint8_t width, const uint8_t height) {
-    fprintf(out->c, "// %u bpp image\nuint8_t %s_data[%u] = {\n %u,%u,  // width,height\n ", bpp, image_name, size, width, height);
+static void c_print_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const uint8_t width, const uint8_t height) {
+    fprintf(out->c, "// %u bpp image\nuint8_t %s_data[%u] = {\n %u,%u,  // width,height\n ", bpp, i_name, size, width, height);
 }
 
-static void c_print_compressed_image(output_t *out, uint8_t bpp, const char *image_name, unsigned int size) {
-    fprintf(out->c, "// %u bpp image\nuint8_t %s_compressed[%u] = {\n ", bpp, image_name, size);
+static void c_print_compressed_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size) {
+    fprintf(out->c, "// %u bpp image\nuint8_t %s_compressed[%u] = {\n ", bpp, i_name, size);
 }
 
-static void c_print_tiles_header(output_t *out, const char *image_name, unsigned int num_tiles, bool compressed) {
+static void c_print_tiles_header(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
     unsigned int i = 0;
     if (compressed) {
         for (; i < num_tiles; i++) {
-            fprintf(out->h, "extern uint8_t %s_tile_%u_compressed[];\n", image_name, i);
+            fprintf(out->h, "extern uint8_t %s_tile_%u_compressed[];\n", i_name, i);
         }
     } else {
         for (; i < num_tiles; i++) {
-            fprintf(out->h,"extern uint8_t %s_tile_%u_data[];\n", image_name, i);
-            fprintf(out->h, "#define %s_tile_%u ((gfx_image_t*)%s_tile_%u_data)\n", image_name, i, image_name, i);
+            fprintf(out->h,"extern uint8_t %s_tile_%u_data[];\n", i_name, i);
+            fprintf(out->h, "#define %s_tile_%u ((gfx_image_t*)%s_tile_%u_data)\n", i_name, i, i_name, i);
         }
     }
 }
 
-static void c_print_tiles_ptrs_header(output_t *out, const char *image_name, unsigned int num_tiles, bool compressed) {
+static void c_print_tiles_ptrs_header(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
     if (compressed) {
-        fprintf(out->h, "extern uint8_t *%s_tiles_compressed[%u];\n", image_name, num_tiles);
+        fprintf(out->h, "extern uint8_t *%s_tiles_compressed[%u];\n", i_name, num_tiles);
     } else {
-        fprintf(out->h, "extern uint8_t *%s_tiles_data[%u];\n", image_name, num_tiles);
-        fprintf(out->h, "#define %s_tiles ((gfx_image_t**)%s_tiles_data)\n", image_name, image_name);
+        fprintf(out->h, "extern uint8_t *%s_tiles_data[%u];\n", i_name, num_tiles);
+        fprintf(out->h, "#define %s_tiles ((gfx_image_t**)%s_tiles_data)\n", i_name, i_name);
     }
 }
 
-static void c_print_image_header(output_t *out, const char *image_name, unsigned int size, bool compressed) {
+static void c_print_image_header(output_t *out, const char *i_name, unsigned int size, bool compressed) {
     if (compressed) {
-        fprintf(out->h, "extern uint8_t %s_compressed[%u];\n", image_name, size);
+        fprintf(out->h, "extern uint8_t %s_compressed[%u];\n", i_name, size);
     } else {
-        fprintf(out->h, "extern uint8_t %s_data[%u];\n", image_name, size);
-        fprintf(out->h, "#define %s ((gfx_image_t*)%s_data)\n", image_name, image_name);
+        fprintf(out->h, "extern uint8_t %s_data[%u];\n", i_name, size);
+        fprintf(out->h, "#define %s ((gfx_image_t*)%s_data)\n", i_name, i_name);
     }
 }
 

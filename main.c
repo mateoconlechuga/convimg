@@ -94,17 +94,13 @@ int main(int argc, char **argv) {
         
         if (g_mode_c) {
             format = &c_format;
-        }
+        } else
         if (g_mode_asm) {
             format = &asm_format;
-        }
-        /*if (g_mode_ice) {
+        } else
+        if (g_mode_ice) {
             format = &ice_format;
-            g_compression = COMPRESS_NONE;
-            g_convert_to_tiles = false;
-            g_is_global_pal = false;
-            g_bpp = 8;
-        }*/
+        }
         
         // log the messages while opening the output files
         if (g_is_global_pal) {
@@ -344,8 +340,16 @@ int main(int argc, char **argv) {
                 }
                 
                 // open the outputs
-                output_t *i_output = safe_malloc(sizeof(output_t));
-                format->open_output(i_output, i_source_name, OUTPUT_SOURCE);
+                output_t *i_output;
+                
+                if (!g_mode_ice) {
+                    i_output = safe_malloc(sizeof(output_t));
+                    format->open_output(i_output, i_source_name, OUTPUT_SOURCE);
+                } else {
+                    i_output = g_output;
+                }
+                
+                // free the source name
                 free(i_source_name);
                 
                 // write all the image data to the ouputs
@@ -442,7 +446,10 @@ int main(int argc, char **argv) {
                 lof("\n");
                 
                 // close the outputs
-                format->close_output(i_output, OUTPUT_SOURCE);
+                if (!g_mode_ice) {
+                    format->close_output(i_output, OUTPUT_SOURCE);
+                    free(i_output);
+                }
                 
                 // free the opened image
                 free(i_data_buffer);
@@ -451,7 +458,6 @@ int main(int argc, char **argv) {
                 free(i_data);
                 free(i_name);
                 free(i_in_name);
-                free(i_output);
                 if (i_mapped) { liq_result_destroy(i_mapped);  }
                 if (i_image)  { liq_image_destroy(i_image); }
                 if (i_attr)   { liq_attr_destroy(i_attr);   }

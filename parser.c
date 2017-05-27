@@ -206,6 +206,14 @@ add_other_colors:
                 g->output_palette_array = false;
             }
             
+            if(!strcmp(*argv, "#OutputPaletteArray")) {
+                if(!strcmp(argv[1], "false")) {
+                    g->output_palette_array = false;
+                } else {
+                    g->output_palette_array = true;
+                }
+            }
+            
             if(!strcmp(*argv, "#Tilemap")) {
                 char **tilemap_options;
         
@@ -223,7 +231,7 @@ add_other_colors:
                 free(tilemap_options);
             }
         
-            if(!strcmp(*argv, "#BitsPerPixel")) {
+            if(!strcmp(*argv, "#BitsPerPixel") || !strcmp(*argv, "#BPP")) {
                 uint8_t bpp = (uint8_t)strtol(argv[1], NULL, 10);
                 switch(bpp) {
                     case 1: case 2: case 4: case 8: case 16:

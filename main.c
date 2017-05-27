@@ -258,6 +258,8 @@ int main(int argc, char **argv) {
             // free the histogram
             if (res)  { liq_result_destroy(res);     }
             if (hist) { liq_histogram_destroy(hist); }
+        } else {
+            lof("16 bpp mode detected, no palette needed...\n");
         }
 
         // output an image of the palette
@@ -336,24 +338,29 @@ int main(int argc, char **argv) {
                 
                 // allocate and decode the image
                 i_data = safe_malloc(i_size + 2);
-                liq_set_max_colors(i_attr, g_pal_len);
-                i_image = liq_image_create_rgba(i_attr, i_rgba, i_width, i_height, 0);
-                if (!i_image) { errorf("could not create image."); }
+                
+                if (!g_is_16_bpp) {
+                    liq_set_max_colors(i_attr, g_pal_len);
+                    i_image = liq_image_create_rgba(i_attr, i_rgba, i_width, i_height, 0);
+                    if (!i_image) { errorf("could not create image."); }
 
-                // add all the palette colors
-                for (j = 0; j < g_pal_len; j++) { liq_image_add_fixed_color(i_image, pal.entries[j]); }
+                    // add all the palette colors
+                    for (j = 0; j < g_pal_len; j++) { liq_image_add_fixed_color(i_image, pal.entries[j]); }
 
-                // quantize image against palette
-                if (!(i_mapped = liq_quantize_image(i_attr, i_image))) {errorf("could not quantize image."); }
-                liq_write_remapped_image(i_mapped, i_image, i_data, i_size);
+                    // quantize image against palette
+                    if (!(i_mapped = liq_quantize_image(i_attr, i_image))) {errorf("could not quantize image."); }
+                    liq_write_remapped_image(i_mapped, i_image, i_data, i_size);
 
-                // if custom palette, hard to compute accuratly
-                if (g_pal_name) {
-                    lof(" %s : converted!", i_name);
-                    convpng.bad_conversion = true;
+                    // if custom palette, hard to compute accuratly
+                    if (g_pal_name) {
+                        lof(" %s : converted!", i_name);
+                        convpng.bad_conversion = true;
+                    } else {
+                        if ((diff = liq_get_remapping_error(i_mapped)) > 15) { convpng.bad_conversion = true; }
+                        lof(" %s : %.2f%%", i_name, 100-diff > 0 ? 100-diff : 0);
+                    }
                 } else {
-                    if ((diff = liq_get_remapping_error(i_mapped)) > 15) { convpng.bad_conversion = true; }
-                    lof(" %s : %.2f%%", i_name, 100-diff > 0 ? 100-diff : 0);
+                    lof(" %s : converted!", i_name);
                 }
                 
                 // open the outputs

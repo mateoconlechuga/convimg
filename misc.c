@@ -79,7 +79,7 @@ void build_image_palette(const liq_palette *pal, const unsigned length, const ch
     unsigned int x;
     for (x = 0; x < length; x++) {
         unsigned int o = x << 2;
-        liq_color *c = &pal->entries[x];
+        const liq_color *c = &pal->entries[x];
         image[o + 0] = c->r;
         image[o + 1] = c->g;
         image[o + 2] = c->b;
@@ -137,17 +137,15 @@ uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode) {
 }
 
 void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_buffer, unsigned int *width, uint8_t height, unsigned int *size) {
-    unsigned int j,k,i = 0;
+    unsigned int j,k,i;
+    j = k = i = 0;
     
     if (bpp == 16) {
-        for (j = 0; j < height; j++) {
-            unsigned int o = j * *width;
-            for (k = 0; k < *width; k++) {
-                unsigned int l = o + k;
-                uint16_t out_short = rgb565(rgba[l + 0], rgba[l + 1], rgba[l + 2]);
-                data_buffer[i++] = out_short >> 8;
-                data_buffer[i++] = out_short & 255;
-            }
+        for (; j < *size; j++) {
+            uint16_t _short = rgb565(rgba[i + 0], rgba[i + 1], rgba[i + 2]);
+            data_buffer[k++] = _short >> 8;
+            data_buffer[k++] = _short & 255;
+            i += 4;
         }
         *width *= 2;
     } else {
@@ -166,7 +164,7 @@ void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_bu
 
         uint8_t inc_amt = pow(2, shift_amt);
 
-        for (j = 0; j < height; j++) {
+        for (; j < height; j++) {
             unsigned int o = j * *width;
             for (k = 0; k < *width; k += inc_amt) {
                 uint8_t curr_inc = inc_amt;

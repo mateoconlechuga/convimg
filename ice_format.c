@@ -96,12 +96,12 @@ static void ice_print_byte(output_t *out, uint8_t byte, bool need_comma) {
     fprintf(out->txt, "0x%02X,", byte);
 }
 
-static void ice_print_next_array_line(output_t *out) {
-    fprintf(out->txt, "\n ");
-}
-
-static void ice_print_terminate_array(output_t *out) {
-    fprintf(out->txt, "\n};\n");
+static void ice_print_next_array_line(output_t *out, bool at_end) {
+    if (at_end) {
+        fprintf(out->c, "\n};\n");
+    } else {
+        fprintf(out->c, "\n ");
+    }
 }
 
 static void ice_print_image(output_t *out, uint8_t bpp, const char *image_name, const unsigned int size, const uint8_t width, const uint8_t height) {
@@ -165,7 +165,6 @@ const format_t ice_format = {
     .print_tile_ptrs = ice_print_tile_ptrs,
     .print_byte = ice_print_byte,
     .print_next_array_line = ice_print_next_array_line,
-    .print_terminate_array = ice_print_terminate_array,
     .print_image = ice_print_image,
     .print_compressed_image = ice_print_compressed_image,
     .print_tiles_header = ice_print_tiles_header,

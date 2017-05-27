@@ -96,12 +96,12 @@ static void c_print_byte(output_t *out, uint8_t byte, bool need_comma) {
     fprintf(out->c, "0x%02X,", byte);
 }
 
-static void c_print_next_array_line(output_t *out) {
-    fprintf(out->c, "\n ");
-}
-
-static void c_print_terminate_array(output_t *out) {
-    fprintf(out->c, "\n};\n");
+static void c_print_next_array_line(output_t *out, bool at_end) {
+    if (at_end) {
+        fprintf(out->c, "\n};\n");
+    } else {
+        fprintf(out->c, "\n ");
+    }
 }
 
 static void c_print_image(output_t *out, uint8_t bpp, const char *image_name, unsigned int size, const uint8_t width, const uint8_t height) {
@@ -166,7 +166,6 @@ const format_t c_format = {
     .print_tile_ptrs = c_print_tile_ptrs,
     .print_byte = c_print_byte,
     .print_next_array_line = c_print_next_array_line,
-    .print_terminate_array = c_print_terminate_array,
     .print_image = c_print_image,
     .print_compressed_image = c_print_compressed_image,
     .print_tiles_header = c_print_tiles_header,

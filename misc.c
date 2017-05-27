@@ -97,10 +97,10 @@ void output_compressed_array(const format_t *format, output_t *out, uint8_t *com
         format->print_byte(out, compressed_data[j], !(j+1 == len || (k+1) & 32));
         if ((k+1) & 32 && j+1 < len) {
             k = -1;
-            format->print_next_array_line(out);
+            format->print_next_array_line(out, false);
         }
     }
-    format->print_terminate_array(out);
+    format->print_next_array_line(out, true);
 }
 
 void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned int width, unsigned int height) {
@@ -112,9 +112,8 @@ void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned
         for (j = 0; j < width; j++) {
             format->print_byte(out, data[j + o], j+1 != width);
         }
-        format->print_next_array_line(out);
+        format->print_next_array_line(out, k+1 == height);
     }
-    format->print_terminate_array(out);
 }
 
 uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode) {

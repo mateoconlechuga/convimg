@@ -96,12 +96,12 @@ static void asm_print_byte(output_t *out, uint8_t byte, bool need_comma) {
     }
 }
 
-static void asm_print_next_array_line(output_t *out) {
-    fprintf(out->asm, "\n db ");
-}
-
-static void asm_print_terminate_array(output_t *out) {
-    (void)out;
+static void asm_print_next_array_line(output_t *out, bool at_end) {
+    if (at_end) {
+        fprintf(out->asm, "\n");
+    } else {
+        fprintf(out->asm, "\n db ");
+    }
 }
 
 static void asm_print_image(output_t *out, uint8_t bpp, const char *image_name, unsigned int size, const uint8_t width, const uint8_t height) {
@@ -155,7 +155,6 @@ const format_t asm_format = {
     .print_tile_ptrs = asm_print_tile_ptrs,
     .print_byte = asm_print_byte,
     .print_next_array_line = asm_print_next_array_line,
-    .print_terminate_array = asm_print_terminate_array,
     .print_image = asm_print_image,
     .print_compressed_image = asm_print_compressed_image,
     .print_tiles_header = asm_print_tiles_header,

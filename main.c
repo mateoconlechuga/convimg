@@ -428,23 +428,24 @@ int main(int argc, char **argv) {
                     }
                 }
                 
-                // free the image buffer
-                free(i_data_buffer);
-                
                 if (g_convert_to_tiles) {
-                    format->print_tiles_header(i_output, i_name, i_num_tiles, g_compression);
+                    format->print_tiles_header(g_output, i_name, i_num_tiles, g_compression);
 
                     if (g_make_tilemap_ptrs) {
-                        format->print_tiles_ptrs_header(i_output, i_name, i_num_tiles, g_compression);
+                        format->print_tiles_ptrs_header(g_output, i_name, i_num_tiles, g_compression);
                     }
                 } else {
-                    format->print_image_header(i_output, i_name, i_size_total, g_compression);
+                    format->print_image_header(g_output, i_name, i_size_total, g_compression);
                 }
+                
+                // newline for next image
+                lof("\n");
                 
                 // close the outputs
                 format->close_output(i_output, OUTPUT_SOURCE);
                 
                 // free the opened image
+                free(i_data_buffer);
                 free(i_curr);
                 free(i_rgba);
                 free(i_data);

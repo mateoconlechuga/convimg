@@ -1,6 +1,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -17,9 +18,7 @@
 #define ICON_HEIGHT   16
 
 // function prototypes
-void output_compressed_array(FILE *outfile, uint8_t *compressed_data, unsigned len, unsigned mode);
 void add_rgba(uint8_t *pal, size_t size);
-void init_convpng_struct(void);
 void free_rgba(void);
 
 // type of mode for the group
@@ -77,7 +76,48 @@ typedef struct c_st {
     bool bad_conversion;
     bool icon_zds;
     char *iconc;
+    bool using_custom_ini;
+    bool using_custom_log;
+    bool group_mode;
 } convpng_t;
+
+#define OUTPUT_HEADER true
+#define OUTPUT_SOURCE false
+
+typedef union {
+    struct {
+        FILE *c; FILE *h;
+    };
+    struct {
+        FILE *asm; FILE *inc;
+    };
+    struct {
+        FILE *txt; FILE *txt_inc;
+    };
+} output_t;
+
+typedef struct {
+	void (*open_output)(output_t *out, const char *input, bool header);
+	void (*close_output)(output_t *out, bool header);
+	void (*print_source_header)(output_t *out, const char *header_file_name);
+	void (*print_header_header)(output_t *out, const char *group_name);
+	void (*print_palette)(output_t *out, const char *group_name, liq_palette *pal, const unsigned int pal_len);
+	void (*print_transparent_index)(output_t *out, const char *group_name, const unsigned int index);
+	void (*print_image_source_header)(output_t *out, const char *group_header_file_name);
+	void (*print_tile)(output_t *out, const char *image_name, unsigned int tile_num, unsigned int size, uint8_t width, uint8_t height);
+	void (*print_compressed_tile)(output_t *out, const char *image_name, unsigned int tile_num, unsigned int size);
+	void (*print_tile_ptrs)(output_t *out, const char *image_name, unsigned int num_tiles, bool compressed);
+	void (*print_byte)(output_t *out, uint8_t byte, bool need_comma);
+	void (*print_next_array_line)(output_t *out);
+	void (*print_terminate_array)(output_t *out);
+	void (*print_image)(output_t *out, uint8_t bpp, const char *image_name, unsigned int size, const uint8_t width, const uint8_t height);
+	void (*print_compressed_image)(output_t *out, uint8_t bpp, const char *image_name, unsigned int size);
+	void (*print_tiles_header)(output_t *out, const char *image_name, unsigned int num_tiles, bool compressed);
+	void (*print_tiles_ptrs_header)(output_t *out, const char *image_name, unsigned int num_tiles, bool compressed);
+	void (*print_image_header)(output_t *out, const char *image_name, unsigned int size, bool compressed);
+	void (*print_palette_header)(output_t *out, const char *name, uint8_t len);
+	void (*print_end_header)(output_t *out);
+} format_t;
 
 extern convpng_t convpng;
 extern group_t group[NUM_GROUPS];

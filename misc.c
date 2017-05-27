@@ -6,6 +6,7 @@
 #include <math.h>
 
 #include "libs/lodepng.h"
+#include "libs/zx7.h"
 
 #include "main.h"
 #include "misc.h"
@@ -86,6 +87,48 @@ void build_image_palette(const liq_palette *pal, const unsigned length, const ch
     encodePNG(filename, image, length, 1);
     free(image);
     lof("Saved palette (%s)\n",filename);
+}
+
+void output_compressed_array(const format_t *format, output_t *out, uint8_t *compressed_data, unsigned len) {
+    unsigned j, k;
+    
+    // write the whole array in a big block
+    for (k = j = 0; j < len; j++, k++) {
+        format->print_byte(out, compressed_data[j], !(j+1 == len || (k+1) & 32));
+        if ((k+1) & 32 && j+1 < len) {
+            k = -1;
+            format->print_next_array_line(out);
+        }
+    }
+    format->print_terminate_array(out);
+}
+
+void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned int width, unsigned int height) {
+    unsigned int j, k;
+    
+    // write out the array
+    for (k = 0; k < height; k++) {
+        unsigned int o = k * width;
+        for (j = 0; j < width; j++) {
+            format->print_byte(out, data[j + o], j+1 != width);
+        }
+        format->print_next_array_line(out);
+    }
+    format->print_terminate_array(out);
+}
+
+uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode) {
+    long delta;
+    
+    // select the compression mode
+    switch (mode) {
+        case COMPRESS_ZX7:
+            return compress(optimize(image, *size), image, *size, (size_t*)size, &delta);
+        default:
+            errorf("unexpected compression mode.");
+            break;
+    }
+    return NULL;
 }
 
 // create an icon for the C toolchain

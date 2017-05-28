@@ -62,7 +62,6 @@ typedef struct g_st {
     bool output_palette_image;       // does the user want an image of the palette?
     bool output_palette_array;       // does the user want an array of the palette?
     uint8_t bpp;                     // bits per pixel in each image
-    char *directory;                 // place to store output things
     
     // for creating global palettes
     bool is_global_palette;          // should we just build a palette rather than a group?
@@ -82,6 +81,7 @@ typedef struct c_st {
     bool using_custom_ini;
     bool using_custom_log;
     bool group_mode;
+    char *directory;
 } convpng_t;
 
 #define OUTPUT_HEADER true

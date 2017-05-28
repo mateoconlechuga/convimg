@@ -533,7 +533,10 @@ int main(int argc, char **argv) {
         lof("[warning] image quality might be too low.\nplease try grouping similar images, reducing image colors, \nor selecting a better palette if conversion is not ideal.\n\n");
     }
     lof("Finished!\n");
-    fclose(convpng.log);
-
+    if (convpng.log) {
+        fclose(convpng.log);
+    }
+    free(convpng.directory);
+    
     return 0;
 }

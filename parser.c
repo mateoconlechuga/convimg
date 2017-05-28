@@ -53,10 +53,8 @@ int separate_args(char *srcstr, char ***output, const char sep) {
 	int numparts = 0;
 	char **currentpart;
 
-	for (i = 0; i < len; i++)
-	{
-		if (srcstr[i] == sep)
-		{
+	for (i = 0; i < len; i++) {
+		if (srcstr[i] == sep) {
 			srcstr[i] = '\0';	
 			numparts++;
 		}
@@ -83,55 +81,95 @@ int separate_args(char *srcstr, char ***output, const char sep) {
 }
 
 // check if there is a wildcard, if so we need to create a list of images to add
-void find_pngs(const char* path) {
-   DIR* dir = opendir(path);
-   if (dir) {
-      struct dirent* hFile;
-      while ((hFile = readdir(dir))) {
-         if (!strcmp(hFile->d_name, ".") || !strcmp(hFile->d_name, "..")) continue;
-
-         // dir.name is the name of the file. Do whatever string comparison 
-         // you want here. Something like:
-         if (strstr(hFile->d_name, ".png" )) {
-            printf( "found an .png file: %s", hFile->d_name );
-         }
-      } 
-      closedir(dir);
-   }
+static char **find_pngs(DIR* dir, const char *path, unsigned int *len) {
+    char **png_array = NULL;
+    *len = 0;
+    if (dir) {
+        unsigned int png_count = 0;
+        struct dirent* file;
+        
+        // find a list of all the png files in the directory
+        while ((file = readdir(dir))) {
+            const char *name = file->d_name;
+            if (!strcmp(name, ".") || !strcmp(name, "..")) continue;
+            if (strstr(name, ".png")) {
+                png_array = realloc(png_array, (png_count + 1) * sizeof(char *));
+                png_array[png_count++] = str_dupcat(path, name);
+                *len += 1;
+            }
+        }
+        closedir(dir);
+    }
+    return png_array;
 }
 
 // adds an image to the indexed array
 static void add_image(char *line) { 
     group_t *g = &group[convpng.numgroups - 1]; image_t *s;
-    unsigned k = g->numimages;
+    unsigned int len = 1;
+    unsigned int i;
+    bool open_dir = false;
+    char **images = NULL;
     char *in;
-    
-    // allocate memory for the new image
-    g->image = safe_realloc(g->image, sizeof(image_t*) * (k + 1));
-    s = g->image[k] = safe_malloc(sizeof(image_t));
+    DIR* dir;
     
     // check if relative or absolute file path
-    if (line[(strlen(line)-1)] == '/') {
-        line[(strlen(line)-1)] = '\0';
-    }
-    (in = strrchr(line, '/')) ? in++ : (in = line);
-    
-    // add the .png extension if needed
-    if (!strrchr(in,'.')) {
-        s->in = str_dupcat(in, ".png");
-    } else {
-        s->in = str_dup(in);
+    if (line[strlen(line)-1] == '/') {
+        line[strlen(line)-1] = '\0';
     }
     
-    // create the name of the file
-    s->name = str_dup(s->in);
-    s->name[(int)(strrchr(s->name,'.')-s->name)] = '\0';
+    // check for wildcard at end
+    if (line[strlen(line)-1] == '*') {
+        line[strlen(line)-1] = '\0';
+        if (!strlen(line)) {
+            *line = '.';
+        }
+        open_dir = true;
+        dir = opendir(line);
+        images = find_pngs(dir, line, &len);
+    }
     
-    // do the whole thing where you create output names
-    s->outc = str_dupcat(s->name, g->mode == MODE_C ? ".c" : ".asm");
+    for (i = 0; i < len; i++) {
+        if (open_dir) { line = images[i]; }
+        (in = strrchr(line, '/')) ? in++ : (in = line);
+        
+        lof ("%s\n", line);
+        
+        // allocate memory for the new image
+        g->image = safe_realloc(g->image, sizeof(image_t*) * (g->numimages + 1));
+        s = g->image[g->numimages] = safe_malloc(sizeof(image_t));
+        
+        // add the .png extension if needed
+        if (!strchr(in,'.')) {
+            s->in = str_dupcat(line, ".png");
+        } else {
+            s->in = str_dup(line);
+        }
+        
+        (in = strrchr(s->in, '/')) ? in++ : (in = s->in);
+        
+        // create the name of the file
+        s->name = str_dup(in);
+        s->name[(int)(strrchr(s->name,'.')-s->name)] = '\0';
+        
+        // do the whole thing where you create output names
+        s->outc = str_dupcat(s->name, g->mode == MODE_C ? ".c" : ".asm");
+        if (convpng.directory) {
+            char *free_outc = s->outc;
+            s->outc = str_dupcat(convpng.directory, s->outc);
+            free(free_outc);
+        }
+        
+        // increment the number of images we have
+        g->numimages++;
+    }
     
-    // increment the number of images we have
-    g->numimages++;
+    if (open_dir) {
+        for(i = 0; i < len; i++) {
+            free(images[i]);
+        }
+        free(images);
+    }
 }
 
 // parse the ini file
@@ -223,7 +261,11 @@ add_other_colors:
             }
             
             if(!strcmp(*argv, "#OutputDirectory")) {
-                g->directory = str_dup(argv[1]);
+                if (argv[1][strlen(argv[1])-1] != '/') {
+                    convpng.directory = str_dupcat(argv[1], "/");
+                } else {
+                    convpng.directory = str_dup(argv[1]);
+                }
             }
             
             if(!strcmp(*argv, "#NoPaletteArray")) {
@@ -261,29 +303,53 @@ add_other_colors:
             
             // A C conversion type
             if(!strcmp(*argv, "#GroupC")) {
+                char *free_me;
                 g = &group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
                 g->outh = str_dupcat(argv[1], ".h");
                 g->outc = str_dupcat(argv[1], ".c");
+                if (convpng.directory) {
+                    free_me = g->outc;
+                    g->outc = str_dupcat(convpng.directory, g->outc);
+                    free(free_me);
+                    free_me = g->outh;
+                    g->outh = str_dupcat(convpng.directory, g->outh);
+                    free(free_me);
+                }
                 g->mode = MODE_C;
                 convpng.numgroups++;
             }
 
             // An ASM group
             if(!strcmp(*argv, "#GroupASM")) {
+                char *free_me;
                 g = &group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
                 g->outh = str_dupcat(argv[1], ".inc");
                 g->outc = str_dupcat(argv[1], ".asm");
+                if (convpng.directory) {
+                    free_me = g->outc;
+                    g->outc = str_dupcat(convpng.directory, g->outc);
+                    free(free_me);
+                    free_me = g->outh;
+                    g->outh = str_dupcat(convpng.directory, g->outh);
+                    free(free_me);
+                }
                 g->mode = MODE_ASM;
                 convpng.numgroups++;
             }
             
             // output in ICE format
             if(!strcmp(*argv, "#GroupICE")) {
+                char *free_me;
                 g = &group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
                 g->outc = str_dupcat(argv[1], ".txt");
+                if (convpng.directory) {
+                    free_me = g->outc;
+                    g->outc = str_dupcat(convpng.directory, g->outc);
+                    free(free_me);
+                }
                 g->outh = NULL;
                 g->mode = MODE_ICE;
                 convpng.numgroups++;

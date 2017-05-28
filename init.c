@@ -23,6 +23,11 @@ static void init_convpng_struct(void) {
     convpng.curline = 0;
     convpng.numgroups = 0;
     convpng.numappvars = 0;
+    convpng.directory = NULL;
+    convpng.log = NULL;
+    convpng.ini = NULL;
+    convpng.using_custom_ini = false;
+    convpng.using_custom_log = false;
     for (t = 0; t < NUM_GROUPS; t++) {
         group_t *g = &group[t];
         g->palette_name = NULL;
@@ -47,12 +52,13 @@ void init_convpng(int argc, char **argv) {
     char opt;
     char *ini_file_name = NULL;
     char *log_file_name = NULL;
+    bool use_file_log = true;
     
-    convpng.using_custom_ini = false;
-    convpng.using_custom_log = false;
+    // init the main structure
+    init_convpng_struct();
     
     // read all the options from the command line
-    while ((opt = getopt(argc, argv, "c:i:j:")) != -1) {
+    while ((opt = getopt(argc, argv, "nc:i:j:")) != -1) {
         switch (opt) {
             case 'c':    // generate an icon header file useable with the C toolchain
                 convpng.iconc = str_dup(optarg);
@@ -78,6 +84,9 @@ void init_convpng(int argc, char **argv) {
                 if (!strrchr(log_file_name, '.')) strcat(log_file_name, ".log");
                 convpng.using_custom_log = true;
                 break;
+            case 'n':    // turn off file logging
+                use_file_log = false;
+                break;
             default:
                 break;
         }
@@ -89,14 +98,11 @@ void init_convpng(int argc, char **argv) {
     
     // open input and output files
     convpng.ini = fopen(ini_file_name, "r");
-    convpng.log = fopen(log_file_name, "w");
+    if(use_file_log) { convpng.log = fopen(log_file_name, "w"); }
     
     // ensure the files were opened correctly
     if (!convpng.ini) { errorf("could not find file '%s'\nPlease make sure you have created the configuration file\n", ini_file_name); }
-    if (!convpng.log) { errorf("could not open file '%s'\nPlease check file permissions\n", log_file_name); }
-    
-    // init the main structure
-    init_convpng_struct();
+    if (!convpng.log && use_file_log) { errorf("could not open file '%s'\nPlease check file permissions\n", log_file_name); }
     
     // log a message that opening succeded
     lof("Opened %s\n", ini_file_name);

@@ -19,7 +19,7 @@ uint16_t rgb565(const uint8_t r8, const uint8_t g8, const uint8_t b8);
 void encodePNG(const char* filename, const unsigned char* image, unsigned width, unsigned height);
 void build_image_palette(const liq_palette *pal, const unsigned length, const char *filename);
 
-void output_compressed_array(const format_t *format, output_t *out, uint8_t *compressed_data, unsigned int len);
+void output_array_compressed(const format_t *format, output_t *out, uint8_t *compressed_data, unsigned int len);
 void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned int width, unsigned int height);
 uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode);
 

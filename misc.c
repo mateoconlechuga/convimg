@@ -90,7 +90,7 @@ void build_image_palette(const liq_palette *pal, const unsigned length, const ch
     lof("Saved palette (%s)\n",filename);
 }
 
-void output_compressed_array(const format_t *format, output_t *out, uint8_t *compressed_data, unsigned len) {
+void output_array_compressed(const format_t *format, output_t *out, uint8_t *compressed_data, unsigned len) {
     unsigned j, k;
     
     // write the whole array in a big block
@@ -185,6 +185,8 @@ unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer,
     unsigned int size = 0;
     unsigned int j = 0;
     
+    memset(data_buffer, 0, width * height * 2);
+    
     for (; j < height; j++) {
         unsigned int offset = j * width, left = width;
         while (left) {
@@ -207,7 +209,6 @@ unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer,
     }
     return size;
 }
-
 
 output_t *output_create(void) {
     return safe_malloc(sizeof(output_t));

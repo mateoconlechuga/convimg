@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <string.h>
+#include <dirent.h>
 
 #include "libs/libimagequant.h"
 #include "libs/lodepng.h"
@@ -81,35 +82,53 @@ int separate_args(char *srcstr, char ***output, const char sep) {
 	return numparts; 
 }
 
+// check if there is a wildcard, if so we need to create a list of images to add
+void find_pngs(const char* path) {
+   DIR* dir = opendir(path);
+   if (dir) {
+      struct dirent* hFile;
+      while ((hFile = readdir(dir))) {
+         if (!strcmp(hFile->d_name, ".") || !strcmp(hFile->d_name, "..")) continue;
+
+         // dir.name is the name of the file. Do whatever string comparison 
+         // you want here. Something like:
+         if (strstr(hFile->d_name, ".png" )) {
+            printf( "found an .png file: %s", hFile->d_name );
+         }
+      } 
+      closedir(dir);
+   }
+}
+
 // adds an image to the indexed array
 static void add_image(char *line) { 
     group_t *g = &group[convpng.numgroups - 1]; image_t *s;
     unsigned k = g->numimages;
-    char *ext;
+    char *in;
     
     // allocate memory for the new image
     g->image = safe_realloc(g->image, sizeof(image_t*) * (k + 1));
     s = g->image[k] = safe_malloc(sizeof(image_t));
     
-    // add the .png extension if needed
-    s->in = safe_malloc(strlen(line)+5);
-    strcpy(s->in, line);
-    if(!(ext = strrchr(s->in,'.'))) {
-        strcat(s->in,".png");
-        ext = strrchr(s->in,'.');
-    }
- 
     // check if relative or absolute file path
-
-    // do the whole thing where you create output names
-    s->outc = safe_malloc(strlen(s->in)+5);
-    strcpy(s->outc, s->in);
-    strcpy(s->outc+(ext-(s->in)), g->mode == MODE_C ? ".c" : ".asm");
+    if (line[(strlen(line)-1)] == '/') {
+        line[(strlen(line)-1)] = '\0';
+    }
+    (in = strrchr(line, '/')) ? in++ : (in = line);
+    
+    // add the .png extension if needed
+    if (!strrchr(in,'.')) {
+        s->in = str_dupcat(in, ".png");
+    } else {
+        s->in = str_dup(in);
+    }
     
     // create the name of the file
-    s->name = safe_malloc(strlen(s->in)+1);
-    strcpy(s->name, s->in);
+    s->name = str_dup(s->in);
     s->name[(int)(strrchr(s->name,'.')-s->name)] = '\0';
+    
+    // do the whole thing where you create output names
+    s->outc = str_dupcat(s->name, g->mode == MODE_C ? ".c" : ".asm");
     
     // increment the number of images we have
     g->numimages++;
@@ -151,17 +170,10 @@ add_other_colors:
             
             // add a transparent index color
             if(!strcmp(*argv, "#TransparentIndex") || !strcmp(*argv, "#TranspIndex")) {
-                char **index;
-                
                 if(num <= 1) { errorf("parsing line %d", convpng.curline); }
-                num = separate_args(argv[1], &index, ',');
-                if(num < 1) { errorf("invalid transparency index"); }
                 
-                g->tindex = (unsigned)strtol(*index, NULL, 10);
+                g->tindex = (unsigned)strtol(argv[1], NULL, 10);
                 g->use_tindex = true;
-                
-                // free the allocated memory
-                free(index);
             }
             
             if(!strcmp(*argv, "#AppVar")) {
@@ -202,16 +214,20 @@ add_other_colors:
                 g->output_palette_image = true;
             }
             
-            if(!strcmp(*argv, "#NoPaletteArray")) {
-                g->output_palette_array = false;
-            }
-            
             if(!strcmp(*argv, "#OutputPaletteArray")) {
                 if(!strcmp(argv[1], "false")) {
                     g->output_palette_array = false;
                 } else {
                     g->output_palette_array = true;
                 }
+            }
+            
+            if(!strcmp(*argv, "#OutputDirectory")) {
+                g->directory = str_dup(argv[1]);
+            }
+            
+            if(!strcmp(*argv, "#NoPaletteArray")) {
+                g->output_palette_array = false;
             }
             
             if(!strcmp(*argv, "#Tilemap")) {

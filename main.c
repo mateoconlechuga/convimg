@@ -72,7 +72,6 @@ int main(int argc, char **argv) {
         unsigned   g_tile_height       = curr->tile_height;
         unsigned   g_compression       = curr->compression;
         bool       g_use_tindex        = curr->use_tindex;
-        bool       g_use_tcolor        = curr->use_tcolor;
         bool       g_is_global_pal     = curr->is_global_palette;
         bool       g_out_pal_img       = curr->output_palette_image;
         bool       g_out_pal_arr       = curr->output_palette_array;
@@ -89,7 +88,7 @@ int main(int argc, char **argv) {
         bool       g_mode_c            = g_mode == MODE_C;
         bool       g_mode_asm          = g_mode == MODE_ASM;
         bool       g_mode_ice          = g_mode == MODE_ICE;
-        bool       g_use_transpcolor   = g_use_tcolor || g_use_tindex;
+        bool       g_use_tcolor        = curr->use_tcolor || g_use_tindex;
         bool       g_style_tp          = curr->style == STYLE_TRANSPARENT;
         
         // determine the output format
@@ -114,7 +113,6 @@ int main(int argc, char **argv) {
             free(g_pal_name);
             g_pal_name        = NULL;
             g_is_global_pal   = false;
-            g_use_transpcolor = false;
             g_use_tcolor      = false;
             g_use_tindex      = false;
             g_out_pal_arr     = false;
@@ -172,21 +170,22 @@ int main(int argc, char **argv) {
             }
             
             // store the custom palette to the main palette
-            liq_color pal_color;
             pal.count = g_pal_len;
             
             // loop though all the colors
             for (unsigned int h = 0; h < g_pal_len; h++) {
-                unsigned int loc = h * 4;
-                pal_color.r = pal_arr[loc + 0];
-                pal_color.g = pal_arr[loc + 1];
-                pal_color.b = pal_arr[loc + 2];
-                pal_color.a = pal_arr[loc + 3];
-                pal.entries[h] = pal_color;
+                unsigned int o = h * 4;
+                liq_color c;
+                c.r = pal_arr[o + 0];
+                c.g = pal_arr[o + 1];
+                c.b = pal_arr[o + 2];
+                c.a = pal_arr[o + 3];
+                pal.entries[h] = c;
             }
             
             // if we allocated a custom palette free it
             free(custom_pal);
+            
         // build the palette using maths
         } else if (!g_is_16_bpp) {
             liq_result *res = NULL;
@@ -237,19 +236,19 @@ int main(int argc, char **argv) {
             
             // find the transparent color, move by default to index 0
             if (g_use_tcolor) {
-                
+
                 // if the user wants the index to be elsewhere, expand the array
                 if (g_tindex > g_pal_len) {
                     g_pal_len = g_tindex+1;
                 }
-                
+
                 for (j = 0; j < g_pal_len ; j++) {
                     liq_color *c = &pal.entries[j];
                     if (g_tcolor_cv == rgb1555(c->r, c->g, c->b))
                         break;
                 }
-                
-                // move transparent color to index 0
+
+                // move transparent color to index
                 liq_color tmpc = pal.entries[j];
                 pal.entries[j] = pal.entries[g_tindex];
                 pal.entries[g_tindex] = tmpc;
@@ -261,7 +260,7 @@ int main(int argc, char **argv) {
         } else {
             lof("16 bpp mode detected, no palette needed...\n");
         }
-
+        
         // output an image of the palette
         if (g_out_pal_img) {
             char *png_file_name = safe_malloc(strlen(g_name)+10);
@@ -284,7 +283,7 @@ int main(int argc, char **argv) {
             }
             
             // log transparent color things
-            if (g_use_transpcolor) {
+            if (g_use_tcolor) {
                 format->print_transparent_index(g_output, g_name, g_tindex);
                 lof("Transparent Color Index : %u\n", g_tindex);
                 lof("Transparent Color : 0x%04X\n", g_tcolor_cv);
@@ -380,21 +379,21 @@ int main(int argc, char **argv) {
                 // write all the image data to the ouputs
                 format->print_image_source_header(i_output, g_outh_name);
                 
-                uint8_t *i_data_buffer = safe_malloc(i_width * i_height * 2);
+                uint8_t *i_data_buffer = safe_malloc(i_width * i_height * 2 + 2);
                 unsigned int i_size_total = i_size + 2;
                 unsigned int i_size_backup = i_size + 2;
                 
                 if (g_convert_to_tiles) {
-                    unsigned int curr_tile;
-                    unsigned int x_offset;
-                    unsigned int y_offset;
+                    unsigned int tile_num = 0;
+                    unsigned int x_offset = 0;
+                    unsigned int y_offset = 0;
                     unsigned int offset;
                     unsigned int index;
                     i_size        = i_tile_width * i_tile_height;
                     i_size_total  = i_size + 2;
                     i_size_backup = i_size_total;
                     
-                    for (x_offset = y_offset = curr_tile = 0; curr_tile < i_num_tiles; curr_tile++) {
+                    for (; tile_num < i_num_tiles; tile_num++) {
                         i_data_buffer[0] = i_tile_width;
                         i_data_buffer[1] = i_tile_height;
                         index = 2;
@@ -409,19 +408,19 @@ int main(int argc, char **argv) {
                         
                         if (g_compression) {
                             uint8_t *c_data = compress_image(i_data_buffer, &i_size_total, g_compression);
-                            format->print_compressed_tile(i_output, i_name, curr_tile, i_size_total);
-                            output_compressed_array(format, i_output, c_data, i_size_total);
+                            format->print_compressed_tile(i_output, i_name, tile_num, i_size_total);
+                            output_array_compressed(format, i_output, c_data, i_size_total);
                             free(c_data);
                             
                             // log the compressed size
-                            lof("\n %s_tile_%u_compressed (%u -> %d bytes)", i_name, curr_tile, i_size_backup, i_size_total);
+                            lof("\n %s_tile_%u_compressed (%u -> %d bytes)", i_name, tile_num, i_size_backup, i_size_total);
                             
                             // warn if compression is worse
                             if (i_size_total > i_size_backup) {
                                 lof(" #warning!");
                             }
                         } else {
-                            format->print_tile(i_output, i_name, curr_tile, i_size_backup, i_tile_width, i_tile_height);
+                            format->print_tile(i_output, i_name, tile_num, i_size_backup, i_tile_width, i_tile_height);
                             output_array(format, i_output, &i_data_buffer[2], i_tile_width, i_tile_height);
                         }
                         
@@ -461,12 +460,12 @@ int main(int argc, char **argv) {
                     if (g_compression) {
                         uint8_t *c_data = compress_image(i_data_buffer, &i_size_total, g_compression);
                         format->print_compressed_image(i_output, i_bpp, i_name, i_size_total);
-                        output_compressed_array(format, i_output, c_data, i_size_total);
+                        output_array_compressed(format, i_output, c_data, i_size_total);
                         free(c_data);
                     } else {
                         format->print_image(i_output, i_bpp, i_name, i_size_total, i_width, i_height);
                         if (g_style_tp) {
-                            output_compressed_array(format, i_output, &i_data_buffer[2], i_size);
+                            output_array_compressed(format, i_output, &i_data_buffer[2], i_size);
                         } else {
                             output_array(format, i_output, &i_data_buffer[2], i_width, i_height);
                         }

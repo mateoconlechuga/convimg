@@ -36,14 +36,17 @@ typedef struct s_st {
     char *in;                        // name of image on disk
     char *outc;                      // output file name (.c, .asm)
     char *name;                      // name of image
+    unsigned int compression;        // compression information
+    unsigned int style;              // output style
 } image_t;
 
 typedef struct g_st {
     char *name;                      // name of the group file
     char *palette_name;              // custom palette file name
     unsigned palette_length;         // custom palette length
+    bool palette_fixed_length;       // bool to check if forced palette size
     image_t **image;                 // pointer to array of images
-    unsigned numimages;              // number of images in the group
+    unsigned int numimages;          // number of images in the group
     char *outh;                      // output main .inc or .h file
     char *outc;                      // output main .asm or .c file
     int tindex;                      // index to use as the transparent color
@@ -51,16 +54,18 @@ typedef struct g_st {
     liq_color tcolor;                // apparently more about the transparent color
     bool use_tcolor;                 // bool to tell if to compute transparent color
     bool use_tindex;                 // bool to use a new index
-    unsigned mode;                   // either asm or c style conversion
-    unsigned style;                  // Style of ouput conversion
-    unsigned compression;            // compression type
-    unsigned tile_width,tile_height; // for use creating tilemaps
-    unsigned tile_size;              // tile_height * tile_width + 2
-    unsigned total_tiles;            // number of tiles in the image
+    unsigned int mode;               // either asm or c style conversion
+    unsigned int style;              // Style of ouput conversion
+    unsigned int compression;        // compression type
+    unsigned int tile_width;         // for use creating tilemaps
+    unsigned int tile_height;        // for use creating tilemaps
+    unsigned int tile_size;          // tile_height * tile_width + 2
+    unsigned int total_tiles;        // number of tiles in the image
     bool convert_to_tilemap;         // should we convert to a tilemap?
     bool create_tilemap_ptrs;        // should we create an array of pointers to the tiles?
     bool output_palette_image;       // does the user want an image of the palette?
     bool output_palette_array;       // does the user want an array of the palette?
+    bool output_palette_appvar;      // does the user want the palette inside the appvar?
     uint8_t bpp;                     // bits per pixel in each image
     
     // for creating global palettes
@@ -118,8 +123,10 @@ typedef struct {
     void (*print_tiles_ptrs_header)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
     void (*print_image_header)(output_t *out, const char *i_name, unsigned int size, bool compressed);
     void (*print_transparent_image_header)(output_t *out, const char *i_name, unsigned int size, bool compressed);
-    void (*print_palette_header)(output_t *out, const char *name, uint8_t len);
+    void (*print_palette_header)(output_t *out, const char *name, unsigned int len);
     void (*print_end_header)(output_t *out);
+    void (*print_appvar_array)(output_t *out, const char *a_name, unsigned int num_images);
+    void (*print_appvar_image)(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style);
 } format_t;
 
 extern convpng_t convpng;

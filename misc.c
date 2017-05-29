@@ -58,6 +58,15 @@ char *str_dupcat(const char *s, const char *c) {
     return d;
 }
 
+char *str_dupcatdir(const char *s, const char *c) {
+    char *d = str_dupcat(s, c);
+    if (d && convpng.directory) {
+        char *f = d;
+        d = str_dupcat(convpng.directory, d);
+        free(f);
+    }
+    return d;
+}
 
 // encodes a PNG image (used for creating global palettes)
 void encodePNG(const char* filename, const unsigned char* image, unsigned width, unsigned height) {

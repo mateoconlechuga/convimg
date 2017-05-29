@@ -25,9 +25,9 @@ static void c_open_output(output_t *out, const char *input, bool header) {
 
 static void c_close_output(output_t *out, bool header) {
     if (header) {
-        fclose(out->h);
+        if (out->h) { fclose(out->h); }
     } else {
-        fclose(out->c);
+        if (out->c) { fclose(out->c); }
     }
 }
 
@@ -153,7 +153,7 @@ static void c_print_transparent_image_header(output_t *out, const char *i_name, 
     }
 }
 
-static void c_print_palette_header(output_t *out, const char *name, uint8_t len) {
+static void c_print_palette_header(output_t *out, const char *name, unsigned int len) {
     fprintf(out->h, "extern uint16_t %s_pal[%u];\n", name, len);
 }
 
@@ -161,6 +161,24 @@ static void c_print_end_header(output_t *out) {
     fprintf(out->h, "\n#endif\n");
 }
 
+static void c_print_appvar_array(output_t *out, const char *a_name, unsigned int num_images) {
+    fprintf(out->c, "uint8_t *%s[%u] = {\n ", a_name, num_images);
+    fprintf(out->h, "#define %s_num_images %u\n\n", a_name, num_images);
+    fprintf(out->h, "extern uint8_t *%s[%u];\n", a_name, num_images);
+}
+
+static void c_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style) {
+    const char *s = "gfx_image_t";
+    if (tp_style) {
+        s = "gfx_timage_t";
+    }
+    fprintf(out->c, "%u,", offset);
+    if (compressed) {
+        fprintf(out->h, "#define %s_compressed ((%s*)%s[%u])\n", i_name, s, a_name, index);
+    } else {
+        fprintf(out->h, "#define %s ((%s*)%s[%u])\n", i_name, s, a_name, index);
+    }
+}
 
 const format_t c_format = {
     .open_output = c_open_output,
@@ -182,6 +200,8 @@ const format_t c_format = {
     .print_image_header = c_print_image_header,
     .print_transparent_image_header = c_print_transparent_image_header,
     .print_palette_header = c_print_palette_header,
-    .print_end_header = c_print_end_header
+    .print_end_header = c_print_end_header,
+    .print_appvar_array = c_print_appvar_array,
+    .print_appvar_image = c_print_appvar_image,
 }; 
 

@@ -25,9 +25,9 @@ static void asm_open_output(output_t *out, const char *input, bool header) {
 
 static void asm_close_output(output_t *out, bool header) {
     if (header) {
-        fclose(out->inc);
+        if (out->inc) { fclose(out->inc); }
     } else {
-        fclose(out->asm);
+        if (out->asm) { fclose(out->asm); }
     }
 }
 
@@ -138,7 +138,7 @@ static void asm_print_transparent_image_header(output_t *out, const char *i_name
     fprintf(out->h, "#include \"%s.asm\" ; %u bytes\n", i_name, size);
 }
 
-static void asm_print_palette_header(output_t *out, const char *name, uint8_t len) {
+static void asm_print_palette_header(output_t *out, const char *name, unsigned int len) {
     (void)out;
     (void)name;
     (void)len;
@@ -146,6 +146,22 @@ static void asm_print_palette_header(output_t *out, const char *name, uint8_t le
 
 static void asm_print_end_header(output_t *out) {
     fprintf(out->h, "\n#endif\n");
+}
+
+static void asm_print_appvar_array(output_t *out, const char *a_name, unsigned int num_images) {
+    (void)out;
+    (void)a_name;
+    (void)num_images;
+}
+
+static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style) {
+    (void)out;
+    (void)a_name;
+    (void)i_name;
+    (void)offset;
+    (void)index;
+    (void)compressed;
+    (void)tp_style;
 }
 
 const format_t asm_format = {
@@ -168,7 +184,9 @@ const format_t asm_format = {
     .print_image_header = asm_print_image_header,
     .print_transparent_image_header = asm_print_transparent_image_header,
     .print_palette_header = asm_print_palette_header,
-    .print_end_header = asm_print_end_header
+    .print_end_header = asm_print_end_header,
+    .print_appvar_array = asm_print_appvar_array,
+    .print_appvar_image = asm_print_appvar_image,
 };
 
 

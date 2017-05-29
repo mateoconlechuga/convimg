@@ -22,7 +22,7 @@ static void ice_open_output(output_t *out, const char *input, bool header) {
 
 static void ice_close_output(output_t *out, bool header) {
     if (!header) {
-        fclose(out->txt);
+        if (out->txt) { fclose(out->txt); }
     }
 }
 
@@ -121,7 +121,7 @@ static void ice_print_transparent_image_header(output_t *out, const char *i_name
     (void)compressed;
 }
 
-static void ice_print_palette_header(output_t *out, const char *name, uint8_t len) {
+static void ice_print_palette_header(output_t *out, const char *name, unsigned int len) {
     (void)out;
     (void)name;
     (void)len;
@@ -129,6 +129,22 @@ static void ice_print_palette_header(output_t *out, const char *name, uint8_t le
 
 static void ice_print_end_header(output_t *out) {
     (void)out;
+}
+
+static void ice_print_appvar_array(output_t *out, const char *a_name, unsigned int num_images) {
+    (void)out;
+    (void)a_name;
+    (void)num_images;
+}
+
+static void ice_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style) {
+    (void)out;
+    (void)a_name;
+    (void)i_name;
+    (void)offset;
+    (void)index;
+    (void)compressed;
+    (void)tp_style;
 }
 
 const format_t ice_format = {
@@ -151,6 +167,8 @@ const format_t ice_format = {
     .print_image_header = ice_print_image_header,
     .print_transparent_image_header = ice_print_transparent_image_header,
     .print_palette_header = ice_print_palette_header,
-    .print_end_header = ice_print_end_header
+    .print_end_header = ice_print_end_header,
+    .print_appvar_array = ice_print_appvar_array,
+    .print_appvar_image = ice_print_appvar_image,
 };
 

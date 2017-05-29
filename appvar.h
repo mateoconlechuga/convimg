@@ -11,6 +11,7 @@
 #define MAX_OFFSETS 512
 
 typedef struct {
+    unsigned int mode;
     uint8_t *output;
     uint8_t curr_image;
     uint8_t max_images;
@@ -20,9 +21,12 @@ typedef struct {
     group_t *g;
 } appvar_t;
 
-unsigned image_is_in_an_appvar(const char *image_name);
+void init_appvars(void);
+void export_appvars(void);
+
+bool image_is_in_an_appvar(const char *image_name);
 void output_appvar_init(appvar_t *a, int num_images);
-void add_appvars_data(const unsigned i, const uint8_t *data, const size_t size);
+void add_appvars_data(const uint8_t *data, const size_t size);
 void add_appvar_data(appvar_t *a, const uint8_t *data, const size_t size);
 void output_appvar_complete(appvar_t *a);
 

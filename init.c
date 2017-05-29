@@ -31,16 +31,19 @@ static void init_convpng_struct(void) {
     for (t = 0; t < NUM_GROUPS; t++) {
         group_t *g = &group[t];
         g->palette_name = NULL;
+        g->palette_length = MAX_PAL_LEN;
         g->image = NULL;
         g->name = NULL;
         g->use_tcolor = false;
         g->use_tindex = false;
         g->output_palette_array = true;
         g->output_palette_image = false;
+        g->output_palette_appvar = false;
         g->is_global_palette = false;
         g->compression = COMPRESS_NONE;
         g->style = STYLE_NONE;
         g->convert_to_tilemap = false;
+        g->palette_fixed_length = false;
         g->numimages = 0;
         g->tindex = 0;
         g->mode = 0;
@@ -64,14 +67,16 @@ void init_convpng(int argc, char **argv) {
                 convpng.iconc = str_dup(optarg);
                 convpng.icon_zds = true;
                 create_icon();
-				exit(0);
-				break;
+                if(convpng.log) { fclose(convpng.log); }
+                exit(0);
+                break;
             case 'j':    // generate an icon for asm programs
                 convpng.iconc = str_dup(optarg);
                 convpng.icon_zds = false;
                 create_icon();
-				exit(0);
-				break;
+                if(convpng.log) { fclose(convpng.log); }
+                exit(0);
+                break;
             case 'i':    // change the ini file input
                 ini_file_name = safe_malloc(strlen(optarg)+5);
                 strcpy(ini_file_name, optarg);
@@ -97,8 +102,8 @@ void init_convpng(int argc, char **argv) {
     log_file_name = log_file_name ? log_file_name : log_main_name;
     
     // open input and output files
-    convpng.ini = fopen(ini_file_name, "r");
-    if(use_file_log) { convpng.log = fopen(log_file_name, "w"); }
+    convpng.ini = fopen(ini_file_name, "rb");
+    if(use_file_log) { convpng.log = fopen(log_file_name, "wb"); }
     
     // ensure the files were opened correctly
     if (!convpng.ini) { errorf("could not find file '%s'\nPlease make sure you have created the configuration file\n", ini_file_name); }
@@ -108,3 +113,10 @@ void init_convpng(int argc, char **argv) {
     lof("Opened %s\n", ini_file_name);
 }
 
+int cleanup_convpng(void) {
+    if (convpng.log) {
+        fclose(convpng.log);
+    }
+    free(convpng.directory);
+    return 0;
+}

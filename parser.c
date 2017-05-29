@@ -11,27 +11,42 @@
 #include "main.h"
 #include "misc.h"
 #include "appvar.h"
+#include "parser.h"
 #include "logging.h"
+
+// completely parses the ini file
+void parse_convpng_ini(void) {
+    char *line = NULL;
+    while ((line = get_line(convpng.ini))) {
+        parse_input(line);
+        free(line);
+    }
+    // close the ini file
+    fclose(convpng.ini);
+    convpng.ini = NULL;
+    
+    // init the appvars created from parsing
+    init_appvars();
+    
+    // add an extra newline for kicks
+    lof("\n");
+}
 
 // get a string
 char *get_line(FILE *stream) {   
-    char *line = safe_malloc(1);
+    char *line = NULL;
     char *tmp;
 
-    if(feof(stream)) {
-        free(line);
-        return NULL;
-    }
-
-    if(line) {
+    if(!feof(stream)) {
+        line = safe_malloc(1);
         int i = 0, c = EOF;
         while (c) {
             c = fgetc(stream);
-            
-            if(c == '\n' || c == EOF) {
+
+            if(c == '\r' || c == '\n' || c == EOF) {
                 c = '\0';
             }
-            
+
             if(c != ' ') {
                 line[i++] = (char)c;
                 tmp = safe_realloc(line, i+1);
@@ -49,35 +64,35 @@ char *get_line(FILE *stream) {
 }
 
 int separate_args(char *srcstr, char ***output, const char sep) {
-	int i, len = strlen(srcstr);
-	int numparts = 0;
-	char **currentpart;
+    int i, len = strlen(srcstr);
+    int numparts = 0;
+    char **currentpart;
 
-	for (i = 0; i < len; i++) {
-		if (srcstr[i] == sep) {
-			srcstr[i] = '\0';	
-			numparts++;
-		}
-	}
+    for (i = 0; i < len; i++) {
+        if (srcstr[i] == sep) {
+            srcstr[i] = '\0';   
+            numparts++;
+        }
+    }
 
-	numparts++;
-	*output = malloc(numparts*sizeof(char*));
+    numparts++;
+    *output = malloc(numparts*sizeof(char*));
 
-	if (*output == NULL) {
-		errorf("memory error.");
-	}
-	
-	currentpart = *output;
-	*currentpart = srcstr;
+    if (*output == NULL) {
+        errorf("memory error.");
+    }
+    
+    currentpart = *output;
+    *currentpart = srcstr;
 
-	for (i = 0; i < len; i++) {
-		if (srcstr[i] == '\0') {
-			currentpart++;
-			*currentpart = &(srcstr[i+1]);
-		}
-	}
-	
-	return numparts; 
+    for (i = 0; i < len; i++) {
+        if (srcstr[i] == '\0') {
+            currentpart++;
+            *currentpart = &(srcstr[i+1]);
+        }
+    }
+    
+    return numparts; 
 }
 
 // check if there is a wildcard, if so we need to create a list of images to add
@@ -104,14 +119,15 @@ static char **find_pngs(DIR* dir, const char *path, unsigned int *len) {
 }
 
 // adds an image to the indexed array
-static void add_image(char *line) { 
-    group_t *g = &group[convpng.numgroups - 1]; image_t *s;
+static void add_image(char *line) {
+    group_t *g = &group[convpng.numgroups - 1];
     unsigned int len = 1;
     unsigned int i;
-    bool open_dir = false;
-    char **images = NULL;
     char *in;
     DIR* dir;
+    image_t *s;
+    bool open_dir = false;
+    char **images = NULL;
     
     // check if relative or absolute file path
     if (line[strlen(line)-1] == '/') {
@@ -133,11 +149,13 @@ static void add_image(char *line) {
         if (open_dir) { line = images[i]; }
         (in = strrchr(line, '/')) ? in++ : (in = line);
         
-        lof ("%s\n", line);
-        
         // allocate memory for the new image
         g->image = safe_realloc(g->image, sizeof(image_t*) * (g->numimages + 1));
         s = g->image[g->numimages] = safe_malloc(sizeof(image_t));
+        
+        // inherit properties from group
+        s->compression = g->compression;
+        s->style = g->style;
         
         // add the .png extension if needed
         if (!strchr(in,'.')) {
@@ -172,6 +190,15 @@ static void add_image(char *line) {
     }
 }
 
+// error if not enough arguments
+static void args_error(void) {
+   if (convpng.log) { fprintf(convpng.log, "[error] incorrect number of arguments (line %d)\n", convpng.curline); }
+   fprintf(stderr, "[error] incorrect number of arguments (line %d)\n", convpng.curline);
+   if (convpng.log) { fclose(convpng.log); }
+   if (convpng.ini) { fclose(convpng.ini); }
+   exit(1);
+}
+
 // parse the ini file
 int parse_input(char *line) {
     int num = 0;
@@ -185,13 +212,13 @@ int parse_input(char *line) {
             if(!strcmp(*argv, "#TransparentColor") || !strcmp(*argv, "#TranspColor")) {
                 char **colors;
                 
-                if(num <= 1) { errorf("parsing line %d", convpng.curline); }
+                if (num <= 1) { args_error(); }
                 num = separate_args(argv[1], &colors, ',');
                 if(num == 3) {
                     g->tcolor.a = 255;
                     goto add_other_colors;
                 } else if(num < 4) {
-                    errorf("not enough transparency colors.");
+                    args_error();
                 }
                 
                 g->tcolor.a = (uint8_t)strtol(colors[3], NULL, 10);
@@ -204,37 +231,40 @@ add_other_colors:
                 
                 // free the allocated memory
                 free(colors);
-            }
+            } else
             
             // add a transparent index color
             if(!strcmp(*argv, "#TransparentIndex") || !strcmp(*argv, "#TranspIndex")) {
-                if(num <= 1) { errorf("parsing line %d", convpng.curline); }
-                
-                g->tindex = (unsigned)strtol(argv[1], NULL, 10);
+                g->tindex = (unsigned int)strtol(argv[1], NULL, 10);
                 g->use_tindex = true;
-            }
+            } else
             
-            if(!strcmp(*argv, "#AppVar")) {
+            if(!strcmp(*argv, "#AppVarC")) {
                 appvar_t *a = &appvar[convpng.numappvars];
-                a->g = g = &group[convpng.numgroups];
-                g->mode = MODE_APPVAR;
+                g = &group[convpng.numgroups];
                 memset(a->name, 0, 9);
                 strncpy(a->name, argv[1], 8);
+                g->mode = MODE_APPVAR;
+                g->name = str_dup(a->name);
+                g->outh = str_dupcatdir(a->name, ".h");
+                g->outc = str_dupcatdir(a->name, ".c");
+                a->mode = MODE_C;
+                a->g = g;
                 convpng.numappvars++;
                 convpng.numgroups++;
-            }
-        
+            } else
+                
             if(!strcmp(*argv, "#Compression")) {
                 if(!strcmp(argv[1], "zx7")) {
                     g->compression = COMPRESS_ZX7;
                 }
-            }
+            } else
             
             if(!strcmp(*argv, "#Style")) {
                 if(!strcmp(argv[1], "transparent")) {
                     g->style = STYLE_TRANSPARENT;
                 }
-            }
+            } else
 
             if(!strcmp(*argv, "#CreateGlobalPalette")) {
                 g = &group[convpng.numgroups];
@@ -242,15 +272,23 @@ add_other_colors:
                 g->is_global_palette = true;
                 g->mode = MODE_C;
                 convpng.numgroups++;
-            }
+            } else
         
             if(!strcmp(*argv, "#Palette")) {
                 g->palette_name = str_dup(argv[1]);
-            }
+            } else
+            
+            if(!strcmp(*argv, "#PaletteMaxSize")) {
+                unsigned int len = g->palette_length = (unsigned int)strtol(argv[1], NULL, 10);
+                if (len > MAX_PAL_LEN) { len = MAX_PAL_LEN; }
+                if (len <= 1) { errorf("invalid pallete size (line %d)", convpng.curline); }
+                g->palette_fixed_length = true;
+                g->palette_length = len;
+            } else
             
             if(!strcmp(*argv, "#OutputPaletteImage")) {
                 g->output_palette_image = true;
-            }
+            } else
             
             if(!strcmp(*argv, "#OutputPaletteArray")) {
                 if(!strcmp(argv[1], "false")) {
@@ -258,7 +296,7 @@ add_other_colors:
                 } else {
                     g->output_palette_array = true;
                 }
-            }
+            } else
             
             if(!strcmp(*argv, "#OutputDirectory")) {
                 if (argv[1][strlen(argv[1])-1] != '/') {
@@ -266,18 +304,18 @@ add_other_colors:
                 } else {
                     convpng.directory = str_dup(argv[1]);
                 }
-            }
+            } else
             
             if(!strcmp(*argv, "#NoPaletteArray")) {
                 g->output_palette_array = false;
-            }
+            } else
             
             if(!strcmp(*argv, "#Tilemap")) {
                 char **tilemap_options;
         
-                if(num <= 1) { errorf("parsing line %d", convpng.curline); }
+                if(num <= 1) { args_error(); }
                 num = separate_args(argv[1], &tilemap_options, ',');
-                if(num < 3) { errorf("not enough options specified (tile_width,tile_hieght)."); }
+                if(num < 3) { args_error(); }
                 
                 g->tile_width = (unsigned)strtol(tilemap_options[0], NULL, 10);
                 g->tile_height = (unsigned)strtol(tilemap_options[1], NULL, 10);
@@ -287,7 +325,7 @@ add_other_colors:
                 
                 // free the allocated memory
                 free(tilemap_options);
-            }
+            } else
         
             if(!strcmp(*argv, "#BitsPerPixel") || !strcmp(*argv, "#BPP")) {
                 uint8_t bpp = (uint8_t)strtol(argv[1], NULL, 10);
@@ -299,61 +337,42 @@ add_other_colors:
                         break;
                 }
                 g->bpp = bpp;
-            }
+            } else
             
             // A C conversion type
-            if(!strcmp(*argv, "#GroupC")) {
-                char *free_me;
+            if (!strcmp(*argv, "#GroupC")) {
                 g = &group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
-                g->outh = str_dupcat(argv[1], ".h");
-                g->outc = str_dupcat(argv[1], ".c");
-                if (convpng.directory) {
-                    free_me = g->outc;
-                    g->outc = str_dupcat(convpng.directory, g->outc);
-                    free(free_me);
-                    free_me = g->outh;
-                    g->outh = str_dupcat(convpng.directory, g->outh);
-                    free(free_me);
-                }
+                g->outh = str_dupcatdir(argv[1], ".h");
+                g->outc = str_dupcatdir(argv[1], ".c");
                 g->mode = MODE_C;
                 convpng.numgroups++;
-            }
+            } else
 
             // An ASM group
-            if(!strcmp(*argv, "#GroupASM")) {
-                char *free_me;
+            if (!strcmp(*argv, "#GroupASM")) {
                 g = &group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
-                g->outh = str_dupcat(argv[1], ".inc");
-                g->outc = str_dupcat(argv[1], ".asm");
-                if (convpng.directory) {
-                    free_me = g->outc;
-                    g->outc = str_dupcat(convpng.directory, g->outc);
-                    free(free_me);
-                    free_me = g->outh;
-                    g->outh = str_dupcat(convpng.directory, g->outh);
-                    free(free_me);
-                }
+                g->outh = str_dupcatdir(argv[1], ".inc");
+                g->outc = str_dupcatdir(argv[1], ".asm");
                 g->mode = MODE_ASM;
                 convpng.numgroups++;
-            }
+            } else
             
             // output in ICE format
-            if(!strcmp(*argv, "#GroupICE")) {
-                char *free_me;
+            if (!strcmp(*argv, "#GroupICE")) {
                 g = &group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
-                g->outc = str_dupcat(argv[1], ".txt");
-                if (convpng.directory) {
-                    free_me = g->outc;
-                    g->outc = str_dupcat(convpng.directory, g->outc);
-                    free(free_me);
-                }
+                g->outc = str_dupcatdir(argv[1], ".txt");
                 g->outh = NULL;
                 g->mode = MODE_ICE;
                 convpng.numgroups++;
-            }
+            } else 
+            
+            if (!strcmp(*argv, "#PNGImages")) {
+            } else
+            
+            errorf("unknown command %s (line %d)", *argv, convpng.curline);
             
             // free the args
             free(argv);

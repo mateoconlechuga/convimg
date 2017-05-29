@@ -163,7 +163,7 @@ static void c_print_end_header(output_t *out) {
 
 static void c_print_appvar_array(output_t *out, const char *a_name, unsigned int num_images) {
     fprintf(out->c, "uint8_t *%s[%u] = {\n ", a_name, num_images);
-    fprintf(out->h, "#define %s_num_images %u\n\n", a_name, num_images);
+    fprintf(out->h, "#define %s_num %u\n\n", a_name, num_images);
     fprintf(out->h, "extern uint8_t *%s[%u];\n", a_name, num_images);
 }
 

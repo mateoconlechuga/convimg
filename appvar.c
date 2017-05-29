@@ -58,7 +58,7 @@ void export_appvars(void) {
         format->print_header_header(output, g->name);
         format->print_source_header(output, g->outh);
         format->print_appvar_array(output, a->name, g->numimages);
-                                   
+        
         for (j = 0; j < g->numimages; j++) {
             image_t *i = g->image[j];
             bool i_style_tp = i->style == STYLE_TRANSPARENT;

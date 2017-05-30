@@ -138,10 +138,11 @@ static void add_image(char *line) {
     if (line[strlen(line)-1] == '*') {
         line[strlen(line)-1] = '\0';
         if (!strlen(line)) {
-            *line = '.';
+            dir = opendir("./");
+        } else {
+            dir = opendir(line);
         }
         open_dir = true;
-        dir = opendir(line);
         images = find_pngs(dir, line, &len);
     }
     
@@ -402,7 +403,7 @@ add_other_colors:
             // free the args
             free(argv);
 
-        } else {
+        } else if(*line != '/') {
             add_image(line);
         }
     }

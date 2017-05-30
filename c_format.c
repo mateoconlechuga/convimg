@@ -154,7 +154,7 @@ static void c_print_transparent_image_header(output_t *out, const char *i_name, 
 }
 
 static void c_print_palette_header(output_t *out, const char *name, unsigned int len) {
-    fprintf(out->h, "#define sizeof_%s_pal \n", name, len*2);
+    fprintf(out->h, "#define sizeof_%s_pal %u\n", name, len*2);
     fprintf(out->h, "extern uint16_t %s_pal[%u];\n", name, len);
 }
 
@@ -164,6 +164,7 @@ static void c_print_end_header(output_t *out) {
 
 static void c_print_appvar_array(output_t *out, const char *a_name, unsigned int num_images) {
     fprintf(out->c, "uint8_t *%s[%u] = {\n ", a_name, num_images);
+    fprintf(out->h,"#include <stdbool.h>\n\n");
     fprintf(out->h, "#define %s_num %u\n\n", a_name, num_images);
     fprintf(out->h, "extern uint8_t *%s[%u];\n", a_name, num_images);
 }
@@ -186,7 +187,7 @@ static void c_print_appvar_palette(output_t *out, unsigned int offset) {
 }
 
 static void c_print_appvar_load_function_header(output_t *out) {
-    fprintf(out->c, "#include <fileioc.h>\n\n");
+    fprintf(out->c, "#include <fileioc.h>\n");
 }
 
 static void c_print_appvar_load_function(output_t *out, const char *a_name) {
@@ -203,7 +204,7 @@ static void c_print_appvar_load_function(output_t *out, const char *a_name) {
     fprintf(out->c, "    ti_CloseAll();\n");
     fprintf(out->c, "    return (bool)appvar;\n");
     fprintf(out->c, "}\n");
-    fprintf(out->h, "\nvoid %s_init(void);\n", a_name);
+    fprintf(out->h, "\nbool %s_init(void);\n", a_name);
 }
 
 static void c_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len) {

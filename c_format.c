@@ -192,14 +192,14 @@ static void c_print_appvar_load_function_header(output_t *out) {
 
 static void c_print_appvar_load_function(output_t *out, const char *a_name) {
     fprintf(out->c, "\nbool %s_init(void) {\n", a_name);
-    fprintf(out->c, "    unsigned int i;\n");
+    fprintf(out->c, "    unsigned int i,s = (unsigned int)%s[0];\n", a_name);
     fprintf(out->c, "    ti_var_t appvar;\n");
     fprintf(out->c, "    void *data;\n\n");
     fprintf(out->c, "    ti_CloseAll();\n\n");
     fprintf(out->c, "    appvar = ti_Open(\"%s\", \"r\");\n", a_name);
     fprintf(out->c, "    data = ti_GetDataPtr(appvar);\n");
     fprintf(out->c, "    for (i = 0; i < %s_num; i++) {\n", a_name);
-    fprintf(out->c, "        %s[i] += (unsigned int)data - (unsigned int)%s[0];\n", a_name, a_name);
+    fprintf(out->c, "        %s[i] += (unsigned int)data - s;\n", a_name);
     fprintf(out->c, "    }\n\n");
     fprintf(out->c, "    ti_CloseAll();\n");
     fprintf(out->c, "    return (bool)appvar;\n");

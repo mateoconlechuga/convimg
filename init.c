@@ -10,6 +10,7 @@
 
 #include "main.h"
 #include "misc.h"
+#include "appvar.h"
 #include "parser.h"
 #include "logging.h"
 #include "palettes.h"
@@ -19,7 +20,7 @@ char *ini_main_name = "convpng.ini";
 char *log_main_name = "convpng.log";
 
 static void init_convpng_struct(void) {
-    unsigned t;
+    unsigned int t;
     convpng.curline = 0;
     convpng.numgroups = 0;
     convpng.numappvars = 0;
@@ -30,7 +31,7 @@ static void init_convpng_struct(void) {
     convpng.using_custom_log = false;
     for (t = 0; t < NUM_GROUPS; t++) {
         group_t *g = &group[t];
-        g->palette_name = NULL;
+        g->palette = NULL;
         g->palette_length = MAX_PAL_LEN;
         g->image = NULL;
         g->name = NULL;
@@ -48,6 +49,13 @@ static void init_convpng_struct(void) {
         g->tindex = 0;
         g->mode = 0;
         g->bpp = 8;
+    }
+    for (t = 0; t < MAX_APPVARS; t++) {
+        appvar_t *a = &appvar[t];
+        a->write_init = true;
+        a->mode = 0;
+        a->palette = NULL;
+        a->palette_data = NULL;
     }
 }
 

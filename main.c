@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
         bool       g_out_pal_arr       = curr->output_palette_array;
         bool       g_convert_to_tiles  = curr->convert_to_tilemap;
         bool       g_make_tilemap_ptrs = curr->create_tilemap_ptrs;
-        char      *g_pal_name          = curr->palette_name;
+        char      *g_pal_name          = curr->palette;
         char      *g_name              = curr->name;
         char      *g_outc_name         = curr->outc;
         char      *g_outh_name         = curr->outh;
@@ -84,6 +84,7 @@ int main(int argc, char **argv) {
         bool       g_mode_appvar       = g_mode == MODE_APPVAR;
         bool       g_use_tcolor        = g_valid_tcolor || g_use_tindex;
         bool       g_style_tp          = g_style == STYLE_TRANSPARENT;
+        bool       g_exported_palette  = false;
         
         // determine the output format
         if (g_mode_c) {
@@ -99,6 +100,10 @@ int main(int argc, char **argv) {
             continue;
         }
         
+        // let's check if the palette for this group needs to be exported to an appvar
+        g_exported_palette = palette_is_in_an_appvar(g_name);
+        
+        // create the output pointer
         g_output = output_create();
         
         if (g_style_tp && g_bpp != 8) {
@@ -143,13 +148,13 @@ int main(int argc, char **argv) {
             // use xlibc palette
             if (!strcmp(g_pal_name, "xlibc")) {
                 pal_arr = xlibc_palette;
-                lof("Using built-in xlibc palette...\n");
+                lof("Using built-in xlibc palette ...\n");
             } else
                 
             // use 332 palette
             if (!strcmp(g_pal_name, "rgb332")) {
                 pal_arr = rgb332_palette;
-                lof("Using built-in rgb332 palette...\n");
+                lof("Using built-in rgb332 palette ...\n");
                 
             // must be some user specified palette
             } else {
@@ -169,7 +174,7 @@ int main(int argc, char **argv) {
                 }
                 
                 // tell the user what they are doing
-                lof("Using defined palette %s...\n", g_pal_name);
+                lof("Using defined palette %s ...\n", g_pal_name);
             }
             
             // store the custom palette to the main palette
@@ -268,7 +273,7 @@ int main(int argc, char **argv) {
             if (res)  { liq_result_destroy(res);     }
             if (hist) { liq_histogram_destroy(hist); }
         } else {
-            lof("16 bpp mode detected, no palette needed...\n");
+            lof("16 bpp mode detected, no palette needed ...\n");
         }
         
         // output an image of the palette
@@ -288,10 +293,13 @@ int main(int argc, char **argv) {
             format->print_source_header(g_output, g_outh_name);
             format->print_header_header(g_output, g_name);
 
-            if (g_out_pal_arr) {
+            // export the palette information to file or appvar
+            if (g_exported_palette) {
+                add_appvars_palette(g_name, &pal);
+            } else if (g_out_pal_arr) {
                 format->print_palette(g_output, g_name, &pal, g_pal_len);
             }
-
+            
             // log transparent color things
             if (g_use_tcolor) {
                 format->print_transparent_index(g_output, g_name, g_tindex);
@@ -310,11 +318,14 @@ int main(int argc, char **argv) {
                 // init some vars
                 uint8_t      *i_data        = NULL;
                 uint8_t      *i_rgba        = NULL;
-
+                uint8_t      *i_data_buffer = NULL;
+                
                 liq_image    *i_image       = NULL;
                 liq_result   *i_mapped      = NULL;
                 liq_attr     *i_attr        = liq_attr_create();
 
+                unsigned int  i_size_total  = 0;
+                
                 // init the things for each image
                 char         *i_source_name = i_curr->outc;
                 char         *i_in_name     = i_curr->in;
@@ -395,8 +406,8 @@ int main(int argc, char **argv) {
                 // write all the image data to the ouputs
                 format->print_image_source_header(i_output, g_outh_name);
 
-                uint8_t *i_data_buffer = safe_malloc(i_width * i_height * 2 + 2);
-                unsigned int i_size_total;
+                // allocate a buffer for storing the new data
+                i_data_buffer = safe_malloc(i_width * i_height * 2 + 2);
 
                 if (g_convert_to_tiles) {
                     unsigned int i_size_backup;
@@ -532,7 +543,6 @@ int main(int argc, char **argv) {
 
                 // free the opened image
                 free(i_data_buffer);
-                free(i_curr);
                 free(i_rgba);
                 free(i_data);
                 free(i_name);
@@ -540,9 +550,10 @@ int main(int argc, char **argv) {
                 if (i_mapped) { liq_result_destroy(i_mapped);  }
                 if (i_image)  { liq_image_destroy(i_image); }
                 if (i_attr)   { liq_attr_destroy(i_attr);   }
+                free(i_curr);
             }
             
-            if (g_out_pal_arr) {
+            if (!g_exported_palette && g_out_pal_arr) {
                 format->print_palette_header(g_output, g_name, g_pal_len);
             }
             format->print_end_header(g_output);

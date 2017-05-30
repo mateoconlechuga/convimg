@@ -147,6 +147,28 @@ static void ice_print_appvar_image(output_t *out, const char *a_name, unsigned i
     (void)tp_style;
 }
 
+static void ice_print_appvar_palette(output_t *out, unsigned int offset) {
+    (void)out;
+    (void)offset;
+}
+
+static void ice_print_appvar_load_function_header(output_t *out) {
+    (void)out;
+}
+
+static void ice_print_appvar_load_function(output_t *out, const char *a_name) {
+    (void)out;
+    (void)a_name;
+}
+
+static void ice_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len) {
+    (void)out;
+    (void)p_name;
+    (void)a_name;
+    (void)index;
+    (void)len;
+}
+
 const format_t ice_format = {
     .open_output = ice_open_output,
     .close_output = ice_close_output,
@@ -170,5 +192,9 @@ const format_t ice_format = {
     .print_end_header = ice_print_end_header,
     .print_appvar_array = ice_print_appvar_array,
     .print_appvar_image = ice_print_appvar_image,
+    .print_appvar_load_function_header = ice_print_appvar_load_function_header,
+    .print_appvar_load_function = ice_print_appvar_load_function,
+    .print_appvar_palette_header = ice_print_appvar_palette_header,
+    .print_appvar_palette = ice_print_appvar_palette,
 };
 

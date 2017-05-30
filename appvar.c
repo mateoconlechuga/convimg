@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "libs/libimagequant.h"
+
 #include "main.h"
 #include "misc.h"
 #include "appvar.h"
@@ -15,13 +17,14 @@
 
 appvar_t appvar[MAX_APPVARS];
 appvar_t *appvar_ptrs[MAX_APPVARS];
-static unsigned int image_num_appvars = 0;
+static unsigned int data_num_appvars = 0;
 
 // initialize all the output appvar structs
 void init_appvars(void) {
-    unsigned int a;
-    for (a = 0; a < convpng.numappvars; a++) {
-        output_appvar_init(&appvar[a], appvar[a].g->numimages);
+    unsigned int s;
+    for (s = 0; s < convpng.numappvars; s++) {
+        appvar_t *a = &appvar[s];
+        output_appvar_init(a, a->g->numimages + a->numpalettes);
     }
 }
 
@@ -38,11 +41,11 @@ void export_appvars(void) {
     }
     
     for (t = 0; t < convpng.numappvars; t++) {
+        unsigned int num;
         appvar_t *a = &appvar[t];
         group_t *g = a->g;
-        output_appvar_complete(a);
         output = output_create();
-            
+        
         // choose the correct output mode
         if (a->mode == MODE_C) {
             format = &c_format;
@@ -54,23 +57,66 @@ void export_appvars(void) {
         format->open_output(output, g->outh, OUTPUT_HEADER);
         format->open_output(output, g->outc, OUTPUT_SOURCE);
         
+        // get total number of things in appvar
+        num = g->numimages + a->numpalettes;
+        
         // write out header information
         format->print_header_header(output, g->name);
         format->print_source_header(output, g->outh);
-        format->print_appvar_array(output, a->name, g->numimages);
-        
-        for (j = 0; j < g->numimages; j++) {
-            image_t *i = g->image[j];
-            bool i_style_tp = i->style == STYLE_TRANSPARENT;
-                
-            format->print_appvar_image(output, a->name, a->offsets[j], i->name, j, i->compression, i_style_tp);
-            format->print_next_array_line(output, j + 1 == g->numimages);
-            
-            free(i->name);
-            free(i->outc);
-            free(i->in);
-            free(i);
+        if (a->write_init) {
+            format->print_appvar_load_function_header(output);
         }
+        format->print_appvar_array(output, a->name, num);
+        
+        // add palette information to the end of the appvar
+        if (a->palette) {
+            unsigned int i;
+            for (i = 0; i < a->numpalettes; i++) {
+                uint16_t pal[256];
+                unsigned int pal_len = a->palette_data[i]->count;
+                for (j = 0; j < pal_len; j++) {
+                    liq_color *e = &a->palette_data[i]->entries[j];
+                    pal[j] = rgb1555(e->r, e->g, e->b);
+                }
+                add_appvar_data(a, (uint8_t*)pal, pal_len * 2);
+            }
+        }
+        
+        // write out the images and pallete information
+        for (j = 0; j < num; j++) {
+            if (j < g->numimages) {
+                image_t *i = g->image[j];
+                bool i_style_tp = i->style == STYLE_TRANSPARENT;
+                format->print_appvar_image(output, a->name, a->offsets[j], i->name, j, i->compression, i_style_tp);
+                free(i->name);
+                free(i->outc);
+                free(i->in);
+                free(i);
+            } else {
+                format->print_appvar_palette(output, a->offsets[j]);
+            }
+            format->print_next_array_line(output, j + 1 == num);
+        }
+        
+        // write the appvar init code
+        if (a->write_init) {
+            format->print_appvar_load_function(output, a->name);
+        }
+        
+        // free any included palette
+        if (a->palette) {
+            unsigned int i = 0;
+            for (; i < a->numpalettes; i++) {
+                format->print_appvar_palette_header(output, a->palette[i], a->name, g->numimages++, a->palette_data[i]->count);
+                free(a->palette[i]);
+                free(a->palette_data[i]);
+            }
+            free(a->palette);
+            free(a->palette_data);
+        }
+        
+        // finish exporting the actual appvar
+        output_appvar_complete(a);
         
         // close the outputs
         format->print_end_header(output);
@@ -78,7 +124,7 @@ void export_appvars(void) {
         format->close_output(output, OUTPUT_SOURCE);
         
         // free all the things
-        free(g->palette_name);
+        free(g->palette);
         free(g->image);
         free(g->name);
         free(g->outc);
@@ -88,19 +134,46 @@ void export_appvars(void) {
     lof("\n");
 }
 
-// check if an image exists in an avvar and make a list of pointers to the ones it does
+// check if an image exists in an appvar and make a list of pointers to the ones it does
 bool image_is_in_an_appvar(const char *image_name) {
-    unsigned int i,j;
-    image_num_appvars = 0;
+    unsigned int i,s;
+    data_num_appvars = 0;
     for (i = 0; i < convpng.numappvars; i++) {
-        image_t **image = appvar[i].g->image;
-        for (j = 0; j < appvar[i].g->numimages; j++) {
-            if (!strcmp(image_name, image[j]->name)) {
-                appvar_ptrs[image_num_appvars++] = &appvar[i];
+        appvar_t *a = &appvar[i];
+        for (s = 0; s < a->g->numimages; s++) {
+            if (!strcmp(image_name, a->g->image[s]->name)) {
+                appvar_ptrs[data_num_appvars++] = a;
             }
         }
     }
-    return image_num_appvars != 0;
+    return data_num_appvars != 0;
+}
+
+// check if the palette is needed in an appvar
+bool palette_is_in_an_appvar(const char *pal_name) {
+    unsigned int i,j;
+    for (i = 0; i < convpng.numappvars; i++) {
+        appvar_t *a = &appvar[i];
+        for (j = 0; j < a->numpalettes; j++) {
+            if (!strcmp(pal_name, a->palette[j])) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void add_appvars_palette(const char *pal_name, liq_palette *pal) {
+    unsigned int i,j;
+    for (i = 0; i < convpng.numappvars; i++) {
+        appvar_t *a = &appvar[i];
+        for (j = 0; j < a->numpalettes; j++) {
+            if (!strcmp(pal_name, a->palette[j])) {
+                a->palette_data[j] = malloc(sizeof(liq_palette));
+                memcpy(a->palette_data[j], pal, sizeof(liq_palette));
+            }
+        }
+    }
 }
 
 void output_appvar_init(appvar_t *a, int num_images) {
@@ -108,21 +181,21 @@ void output_appvar_init(appvar_t *a, int num_images) {
     
     // clear data
     a->output = safe_calloc(0x10100, sizeof(uint8_t));
-    memset(a->offsets, 0, MAX_OFFSETS);
+    memset(a->offsets, 0, MAX_OFFSETS * sizeof(uint16_t));
     
     // write header bytes
     memcpy(a->output, header, sizeof header);
     
     // compute storage for image offsets
     a->offsets[0] = 0;
-    a->max_images = num_images;
+    a->max_data = num_images;
     a->curr_image = 0;
     a->offset = 0x4A;
 }
 
 void add_appvars_data(const uint8_t *data, const size_t size) {
     unsigned int j;
-    for (j = 0; j < image_num_appvars; j++) {
+    for (j = 0; j < data_num_appvars; j++) {
         add_appvar_data(appvar_ptrs[j], data, size);
     }
 }
@@ -131,8 +204,8 @@ void add_appvar_data(appvar_t *a, const uint8_t *data, const size_t size) {
     unsigned int offset = a->offset;
     unsigned int curr   = a->curr_image;
     
-    if (offset > 0xFFF0)      { errorf("too many images in group to output appvar"); }
-    if (curr > a->max_images) { errorf("tried to add too many images to appvar"); }
+    if (offset > 0xFFF0)    { errorf("too much data to output appvar '%s'", a->name); }
+    if (curr > a->max_data) { errorf("tried to add too much data to appvar '%s'", a->name); }
     
     a->offsets[curr+1] = a->offsets[curr] + size;
     memcpy(a->output + offset, data, size);

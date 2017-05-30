@@ -154,6 +154,7 @@ static void c_print_transparent_image_header(output_t *out, const char *i_name, 
 }
 
 static void c_print_palette_header(output_t *out, const char *name, unsigned int len) {
+    fprintf(out->h, "#define sizeof_%s_pal \n", name, len*2);
     fprintf(out->h, "extern uint16_t %s_pal[%u];\n", name, len);
 }
 
@@ -172,12 +173,42 @@ static void c_print_appvar_image(output_t *out, const char *a_name, unsigned int
     if (tp_style) {
         s = "gfx_timage_t";
     }
-    fprintf(out->c, "%u,", offset);
+    fprintf(out->c, "(uint8_t*)%u,", offset);
     if (compressed) {
         fprintf(out->h, "#define %s_compressed ((%s*)%s[%u])\n", i_name, s, a_name, index);
     } else {
         fprintf(out->h, "#define %s ((%s*)%s[%u])\n", i_name, s, a_name, index);
     }
+}
+
+static void c_print_appvar_palette(output_t *out, unsigned int offset) {
+    fprintf(out->c, "(uint8_t*)%u,", offset);
+}
+
+static void c_print_appvar_load_function_header(output_t *out) {
+    fprintf(out->c, "#include <fileioc.h>\n\n");
+}
+
+static void c_print_appvar_load_function(output_t *out, const char *a_name) {
+    fprintf(out->c, "\nbool %s_init(void) {\n", a_name);
+    fprintf(out->c, "    unsigned int i;\n");
+    fprintf(out->c, "    ti_var_t appvar;\n");
+    fprintf(out->c, "    void *data;\n\n");
+    fprintf(out->c, "    ti_CloseAll();\n\n");
+    fprintf(out->c, "    appvar = ti_Open(\"%s\", \"r\");\n", a_name);
+    fprintf(out->c, "    data = ti_GetDataPtr(appvar);\n");
+    fprintf(out->c, "    for (i = 0; i < %s_num; i++) {\n", a_name);
+    fprintf(out->c, "        %s[i] += (unsigned int)data - (unsigned int)%s[0];\n", a_name, a_name);
+    fprintf(out->c, "    }\n\n");
+    fprintf(out->c, "    ti_CloseAll();\n");
+    fprintf(out->c, "    return (bool)appvar;\n");
+    fprintf(out->c, "}\n");
+    fprintf(out->h, "\nvoid %s_init(void);\n", a_name);
+}
+
+static void c_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len) {
+    fprintf(out->h, "#define sizeof_%s_pal %u\n", p_name, len*2);
+    fprintf(out->h, "#define %s_pal ((uint16_t*)%s[%u])\n", p_name, a_name, index);
 }
 
 const format_t c_format = {
@@ -203,5 +234,9 @@ const format_t c_format = {
     .print_end_header = c_print_end_header,
     .print_appvar_array = c_print_appvar_array,
     .print_appvar_image = c_print_appvar_image,
+    .print_appvar_load_function_header = c_print_appvar_load_function_header,
+    .print_appvar_load_function = c_print_appvar_load_function,
+    .print_appvar_palette_header = c_print_appvar_palette_header,
+    .print_appvar_palette = c_print_appvar_palette,
 }; 
 

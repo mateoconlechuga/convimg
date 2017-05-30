@@ -42,7 +42,7 @@ typedef struct s_st {
 
 typedef struct g_st {
     char *name;                      // name of the group file
-    char *palette_name;              // custom palette file name
+    char *palette;              // custom palette file name
     unsigned palette_length;         // custom palette length
     bool palette_fixed_length;       // bool to check if forced palette size
     image_t **image;                 // pointer to array of images
@@ -125,8 +125,14 @@ typedef struct {
     void (*print_transparent_image_header)(output_t *out, const char *i_name, unsigned int size, bool compressed);
     void (*print_palette_header)(output_t *out, const char *name, unsigned int len);
     void (*print_end_header)(output_t *out);
+    
+    // appvar functions
     void (*print_appvar_array)(output_t *out, const char *a_name, unsigned int num_images);
     void (*print_appvar_image)(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style);
+    void (*print_appvar_palette)(output_t *out, unsigned int offset);
+    void (*print_appvar_load_function_header)(output_t *out);
+    void (*print_appvar_load_function)(output_t *out, const char *a_name);
+    void (*print_appvar_palette_header)(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len);
 } format_t;
 
 extern convpng_t convpng;

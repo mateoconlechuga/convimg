@@ -164,6 +164,28 @@ static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned i
     (void)tp_style;
 }
 
+static void asm_print_appvar_palette(output_t *out, unsigned int offset) {
+    (void)out;
+    (void)offset;
+}
+
+static void asm_print_appvar_load_function_header(output_t *out) {
+    (void)out;
+}
+
+static void asm_print_appvar_load_function(output_t *out, const char *a_name) {
+    (void)out;
+    (void)a_name;
+}
+
+static void asm_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len) {
+    (void)out;
+    (void)p_name;
+    (void)a_name;
+    (void)index;
+    (void)len;
+}
+
 const format_t asm_format = {
     .open_output = asm_open_output,
     .close_output = asm_close_output,
@@ -187,6 +209,8 @@ const format_t asm_format = {
     .print_end_header = asm_print_end_header,
     .print_appvar_array = asm_print_appvar_array,
     .print_appvar_image = asm_print_appvar_image,
+    .print_appvar_load_function_header = asm_print_appvar_load_function_header,
+    .print_appvar_load_function = asm_print_appvar_load_function,
+    .print_appvar_palette_header = asm_print_appvar_palette_header,
+    .print_appvar_palette = asm_print_appvar_palette,
 };
-
-

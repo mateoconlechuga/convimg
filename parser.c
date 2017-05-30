@@ -239,7 +239,7 @@ add_other_colors:
                 g->use_tindex = true;
             } else
             
-            if(!strcmp(*argv, "#AppVarC")) {
+            if(!strcmp(*argv, "#AppvarC")) {
                 appvar_t *a = &appvar[convpng.numappvars];
                 g = &group[convpng.numgroups];
                 memset(a->name, 0, 9);
@@ -253,7 +253,32 @@ add_other_colors:
                 convpng.numappvars++;
                 convpng.numgroups++;
             } else
-                
+            
+            if(!strcmp(*argv, "#OutputInitCode")) {
+                appvar_t *a = &appvar[convpng.numappvars - 1];
+                if(!strcmp(argv[1], "false")) {
+                    a->write_init = false;
+                } else {
+                    a->write_init = true;
+                }
+            } else
+            
+            if(!strcmp(*argv, "#IncludePalettes")) {
+                int i;
+                char **palettes;
+                appvar_t *a = &appvar[convpng.numappvars - 1];
+                num = separate_args(argv[1], &palettes, ',');
+                if (!num) { args_error(); }
+                a->palette = safe_realloc(a->palette, num * sizeof(char*));
+                a->palette_data = safe_realloc(a->palette_data, num * sizeof(liq_palette));
+                for (i = 0; i < num; i++) {
+                    a->palette[i] = str_dup(palettes[i]);
+                    a->palette_data[i] = NULL;
+                }
+                a->numpalettes = num;
+                free(palettes);
+            } else
+            
             if(!strcmp(*argv, "#Compression")) {
                 if(!strcmp(argv[1], "zx7")) {
                     g->compression = COMPRESS_ZX7;
@@ -275,7 +300,7 @@ add_other_colors:
             } else
         
             if(!strcmp(*argv, "#Palette")) {
-                g->palette_name = str_dup(argv[1]);
+                g->palette = str_dup(argv[1]);
             } else
             
             if(!strcmp(*argv, "#PaletteMaxSize")) {

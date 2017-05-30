@@ -192,7 +192,7 @@ static void c_print_appvar_load_function_header(output_t *out) {
 
 static void c_print_appvar_load_function(output_t *out, const char *a_name) {
     fprintf(out->c, "\nbool %s_init(void) {\n", a_name);
-    fprintf(out->c, "    unsigned int data,i;");
+    fprintf(out->c, "    unsigned int data,i;\n");
     fprintf(out->c, "    ti_var_t appvar;\n\n");
     fprintf(out->c, "    ti_CloseAll();\n\n");
     fprintf(out->c, "    appvar = ti_Open(\"%s\", \"r\");\n", a_name);

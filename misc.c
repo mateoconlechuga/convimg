@@ -14,6 +14,8 @@
 #include "logging.h"
 #include "palettes.h"
 
+#define icon_offset(a) (0xD1A882+16*16+(unsigned int)strlen((a))+8)
+
 void *safe_malloc(size_t n) {
     void* p = malloc(n);
     if (!p) { errorf("out of memory."); }
@@ -263,20 +265,21 @@ int create_icon(void) {
     if(!res) {errorf("could not quantize icon."); }
     liq_write_remapped_image(res, image, data, size);
 
-    FILE *out = fopen("iconc.asm", "w");
+    FILE *out = fopen("iconc.src", "w");
     if (convpng.icon_zds) {
-        fprintf(out, " define .icon,space=ram\n segment .icon\n xdef __icon_begin\n xdef __icon_end\n xdef __program_description\n xdef __program_description_end\n");
-    
-        fprintf(out,"\n db 1\n db %u,%u\n__icon_begin:",width,height);
+        fprintf(out, " define .icon,space=ram\n segment .icon\n");
+        fprintf(out, " .def __program_icon\n .def __program_description\n\n .assume adl=1\n");
+        
+        fprintf(out,"\n jp 0%06Xh\n db 1\n__program_icon:\n db %u,%u",icon_offset(icon_options[1]), width, height);
         for (y = 0; y < height; y++) {
-            fputs("\n db ",out);
+            fputs("\n db ", out);
             for (x = 0; x < width; x++) {
-                fprintf(out, "0%02Xh%s", data[x+(y*width)], x + 1 == width ? "" : ",");
+                fprintf(out, "0%02Xh%s", data[x+y*width], x + 1 == width ? "" : ",");
             }
         }
-
-        fprintf(out,"\n__icon_end:\n__program_description:\n");
-        fprintf(out," db \"%s\",0\n__program_description_end:\n", icon_options[1]);
+        
+        fprintf(out,"\n\n__program_description:\n");
+        fprintf(out," db \"%s\",0\n", icon_options[1]);
         lof("Converted icon '%s'\n", icon_options[0]);
     } else {
         fprintf(out, "__icon_begin:\n .db 1,%u,%u", width, height);
@@ -289,7 +292,7 @@ int create_icon(void) {
 
         fprintf(out, "\n__icon_end:\n__program_description:\n");
         fprintf(out, " .db \"%s\",0\n__program_description_end:\n", icon_options[1]);
-        lof("Converted icon '%s' -> 'iconc.asm'\n", icon_options[0]);
+        lof("Converted icon '%s' -> 'iconc.src'\n", icon_options[0]);
     }
     
     liq_attr_destroy(attr);

@@ -6,6 +6,7 @@ SOURCES := $(wildcard *.c)
 SOURCES += $(wildcard libs/*.c)
 
 ifeq ($(OS),Windows_NT)
+SHELL = cmd.exe
 NATIVEPATH = $(subst /,\,$(1))
 RM = del /f 2>nul
 SOURCES := $(call NATIVEPATH,$(SOURCES))

@@ -18,7 +18,7 @@ void errorf(char *format, ...) {
     
     va_start(aptr, format);
     
-    vsprintf(buffer, format, aptr);
+    vsnprintf(buffer, sizeof buffer, format, aptr);
     if (convpng.log) { fprintf(convpng.log, "[error] %s\n", buffer); }
     fprintf(stderr, "[error] %s\n", buffer);
     
@@ -34,7 +34,7 @@ void lof(char *format, ...) {
     
     va_start(aptr, format);
     
-    vsprintf(buffer, format, aptr);
+    vsnprintf(buffer, sizeof buffer, format, aptr);
     if (convpng.log) { fprintf(convpng.log, "%s", buffer); }
     fprintf(stdout, "%s", buffer);
     

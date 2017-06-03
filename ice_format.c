@@ -77,7 +77,8 @@ static void ice_print_byte(output_t *out, uint8_t byte, bool need_comma) {
     fprintf(out->txt, "%02X", byte);
 }
 
-static void ice_print_next_array_line(output_t *out, bool at_end) {
+static void ice_print_next_array_line(output_t *out, bool is_long, bool at_end) {
+    (void)is_long;
     if (at_end) {
         fprintf(out->txt, "\"\n\n");
     }

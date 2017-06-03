@@ -255,6 +255,21 @@ add_other_colors:
                 convpng.numgroups++;
             } else
             
+            if(!strcmp(*argv, "#AppvarASM")) {
+                appvar_t *a = &appvar[convpng.numappvars];
+                g = &group[convpng.numgroups];
+                memset(a->name, 0, 9);
+                strncpy(a->name, argv[1], 8);
+                g->mode = MODE_APPVAR;
+                g->name = str_dup(a->name);
+                g->outh = str_dupcatdir(a->name, ".inc");
+                g->outc = str_dupcatdir(a->name, ".asm");
+                a->mode = MODE_ASM;
+                a->g = g;
+                convpng.numappvars++;
+                convpng.numgroups++;
+            } else
+            
             if(!strcmp(*argv, "#OutputInitCode")) {
                 appvar_t *a = &appvar[convpng.numappvars - 1];
                 if(!strcmp(argv[1], "false")) {

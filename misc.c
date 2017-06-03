@@ -112,10 +112,10 @@ void output_array_compressed(const format_t *format, output_t *out, uint8_t *com
         format->print_byte(out, compressed_data[j], !(j+1 == len || (k+1) & 32));
         if ((k+1) & 32 && j+1 < len) {
             k = -1;
-            format->print_next_array_line(out, false);
+            format->print_next_array_line(out, false, false);
         }
     }
-    format->print_next_array_line(out, true);
+    format->print_next_array_line(out, false, true);
 }
 
 void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned int width, unsigned int height) {
@@ -127,7 +127,7 @@ void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned
         for (j = 0; j < width; j++) {
             format->print_byte(out, data[j + o], j+1 != width);
         }
-        format->print_next_array_line(out, k+1 == height);
+        format->print_next_array_line(out, false, k+1 == height);
     }
 }
 

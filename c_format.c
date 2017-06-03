@@ -96,7 +96,8 @@ static void c_print_byte(output_t *out, uint8_t byte, bool need_comma) {
     fprintf(out->c, "0x%02X,", byte);
 }
 
-static void c_print_next_array_line(output_t *out, bool at_end) {
+static void c_print_next_array_line(output_t *out, bool is_long, bool at_end) {
+    (void)is_long;
     if (at_end) {
         fprintf(out->c, "\n};\n");
     } else {
@@ -154,7 +155,7 @@ static void c_print_transparent_image_header(output_t *out, const char *i_name, 
 }
 
 static void c_print_palette_header(output_t *out, const char *name, unsigned int len) {
-    fprintf(out->h, "#define sizeof_%s_pal %u\n", name, len*2);
+    fprintf(out->h, "#define sizeof_%s_pal %u\n", name, len * 2);
     fprintf(out->h, "extern uint16_t %s_pal[%u];\n", name, len);
 }
 
@@ -207,7 +208,7 @@ static void c_print_appvar_load_function(output_t *out, const char *a_name) {
 }
 
 static void c_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len) {
-    fprintf(out->h, "#define sizeof_%s_pal %u\n", p_name, len*2);
+    fprintf(out->h, "#define sizeof_%s_pal %u\n", p_name, len * 2);
     fprintf(out->h, "#define %s_pal ((uint16_t*)%s[%u])\n", p_name, a_name, index);
 }
 

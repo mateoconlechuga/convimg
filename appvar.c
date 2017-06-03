@@ -49,6 +49,8 @@ void export_appvars(void) {
         // choose the correct output mode
         if (a->mode == MODE_C) {
             format = &c_format;
+        } else if (a->mode == MODE_ASM) {
+            format = &asm_format;
         } else {
             errorf("unknown appvar mode");
         }
@@ -95,7 +97,7 @@ void export_appvars(void) {
             } else {
                 format->print_appvar_palette(output, a->offsets[j]);
             }
-            format->print_next_array_line(output, j + 1 == num);
+            format->print_next_array_line(output, true, j + 1 == num);
         }
         
         // write the appvar init code

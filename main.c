@@ -478,7 +478,7 @@ int main(int argc, char **argv) {
 
                     // build the tilemap table
                     if (g_make_tilemap_ptrs) {
-                        format->print_tile_ptrs(i_output, i_name, i_num_tiles, i_compression);
+                        format->print_tile_ptrs(i_output, i_name, i_num_tiles, i_compression, i_appvar);
                     }
 
                 // not a tilemap

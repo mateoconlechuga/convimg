@@ -46,6 +46,8 @@ void export_appvars(void) {
         group_t *g = a->g;
         output = output_create();
         
+        lof("exporting appvar: %s.8xp\n", a->name);
+        
         // choose the correct output mode
         if (a->mode == MODE_C) {
             format = &c_format;
@@ -75,7 +77,11 @@ void export_appvars(void) {
             unsigned int i;
             for (i = 0; i < a->numpalettes; i++) {
                 uint16_t pal[256];
-                unsigned int pal_len = a->palette_data[i]->count;
+                unsigned int pal_len;
+                if (!a->palette_data[i]) {
+                    errorf("missing requested palette '%s'", a->palette[i]);
+                }
+                pal_len = a->palette_data[i]->count;
                 for (j = 0; j < pal_len; j++) {
                     liq_color *e = &a->palette_data[i]->entries[j];
                     pal[j] = rgb1555(e->r, e->g, e->b);
@@ -206,8 +212,7 @@ void add_appvar_data(appvar_t *a, const uint8_t *data, const size_t size) {
     unsigned int offset = a->offset;
     unsigned int curr   = a->curr_image;
     
-    if (offset > 0xFFF0)    { errorf("too much data to output appvar '%s'", a->name); }
-    if (curr > a->max_data) { errorf("tried to add too much data to appvar '%s'", a->name); }
+    if (offset > 0xFFE0)    { errorf("too much data to output appvar '%s'", a->name); }
     
     a->offsets[curr+1] = a->offsets[curr] + size;
     memcpy(a->output + offset, data, size);
@@ -227,7 +232,6 @@ void output_appvar_complete(appvar_t *a) {
     unsigned int offset = a->offset;
     
     // write name
-    lof("exporting appvar: %s.8xp\n", a->name);
     memcpy(&output[0x3C], a->name, strlen(a->name));
     
     // write config bytes

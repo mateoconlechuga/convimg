@@ -55,6 +55,12 @@ char *str_dup(const char *s) {
 }
 
 char *str_dupcat(const char *s, const char *c) {
+    if (!s) {
+        return str_dup(c);
+    } else
+    if (!c) {
+        return str_dup(s);
+    }
     char *d = safe_malloc(strlen(s)+strlen(c)+1);
     if (d) { strcpy(d, s); strcat(d, c); }
     return d;
@@ -225,7 +231,10 @@ unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer,
 }
 
 output_t *output_create(void) {
-    return safe_malloc(sizeof(output_t));
+    output_t *output = safe_malloc(sizeof(output_t));
+    output->c = NULL;
+    output->h = NULL;
+    return output;
 }
 
 // create an icon for the C toolchain

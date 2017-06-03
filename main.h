@@ -114,7 +114,7 @@ typedef struct {
     void (*print_image_source_header)(output_t *out, const char *group_header_file_name);
     void (*print_tile)(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, uint8_t width, uint8_t height);
     void (*print_compressed_tile)(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size);
-    void (*print_tile_ptrs)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
+    void (*print_tile_ptrs)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar);
     void (*print_byte)(output_t *out, uint8_t byte, bool need_comma);
     void (*print_next_array_line)(output_t *out, bool is_long, bool is_end);
     void (*print_image)(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const uint8_t width, const uint8_t height);

@@ -66,18 +66,30 @@ static void asm_print_tile(output_t *out, const char *i_name, unsigned int tile_
     fprintf(out->asm, "_%s_tile_%u: ; %u bytes\n db %u,%u ; width,height\n db ", i_name, tile_num, size, width, height);
 }
 
-static void asm_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
+static void asm_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar) {
     unsigned int i = 0;
 
     if (compressed) {
         fprintf(out->asm, "_%s_tiles_compressed: ; %u tiles\n", i_name, num_tiles);
-        for (; i < num_tiles; i++) {
-            fprintf(out->asm, " .dl _%s_tile_%u_compressed\n", i_name, i);
+        if (in_appvar) {
+            for (; i < num_tiles; i++) {
+                fprintf(out->asm, " .dl 0\n");
+            }
+        } else {
+            for (; i < num_tiles; i++) {
+                fprintf(out->asm, " .dl _%s_tile_%u_compressed\n", i_name, i);
+            }
         }
     } else {
         fprintf(out->asm, "_%s_tiles: ; %u tiles\n", i_name, num_tiles);
-        for (; i < num_tiles; i++) {
-            fprintf(out->asm, " .dl _%s_tile_%u\n", i_name, i);
+        if (in_appvar) {
+            for (; i < num_tiles; i++) {
+                fprintf(out->asm, " .dl 0\n");
+            }
+        } else {
+            for (; i < num_tiles; i++) {
+                fprintf(out->asm, " .dl _%s_tile_%u\n", i_name, i);
+            }
         }
     }
 }

@@ -61,7 +61,7 @@ static void ice_print_tile(output_t *out, const char *i_name, unsigned int tile_
     fprintf(out->txt, "%s_tile_%u | %u bytes\n%u,%u,\"", i_name, tile_num, size, width, height);
 }
 
-static void ice_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
+static void ice_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar) {
     (void)out;
     (void)i_name;
     (void)num_tiles;

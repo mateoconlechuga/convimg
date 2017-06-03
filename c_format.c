@@ -70,21 +70,31 @@ static void c_print_tile(output_t *out, const char *i_name, unsigned int tile_nu
     fprintf(out->c, "uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ", i_name, tile_num, size, width, height);
 }
 
-static void c_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
+static void c_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar) {
     unsigned int i = 0;
 
     if (compressed) {
-        fprintf(out->c, "uint8_t *%s_tiles_compressed[%u] = {\n", i_name, num_tiles);
-        for (; i < num_tiles; i++) {
-            fprintf(out->c, " %s_tile_%u_compressed,\n", i_name, i);
+        if (in_appvar) {
+            fprintf(out->c, "uint8_t *%s_tiles_compressed[%u];\n", i_name, num_tiles);
+        } else {
+            fprintf(out->c, "uint8_t *%s_tiles_compressed[%u] = {\n", i_name, num_tiles);
+            for (; i < num_tiles; i++) {
+                fprintf(out->c, " %s_tile_%u_compressed,\n", i_name, i);
+            }
         }
     } else {
-        fprintf(out->c, "uint8_t *%s_tiles_data[%u] = {\n", i_name, num_tiles);
-        for (; i < num_tiles; i++) {
-            fprintf(out->c, " %s_tile_%u_data,\n", i_name, i);
+        if (in_appvar) {
+            fprintf(out->c, "uint8_t *%s_tiles_data[%u];\n", i_name, num_tiles);
+        } else {
+            fprintf(out->c, "uint8_t *%s_tiles_data[%u] = {\n", i_name, num_tiles);
+            for (; i < num_tiles; i++) {
+                fprintf(out->c, " %s_tile_%u_data,\n", i_name, i);
+            }
         }
     }
-    fprintf(out->c, "};\n");
+    if (!in_appvar) {
+        fprintf(out->c, "};\n");
+    }
 }
 
 static void c_print_compressed_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size) {

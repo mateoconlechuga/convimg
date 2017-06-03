@@ -264,9 +264,7 @@ void output_appvar_complete(appvar_t *a) {
     output[offset++] = mr8(checksum);
 
     // write the buffer to the file
-    char name[14];
-    strcpy(name, a->name);
-    strcat(name, ".8xv");
+    char *name = str_dupcatdir(a->name, ".8xv");
     
     if (!(out_file = fopen(name, "wb"))) {
         errorf("unable to open output appvar file.");
@@ -278,5 +276,6 @@ void output_appvar_complete(appvar_t *a) {
     fclose(out_file);
     
     // free the memory
+    free(name);
     free(output);
 }

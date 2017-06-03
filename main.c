@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
                 // decode the palette
                 unsigned int error = lodepng_decode32_file(&custom_pal, &pal_width, &pal_height, g_pal_name);
                 if (error) { errorf("decoding palette %s", pal_width); }
-                if (pal_height > 1 || pal_width > 256 || pal_width < 3) { errorf("palette not formatted correctly."); }
+                if (pal_height > 1 || pal_width > 256 || !pal_width) { errorf("palette not formatted correctly."); }
                 
                 // we should use the custom palette
                 pal_arr = custom_pal;
@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
                 
                 // open the file
                 error = lodepng_decode32_file(&pal_rgba, &pal_width, &pal_height, pal_in_name);
-                if (error) { errorf("decoding %s for palette.", pal_in_name); }
+                if (error) { errorf("decoding %s for palette", pal_in_name); }
                 
                 pal_image = liq_image_create_rgba(attr, pal_rgba, pal_width, pal_height, 0);
                 liq_histogram_add_image(hist, attr, pal_image);
@@ -229,11 +229,11 @@ int main(int argc, char **argv) {
                 liq_histogram_entry hist_entry;
                 hist_entry.color = curr->tcolor;
                 liq_error err = liq_histogram_add_colors(hist, attr, &hist_entry, hist_entry.count = 1, 0);
-                if (err != LIQ_OK) { errorf("adding transparent color to palette."); }
+                if (err != LIQ_OK) { errorf("adding transparent color to palette"); }
             }
             
             liq_error err = liq_histogram_quantize(hist, attr, &res);
-            if (err != LIQ_OK) { errorf("generating quantized palette."); }
+            if (err != LIQ_OK) { errorf("generating quantized palette"); }
             
             // get the crappiness of the user's image
             memcpy(&pal, liq_get_palette(res), sizeof(liq_palette));
@@ -289,6 +289,16 @@ int main(int argc, char **argv) {
         if (curr->is_global_palette) {
             // build an image which uses the global palette
             build_image_palette(&pal, g_pal_len, g_name);
+            for (s = 0; s < g_numimages; s++) {
+                image_t *i_curr = curr->image[s];
+                free(i_curr->name);
+                free(i_curr->outc);
+                free(i_curr->in);
+                free(i_curr);
+            }
+            format->close_output(g_output, OUTPUT_HEADER);
+            format->close_output(g_output, OUTPUT_SOURCE);
+            free(g_output);
         } else {
             format->print_source_header(g_output, g_outh_name);
             format->print_header_header(g_output, g_name);
@@ -369,13 +379,13 @@ int main(int argc, char **argv) {
                 if (!g_is_16_bpp) {
                     liq_set_max_colors(i_attr, g_pal_len);
                     i_image = liq_image_create_rgba(i_attr, i_rgba, i_width, i_height, 0);
-                    if (!i_image) { errorf("could not create image."); }
+                    if (!i_image) { errorf("could not create image"); }
 
                     // add all the palette colors
                     for (j = 0; j < g_pal_len; j++) { liq_image_add_fixed_color(i_image, pal.entries[j]); }
 
                     // quantize image against palette
-                    if (!(i_mapped = liq_quantize_image(i_attr, i_image))) {errorf("could not quantize image."); }
+                    if (!(i_mapped = liq_quantize_image(i_attr, i_image))) {errorf("could not quantize image"); }
                     liq_write_remapped_image(i_mapped, i_image, i_data, i_size);
 
                     // if custom palette, hard to compute accuratly

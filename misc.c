@@ -74,13 +74,13 @@ char *str_dupcatdir(const char *s, const char *c) {
 void encodePNG(const char* filename, const unsigned char* image, unsigned width, unsigned height) {
     unsigned char* png;
     size_t pngsize;
-
     unsigned error = lodepng_encode32(&png, &pngsize, image, width, height);
-    if(!error) { lodepng_save_file(png, pngsize, filename); }
     
     /* if there's an error, display it */
-    if(error) { printf("error %u: %s\n", error, lodepng_error_text(error)); }
-
+    if (error == LODEPNG_ERR_OPEN) { errorf("could not open '%s'", filename); }
+    else if (error) { errorf("writting '%s'", filename); }
+    else { lodepng_save_file(png, pngsize, filename); }
+    
     free(png);
 }
 
@@ -88,6 +88,8 @@ void encodePNG(const char* filename, const unsigned char* image, unsigned width,
 void build_image_palette(const liq_palette *pal, const unsigned length, const char *filename) {
     uint8_t *image = safe_malloc(length * 4);
     unsigned int x;
+    char *name = str_dupcat(convpng.directory, filename);
+    
     for (x = 0; x < length; x++) {
         unsigned int o = x << 2;
         const liq_color *c = &pal->entries[x];
@@ -96,9 +98,10 @@ void build_image_palette(const liq_palette *pal, const unsigned length, const ch
         image[o + 2] = c->b;
         image[o + 3] = 255;
     }
-    encodePNG(filename, image, length, 1);
+    encodePNG(name, image, length, 1);
+    lof("Wrote palette image (%s)\n", name);
     free(image);
-    lof("Saved palette (%s)\n",filename);
+    free(name);
 }
 
 void output_array_compressed(const format_t *format, output_t *out, uint8_t *compressed_data, unsigned len) {

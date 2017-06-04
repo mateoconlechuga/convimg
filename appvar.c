@@ -213,6 +213,22 @@ void output_appvar_init(appvar_t *a, int num_images) {
     a->offset = 0x4A;
 }
 
+void add_appvars_offsets_state(bool state) {
+    unsigned int j;
+    for (j = 0; j < data_num_appvars; j++) {
+        appvar_ptrs[j]->add_offset = state;
+    }
+}
+
+void add_appvars_offset(unsigned int size) {
+    unsigned int j;
+    for (j = 0; j < data_num_appvars; j++) {
+        appvar_t *a = appvar_ptrs[j];
+        a->offsets[a->curr_image+1] = a->offsets[a->curr_image] + size;
+        a->curr_image++;
+    }
+}
+
 void add_appvars_data(const uint8_t *data, const size_t size) {
     unsigned int j;
     for (j = 0; j < data_num_appvars; j++) {
@@ -226,10 +242,12 @@ void add_appvar_data(appvar_t *a, const uint8_t *data, const size_t size) {
     
     if (offset > 0xFFE0)    { errorf("too much data to output appvar '%s'", a->name); }
     
-    a->offsets[curr+1] = a->offsets[curr] + size;
+    if (a->add_offset) {
+        a->offsets[curr+1] = a->offsets[curr] + size;
+        a->curr_image++;
+    }
     memcpy(a->output + offset, data, size);
     a->offset += size;
-    a->curr_image++;
 }
 
 void output_appvar_complete(appvar_t *a) {

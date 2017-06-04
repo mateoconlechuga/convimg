@@ -415,11 +415,15 @@ int main(int argc, char **argv) {
                     unsigned int tile_num = 0;
                     unsigned int x_offset = 0;
                     unsigned int y_offset = 0;
+                    unsigned int offset_size = 0;
                     unsigned int offset;
                     unsigned int *offsets;
                     unsigned int index;
                     i_size = i_tile_width * i_tile_height;
 
+                    // disable output to offset stack
+                    if (i_appvar) { add_appvars_offsets_state(false); }
+                    
                     offsets = malloc(i_num_tiles * sizeof(unsigned int));
                     
                     for (; tile_num < i_num_tiles; tile_num++) {
@@ -464,8 +468,9 @@ int main(int argc, char **argv) {
                         }
 
                         // store the size
-                        offsets[tile_num] = i_size_total + (tile_num ? offsets[tile_num-1] : 0);
-
+                        offset_size += i_size_total;
+                        offsets[tile_num] = offset_size;
+                        
                         // move to the correct data location
                         if ((x_offset += i_tile_width) > i_width - 1) {
                             x_offset = 0;
@@ -473,6 +478,12 @@ int main(int argc, char **argv) {
                         }
                     }
 
+                    // add the image offsets
+                    if (i_appvar) {
+                        add_appvars_offsets_state(false);
+                        add_appvars_offset(offset_size);
+                    }
+                    
                     // build the tilemap table
                     if (i_create_tilemap_ptrs) {
                         format->print_tile_ptrs(i_output, i_name, i_num_tiles, i_compression, i_appvar, offsets);

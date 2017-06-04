@@ -219,6 +219,7 @@ static void c_print_appvar_load_function_header(output_t *out) {
 
 static void c_print_appvar_load_function(output_t *out, const char *a_name, bool has_tilemaps) {
     (void)has_tilemaps;
+    fprintf(out->h, "bool %s_init(void);\n", a_name);
     fprintf(out->c, "\nbool %s_init(void) {\n", a_name);
     fprintf(out->c, "    unsigned int data, i;\n");
     fprintf(out->c, "    ti_var_t appvar;\n\n");

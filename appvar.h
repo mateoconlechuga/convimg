@@ -14,6 +14,7 @@
 typedef struct {
     unsigned int mode;
     bool write_init;
+    bool add_offset;
     uint8_t *output;
     uint8_t curr_image;
     uint8_t max_data;
@@ -32,6 +33,9 @@ typedef struct {
 
 void init_appvars(void);
 void export_appvars(void);
+
+void add_appvars_offsets_state(bool state);
+void add_appvars_offset(unsigned int size);
 
 bool image_is_in_an_appvar(image_t *image);
 bool palette_is_in_an_appvar(const char *pal_name);

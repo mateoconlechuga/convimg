@@ -54,6 +54,7 @@ static void init_convpng_struct(void) {
         appvar_t *a = &appvar[t];
         a->write_init = true;
         a->mode = 0;
+        a->add_offset = false;
         a->palette = NULL;
         a->palette_data = NULL;
     }

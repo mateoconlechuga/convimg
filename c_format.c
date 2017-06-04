@@ -232,18 +232,16 @@ static void c_print_appvar_load_function(output_t *out, const char *a_name, bool
 }
 
 static void c_print_appvar_load_function_tilemap(output_t *out, const char *a_name, char *tilemap_name, unsigned int tilemap_size, unsigned int index, bool compressed) {
-    (void)a_name;
     (void)tilemap_size;
-    (void)index;
     if (compressed) {
-        fprintf(out->c, "    data = (unsigned int)%s_compressed - (unsigned int)%s_tiles_compressed[0];\n", tilemap_name, tilemap_name);
+        fprintf(out->c, "    data = (unsigned int)%s[%u] - (unsigned int)%s_tiles_compressed[0];\n", a_name, index, tilemap_name);
         fprintf(out->c, "    for (i = 0; i < %s_tiles_num; i++) {\n", tilemap_name);
         fprintf(out->c, "        %s_tiles_compressed[i] += data;\n", tilemap_name);
         fprintf(out->c, "    }\n\n");
     } else {
-        fprintf(out->c, "    data = (unsigned int)%s - (unsigned int)%s_tiles[0];\n", tilemap_name, tilemap_name);
+        fprintf(out->c, "    data = (unsigned int)%s[%u] - (unsigned int)%s_tiles_data[0];\n", a_name, index, tilemap_name);
         fprintf(out->c, "    for (i = 0; i < %s_tiles_num; i++) {\n", tilemap_name);
-        fprintf(out->c, "        %s_tiles[i] += data;\n", tilemap_name);
+        fprintf(out->c, "        %s_tiles_data[i] += data;\n", tilemap_name);
         fprintf(out->c, "    }\n\n");
     }
 }

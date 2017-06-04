@@ -325,6 +325,7 @@ int main(int argc, char **argv) {
                 liq_attr     *i_attr        = liq_attr_create();
 
                 unsigned int  i_size_total  = 0;
+                unsigned int  i_size_backup = 0;
                 
                 // init the things for each image
                 char         *i_source_name = i_curr->outc;
@@ -411,7 +412,6 @@ int main(int argc, char **argv) {
                 i_data_buffer = safe_malloc(i_width * i_height * 2 + 2);
                 
                 if (i_convert_to_tilemap) {
-                    unsigned int i_size_backup;
                     unsigned int tile_num = 0;
                     unsigned int x_offset = 0;
                     unsigned int y_offset = 0;
@@ -448,7 +448,7 @@ int main(int argc, char **argv) {
                             free(c_data);
 
                             // log the compressed size
-                            lof("\n %s_tile_%u_compressed (%u -> %d bytes)", i_name, tile_num, i_size_backup, i_size_total);
+                            lof("\n %s_tile_%u_compressed (%u > %d bytes)", i_name, tile_num, i_size_backup, i_size_total);
 
                             // warn if compression is worse
                             if (i_size_total > i_size_backup) {
@@ -488,7 +488,8 @@ int main(int argc, char **argv) {
                     i_data_buffer[1] = i_height;
                     i_size = i_width * i_height;
                     i_size_total = i_size + 2;
-
+                    i_size_backup = i_size_total;
+                    
                     // handle bpp mode here
                     if (i_bpp == 8) {
                         memcpy(&i_data_buffer[2], i_data, i_size);
@@ -511,6 +512,7 @@ int main(int argc, char **argv) {
                             format->print_compressed_image(i_output, i_bpp, i_name, i_size_total);
                             output_array_compressed(format, i_output, c_data, i_size_total);
                         }
+                        lof(" (%u > %d bytes)", i_size_backup, i_size_total);
                         free(c_data);
                     } else {
                         if (i_appvar) {

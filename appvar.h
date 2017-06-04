@@ -20,16 +20,20 @@ typedef struct {
     uint16_t offsets[MAX_OFFSETS];
     unsigned offset;
     char name[9];
+    
+    // palette information
     char **palette;
     liq_palette **palette_data;
     unsigned int numpalettes;
+    
+    // group information
     group_t *g;
 } appvar_t;
 
 void init_appvars(void);
 void export_appvars(void);
 
-bool image_is_in_an_appvar(const char *image_name);
+bool image_is_in_an_appvar(image_t *image);
 bool palette_is_in_an_appvar(const char *pal_name);
 void output_appvar_init(appvar_t *a, int num_images);
 void add_appvars_palette(const char *pal_name, liq_palette *pal);

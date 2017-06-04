@@ -157,6 +157,8 @@ static void add_image(char *line) {
         // inherit properties from group
         s->compression = g->compression;
         s->style = g->style;
+        s->convert_to_tilemap = g->convert_to_tilemap;
+        s->create_tilemap_ptrs = g->create_tilemap_ptrs;
         
         // add the .png extension if needed
         if (!strchr(in,'.')) {

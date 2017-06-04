@@ -60,7 +60,6 @@ int main(int argc, char **argv) {
         unsigned   g_numimages         = curr->numimages;
         unsigned   g_tile_width        = curr->tile_width;
         unsigned   g_tile_height       = curr->tile_height;
-        unsigned   g_compression       = curr->compression;
         unsigned   g_style             = curr->style;
         bool       g_pal_fixed_len     = curr->palette_fixed_length;
         bool       g_use_tindex        = curr->use_tindex;
@@ -68,8 +67,6 @@ int main(int argc, char **argv) {
         bool       g_is_global_pal     = curr->is_global_palette;
         bool       g_out_pal_img       = curr->output_palette_image;
         bool       g_out_pal_arr       = curr->output_palette_array;
-        bool       g_convert_to_tiles  = curr->convert_to_tilemap;
-        bool       g_make_tilemap_ptrs = curr->create_tilemap_ptrs;
         char      *g_pal_name          = curr->palette;
         char      *g_name              = curr->name;
         char      *g_outc_name         = curr->outc;
@@ -289,13 +286,6 @@ int main(int argc, char **argv) {
         if (curr->is_global_palette) {
             // build an image which uses the global palette
             build_image_palette(&pal, g_pal_len, g_name);
-            for (s = 0; s < g_numimages; s++) {
-                image_t *i_curr = curr->image[s];
-                free(i_curr->name);
-                free(i_curr->outc);
-                free(i_curr->in);
-                free(i_curr);
-            }
             format->close_output(g_output, OUTPUT_HEADER);
             format->close_output(g_output, OUTPUT_SOURCE);
             free(g_output);
@@ -353,8 +343,12 @@ int main(int argc, char **argv) {
                 unsigned int  i_error;
                 
                 // determine if image needs to be exported to an appvar
-                bool i_appvar = image_is_in_an_appvar(i_name);
+                bool i_appvar = image_is_in_an_appvar(i_curr);
                 bool i_style_tp = i_style == STYLE_TRANSPARENT;
+                
+                // tilemap things
+                bool i_convert_to_tilemap = i_curr->convert_to_tilemap;
+                bool i_create_tilemap_ptrs = i_curr->create_tilemap_ptrs;
                 
                 // open the file and make a rgba array
                 i_error = lodepng_decode32_file(&i_rgba, &i_width, &i_height, i_in_name);
@@ -365,8 +359,8 @@ int main(int argc, char **argv) {
                 i_size = i_width * i_height;
 
                 // quick tilemap check
-                if (g_convert_to_tiles) {
-                    i_num_tiles = (i_width / g_tile_width) * (i_height / g_tile_height);
+                if (i_convert_to_tilemap) {
+                    i_curr->numtiles = i_num_tiles = (i_width / g_tile_width) * (i_height / g_tile_height);
 
                     if ((i_width % g_tile_width) || (i_height % g_tile_height)) {
                         errorf("image dimensions do not align to tile width and/or height value");
@@ -410,31 +404,31 @@ int main(int argc, char **argv) {
                     i_output = g_output;
                 }
 
-                // free the source name
-                free(i_source_name);
-
                 // write all the image data to the ouputs
                 format->print_image_source_header(i_output, g_outh_name);
-
+                
                 // allocate a buffer for storing the new data
                 i_data_buffer = safe_malloc(i_width * i_height * 2 + 2);
-
-                if (g_convert_to_tiles) {
+                
+                if (i_convert_to_tilemap) {
                     unsigned int i_size_backup;
                     unsigned int tile_num = 0;
                     unsigned int x_offset = 0;
                     unsigned int y_offset = 0;
                     unsigned int offset;
+                    unsigned int *offsets;
                     unsigned int index;
-                    i_size        = i_tile_width * i_tile_height;
-                    i_size_total  = i_size + 2;
-                    i_size_backup = i_size_total;
+                    i_size = i_tile_width * i_tile_height;
 
+                    offsets = malloc(i_num_tiles * sizeof(unsigned int));
+                    
                     for (; tile_num < i_num_tiles; tile_num++) {
                         i_data_buffer[0] = i_tile_width;
                         i_data_buffer[1] = i_tile_height;
                         index = 2;
-
+                        i_size_total = i_size + 2;
+                        i_size_backup = i_size_total;
+                        
                         // convert a single tile
                         for (j = 0; j < i_tile_height; j++) {
                             offset = j * i_width;
@@ -469,6 +463,9 @@ int main(int argc, char **argv) {
                             }
                         }
 
+                        // store the size
+                        offsets[tile_num] = i_size_total + (tile_num ? offsets[tile_num-1] : 0);
+
                         // move to the correct data location
                         if ((x_offset += i_tile_width) > i_width - 1) {
                             x_offset = 0;
@@ -477,9 +474,12 @@ int main(int argc, char **argv) {
                     }
 
                     // build the tilemap table
-                    if (g_make_tilemap_ptrs) {
-                        format->print_tile_ptrs(i_output, i_name, i_num_tiles, i_compression, i_appvar);
+                    if (i_create_tilemap_ptrs) {
+                        format->print_tile_ptrs(i_output, i_name, i_num_tiles, i_compression, i_appvar, offsets);
                     }
+                    
+                    // free all the offsets
+                    free(offsets);
 
                 // not a tilemap
                 } else {
@@ -525,23 +525,23 @@ int main(int argc, char **argv) {
                         }
                     }
                 }
+                
+                if (!i_appvar) {
+                    if (i_convert_to_tilemap) {
+                        format->print_tiles_header(g_output, i_name, i_num_tiles, i_compression, i_appvar);
 
-                if (g_convert_to_tiles) {
-                    if (!i_appvar) {
-                        format->print_tiles_header(g_output, i_name, i_num_tiles, g_compression);
-                    }
-                    
-                    if (g_make_tilemap_ptrs) {
-                        format->print_tiles_ptrs_header(g_output, i_name, i_num_tiles, g_compression);
-                    }
-                } else if (!i_appvar) {
-                    if (g_style_tp) {
-                        format->print_transparent_image_header(g_output, i_name, i_size_total, g_compression);
-                    } else {
-                        format->print_image_header(g_output, i_name, i_size_total, g_compression);
+                        if (i_create_tilemap_ptrs) {
+                            format->print_tiles_ptrs_header(g_output, i_name, i_num_tiles, i_compression);
+                        }
+                    } else if (!i_appvar) {
+                        if (g_style_tp) {
+                            format->print_transparent_image_header(g_output, i_name, i_size_total, i_compression);
+                        } else {
+                            format->print_image_header(g_output, i_name, i_size_total, i_compression);
+                        }
                     }
                 }
-
+                
                 // newline for next image
                 lof("\n");
 
@@ -555,12 +555,9 @@ int main(int argc, char **argv) {
                 free(i_data_buffer);
                 free(i_rgba);
                 free(i_data);
-                free(i_name);
-                free(i_in_name);
                 if (i_mapped) { liq_result_destroy(i_mapped);  }
                 if (i_image)  { liq_image_destroy(i_image); }
                 if (i_attr)   { liq_attr_destroy(i_attr);   }
-                free(i_curr);
             }
             
             if (!g_exported_palette && g_out_pal_arr) {
@@ -573,11 +570,6 @@ int main(int argc, char **argv) {
         }
         
         // free *everything*
-        free(curr->image);
-        free(g_name);
-        free(g_outc_name);
-        free(g_outh_name);
-        free(g_pal_name);
         if (attr)  { liq_attr_destroy(attr);   }
         if (image) { liq_image_destroy(image); }
         lof("\n");
@@ -585,6 +577,28 @@ int main(int argc, char **argv) {
     
     // export final appvar data
     export_appvars();
+    
+    // free everything else
+    for (g = 0; g < convpng.numgroups; g++) {
+        group_t *curr = &group[g];
+        if (curr->mode != MODE_APPVAR) {
+            for (s = 0; s < curr->numimages; s++) {
+                image_t *i_curr = curr->image[s];
+                if (i_curr) {
+                    free(i_curr->name);
+                    free(i_curr->outc);
+                    free(i_curr->in);
+                    free(i_curr);
+                }
+            }
+        }
+        free(curr->palette);
+        free(curr->image);
+        free(curr->name);
+        free(curr->outc);
+        free(curr->outh);
+        curr->image = NULL;
+    }
     
     // say how long it took and if changes should be made
     lof("Converted in %u s\n\n", (unsigned)(time(NULL)-c1));

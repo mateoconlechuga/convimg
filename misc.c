@@ -141,12 +141,14 @@ uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode) {
     long delta;
     Optimal *opt;
     uint8_t *ret = NULL;
+    size_t s_size = *size;
     
     // select the compression mode
     switch (mode) {
         case COMPRESS_ZX7:
-            opt = optimize(image, *size);
-            ret = compress(opt, image, *size, (size_t*)size, &delta);
+            opt = optimize(image, s_size);
+            ret = compress(opt, image, s_size, &s_size, &delta);
+            *size = s_size;
             free(opt);
             break;
         default:

@@ -61,11 +61,13 @@ static void ice_print_tile(output_t *out, const char *i_name, unsigned int tile_
     fprintf(out->txt, "%s_tile_%u | %u bytes\n%u,%u,\"", i_name, tile_num, size, width, height);
 }
 
-static void ice_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar) {
+static void ice_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar, unsigned int *offsets) {
     (void)out;
     (void)i_name;
     (void)num_tiles;
     (void)compressed;
+    (void)in_appvar;
+    (void)offsets;
 }
 
 static void ice_print_compressed_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size) {
@@ -94,11 +96,12 @@ static void ice_print_compressed_image(output_t *out, uint8_t bpp, const char *i
     fprintf(out->txt, "%s_compressed | %u bytes\n\"", i_name, size);
 }
 
-static void ice_print_tiles_header(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
+static void ice_print_tiles_header(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar) {
     (void)out;
     (void)i_name;
     (void)num_tiles;
     (void)compressed;
+    (void)in_appvar;
 }
 
 static void ice_print_tiles_ptrs_header(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
@@ -157,9 +160,23 @@ static void ice_print_appvar_load_function_header(output_t *out) {
     (void)out;
 }
 
-static void ice_print_appvar_load_function(output_t *out, const char *a_name) {
+static void ice_print_appvar_load_function(output_t *out, const char *a_name, bool has_tilemaps) {
     (void)out;
     (void)a_name;
+    (void)has_tilemaps;
+}
+
+static void ice_print_appvar_load_function_tilemap(output_t *out, const char *a_name, char *tilemap_name, unsigned int tilemap_size, unsigned int index, bool compressed) {
+    (void)out;
+    (void)a_name;
+    (void)tilemap_name;
+    (void)tilemap_size;
+    (void)index;
+    (void)compressed;
+}
+
+static void ice_print_appvar_load_function_end(output_t *out) {
+    (void)out;
 }
 
 static void ice_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len) {
@@ -170,9 +187,15 @@ static void ice_print_appvar_palette_header(output_t *out, const char *p_name, c
     (void)len;
 }
 
+static void ice_print_include_header(output_t *out, const char *name) {
+    (void)out;
+    (void)name;
+}
+
 const format_t ice_format = {
     .open_output = ice_open_output,
     .close_output = ice_close_output,
+    .print_include_header = ice_print_include_header,
     .print_source_header = ice_print_source_header,
     .print_header_header = ice_print_header_header,
     .print_palette = ice_print_palette,
@@ -195,6 +218,8 @@ const format_t ice_format = {
     .print_appvar_image = ice_print_appvar_image,
     .print_appvar_load_function_header = ice_print_appvar_load_function_header,
     .print_appvar_load_function = ice_print_appvar_load_function,
+    .print_appvar_load_function_tilemap = ice_print_appvar_load_function_tilemap,
+    .print_appvar_load_function_end = ice_print_appvar_load_function_end,
     .print_appvar_palette_header = ice_print_appvar_palette_header,
     .print_appvar_palette = ice_print_appvar_palette,
 };

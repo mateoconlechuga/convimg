@@ -96,31 +96,41 @@ void export_appvars(void) {
                 image_t *i = g->image[j];
                 bool i_style_tp = i->style == STYLE_TRANSPARENT;
                 format->print_appvar_image(output, a->name, a->offsets[j], i->name, j, i->compression, i_style_tp);
-                free(i->name);
-                free(i->outc);
-                free(i->in);
-                free(i);
+                if (i->create_tilemap_ptrs) {
+                    format->print_tiles_ptrs_header(output, i->name, i->numtiles, i->compression);
+                    format->print_tiles_header(output, i->name, i->numtiles, i->compression, true);
+                }
             } else {
                 format->print_appvar_palette(output, a->offsets[j]);
             }
             format->print_next_array_line(output, true, j + 1 == num);
         }
         
-        // write the appvar init code
-        if (a->write_init) {
-            format->print_appvar_load_function(output, a->name);
-        }
-        
         // free any included palette
         if (a->palette) {
             unsigned int i = 0;
+            unsigned int index = g->numimages;
             for (; i < a->numpalettes; i++) {
-                format->print_appvar_palette_header(output, a->palette[i], a->name, g->numimages++, a->palette_data[i]->count);
+                format->print_appvar_palette_header(output, a->palette[i], a->name, index++, a->palette_data[i]->count);
                 free(a->palette[i]);
                 free(a->palette_data[i]);
             }
             free(a->palette);
             free(a->palette_data);
+        }
+        
+        // write the appvar init code
+        if (a->write_init) {
+            format->print_appvar_load_function(output, a->name, false);
+        
+            for (j = 0; j < g->numimages; j++) {
+                image_t *i = g->image[j];
+                if (i->create_tilemap_ptrs) {
+                    format->print_appvar_load_function_tilemap(output, a->name, i->name, i->numtiles, j, i->compression);
+                }
+            }
+            
+            format->print_appvar_load_function_end(output);
         }
         
         // finish exporting the actual appvar
@@ -132,24 +142,26 @@ void export_appvars(void) {
         format->close_output(output, OUTPUT_SOURCE);
         
         // free all the things
-        free(g->palette);
-        free(g->image);
-        free(g->name);
-        free(g->outc);
-        free(g->outh);
         free(output);
     }
     lof("\n");
 }
 
 // check if an image exists in an appvar and make a list of pointers to the ones it does
-bool image_is_in_an_appvar(const char *image_name) {
+bool image_is_in_an_appvar(image_t *image) {
     unsigned int i,s;
     data_num_appvars = 0;
+    if (!image) { return 0; }
     for (i = 0; i < convpng.numappvars; i++) {
         appvar_t *a = &appvar[i];
         for (s = 0; s < a->g->numimages; s++) {
-            if (!strcmp(image_name, a->g->image[s]->name)) {
+            image_t *c = a->g->image[s];
+            if (!strcmp(image->name, c->name)) {
+                free(c->in);
+                free(c->outc);
+                free(c->name);
+                free(c);
+                a->g->image[s] = image;
                 appvar_ptrs[data_num_appvars++] = a;
             }
         }

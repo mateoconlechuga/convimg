@@ -38,11 +38,14 @@ typedef struct s_st {
     char *name;                      // name of image
     unsigned int compression;        // compression information
     unsigned int style;              // output style
+    bool convert_to_tilemap;         // should we convert to a tilemap?
+    bool create_tilemap_ptrs;        // should we create an array of pointers to the tiles?
+    unsigned int numtiles;           // number of tiles in the image
 } image_t;
 
 typedef struct g_st {
     char *name;                      // name of the group file
-    char *palette;              // custom palette file name
+    char *palette;                   // custom palette file name
     unsigned palette_length;         // custom palette length
     bool palette_fixed_length;       // bool to check if forced palette size
     image_t **image;                 // pointer to array of images
@@ -107,6 +110,7 @@ typedef union {
 typedef struct {
     void (*open_output)(output_t *out, const char *input, bool header);
     void (*close_output)(output_t *out, bool header);
+    void (*print_include_header)(output_t *out, const char *name);
     void (*print_source_header)(output_t *out, const char *header_file_name);
     void (*print_header_header)(output_t *out, const char *group_name);
     void (*print_palette)(output_t *out, const char *group_name, liq_palette *pal, const unsigned int pal_len);
@@ -114,12 +118,12 @@ typedef struct {
     void (*print_image_source_header)(output_t *out, const char *group_header_file_name);
     void (*print_tile)(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, uint8_t width, uint8_t height);
     void (*print_compressed_tile)(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size);
-    void (*print_tile_ptrs)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar);
+    void (*print_tile_ptrs)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar, unsigned int *offsets);
     void (*print_byte)(output_t *out, uint8_t byte, bool need_comma);
     void (*print_next_array_line)(output_t *out, bool is_long, bool is_end);
     void (*print_image)(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const uint8_t width, const uint8_t height);
     void (*print_compressed_image)(output_t *out, uint8_t bpp, const char *i_name, unsigned int size);
-    void (*print_tiles_header)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
+    void (*print_tiles_header)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar);
     void (*print_tiles_ptrs_header)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
     void (*print_image_header)(output_t *out, const char *i_name, unsigned int size, bool compressed);
     void (*print_transparent_image_header)(output_t *out, const char *i_name, unsigned int size, bool compressed);
@@ -131,7 +135,9 @@ typedef struct {
     void (*print_appvar_image)(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style);
     void (*print_appvar_palette)(output_t *out, unsigned int offset);
     void (*print_appvar_load_function_header)(output_t *out);
-    void (*print_appvar_load_function)(output_t *out, const char *a_name);
+    void (*print_appvar_load_function)(output_t *out, const char *a_name, bool has_tilemaps);
+    void (*print_appvar_load_function_tilemap)(output_t *out, const char *a_name, char *tilemap_name, unsigned int tilemap_size, unsigned int index, bool compressed);
+    void (*print_appvar_load_function_end)(output_t *out);
     void (*print_appvar_palette_header)(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len);
 } format_t;
 

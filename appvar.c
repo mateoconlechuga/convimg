@@ -75,6 +75,7 @@ void export_appvars(void) {
         // add palette information to the end of the appvar
         if (a->palette) {
             unsigned int i;
+            a->add_offset = true;
             for (i = 0; i < a->numpalettes; i++) {
                 uint16_t pal[256];
                 unsigned int pal_len;
@@ -86,7 +87,7 @@ void export_appvars(void) {
                     liq_color *e = &a->palette_data[i]->entries[j];
                     pal[j] = rgb1555(e->r, e->g, e->b);
                 }
-                add_appvar_data(a, (uint8_t*)pal, pal_len * 2);
+                add_appvar_data(a, pal, pal_len * 2);
             }
         }
         
@@ -229,14 +230,14 @@ void add_appvars_offset(unsigned int size) {
     }
 }
 
-void add_appvars_data(const uint8_t *data, const size_t size) {
+void add_appvars_data(const void *data, const size_t size) {
     unsigned int j;
     for (j = 0; j < data_num_appvars; j++) {
         add_appvar_data(appvar_ptrs[j], data, size);
     }
 }
 
-void add_appvar_data(appvar_t *a, const uint8_t *data, const size_t size) {
+void add_appvar_data(appvar_t *a, const void *data, const size_t size) {
     unsigned int offset = a->offset;
     unsigned int curr   = a->curr_image;
     

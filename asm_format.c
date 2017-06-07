@@ -36,24 +36,24 @@ static void asm_print_source_header(output_t *out, const char *header_file_name)
     fprintf(out->asm, "; Converted using ConvPNG\n");
 }
 
-static void asm_print_header_header(output_t *out, const char *group_name) {
+static void asm_print_header_header(output_t *out, const char *name) {
     fprintf(out->inc, "; Converted using ConvPNG\n");
     fprintf(out->inc, "; This file contains all the graphics for easier inclusion in a project\n");
-    fprintf(out->inc, "#ifndef __%s__\n#define __%s__\n\n", group_name, group_name);
-    fprintf(out->inc, "#include \"%s.asm\"\n", group_name);
+    fprintf(out->inc, "#ifndef __%s__\n#define __%s__\n\n", name, name);
+    fprintf(out->inc, "#include \"%s.asm\"\n", name);
 }
 
-static void asm_print_palette(output_t *out, const char *group_name, liq_palette *pal, const unsigned int pal_len) {
-    fprintf(out->asm, "_%s_pal_size .equ %u\n", group_name, pal_len << 1);
-    fprintf(out->asm, "_%s_pal:\n", group_name);
+static void asm_print_palette(output_t *out, const char *name, liq_palette *pal, const unsigned int pal_len) {
+    fprintf(out->asm, "_%s_pal_size .equ %u\n", name, pal_len << 1);
+    fprintf(out->asm, "_%s_pal:\n", name);
     for (unsigned int j = 0; j < pal_len; j++) {
         liq_color *e = &pal->entries[j];
         fprintf(out->asm, " .dw 0%04Xh ; %02u :: rgba(%u,%u,%u,%u)\n", rgb1555(e->r, e->g, e->b), j, e->r, e->g, e->b, e->a);
     }
 }
 
-static void asm_print_transparent_index(output_t *out, const char *group_name, const unsigned int index) {
-    fprintf(out->inc, "%s_transparent_color_index .equ %u\n\n", group_name, index);
+static void asm_print_transparent_index(output_t *out, const char *name, const unsigned int index) {
+    fprintf(out->inc, "%s_transparent_color_index .equ %u\n\n", name, index);
 }
 
 static void asm_print_image_source_header(output_t *out, const char *group_header_file_name) {

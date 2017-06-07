@@ -232,6 +232,16 @@ unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer,
     return size;
 }
 
+char *strip_path(char *name) {
+    char *h_name = name;
+    if (name) {
+        if (convpng.directory) {
+            (h_name = strrchr(name, '/')) ? h_name++ : (h_name = name);
+        }
+    }
+    return h_name;
+}
+
 output_t *output_create(void) {
     output_t *output = safe_malloc(sizeof(output_t));
     output->c = NULL;

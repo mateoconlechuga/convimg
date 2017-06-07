@@ -168,6 +168,8 @@ int main(int argc, char **argv) {
                 pal_arr = custom_pal;
                 if (!g_pal_fixed_len) {
                     g_pal_len = pal_width;
+                } else if (pal_width < g_pal_len) {
+                    g_pal_len = pal_width;
                 }
                 
                 // tell the user what they are doing
@@ -178,7 +180,7 @@ int main(int argc, char **argv) {
             pal.count = g_pal_len;
             
             // loop though all the colors
-            for (unsigned int h = 0; h < g_pal_len; h++) {
+            for (unsigned int h = 0; h < g_pal_len; ++h) {
                 unsigned int o = h * 4;
                 liq_color c;
                 c.r = pal_arr[o + 0];
@@ -290,19 +292,19 @@ int main(int argc, char **argv) {
             format->close_output(g_output, OUTPUT_SOURCE);
             free(g_output);
         } else {
-            format->print_source_header(g_output, g_outh_name);
-            format->print_header_header(g_output, g_name);
+            format->print_source_header(g_output, strip_path(g_outh_name));
+            format->print_header_header(g_output, strip_path(g_name));
 
             // export the palette information to file or appvar
             if (g_exported_palette) {
                 add_appvars_palette(g_name, &pal);
             } else if (g_out_pal_arr) {
-                format->print_palette(g_output, g_name, &pal, g_pal_len);
+                format->print_palette(g_output, strip_path(g_name), &pal, g_pal_len);
             }
             
             // log transparent color things
             if (g_use_tcolor) {
-                format->print_transparent_index(g_output, g_name, g_tindex);
+                format->print_transparent_index(g_output, strip_path(g_name), g_tindex);
                 lof("Transparent Color Index : %u\n", g_tindex);
                 lof("Transparent Color : 0x%04X\n", g_tcolor_cv);
             }
@@ -406,7 +408,7 @@ int main(int argc, char **argv) {
                 }
 
                 // write all the image data to the ouputs
-                format->print_image_source_header(i_output, g_outh_name);
+                format->print_image_source_header(i_output, strip_path(g_outh_name));
                 
                 // allocate a buffer for storing the new data
                 i_data_buffer = safe_malloc(i_width * i_height * 2 + 2);
@@ -480,7 +482,6 @@ int main(int argc, char **argv) {
 
                     // add the image offsets
                     if (i_appvar) {
-                        add_appvars_offsets_state(false);
                         add_appvars_offset(offset_size);
                     }
                     
@@ -574,7 +575,7 @@ int main(int argc, char **argv) {
             }
             
             if (!g_exported_palette && g_out_pal_arr) {
-                format->print_palette_header(g_output, g_name, g_pal_len);
+                format->print_palette_header(g_output, strip_path(g_name), g_pal_len);
             }
             format->print_end_header(g_output);
             format->close_output(g_output, OUTPUT_HEADER);

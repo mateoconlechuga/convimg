@@ -31,23 +31,21 @@ static void c_close_output(output_t *out, bool header) {
     }
 }
 
-static void c_print_source_header(output_t *out, const char *header_file_name) {
+static void c_print_source_header(output_t *out, const char *name) {
     fprintf(out->c, "// Converted using ConvPNG\n");
     fprintf(out->c, "#include <stdint.h>\n");
-    if (header_file_name) {
-        fprintf(out->c, "#include \"%s\"\n\n", header_file_name);
-    }
+    fprintf(out->c, "#include \"%s\"\n\n", name);
 }
 
-static void c_print_header_header(output_t *out, const char *group_name) {
+static void c_print_header_header(output_t *out, const char *name) {
     fprintf(out->h, "// Converted using ConvPNG\n");
     fprintf(out->h, "// This file contains all the graphics sources for easier inclusion in a project\n");
-    fprintf(out->h, "#ifndef __%s__\n#define __%s__\n", group_name, group_name);
+    fprintf(out->h, "#ifndef __%s__\n#define __%s__\n", name, name);
     fprintf(out->h, "#include <stdint.h>\n\n");
 }
 
-static void c_print_palette(output_t *out, const char *group_name, liq_palette *pal, const unsigned int pal_len) {
-    fprintf(out->c, "uint16_t %s_pal[%u] = {\n", group_name, pal_len);
+static void c_print_palette(output_t *out, const char *name, liq_palette *pal, const unsigned int pal_len) {
+    fprintf(out->c, "uint16_t %s_pal[%u] = {\n", name, pal_len);
      
     for (unsigned int j = 0; j < pal_len; j++) {
         liq_color *e = &pal->entries[j];
@@ -56,14 +54,14 @@ static void c_print_palette(output_t *out, const char *group_name, liq_palette *
     fprintf(out->c, "};");
 }
 
-static void c_print_transparent_index(output_t *out, const char *group_name, const unsigned int index) {
-    fprintf(out->h, "#define %s_transparent_color_index %u\n\n", group_name, index);
+static void c_print_transparent_index(output_t *out, const char *name, const unsigned int index) {
+    fprintf(out->h, "#define %s_transparent_color_index %u\n\n", name, index);
 }
 
-static void c_print_image_source_header(output_t *out, const char *group_header_file_name) {
+static void c_print_image_source_header(output_t *out, const char *name) {
     fprintf(out->c, "// Converted using ConvPNG\n");
     fprintf(out->c, "#include <stdint.h>\n");
-    fprintf(out->c, "#include \"%s\"\n\n", group_header_file_name);
+    fprintf(out->c, "#include \"%s\"\n\n", name);
 }
 
 static void c_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, uint8_t width, uint8_t height) {
@@ -130,7 +128,7 @@ static void c_print_tiles_header(output_t *out, const char *i_name, unsigned int
     if (compressed) {
         if (in_appvar) {
             for (; i < num_tiles; i++) {
-                fprintf(out->h, "#define %s_tile_%u_compressed ((gfx_image_t*)%s_tiles_compressed[%u])\n", i_name, i, i_name, i);
+                fprintf(out->h, "#define %s_tile_%u_compressed ((gfx_sprite_t*)%s_tiles_compressed[%u])\n", i_name, i, i_name, i);
             }
         } else {
             for (; i < num_tiles; i++) {
@@ -140,12 +138,12 @@ static void c_print_tiles_header(output_t *out, const char *i_name, unsigned int
     } else {
         if (in_appvar) {
             for (; i < num_tiles; i++) {
-                fprintf(out->h, "#define %s_tile_%u ((gfx_image_t*)%s_tiles_data[%u])\n", i_name, i, i_name, i);
+                fprintf(out->h, "#define %s_tile_%u ((gfx_sprite_t*)%s_tiles_data[%u])\n", i_name, i, i_name, i);
             }
         } else {
             for (; i < num_tiles; i++) {
                 fprintf(out->h,"extern uint8_t %s_tile_%u_data[];\n", i_name, i);
-                fprintf(out->h, "#define %s_tile_%u ((gfx_image_t*)%s_tile_%u_data)\n", i_name, i, i_name, i);
+                fprintf(out->h, "#define %s_tile_%u ((gfx_sprite_t*)%s_tile_%u_data)\n", i_name, i, i_name, i);
             }
         }
     }
@@ -158,7 +156,7 @@ static void c_print_tiles_ptrs_header(output_t *out, const char *i_name, unsigne
     } else {
         fprintf(out->h, "#define %s_tiles_num %u\n", i_name, num_tiles);
         fprintf(out->h, "extern uint8_t *%s_tiles_data[%u];\n", i_name, num_tiles);
-        fprintf(out->h, "#define %s_tiles ((gfx_image_t**)%s_tiles_data)\n", i_name, i_name);
+        fprintf(out->h, "#define %s_tiles ((gfx_sprite_t**)%s_tiles_data)\n", i_name, i_name);
     }
 }
 
@@ -167,7 +165,7 @@ static void c_print_image_header(output_t *out, const char *i_name, unsigned int
         fprintf(out->h, "extern uint8_t %s_compressed[%u];\n", i_name, size);
     } else {
         fprintf(out->h, "extern uint8_t %s_data[%u];\n", i_name, size);
-        fprintf(out->h, "#define %s ((gfx_image_t*)%s_data)\n", i_name, i_name);
+        fprintf(out->h, "#define %s ((gfx_sprite_t*)%s_data)\n", i_name, i_name);
     }
 }
 
@@ -176,7 +174,7 @@ static void c_print_transparent_image_header(output_t *out, const char *i_name, 
         fprintf(out->h, "extern uint8_t %s_compressed[%u];\n", i_name, size);
     } else {
         fprintf(out->h, "extern uint8_t %s_data[%u];\n", i_name, size);
-        fprintf(out->h, "#define %s ((gfx_timage_t*)%s_data)\n", i_name, i_name);
+        fprintf(out->h, "#define %s ((gfx_rletsprite_t*)%s_data)\n", i_name, i_name);
     }
 }
 
@@ -197,9 +195,9 @@ static void c_print_appvar_array(output_t *out, const char *a_name, unsigned int
 }
 
 static void c_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style) {
-    const char *s = "gfx_image_t";
+    const char *s = "gfx_sprite_t";
     if (tp_style) {
-        s = "gfx_timage_t";
+        s = "gfx_rletsprite_t";
     }
     fprintf(out->c, "(uint8_t*)%u,", offset);
     if (compressed) {

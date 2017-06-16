@@ -17,17 +17,17 @@ char *str_dupcat(const char *s, const char *c);
 char *str_dupcatdir(const char *s, const char *c);
 uint16_t rgb1555(const uint8_t r8, const uint8_t g8, const uint8_t b8);
 uint16_t rgb565(const uint8_t r8, const uint8_t g8, const uint8_t b8);
-void encodePNG(const char* filename, const unsigned char* image, unsigned width, unsigned height);
-void build_image_palette(const liq_palette *pal, const unsigned length, const char *filename);
+void encodePNG(const char* filename, const unsigned char* image, unsigned int width, unsigned int height);
+void build_image_palette(const liq_palette *pal, const unsigned int length, const char *filename);
 
 void output_array_compressed(const format_t *format, output_t *out, uint8_t *compressed_data, unsigned int len);
 void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned int width, unsigned int height);
 uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode);
 
-void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_buffer, unsigned int *width, uint8_t height, unsigned int *size);
+void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_buffer, unsigned int *width, unsigned int height, unsigned int *size);
 output_t *output_create(void);
 char *strip_path(char *name);
 
-unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer, uint8_t width, uint8_t height, uint8_t tp_index);
+unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer, unsigned int width, unsigned int height, uint8_t tp_index);
 
 #endif

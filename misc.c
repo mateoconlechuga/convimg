@@ -158,7 +158,7 @@ uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode) {
     return ret;
 }
 
-void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_buffer, unsigned int *width, uint8_t height, unsigned int *size) {
+void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_buffer, unsigned int *width, unsigned int height, unsigned int *size) {
     unsigned int j,k,i;
     j = k = i = 0;
     
@@ -203,7 +203,7 @@ void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_bu
     *size = *width * height;
 }
 
-unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer, uint8_t width, uint8_t height, uint8_t tp_index) {
+unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer, unsigned int width, unsigned int height, uint8_t tp_index) {
     unsigned int size = 0;
     unsigned int j = 0;
     

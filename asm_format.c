@@ -61,7 +61,7 @@ static void asm_print_image_source_header(output_t *out, const char *group_heade
     fprintf(out->asm, "; Converted using ConvPNG\n\n");
 }
 
-static void asm_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, uint8_t width, uint8_t height) {
+static void asm_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, unsigned int width, unsigned int height) {
 	fprintf(out->asm, "_%s_tile_%u_size .equ %u\n", i_name, tile_num, size);
     fprintf(out->asm, "_%s_tile_%u: ; %u bytes\n db %u,%u ; width,height\n db ", i_name, tile_num, size, width, height);
 }
@@ -119,7 +119,7 @@ static void asm_print_next_array_line(output_t *out, bool is_long, bool at_end) 
     }
 }
 
-static void asm_print_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const uint8_t width, const uint8_t height) {
+static void asm_print_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const unsigned int width, const unsigned int height) {
     fprintf(out->asm, "; %u bpp image\n", bpp);
 	fprintf(out->asm, "_%s_size .equ %u\n", i_name, size);
 	fprintf(out->asm, "_%s:\n .db %u,%u\n .db ", i_name, width, height);

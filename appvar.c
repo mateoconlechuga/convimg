@@ -55,6 +55,7 @@ void export_appvars(void) {
             format = &asm_format;
         } else {
             errorf("unknown appvar mode");
+            return;
         }
         
         // open the outputs

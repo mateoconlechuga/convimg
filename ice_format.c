@@ -57,7 +57,7 @@ static void ice_print_image_source_header(output_t *out, const char *group_heade
     (void)group_header_file_name;
 }
 
-static void ice_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, uint8_t width, uint8_t height) {
+static void ice_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, unsigned int width, unsigned int height) {
     fprintf(out->txt, "%s_tile_%u | %u bytes\n%u,%u,\"", i_name, tile_num, size, width, height);
 }
 
@@ -86,7 +86,7 @@ static void ice_print_next_array_line(output_t *out, bool is_long, bool at_end) 
     }
 }
 
-static void ice_print_image(output_t *out, uint8_t bpp, const char *i_name, const unsigned int size, const uint8_t width, const uint8_t height) {
+static void ice_print_image(output_t *out, uint8_t bpp, const char *i_name, const unsigned int size, const unsigned int width, const unsigned int height) {
     (void)bpp;
     fprintf(out->txt, "%s | %u bytes\n%u,%u,\"", i_name, size, width, height);
 }

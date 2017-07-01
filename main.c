@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
         bool       g_mode_ice          = g_mode == MODE_ICE;
         bool       g_mode_appvar       = g_mode == MODE_APPVAR;
         bool       g_use_tcolor        = g_valid_tcolor || g_use_tindex;
-        bool       g_style_tp          = g_style == STYLE_TRANSPARENT;
+        bool       g_style_tp          = g_style == STYLE_RLET;
         bool       g_exported_palette  = false;
         
         // determine the output format
@@ -347,7 +347,7 @@ int main(int argc, char **argv) {
                 
                 // determine if image needs to be exported to an appvar
                 bool i_appvar = image_is_in_an_appvar(i_curr);
-                bool i_style_tp = i_style == STYLE_TRANSPARENT;
+                bool i_style_rlet = i_style == STYLE_RLET;
                 
                 // tilemap things
                 bool i_convert_to_tilemap = i_curr->convert_to_tilemap;
@@ -511,8 +511,8 @@ int main(int argc, char **argv) {
                     }
 
                     // output the image
-                    if (i_style_tp) {
-                        i_size = group_style_transparent_output(i_data, &i_data_buffer[2], i_width, i_height, i_tindex);
+                    if (i_style_rlet) {
+                        i_size = group_rlet_output(i_data, &i_data_buffer[2], i_width, i_height, i_tindex);
                         i_size_total = i_size + 2;
                     }
 
@@ -531,7 +531,7 @@ int main(int argc, char **argv) {
                             add_appvars_data(i_data_buffer, i_size_total);
                         } else {
                             format->print_image(i_output, i_bpp, i_name, i_size_total, i_width, i_height);
-                            if (i_style_tp) {
+                            if (i_style_rlet) {
                                 output_array_compressed(format, i_output, &i_data_buffer[2], i_size);
                             } else {
                                 output_array(format, i_output, &i_data_buffer[2], i_width, i_height);

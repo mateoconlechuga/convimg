@@ -96,7 +96,7 @@ void export_appvars(void) {
         for (j = 0; j < num; j++) {
             if (j < g->numimages) {
                 image_t *i = g->image[j];
-                bool i_style_tp = i->style == STYLE_TRANSPARENT;
+                bool i_style_tp = i->style == STYLE_RLET;
                 format->print_appvar_image(output, a->name, a->offsets[j], i->name, j, i->compression, i_style_tp);
                 if (i->create_tilemap_ptrs) {
                     format->print_tiles_ptrs_header(output, i->name, i->numtiles, i->compression);

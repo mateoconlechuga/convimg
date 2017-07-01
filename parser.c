@@ -304,8 +304,8 @@ add_other_colors:
             } else
             
             if(!strcmp(*argv, "#Style")) {
-                if(!strcmp(argv[1], "transparent")) {
-                    g->style = STYLE_TRANSPARENT;
+                if(!strcmp(argv[1], "rlet")) {
+                    g->style = STYLE_RLET;
                 }
             } else
 

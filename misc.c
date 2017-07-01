@@ -203,7 +203,7 @@ void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_bu
     *size = *width * height;
 }
 
-unsigned int group_style_transparent_output(uint8_t *data, uint8_t *data_buffer, unsigned int width, unsigned int height, uint8_t tp_index) {
+unsigned int group_rlet_output(uint8_t *data, uint8_t *data_buffer, unsigned int width, unsigned int height, uint8_t tp_index) {
     unsigned int size = 0;
     unsigned int j = 0;
     

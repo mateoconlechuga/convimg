@@ -30,7 +30,7 @@ enum mode_t { MODE_C = 0, MODE_ASM, MODE_ICE, MODE_APPVAR };
 enum compression_t { COMPRESS_NONE = 0, COMPRESS_ZX7 };
 
 // style modes
-enum style_t { STYLE_NONE = 0, STYLE_TRANSPARENT };
+enum style_t { STYLE_NONE = 0, STYLE_RLET };
 
 typedef struct s_st {
     char *in;                        // name of image on disk

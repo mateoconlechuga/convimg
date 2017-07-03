@@ -242,6 +242,37 @@ add_other_colors:
                 g->use_tindex = true;
             } else
             
+            // add a fixed color index
+            if(!strcmp(*argv, "#FixedIndexColor")) {
+                char **colors;
+                unsigned int numf = g->num_fixed_colors;
+                fixed_t *f = &g->fixed[numf];
+                if (numf > 200) {
+                    errorf("too many fixed color indexes");
+                }
+                
+                if (num <= 1) { args_error(); }
+                num = separate_args(argv[1], &colors, ',');
+                if(num == 4) {
+                    f->color.a = 255;
+                    goto add_other_colors_fixed;
+                } else if(num < 5) {
+                    args_error();
+                }
+                
+                f->color.a = (uint8_t)strtol(colors[4], NULL, 10);
+add_other_colors_fixed:
+                f->color.r = (uint8_t)strtol(colors[1], NULL, 10);
+                f->color.g = (uint8_t)strtol(colors[2], NULL, 10);
+                f->color.b = (uint8_t)strtol(colors[3], NULL, 10);
+                f->converted = rgb1555(f->color.r, f->color.g, f->color.b);
+                f->index = (unsigned int)strtol(colors[0], NULL, 10);
+                g->num_fixed_colors++;
+                
+                // free the allocated memory
+                free(colors);
+            } else
+            
             if(!strcmp(*argv, "#AppvarC")) {
                 appvar_t *a = &appvar[convpng.numappvars];
                 g = &group[convpng.numgroups];

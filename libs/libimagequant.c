@@ -2030,3 +2030,31 @@ LIQ_EXPORT LIQ_NONNULL liq_error liq_write_remapped_image_rows(liq_result *quant
 LIQ_EXPORT int liq_version() {
     return LIQ_VERSION;
 }
+
+
+
+#define internal_gamma 0.5499
+#define gamma 0.45455
+
+static float gamma_lut[256];
+
+void liq_init_gamma_lut(void) {
+    unsigned int i;
+    for(i = 0; i < 256; i++) {
+        gamma_lut[i] = pow((double)i/255.0, internal_gamma/gamma);
+    }
+}
+
+static f_pixel color_to_f(const liq_color color) {
+    float a = color.a/255.f;
+    return (f_pixel) {
+        .a = a,
+        .r = gamma_lut[color.r]*a,
+        .g = gamma_lut[color.g]*a,
+        .b = gamma_lut[color.b]*a,
+    };
+}
+
+void liq_add_fixed_histogram_color(liq_histogram *hist, liq_color fixed_color) {
+    hist->fixed_colors[hist->fixed_colors_count++] = color_to_f(fixed_color);
+}

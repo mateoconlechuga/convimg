@@ -67,6 +67,9 @@ typedef struct liq_histogram_entry {
     unsigned int count;
 } liq_histogram_entry;
 
+LIQ_EXPORT void liq_init_gamma_lut(void);
+LIQ_EXPORT void liq_add_fixed_histogram_color(liq_histogram *hist, liq_color fixed_color);
+
 LIQ_EXPORT LIQ_USERESULT liq_attr* liq_attr_create(void);
 LIQ_EXPORT LIQ_USERESULT liq_attr* liq_attr_create_with_allocator(void* (*malloc)(size_t), void (*free)(void*));
 LIQ_EXPORT LIQ_USERESULT liq_attr* liq_attr_copy(const liq_attr *orig) LIQ_NONNULL;

@@ -69,6 +69,9 @@ void init_convpng(int argc, char **argv) {
     // init the main structure
     init_convpng_struct();
     
+    // init the gamma lut
+    liq_init_gamma_lut();
+    
     // read all the options from the command line
     while ((opt = getopt(argc, argv, "nc:i:j:")) != -1) {
         switch (opt) {

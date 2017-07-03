@@ -72,6 +72,8 @@ int main(int argc, char **argv) {
         char      *g_outc_name         = curr->outc;
         char      *g_outh_name         = curr->outh;
         unsigned   g_pal_len           = curr->palette_length;
+        unsigned   g_fixed_num         = curr->num_fixed_colors;
+        fixed_t   *g_fixed             = curr->fixed;
         
         // init new elements
         bool       g_is_16_bpp         = g_bpp == 16;
@@ -225,10 +227,14 @@ int main(int argc, char **argv) {
             
             // add transparent color if neeeded
             if (g_use_tcolor) {
-                liq_histogram_entry hist_entry;
-                hist_entry.color = curr->tcolor;
-                liq_error err = liq_histogram_add_colors(hist, attr, &hist_entry, hist_entry.count = 1, 0);
-                if (err != LIQ_OK) { errorf("adding transparent color to palette"); }
+                liq_add_fixed_histogram_color(hist, curr->tcolor);
+            }
+            
+            // add any fixed palette colors if needed
+            if (g_fixed_num) {
+                for (j = 0; j < g_fixed_num; j++) {
+                    liq_add_fixed_histogram_color(hist, g_fixed[j].color);
+                }
             }
             
             liq_error err = liq_histogram_quantize(hist, attr, &res);
@@ -251,7 +257,7 @@ int main(int argc, char **argv) {
                 // if the user wants the index to be elsewhere, expand the array
                 if (g_tindex > g_pal_len) {
                     if (g_pal_fixed_len) {
-                        errorf("transparent index placed outside palette max size");
+                        errorf("transparent index placed outside max palette size");
                     }
                     g_pal_len = g_tindex+1;
                 }
@@ -268,7 +274,36 @@ int main(int argc, char **argv) {
                 pal.entries[g_tindex] = tmpc;
             }
             
-            // free the histogram
+            // find any fixed colors and move to proper indexes
+            if (g_fixed_num) {
+                for (s = 0; s < g_fixed_num; s++) {
+                    unsigned int f_index = g_fixed[s].index;
+                    uint16_t converted_color = g_fixed[s].converted;
+                    
+                    // if the user wants the index to be elsewhere, expand the array
+                    if (f_index > g_pal_len) {
+                        if (g_pal_fixed_len) {
+                            errorf("fixed index placed outside max palette size");
+                        }
+                        g_pal_len = f_index+1;
+                    }
+
+                    for (j = 0; j < g_pal_len ; j++) {
+                        liq_color *c = &pal.entries[j];
+                        if (converted_color == rgb1555(c->r, c->g, c->b))
+                            break;
+                    }
+
+                    lof("Replacing fixed color %u: (%u -> %u)", s, j, f_index);
+                    
+                    // move transparent color to index
+                    liq_color tmpc = pal.entries[j];
+                    pal.entries[j] = pal.entries[f_index];
+                    pal.entries[f_index] = tmpc;
+                }
+            }
+            
+            // free the histogram and resultants
             if (res)  { liq_result_destroy(res);     }
             if (hist) { liq_histogram_destroy(hist); }
         } else {

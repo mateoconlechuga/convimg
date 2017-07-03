@@ -32,7 +32,7 @@ enum compression_t { COMPRESS_NONE = 0, COMPRESS_ZX7 };
 // style modes
 enum style_t { STYLE_NONE = 0, STYLE_RLET };
 
-typedef struct s_st {
+typedef struct {
     char *in;                        // name of image on disk
     char *outc;                      // output file name (.c, .asm)
     char *name;                      // name of image
@@ -43,7 +43,13 @@ typedef struct s_st {
     unsigned int numtiles;           // number of tiles in the image
 } image_t;
 
-typedef struct g_st {
+typedef struct {
+    liq_color color;
+    uint16_t converted;
+    unsigned int index;
+} fixed_t;
+
+typedef struct {
     char *name;                      // name of the group file
     char *palette;                   // custom palette file name
     unsigned palette_length;         // custom palette length
@@ -70,12 +76,14 @@ typedef struct g_st {
     bool output_palette_array;       // does the user want an array of the palette?
     bool output_palette_appvar;      // does the user want the palette inside the appvar?
     uint8_t bpp;                     // bits per pixel in each image
+    fixed_t fixed[256];              // fixed colors to add
+    unsigned int num_fixed_colors;   // number of fixed colors
     
     // for creating global palettes
     bool is_global_palette;          // should we just build a palette rather than a group?
 } group_t;
 
-typedef struct c_st {
+typedef struct {
     FILE *ini;
     FILE *log;
     FILE *all_gfx_c;

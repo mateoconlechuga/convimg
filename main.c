@@ -25,7 +25,7 @@
 
 convpng_t convpng;
 group_t group[NUM_GROUPS];
-                        
+                  
 int main(int argc, char **argv) {
     unsigned int s,g,j,k;
     time_t c1 = time(NULL);
@@ -253,48 +253,13 @@ int main(int argc, char **argv) {
             
             // find the transparent color, move by default to index 0
             if (g_use_tcolor) {
-
-                // if the user wants the index to be elsewhere, expand the array
-                if (g_tindex > g_pal_len) {
-                    if (g_pal_fixed_len) {
-                        errorf("transparent index placed outside max palette size");
-                    }
-                    g_pal_len = g_tindex+1;
-                }
-
-                for (j = 0; j < g_pal_len ; j++) {
-                    if (!memcmp(&g_transparentcolor, &pal.entries[j], sizeof(liq_color)))
-                        break;
-                }
-
-                // move transparent color to index
-                liq_color tmpc = pal.entries[j];
-                pal.entries[j] = pal.entries[g_tindex];
-                pal.entries[g_tindex] = tmpc;
+                force_color_index(&g_transparentcolor, &pal, &g_pal_len, g_pal_fixed_len, g_tindex);
             }
             
             // find any fixed colors and move to proper indexes
             if (g_fixed_num) {
                 for (s = 0; s < g_fixed_num; s++) {
-                    unsigned int f_index = g_fixed[s].index;
-                    
-                    // if the user wants the index to be elsewhere, expand the array
-                    if (f_index > g_pal_len) {
-                        if (g_pal_fixed_len) {
-                            errorf("fixed index placed outside max palette size");
-                        }
-                        g_pal_len = f_index+1;
-                    }
-
-                    for (j = 0; j < g_pal_len ; j++) {
-                        if (!memcmp(&g_fixed[s].color, &pal.entries[j], sizeof(liq_color)))
-                            break;
-                    }
-
-                    // move transparent color to index
-                    liq_color tmpc = pal.entries[j];
-                    pal.entries[j] = pal.entries[f_index];
-                    pal.entries[f_index] = tmpc;
+                    force_color_index(&g_fixed[s].color, &pal, &g_pal_len, g_pal_fixed_len, g_fixed[s].index);
                 }
             }
             

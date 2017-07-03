@@ -49,7 +49,7 @@ static void c_print_palette(output_t *out, const char *name, liq_palette *pal, c
      
     for (unsigned int j = 0; j < pal_len; j++) {
         liq_color *e = &pal->entries[j];
-        fprintf(out->c, " 0x%04X,  // %02u :: rgba(%u,%u,%u)\n", rgb1555(e->r, e->g, e->b), j, e->r, e->g, e->b);
+        fprintf(out->c, " 0x%04X,  // %02u :: rgb(%u,%u,%u)\n", rgb1555(e->r, e->g, e->b), j, e->r, e->g, e->b);
     }
     fprintf(out->c, "};");
 }

@@ -28,6 +28,7 @@ void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_bu
 output_t *output_create(void);
 char *strip_path(char *name);
 
+void force_color_index(liq_color *color, liq_palette *pal, unsigned int *pal_len, unsigned int max_pal_len, unsigned int index);
 unsigned int group_rlet_output(uint8_t *data, uint8_t *data_buffer, unsigned int width, unsigned int height, uint8_t tp_index);
 
 #endif

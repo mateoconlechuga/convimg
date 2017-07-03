@@ -48,7 +48,7 @@ static void asm_print_palette(output_t *out, const char *name, liq_palette *pal,
     fprintf(out->asm, "_%s_pal:\n", name);
     for (unsigned int j = 0; j < pal_len; j++) {
         liq_color *e = &pal->entries[j];
-        fprintf(out->asm, " .dw 0%04Xh ; %02u :: rgba(%u,%u,%u)\n", rgb1555(e->r, e->g, e->b), j, e->r, e->g, e->b);
+        fprintf(out->asm, " .dw 0%04Xh ; %02u :: rgb(%u,%u,%u)\n", rgb1555(e->r, e->g, e->b), j, e->r, e->g, e->b);
     }
 }
 

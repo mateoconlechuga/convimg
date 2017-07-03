@@ -203,6 +203,28 @@ void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_bu
     *size = *width * height;
 }
 
+void force_color_index(liq_color *color, liq_palette *pal, unsigned int *pal_len, unsigned int max_pal_len, unsigned int index) {
+    unsigned int j;
+    
+    // if the user wants the index to be elsewhere, expand the array
+    if (index > *pal_len) {
+        if (max_pal_len) {
+            errorf("index placed outside max palette size");
+        }
+        *pal_len = index + 1;
+    }
+
+    for (j = 0; j < *pal_len ; j++) {
+        if (!memcmp(color, &pal->entries[j], sizeof(liq_color)))
+            break;
+    }
+
+    // move transparent color to index
+    liq_color tmpc = pal->entries[j];
+    pal->entries[j] = pal->entries[index];
+    pal->entries[index] = tmpc;
+}
+
 unsigned int group_rlet_output(uint8_t *data, uint8_t *data_buffer, unsigned int width, unsigned int height, uint8_t tp_index) {
     unsigned int size = 0;
     unsigned int j = 0;

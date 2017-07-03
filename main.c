@@ -55,7 +55,6 @@ int main(int argc, char **argv) {
         
         // already inited structure elements
         uint8_t    g_bpp               = curr->bpp;
-        uint16_t   g_tcolor_cv         = curr->tcolor_converted;
         unsigned   g_tindex            = curr->tindex;
         unsigned   g_numimages         = curr->numimages;
         unsigned   g_tile_width        = curr->tile_width;
@@ -74,6 +73,7 @@ int main(int argc, char **argv) {
         unsigned   g_pal_len           = curr->palette_length;
         unsigned   g_fixed_num         = curr->num_fixed_colors;
         fixed_t   *g_fixed             = curr->fixed;
+        liq_color  g_transparentcolor  = curr->tcolor;
         
         // init new elements
         bool       g_is_16_bpp         = g_bpp == 16;
@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
             
             // add transparent color if neeeded
             if (g_use_tcolor) {
-                liq_add_fixed_histogram_color(hist, curr->tcolor);
+                liq_add_fixed_histogram_color(hist, g_transparentcolor);
             }
             
             // add any fixed palette colors if needed
@@ -263,8 +263,7 @@ int main(int argc, char **argv) {
                 }
 
                 for (j = 0; j < g_pal_len ; j++) {
-                    liq_color *c = &pal.entries[j];
-                    if (g_tcolor_cv == rgb1555(c->r, c->g, c->b))
+                    if (!memcmp(&g_transparentcolor, &pal.entries[j], sizeof(liq_color)))
                         break;
                 }
 
@@ -278,7 +277,6 @@ int main(int argc, char **argv) {
             if (g_fixed_num) {
                 for (s = 0; s < g_fixed_num; s++) {
                     unsigned int f_index = g_fixed[s].index;
-                    uint16_t converted_color = g_fixed[s].converted;
                     
                     // if the user wants the index to be elsewhere, expand the array
                     if (f_index > g_pal_len) {
@@ -289,13 +287,10 @@ int main(int argc, char **argv) {
                     }
 
                     for (j = 0; j < g_pal_len ; j++) {
-                        liq_color *c = &pal.entries[j];
-                        if (converted_color == rgb1555(c->r, c->g, c->b))
+                        if (!memcmp(&g_fixed[s].color, &pal.entries[j], sizeof(liq_color)))
                             break;
                     }
 
-                    lof("Replacing fixed color %u: (%u -> %u)", s, j, f_index);
-                    
                     // move transparent color to index
                     liq_color tmpc = pal.entries[j];
                     pal.entries[j] = pal.entries[f_index];
@@ -341,7 +336,9 @@ int main(int argc, char **argv) {
             if (g_use_tcolor) {
                 format->print_transparent_index(g_output, strip_path(g_name), g_tindex);
                 lof("Transparent Color Index : %u\n", g_tindex);
-                lof("Transparent Color : 0x%04X\n", g_tcolor_cv);
+                lof("Transparent Color : 0x%04X\n", rgb1555(g_transparentcolor.r,
+                                                            g_transparentcolor.g,
+                                                            g_transparentcolor.b));
             }
 
             // log the number of images we are converting

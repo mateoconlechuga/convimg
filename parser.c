@@ -229,7 +229,6 @@ add_other_colors:
                 g->tcolor.r = (uint8_t)strtol(colors[0], NULL, 10);
                 g->tcolor.g = (uint8_t)strtol(colors[1], NULL, 10);
                 g->tcolor.b = (uint8_t)strtol(colors[2], NULL, 10);
-                g->tcolor_converted = rgb1555(g->tcolor.r, g->tcolor.g, g->tcolor.b);
                 g->use_tcolor = true;
                 
                 // free the allocated memory
@@ -265,7 +264,6 @@ add_other_colors_fixed:
                 f->color.r = (uint8_t)strtol(colors[1], NULL, 10);
                 f->color.g = (uint8_t)strtol(colors[2], NULL, 10);
                 f->color.b = (uint8_t)strtol(colors[3], NULL, 10);
-                f->converted = rgb1555(f->color.r, f->color.g, f->color.b);
                 f->index = (unsigned int)strtol(colors[0], NULL, 10);
                 g->num_fixed_colors++;
                 

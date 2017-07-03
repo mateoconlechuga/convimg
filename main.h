@@ -45,7 +45,6 @@ typedef struct {
 
 typedef struct {
     liq_color color;
-    uint16_t converted;
     unsigned int index;
 } fixed_t;
 
@@ -59,7 +58,6 @@ typedef struct {
     char *outh;                      // output main .inc or .h file
     char *outc;                      // output main .asm or .c file
     int tindex;                      // index to use as the transparent color
-    uint16_t tcolor_converted;       // converted transparent color
     liq_color tcolor;                // apparently more about the transparent color
     bool use_tcolor;                 // bool to tell if to compute transparent color
     bool use_tindex;                 // bool to use a new index

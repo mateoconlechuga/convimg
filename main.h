@@ -17,6 +17,8 @@
 #define ICON_WIDTH    16
 #define ICON_HEIGHT   16
 
+#define SIZE_BYTES    2
+
 #define LODEPNG_ERR_OPEN 78
 
 // function prototypes
@@ -58,7 +60,7 @@ typedef struct {
     char *outh;                      // output main .inc or .h file
     char *outc;                      // output main .asm or .c file
     int tindex;                      // index to use as the transparent color
-    liq_color tcolor;                // apparently more about the transparent color
+    liq_color tcolor;                // transparent color used for conversion
     bool use_tcolor;                 // bool to tell if to compute transparent color
     bool use_tindex;                 // bool to use a new index
     unsigned int mode;               // either asm or c style conversion
@@ -76,6 +78,8 @@ typedef struct {
     uint8_t bpp;                     // bits per pixel in each image
     fixed_t fixed[256];              // fixed colors to add
     unsigned int num_fixed_colors;   // number of fixed colors
+    liq_color ocolor;                // color to omit from output
+    bool use_ocolor;                 // use the color ommision
     
     // for creating global palettes
     bool is_global_palette;          // should we just build a palette rather than a group?

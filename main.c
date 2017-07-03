@@ -25,7 +25,7 @@
 
 convpng_t convpng;
 group_t group[NUM_GROUPS];
-                  
+
 int main(int argc, char **argv) {
     unsigned int s,g,j,k;
     time_t c1 = time(NULL);
@@ -62,6 +62,7 @@ int main(int argc, char **argv) {
         unsigned   g_style             = curr->style;
         bool       g_pal_fixed_len     = curr->palette_fixed_length;
         bool       g_use_tindex        = curr->use_tindex;
+        bool       g_use_omit_color    = curr->use_ocolor;
         bool       g_valid_tcolor      = curr->use_tcolor;
         bool       g_is_global_pal     = curr->is_global_palette;
         bool       g_out_pal_img       = curr->output_palette_image;
@@ -74,6 +75,7 @@ int main(int argc, char **argv) {
         unsigned   g_fixed_num         = curr->num_fixed_colors;
         fixed_t   *g_fixed             = curr->fixed;
         liq_color  g_transparentcolor  = curr->tcolor;
+        liq_color  g_omitcolor         = curr->ocolor;
         
         // init new elements
         bool       g_is_16_bpp         = g_bpp == 16;
@@ -84,6 +86,7 @@ int main(int argc, char **argv) {
         bool       g_use_tcolor        = g_valid_tcolor || g_use_tindex;
         bool       g_style_tp          = g_style == STYLE_RLET;
         bool       g_exported_palette  = false;
+        unsigned   g_omitcolor_index;
         
         // determine the output format
         if (g_mode_c) {
@@ -263,6 +266,15 @@ int main(int argc, char **argv) {
                 }
             }
             
+            // find which index is used for the omit color
+            if (g_use_omit_color) {
+                for (j = 0; j < g_pal_len; j++) {
+                    if (!memcmp(&g_omitcolor, &pal.entries[j], sizeof(liq_color)))
+                        break;
+                }
+                g_omitcolor_index = j;
+            }
+            
             // free the histogram and resultants
             if (res)  { liq_result_destroy(res);     }
             if (hist) { liq_histogram_destroy(hist); }
@@ -418,7 +430,6 @@ int main(int argc, char **argv) {
                     unsigned int offset;
                     unsigned int *offsets;
                     unsigned int index;
-                    i_size = i_tile_width * i_tile_height;
 
                     // disable output to offset stack
                     if (i_appvar) { add_appvars_offsets_state(false); }
@@ -428,8 +439,9 @@ int main(int argc, char **argv) {
                     for (; tile_num < i_num_tiles; tile_num++) {
                         i_data_buffer[0] = i_tile_width;
                         i_data_buffer[1] = i_tile_height;
-                        index = 2;
-                        i_size_total = i_size + 2;
+                        index = SIZE_BYTES;
+                        i_size = i_tile_width * i_tile_height;
+                        i_size_total = i_size + SIZE_BYTES;
                         i_size_backup = i_size_total;
                         
                         // convert a single tile
@@ -440,6 +452,11 @@ int main(int argc, char **argv) {
                             }
                         }
 
+                        if (g_use_omit_color) {
+                            i_size = remove_elements(&i_data_buffer[SIZE_BYTES], i_size, g_omitcolor_index);
+                            i_size_total = i_size + SIZE_BYTES;
+                        }
+                        
                         if (i_compression) {
                             uint8_t *c_data = compress_image(i_data_buffer, &i_size_total, i_compression);
                             if (i_appvar) {
@@ -462,7 +479,11 @@ int main(int argc, char **argv) {
                                 add_appvars_data(i_data_buffer, i_size_total);
                             } else {
                                 format->print_tile(i_output, i_name, tile_num, i_size_total, i_tile_width, i_tile_height);
-                                output_array(format, i_output, &i_data_buffer[2], i_tile_width, i_tile_height);
+                                if (g_use_omit_color) {
+                                    output_array_compressed(format, i_output, &i_data_buffer[SIZE_BYTES], i_size);
+                                } else {
+                                    output_array(format, i_output, &i_data_buffer[SIZE_BYTES], i_tile_width, i_tile_height);
+                                }
                             }
                         }
 
@@ -496,23 +517,30 @@ int main(int argc, char **argv) {
                     i_data_buffer[0] = i_width;
                     i_data_buffer[1] = i_height;
                     i_size = i_width * i_height;
-                    i_size_total = i_size + 2;
+                    i_size_total = i_size + SIZE_BYTES;
                     i_size_backup = i_size_total;
                     
                     // handle bpp mode here
                     if (i_bpp == 8) {
-                        memcpy(&i_data_buffer[2], i_data, i_size);
+                        memcpy(&i_data_buffer[SIZE_BYTES], i_data, i_size);
                     } else {
-                        force_image_bpp(i_bpp, i_rgba, i_data, &i_data_buffer[2], &i_width, i_height, &i_size);
-                        i_size_total = i_size + 2;
+                        force_image_bpp(i_bpp, i_rgba, i_data, &i_data_buffer[SIZE_BYTES], &i_width, i_height, &i_size);
+                        i_size_total = i_size + SIZE_BYTES;
                     }
 
-                    // output the image
+                    // do we need to omit a color from output
+                    if (g_use_omit_color) {
+                        i_size = remove_elements(&i_data_buffer[SIZE_BYTES], i_size, g_omitcolor_index);
+                        i_size_total = i_size + SIZE_BYTES;
+                    } else
+                    
+                    // check if rlet style
                     if (i_style_rlet) {
-                        i_size = group_rlet_output(i_data, &i_data_buffer[2], i_width, i_height, i_tindex);
-                        i_size_total = i_size + 2;
+                        i_size = group_rlet_output(i_data, &i_data_buffer[SIZE_BYTES], i_width, i_height, i_tindex);
+                        i_size_total = i_size + SIZE_BYTES;
                     }
-
+                    
+                    // output the image
                     if (i_compression) {
                         uint8_t *c_data = compress_image(i_data_buffer, &i_size_total, i_compression);
                         if (i_appvar) {
@@ -528,10 +556,10 @@ int main(int argc, char **argv) {
                             add_appvars_data(i_data_buffer, i_size_total);
                         } else {
                             format->print_image(i_output, i_bpp, i_name, i_size_total, i_width, i_height);
-                            if (i_style_rlet) {
-                                output_array_compressed(format, i_output, &i_data_buffer[2], i_size);
+                            if (i_style_rlet || g_use_omit_color) {
+                                output_array_compressed(format, i_output, &i_data_buffer[SIZE_BYTES], i_size);
                             } else {
-                                output_array(format, i_output, &i_data_buffer[2], i_width, i_height);
+                                output_array(format, i_output, &i_data_buffer[SIZE_BYTES], i_width, i_height);
                             }
                         }
                     }

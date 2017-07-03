@@ -37,6 +37,7 @@ static void init_convpng_struct(void) {
         g->name = NULL;
         g->use_tcolor = false;
         g->use_tindex = false;
+        g->use_ocolor = false;
         g->output_palette_array = true;
         g->output_palette_image = false;
         g->output_palette_appvar = false;

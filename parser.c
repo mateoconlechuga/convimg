@@ -271,6 +271,34 @@ add_other_colors_fixed:
                 free(colors);
             } else
             
+            // color that should not be exported to the output image
+            if(!strcmp(*argv, "#OmitColor")) {
+                char **colors;
+
+                if (g->style == STYLE_RLET) {
+                    errorf("cannot use #OmitColor with rlet style");
+                }
+                               
+                if (num <= 1) { args_error(); }
+                num = separate_args(argv[1], &colors, ',');
+                if(num == 3) {
+                    g->ocolor.a = 255;
+                    goto add_other_colors_omit;
+                } else if(num < 4) {
+                    args_error();
+                }
+                
+                g->ocolor.a = (uint8_t)strtol(colors[3], NULL, 10);
+add_other_colors_omit:
+                g->ocolor.r = (uint8_t)strtol(colors[0], NULL, 10);
+                g->ocolor.g = (uint8_t)strtol(colors[1], NULL, 10);
+                g->ocolor.b = (uint8_t)strtol(colors[2], NULL, 10);
+                g->use_ocolor = true;
+                
+                // free the allocated memory
+                free(colors);
+            } else
+            
             if(!strcmp(*argv, "#AppvarC")) {
                 appvar_t *a = &appvar[convpng.numappvars];
                 g = &group[convpng.numgroups];
@@ -334,6 +362,9 @@ add_other_colors_fixed:
             
             if(!strcmp(*argv, "#Style")) {
                 if(!strcmp(argv[1], "rlet")) {
+                    if (g->use_ocolor) {
+                        errorf("cannot use #OmitColor with rlet style");
+                    }
                     g->style = STYLE_RLET;
                 }
             } else

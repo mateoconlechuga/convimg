@@ -214,7 +214,7 @@ void force_color_index(liq_color *color, liq_palette *pal, unsigned int *pal_len
         *pal_len = index + 1;
     }
 
-    for (j = 0; j < *pal_len ; j++) {
+    for (j = 0; j < *pal_len; j++) {
         if (!memcmp(color, &pal->entries[j], sizeof(liq_color)))
             break;
     }
@@ -223,6 +223,17 @@ void force_color_index(liq_color *color, liq_palette *pal, unsigned int *pal_len
     liq_color tmpc = pal->entries[j];
     pal->entries[j] = pal->entries[index];
     pal->entries[index] = tmpc;
+}
+
+unsigned int remove_elements(uint8_t *array, unsigned int len, uint8_t val) {
+    unsigned int i;
+    unsigned int l = 0;
+    for(i = 0; i < len; i++) {
+        if(array[i] != val) {
+            array[l++] = array[i];
+        }
+    }
+    return l;
 }
 
 unsigned int group_rlet_output(uint8_t *data, uint8_t *data_buffer, unsigned int width, unsigned int height, uint8_t tp_index) {

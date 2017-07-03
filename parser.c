@@ -369,7 +369,7 @@ add_other_colors_omit:
                 }
             } else
 
-            if(!strcmp(*argv, "#CreateGlobalPalette")) {
+            if(!strcmp(*argv, "#CreateGlobalPalette") || !strcmp(*argv, "#GroupPalette")) {
                 g = &group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
                 g->is_global_palette = true;

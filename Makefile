@@ -1,6 +1,6 @@
 TARGET := convpng
 CC := gcc
-CFLAGS := -Wall -Wextra -Wno-unknown-pragmas -O3 -std=c99 -I.
+CFLAGS := -Wall -Wextra -Wno-unknown-pragmas -g -std=c99 -I.
 LDFLAGS := -flto
 SOURCES := $(wildcard *.c)
 SOURCES += $(wildcard libs/*.c)

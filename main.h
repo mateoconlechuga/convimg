@@ -135,8 +135,8 @@ typedef struct {
     void (*print_compressed_image)(output_t *out, uint8_t bpp, const char *i_name, unsigned int size);
     void (*print_tiles_header)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar);
     void (*print_tiles_ptrs_header)(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed);
-    void (*print_image_header)(output_t *out, const char *i_name, unsigned int size, bool compressed);
-    void (*print_transparent_image_header)(output_t *out, const char *i_name, unsigned int size, bool compressed);
+    void (*print_image_header)(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed);
+    void (*print_transparent_image_header)(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed);
     void (*print_palette_header)(output_t *out, const char *name, unsigned int len);
     void (*print_end_header)(output_t *out);
     

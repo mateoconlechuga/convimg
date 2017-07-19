@@ -574,9 +574,9 @@ int main(int argc, char **argv) {
                         }
                     } else if (!i_appvar) {
                         if (g_style_tp) {
-                            format->print_transparent_image_header(g_output, i_name, i_size_total, i_compression);
+                            format->print_transparent_image_header(g_output, i_name, i_size_total, i_width, i_height, i_compression);
                         } else {
-                            format->print_image_header(g_output, i_name, i_size_total, i_compression);
+                            format->print_image_header(g_output, i_name, i_size_total, i_width, i_height, i_compression);
                         }
                     }
                 }

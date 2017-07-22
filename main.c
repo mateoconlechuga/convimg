@@ -199,7 +199,7 @@ int main(int argc, char **argv) {
             free(custom_pal);
             
             if (g_valid_tcolor) {
-                lof("warning: ignoring transparent color value for a fixed palette.");
+                lof("warning: might ignore transparent color value for a fixed palette.\n");
             }
             
         // build the palette using maths

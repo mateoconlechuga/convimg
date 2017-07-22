@@ -353,6 +353,7 @@ int main(int argc, char **argv) {
                 unsigned int  i_height;
                 unsigned int  i_size;
                 unsigned int  i_error;
+                unsigned int  i_decompressed_size;
                 
                 // determine if image needs to be exported to an appvar
                 bool i_appvar = image_is_in_an_appvar(i_curr);
@@ -542,6 +543,7 @@ int main(int argc, char **argv) {
                     
                     // output the image
                     if (i_compression) {
+                        i_decompressed_size = i_size_total;
                         uint8_t *c_data = compress_image(i_data_buffer, &i_size_total, i_compression);
                         if (i_appvar) {
                             add_appvars_data(c_data, i_size_total);
@@ -574,9 +576,9 @@ int main(int argc, char **argv) {
                         }
                     } else if (!i_appvar) {
                         if (g_style_tp) {
-                            format->print_transparent_image_header(g_output, i_name, i_size_total, i_width, i_height, i_compression);
+                            format->print_transparent_image_header(g_output, i_name, i_size_total, i_width, i_height, i_compression, i_decompressed_size);
                         } else {
-                            format->print_image_header(g_output, i_name, i_size_total, i_width, i_height, i_compression);
+                            format->print_image_header(g_output, i_name, i_size_total, i_width, i_height, i_compression, i_decompressed_size);
                         }
                     }
                 }

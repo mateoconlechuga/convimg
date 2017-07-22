@@ -160,23 +160,27 @@ static void c_print_tiles_ptrs_header(output_t *out, const char *i_name, unsigne
     }
 }
 
-static void c_print_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed) {
+static void c_print_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size) {
     fprintf(out->h, "#define %s_width %u\n", i_name, width);
     fprintf(out->h, "#define %s_height %u\n", i_name, height);
     if (compressed) {
+        fprintf(out->h, "#define %s_size %u\n", i_name, decompressed_size);
         fprintf(out->h, "extern uint8_t %s_compressed[%u];\n", i_name, size);
     } else {
+        fprintf(out->h, "#define %s_size %u\n", i_name, size);
         fprintf(out->h, "extern uint8_t %s_data[%u];\n", i_name, size);
         fprintf(out->h, "#define %s ((gfx_sprite_t*)%s_data)\n", i_name, i_name);
     }
 }
 
-static void c_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed) {
+static void c_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size) {
     fprintf(out->h, "#define %s_width %u\n", i_name, width);
     fprintf(out->h, "#define %s_height %u\n", i_name, height);
     if (compressed) {
+        fprintf(out->h, "#define %s_size %u\n", i_name, decompressed_size);
         fprintf(out->h, "extern uint8_t %s_compressed[%u];\n", i_name, size);
     } else {
+        fprintf(out->h, "#define %s_size %u\n", i_name, size);
         fprintf(out->h, "extern uint8_t %s_data[%u];\n", i_name, size);
         fprintf(out->h, "#define %s ((gfx_rletsprite_t*)%s_data)\n", i_name, i_name);
     }

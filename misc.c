@@ -243,7 +243,8 @@ unsigned int group_rlet_output(uint8_t *data, uint8_t *data_buffer, unsigned int
     memset(data_buffer, 0, width * height * 2);
     
     for (; j < height; j++) {
-        unsigned int offset = j * width, left = width;
+        unsigned int offset = j * width;
+        unsigned int left = width;
         while (left) {
             unsigned int o = 0, t = 0;
             while (tp_index == data[t + offset] && t < left) {

@@ -111,22 +111,24 @@ static void ice_print_tiles_ptrs_header(output_t *out, const char *i_name, unsig
     (void)compressed;
 }
 
-static void ice_print_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed) {
+static void ice_print_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size) {
     (void)out;
     (void)i_name;
     (void)size;
     (void)width;
     (void)height;
     (void)compressed;
+    (void)decompressed_size;
 }
 
-static void ice_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed) {
+static void ice_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size) {
     (void)out;
     (void)i_name;
     (void)size;
     (void)width;
     (void)height;
     (void)compressed;
+    (void)decompressed_size;
 }
 
 static void ice_print_palette_header(output_t *out, const char *name, unsigned int len) {

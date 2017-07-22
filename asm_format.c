@@ -145,17 +145,19 @@ static void asm_print_tiles_ptrs_header(output_t *out, const char *i_name, unsig
     (void)out;
 }
 
-static void asm_print_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed) {
+static void asm_print_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size) {
     (void)compressed;
     (void)width;
     (void)height;
+    (void)decompressed_size;
     fprintf(out->inc, "#include \"%s.asm\" ; %u bytes\n", i_name, size);
 }
 
-static void asm_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed) {
+static void asm_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size) {
     (void)compressed;
     (void)width;
     (void)height;
+    (void)decompressed_size;
     fprintf(out->inc, "#include \"%s.asm\" ; %u bytes\n", i_name, size);
 }
 

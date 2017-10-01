@@ -435,6 +435,11 @@ int main(int argc, char **argv) {
                     // disable output to offset stack
                     if (i_appvar) { add_appvars_offsets_state(false); }
                     
+                    // special handling needed for printing ice output
+                    if (format == &ice_format) {
+                        ice_print_tilemap_header(i_output, i_name, i_num_tiles * (i_tile_width * i_tile_height + SIZE_BYTES), i_tile_width, i_tile_height);
+                    }
+                    
                     offsets = malloc(i_num_tiles * sizeof(unsigned int));
                     
                     for (; tile_num < i_num_tiles; tile_num++) {
@@ -507,6 +512,11 @@ int main(int argc, char **argv) {
                     // build the tilemap table
                     if (i_create_tilemap_ptrs) {
                         format->print_tile_ptrs(i_output, i_name, i_num_tiles, i_compression, i_appvar, offsets);
+                    }
+                    
+                    if (format == &ice_format) {
+                        convpng.allow_newlines = true;
+                        fprintf(i_output->txt, "\"\n");
                     }
                     
                     // free all the offsets

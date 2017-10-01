@@ -29,6 +29,8 @@ static void init_convpng_struct(void) {
     convpng.ini = NULL;
     convpng.using_custom_ini = false;
     convpng.using_custom_log = false;
+    convpng.allow_newlines = true;
+    
     for (t = 0; t < NUM_GROUPS; t++) {
         group_t *g = &group[t];
         g->palette = NULL;
@@ -51,6 +53,7 @@ static void init_convpng_struct(void) {
         g->mode = 0;
         g->bpp = 8;
     }
+    
     for (t = 0; t < MAX_APPVARS; t++) {
         appvar_t *a = &appvar[t];
         a->write_init = true;

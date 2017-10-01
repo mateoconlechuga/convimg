@@ -8,6 +8,10 @@
 
 // ICE output functions
 
+void ice_print_tilemap_header(output_t *out, const char *name, unsigned int size, unsigned int tile_width, unsigned int tile_height) {
+    fprintf(out->txt, "%s | %u bytes\n%u,%u,\"", name, size, tile_width, tile_height);
+}
+
 static void ice_open_output(output_t *out, const char *input, bool header) {
     if (input) {
         if (!header) {
@@ -58,7 +62,11 @@ static void ice_print_image_source_header(output_t *out, const char *group_heade
 }
 
 static void ice_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, unsigned int width, unsigned int height) {
-    fprintf(out->txt, "%s_tile_%u | %u bytes\n%u,%u,\"", i_name, tile_num, size, width, height);
+    (void)i_name;
+    (void)tile_num;
+    (void)size;
+    fprintf(out->txt, "%02X%02X", width, height);
+    convpng.allow_newlines = false;
 }
 
 static void ice_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar, unsigned int *offsets) {
@@ -81,7 +89,7 @@ static void ice_print_byte(output_t *out, uint8_t byte, bool need_comma) {
 
 static void ice_print_next_array_line(output_t *out, bool is_long, bool at_end) {
     (void)is_long;
-    if (at_end) {
+    if (at_end && convpng.allow_newlines) {
         fprintf(out->txt, "\"\n\n");
     }
 }

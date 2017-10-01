@@ -90,9 +90,10 @@ typedef struct {
     FILE *log;
     FILE *all_gfx_c;
     FILE *all_gfx_h;
-    unsigned numgroups;
-    unsigned numappvars;
-    unsigned curline;
+    unsigned int numgroups;
+    unsigned int numappvars;
+    unsigned int curline;
+    bool allow_newlines;             // allow newlines in output
     bool bad_conversion;
     bool icon_zds;
     char *iconc;

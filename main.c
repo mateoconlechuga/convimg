@@ -436,7 +436,7 @@ int main(int argc, char **argv) {
                     if (i_appvar) { add_appvars_offsets_state(false); }
                     
                     // special handling needed for printing ice output
-                    if (format == &ice_format) {
+                    else if (format == &ice_format) {
                         ice_print_tilemap_header(i_output, i_name, i_num_tiles * (i_tile_width * i_tile_height + SIZE_BYTES), i_tile_width, i_tile_height);
                     }
                     
@@ -516,7 +516,9 @@ int main(int argc, char **argv) {
                     
                     if (format == &ice_format) {
                         convpng.allow_newlines = true;
-                        fprintf(i_output->txt, "\"\n");
+                        if (!i_appvar) {
+                            fprintf(i_output->txt, "\"\n");
+                        }
                     }
                     
                     // free all the offsets

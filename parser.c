@@ -314,6 +314,21 @@ add_other_colors_omit:
                 convpng.numgroups++;
             } else
             
+            if(!strcmp(*argv, "#AppvarICE")) {
+                appvar_t *a = &appvar[convpng.numappvars];
+                g = &group[convpng.numgroups];
+                memset(a->name, 0, 9);
+                strncpy(a->name, argv[1], 8);
+                g->mode = MODE_APPVAR;
+                g->name = str_dup(a->name);
+                g->outh = str_dupcatdir(a->name, ".txt");
+                g->outc = str_dupcatdir(a->name, ".txt");
+                a->mode = MODE_ICE;
+                a->g = g;
+                convpng.numappvars++;
+                convpng.numgroups++;
+            } else
+                                
             if(!strcmp(*argv, "#AppvarASM")) {
                 appvar_t *a = &appvar[convpng.numappvars];
                 g = &group[convpng.numgroups];

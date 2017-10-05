@@ -53,6 +53,8 @@ void export_appvars(void) {
             format = &c_format;
         } else if (a->mode == MODE_ASM) {
             format = &asm_format;
+        } else if (a->mode == MODE_ICE) {
+            format = &ice_format;
         } else {
             errorf("unknown appvar mode");
             return;
@@ -97,7 +99,7 @@ void export_appvars(void) {
             if (j < g->numimages) {
                 image_t *i = g->image[j];
                 bool i_style_tp = i->style == STYLE_RLET;
-                format->print_appvar_image(output, a->name, a->offsets[j], i->name, j, i->compression, i_style_tp);
+                format->print_appvar_image(output, a->name, a->mode == MODE_ICE ? (i->create_tilemap_ptrs ? i->numtiles : 1) : a->offsets[j], i->name, j, i->compression, i_style_tp);
                 if (i->create_tilemap_ptrs) {
                     format->print_tiles_ptrs_header(output, i->name, i->numtiles, i->compression);
                     format->print_tiles_header(output, i->name, i->numtiles, i->compression, true);
@@ -105,7 +107,14 @@ void export_appvars(void) {
             } else {
                 format->print_appvar_palette(output, a->offsets[j]);
             }
-            format->print_next_array_line(output, true, j + 1 == num);
+            if (a->mode != MODE_ICE) {
+                format->print_next_array_line(output, true, j + 1 == num);
+            }
+        }
+        
+        // subtract to start
+        if (a->mode == MODE_ICE) {
+            fixup_appvars_offsets();
         }
         
         // free any included palette
@@ -250,6 +259,23 @@ void add_appvar_data(appvar_t *a, const void *data, const size_t size) {
     }
     memcpy(a->output + offset, data, size);
     a->offset += size;
+}
+
+/* added for ice */
+void fixup_appvar_offsets(appvar_t *a) {
+    unsigned int curr = a->curr_image;
+    unsigned int i;
+    
+    for (i = 0; i < curr; i++) {
+        a->offsets[i] = a->offsets[i] - (3 * curr);
+    }
+}
+
+void fixup_appvars_offsets(void) {
+    unsigned int j;
+    for (j = 0; j < data_num_appvars; j++) {
+        fixup_appvar_offsets(appvar_ptrs[j]);
+    }
 }
 
 void output_appvar_complete(appvar_t *a) {

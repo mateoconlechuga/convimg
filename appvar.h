@@ -45,6 +45,8 @@ void add_appvars_data(const void *data, const size_t size);
 void add_appvar_data(appvar_t *a, const void *data, const size_t size);
 void output_appvar_complete(appvar_t *a);
 
+void fixup_appvars_offsets(void);
+
 extern appvar_t appvar[MAX_APPVARS];
 extern appvar_t *appvar_ptrs[MAX_APPVARS];
 

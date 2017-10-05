@@ -263,7 +263,7 @@ void add_appvar_data(appvar_t *a, const void *data, const size_t size) {
 
 /* added for ice */
 void fixup_appvar_offsets(appvar_t *a) {
-    unsigned int curr = a->curr_image;
+    unsigned int curr = a->curr_image - 1;
     unsigned int i;
     
     for (i = 0; i < curr; i++) {

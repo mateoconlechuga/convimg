@@ -267,7 +267,7 @@ void fixup_appvar_offsets(appvar_t *a) {
     unsigned int i;
     
     for (i = 0; i < curr; i++) {
-        a->offsets[i] = a->offsets[i] - (3 * curr);
+        a->offsets[i] = a->offsets[i] + (3 * (curr-i));
     }
 }
 

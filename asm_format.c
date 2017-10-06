@@ -186,7 +186,9 @@ static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned i
     }
 }
 
-static void asm_print_appvar_palette(output_t *out, unsigned int offset) {
+static void asm_print_appvar_palette(output_t *out, const char *p_name, const char *a_name, unsigned int offset) {
+    (void)p_name;
+    (void)a_name;
     fprintf(out->asm, "%u", offset);
 }
 

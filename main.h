@@ -144,7 +144,7 @@ typedef struct {
     // appvar functions
     void (*print_appvar_array)(output_t *out, const char *a_name, unsigned int num_images);
     void (*print_appvar_image)(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style);
-    void (*print_appvar_palette)(output_t *out, unsigned int offset);
+    void (*print_appvar_palette)(output_t *out, const char *p_name, const char *a_name, unsigned int offset);
     void (*print_appvar_load_function_header)(output_t *out);
     void (*print_appvar_load_function)(output_t *out, const char *a_name, bool has_tilemaps);
     void (*print_appvar_load_function_tilemap)(output_t *out, const char *a_name, char *tilemap_name, unsigned int tilemap_size, unsigned int index, bool compressed);

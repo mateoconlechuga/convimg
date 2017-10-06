@@ -165,7 +165,7 @@ static void ice_print_appvar_image(output_t *out, const char *a_name, unsigned i
 }
 
 static void ice_print_appvar_palette(output_t *out, const char *p_name, const char *a_name, unsigned int offset) {
-    fprintf(out->txt, "%s_palette |\n \"%s\",%u\n\n", p_name, a_name, offset);
+    fprintf(out->txt, "%s_palette |\n \"%s\",%u,3\n\n", p_name, a_name, offset);
 }
 
 static void ice_print_appvar_load_function_header(output_t *out) {

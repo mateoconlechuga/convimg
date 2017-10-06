@@ -110,7 +110,7 @@ void export_appvars(void) {
                     format->print_tiles_header(output, i->name, i->numtiles, i->compression, true);
                 }
             } else {
-                format->print_appvar_palette(output, a->palette[j - num + 1], a->name, a->offsets[j]);
+                format->print_appvar_palette(output, a->palette[j - g->numimages], a->name, a->offsets[j]);
             }
             if (a->mode != MODE_ICE) {
                 format->print_next_array_line(output, true, j + 1 == num);

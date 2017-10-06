@@ -524,6 +524,9 @@ int main(int argc, char **argv) {
                     // free all the offsets
                     free(offsets);
 
+                    // fixes a bug
+                    if (i_appvar) { add_appvars_offsets_state(true); }
+                    
                 // not a tilemap
                 } else {
                     // store the width and height as well

@@ -67,7 +67,7 @@ Create a tileset from the image; 1st argument is tile width, 2nd argument is til
     
 Specify the transparent color used in the image according to the rbg channels. Optionally the alpha channel is supported. 
 
-The transparent color is always located at index 0 if used.
+The transparent color is located at index 0 if used. (This is overridable with `#TransparentIndex`)
 
 ----
 

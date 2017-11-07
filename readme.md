@@ -89,7 +89,7 @@ Specify the bit depth of the exported images. 8bpp is the default, currently sup
 
 ----
 
-    #OutputDirectory : <output directory path>
+    #OutputDirectory: <output directory path>
     
 Changes the directory of where exported images and any other created files should be placed.
 

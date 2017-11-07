@@ -101,7 +101,7 @@ When using commands such as `GroupPalette`, you do not want to duplicate output 
 
 ---
  
-    #OutputPaletteImage`: <boolean>
+    #OutputPaletteImage : <boolean>
     
 Output an image of the palette in png format of the group. The image is written to <group name>_pal.png
 

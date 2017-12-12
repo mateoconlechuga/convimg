@@ -47,7 +47,7 @@ char *get_line(FILE *stream) {
                 c = '\0';
             }
 
-            if(c != ' ') {
+            if(c != ' ' && c != '\t') {
                 line[i++] = (char)c;
                 tmp = safe_realloc(line, i+1);
                 if(!tmp) {

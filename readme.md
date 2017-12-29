@@ -127,8 +127,6 @@ The alpha channel is optional.
 
 This omits a color palette index from the exported images, but not from the palette. This should be used when the palette is predefined. It is useful when working with custom sprite drawing routines that may require the image to be formated a particular way, such as an isometric tile.
 
-The alpha channel is optional.
-
 ----
 
 ## Exporting to Appvars

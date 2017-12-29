@@ -123,6 +123,14 @@ The alpha channel is optional.
 
 ----
 
+    #OmitIndex : <index>
+
+This omits a color palette index from the exported images, but not from the palette. This should be used when the palette is predefined. It is useful when working with custom sprite drawing routines that may require the image to be formated a particular way, such as an isometric tile.
+
+The alpha channel is optional.
+
+----
+
 ## Exporting to Appvars
 
 Currently ConvPNG can export image and palette data to appvars which are treated just like groups. The commands for appvars are shown below.

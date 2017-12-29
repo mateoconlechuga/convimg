@@ -78,8 +78,10 @@ typedef struct {
     uint8_t bpp;                     // bits per pixel in each image
     fixed_t fixed[256];              // fixed colors to add
     unsigned int num_fixed_colors;   // number of fixed colors
+    unsigned int oindex;             // index to use as the omit color
     liq_color ocolor;                // color to omit from output
-    bool use_ocolor;                 // use the color ommision
+    bool use_ocolor;                 // use the color ommission
+    bool use_oindex;                 // use the index ommission
     
     // for creating global palettes
     bool is_global_palette;          // should we just build a palette rather than a group?

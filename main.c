@@ -61,9 +61,10 @@ int main(int argc, char **argv) {
         unsigned   g_tile_height       = curr->tile_height;
         unsigned   g_style             = curr->style;
         bool       g_pal_fixed_len     = curr->palette_fixed_length;
+        bool       g_valid_tcolor      = curr->use_tcolor;
         bool       g_use_tindex        = curr->use_tindex;
         bool       g_use_omit_color    = curr->use_ocolor;
-        bool       g_valid_tcolor      = curr->use_tcolor;
+        bool       g_use_omit_index    = curr->use_oindex;
         bool       g_is_global_pal     = curr->is_global_palette;
         bool       g_out_pal_img       = curr->output_palette_image;
         bool       g_out_pal_arr       = curr->output_palette_array;
@@ -73,9 +74,10 @@ int main(int argc, char **argv) {
         char      *g_outh_name         = curr->outh;
         unsigned   g_pal_len           = curr->palette_length;
         unsigned   g_fixed_num         = curr->num_fixed_colors;
-        fixed_t   *g_fixed             = curr->fixed;
+        unsigned   g_omit_index        = curr->oindex;
         liq_color  g_transparentcolor  = curr->tcolor;
-        liq_color  g_omitcolor         = curr->ocolor;
+        liq_color  g_omit_color        = curr->ocolor;
+        fixed_t   *g_fixed             = curr->fixed;
         
         // init new elements
         bool       g_is_16_bpp         = g_bpp == 16;
@@ -86,7 +88,7 @@ int main(int argc, char **argv) {
         bool       g_use_tcolor        = g_valid_tcolor || g_use_tindex;
         bool       g_style_tp          = g_style == STYLE_RLET;
         bool       g_exported_palette  = false;
-        unsigned   g_omitcolor_index;
+        unsigned   g_omit_color_index;
         
         // determine the output format
         if (g_mode_c) {
@@ -269,10 +271,10 @@ int main(int argc, char **argv) {
             // find which index is used for the omit color
             if (g_use_omit_color) {
                 for (j = 0; j < g_pal_len; j++) {
-                    if (!memcmp(&g_omitcolor, &pal.entries[j], sizeof(liq_color)))
+                    if (!memcmp(&g_omit_color, &pal.entries[j], sizeof(liq_color)))
                         break;
                 }
-                g_omitcolor_index = j;
+                g_omit_color_index = j;
             }
             
             // free the histogram and resultants
@@ -459,7 +461,12 @@ int main(int argc, char **argv) {
                         }
 
                         if (g_use_omit_color) {
-                            i_size = remove_elements(&i_data_buffer[SIZE_BYTES], i_size, g_omitcolor_index);
+                            i_size = remove_elements(&i_data_buffer[SIZE_BYTES], i_size, g_omit_color_index);
+                            i_size_total = i_size + SIZE_BYTES;
+                        }
+
+                        if (g_use_omit_index) {
+                            i_size = remove_elements(&i_data_buffer[SIZE_BYTES], i_size, g_omit_index);
                             i_size_total = i_size + SIZE_BYTES;
                         }
                         
@@ -485,7 +492,7 @@ int main(int argc, char **argv) {
                                 add_appvars_data(i_data_buffer, i_size_total);
                             } else {
                                 format->print_tile(i_output, i_name, tile_num, i_size_total, i_tile_width, i_tile_height);
-                                if (g_use_omit_color) {
+                                if (g_use_omit_color || g_use_omit_index) {
                                     output_array_compressed(format, i_output, &i_data_buffer[SIZE_BYTES], i_size);
                                 } else {
                                     output_array(format, i_output, &i_data_buffer[SIZE_BYTES], i_tile_width, i_tile_height);
@@ -546,9 +553,15 @@ int main(int argc, char **argv) {
 
                     // do we need to omit a color from output
                     if (g_use_omit_color) {
-                        i_size = remove_elements(&i_data_buffer[SIZE_BYTES], i_size, g_omitcolor_index);
+                        i_size = remove_elements(&i_data_buffer[SIZE_BYTES], i_size, g_omit_color_index);
                         i_size_total = i_size + SIZE_BYTES;
-                    } else
+                    }
+
+                    // do we need to omit an index from output
+                    if (g_use_omit_index) {
+                        i_size = remove_elements(&i_data_buffer[SIZE_BYTES], i_size, g_omit_index);
+                        i_size_total = i_size + SIZE_BYTES;
+                    }
                     
                     // check if rlet style
                     if (i_style_rlet) {
@@ -573,7 +586,7 @@ int main(int argc, char **argv) {
                             add_appvars_data(i_data_buffer, i_size_total);
                         } else {
                             format->print_image(i_output, i_bpp, i_name, i_size_total, i_width, i_height);
-                            if (i_style_rlet || g_use_omit_color) {
+                            if (i_style_rlet || g_use_omit_color || g_use_omit_index) {
                                 output_array_compressed(format, i_output, &i_data_buffer[SIZE_BYTES], i_size);
                             } else {
                                 output_array(format, i_output, &i_data_buffer[SIZE_BYTES], i_width, i_height);

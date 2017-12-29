@@ -40,6 +40,7 @@ static void init_convpng_struct(void) {
         g->use_tcolor = false;
         g->use_tindex = false;
         g->use_ocolor = false;
+        g->use_oindex = false;
         g->output_palette_array = true;
         g->output_palette_image = false;
         g->output_palette_appvar = false;
@@ -50,6 +51,7 @@ static void init_convpng_struct(void) {
         g->palette_fixed_length = false;
         g->numimages = 0;
         g->tindex = 0;
+        g->oindex = 0;
         g->mode = 0;
         g->bpp = 8;
     }

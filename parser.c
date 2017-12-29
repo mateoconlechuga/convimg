@@ -271,6 +271,18 @@ add_other_colors_fixed:
                 free(colors);
             } else
             
+            // palette index that should not be exported to the output image
+            if(!strcmp(*argv, "#OmitIndex")) {
+                if (g->style == STYLE_RLET) {
+                    errorf("cannot use #OmitIndex with rlet style");
+                }
+
+                if (num > 2) { args_error(); }
+
+                g->oindex = (uint8_t)strtol(argv[1], NULL, 10);
+                g->use_oindex = true;
+            } else
+
             // color that should not be exported to the output image
             if(!strcmp(*argv, "#OmitColor")) {
                 char **colors;
@@ -278,7 +290,7 @@ add_other_colors_fixed:
                 if (g->style == STYLE_RLET) {
                     errorf("cannot use #OmitColor with rlet style");
                 }
-                               
+
                 if (num <= 1) { args_error(); }
                 num = separate_args(argv[1], &colors, ',');
                 if(num == 3) {

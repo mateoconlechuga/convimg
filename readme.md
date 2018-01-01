@@ -129,6 +129,12 @@ This omits a color palette index from the exported images, but not from the pale
 
 ----
 
+    #OutputWidthHeight : <boolean>
+
+This command controls the output of width and height information. The default is `true`. 
+
+---
+
 ## Exporting to Appvars
 
 Currently ConvPNG can export image and palette data to appvars which are treated just like groups. The commands for appvars are shown below.

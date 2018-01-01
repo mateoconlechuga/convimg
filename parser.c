@@ -440,6 +440,14 @@ add_other_colors_omit:
                 g->output_palette_array = false;
             } else
             
+            if(!strcmp(*argv, "#OutputWidthHeight")) {
+                if(!strcmp(argv[1], "false")) {
+                    g->output_size = false;
+                } else {
+                    g->output_size = true;
+                }
+            } else
+
             if(!strcmp(*argv, "#Tilemap")) {
                 char **tilemap_options;
         

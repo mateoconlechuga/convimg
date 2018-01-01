@@ -63,7 +63,11 @@ static void asm_print_image_source_header(output_t *out, const char *group_heade
 
 static void asm_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, unsigned int width, unsigned int height) {
 	fprintf(out->asm, "_%s_tile_%u_size .equ %u\n", i_name, tile_num, size);
-    fprintf(out->asm, "_%s_tile_%u: ; %u bytes\n db %u,%u ; width,height\n db ", i_name, tile_num, size, width, height);
+    if (convpng.output_size) {
+        fprintf(out->asm, "_%s_tile_%u: ; %u bytes\n db %u,%u ; width,height\n db ", i_name, tile_num, size, width, height);
+    } else {
+        fprintf(out->asm, "_%s_tile_%u: ; %u bytes\n db ", i_name, tile_num, size);
+    }
 }
 
 static void asm_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar, unsigned int *offsets) {
@@ -122,7 +126,11 @@ static void asm_print_next_array_line(output_t *out, bool is_long, bool at_end) 
 static void asm_print_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const unsigned int width, const unsigned int height) {
     fprintf(out->asm, "; %u bpp image\n", bpp);
 	fprintf(out->asm, "_%s_size .equ %u\n", i_name, size);
-	fprintf(out->asm, "_%s:\n .db %u,%u\n .db ", i_name, width, height);
+    if (convpng.output_size) {
+	    fprintf(out->asm, "_%s:\n .d%c %u,%u\n .db ", i_name, width > 255 || height > 255 ? 'w' : 'b', width, height);
+    } else {
+        fprintf(out->asm, "_%s:\n .db ", i_name);
+    }
 }
 
 static void asm_print_compressed_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size) {

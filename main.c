@@ -68,6 +68,7 @@ int main(int argc, char **argv) {
         bool       g_is_global_pal     = curr->is_global_palette;
         bool       g_out_pal_img       = curr->output_palette_image;
         bool       g_out_pal_arr       = curr->output_palette_array;
+        bool       g_out_size          = curr->output_size;
         char      *g_pal_name          = curr->palette;
         char      *g_name              = curr->name;
         char      *g_outc_name         = curr->outc;
@@ -341,6 +342,7 @@ int main(int argc, char **argv) {
                 unsigned int  i_size_backup = 0;
                 
                 // init the things for each image
+                bool          i_out_size    = g_out_size;
                 char         *i_source_name = i_curr->outc;
                 char         *i_in_name     = i_curr->in;
                 char         *i_name        = i_curr->name;
@@ -364,7 +366,10 @@ int main(int argc, char **argv) {
                 // tilemap things
                 bool i_convert_to_tilemap = i_curr->convert_to_tilemap;
                 bool i_create_tilemap_ptrs = i_curr->create_tilemap_ptrs;
-                
+
+                // save for formatting
+                convpng.output_size = i_out_size;
+
                 // open the file and make a rgba array
                 i_error = lodepng_decode32_file(&i_rgba, &i_width, &i_height, i_in_name);
                 if (i_error == LODEPNG_ERR_OPEN) { errorf("could not open '%s'", i_in_name); }
@@ -454,9 +459,9 @@ int main(int argc, char **argv) {
                         
                         // convert a single tile
                         for (j = 0; j < i_tile_height; j++) {
-                            offset = j * i_width;
+                            offset = j * i_width + y_offset;
                             for (k = 0; k < i_tile_width; k++) {
-                                i_data_buffer[index++] = i_data[k + x_offset + y_offset + offset];
+                                i_data_buffer[index++] = i_data[k + x_offset + offset];
                             }
                         }
 
@@ -469,7 +474,13 @@ int main(int argc, char **argv) {
                             i_size = remove_elements(&i_data_buffer[SIZE_BYTES], i_size, g_omit_index);
                             i_size_total = i_size + SIZE_BYTES;
                         }
-                        
+
+                        if (!i_out_size) {
+                            i_data_buffer += SIZE_BYTES;
+                            i_size_total -= SIZE_BYTES;
+                            i_size_backup -= SIZE_BYTES;
+                        }
+
                         if (i_compression) {
                             uint8_t *c_data = compress_image(i_data_buffer, &i_size_total, i_compression);
                             if (i_appvar) {
@@ -491,15 +502,20 @@ int main(int argc, char **argv) {
                             if (i_appvar) {
                                 add_appvars_data(i_data_buffer, i_size_total);
                             } else {
+                                uint8_t *i_data = i_out_size ? &i_data_buffer[SIZE_BYTES] : i_data_buffer;
                                 format->print_tile(i_output, i_name, tile_num, i_size_total, i_tile_width, i_tile_height);
                                 if (g_use_omit_color || g_use_omit_index) {
-                                    output_array_compressed(format, i_output, &i_data_buffer[SIZE_BYTES], i_size);
+                                    output_array_compressed(format, i_output, i_data, i_size);
                                 } else {
-                                    output_array(format, i_output, &i_data_buffer[SIZE_BYTES], i_tile_width, i_tile_height);
+                                    output_array(format, i_output, i_data, i_tile_width, i_tile_height);
                                 }
                             }
                         }
 
+                        if (!i_out_size) {
+                            i_data_buffer -= SIZE_BYTES;
+                        }
+                        
                         // store the size
                         offset_size += i_size_total;
                         offsets[tile_num] = offset_size;
@@ -569,6 +585,12 @@ int main(int argc, char **argv) {
                         i_size_total = i_size + SIZE_BYTES;
                     }
                     
+                    if (!i_out_size) {
+                        i_data_buffer += SIZE_BYTES;
+                        i_size_total -= SIZE_BYTES;
+                        i_size_backup -= SIZE_BYTES;
+                    }
+                    
                     // output the image
                     if (i_compression) {
                         i_decompressed_size = i_size_total;
@@ -585,14 +607,20 @@ int main(int argc, char **argv) {
                         if (i_appvar) {
                             add_appvars_data(i_data_buffer, i_size_total);
                         } else {
+                            uint8_t *i_data = i_out_size ? &i_data_buffer[SIZE_BYTES] : i_data_buffer;
                             format->print_image(i_output, i_bpp, i_name, i_size_total, i_width, i_height);
                             if (i_style_rlet || g_use_omit_color || g_use_omit_index) {
-                                output_array_compressed(format, i_output, &i_data_buffer[SIZE_BYTES], i_size);
+                                output_array_compressed(format, i_output, i_data, i_size);
                             } else {
-                                output_array(format, i_output, &i_data_buffer[SIZE_BYTES], i_width, i_height);
+                                output_array(format, i_output, i_data, i_width, i_height);
                             }
                         }
                     }
+                }
+                
+                // restore old pointer
+                if (!i_out_size) {
+                    i_data_buffer -= SIZE_BYTES;
                 }
                 
                 if (!i_appvar) {

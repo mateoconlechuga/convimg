@@ -65,7 +65,13 @@ static void c_print_image_source_header(output_t *out, const char *name) {
 }
 
 static void c_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, unsigned int width, unsigned int height) {
-    fprintf(out->c, "uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ", i_name, tile_num, size, width, height);
+    if (convpng.output_size) {
+        fprintf(out->c, "uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ",
+                i_name, tile_num, size, width, height);
+    } else {
+        fprintf(out->c, "uint8_t %s_tile_%u_data[%u] = {\n ",
+                i_name, tile_num, size);
+    }
 }
 
 static void c_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar, unsigned int *offsets) {
@@ -116,7 +122,13 @@ static void c_print_next_array_line(output_t *out, bool is_long, bool at_end) {
 }
 
 static void c_print_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const unsigned int width, const unsigned int height) {
-    fprintf(out->c, "// %u bpp image\nuint8_t %s_data[%u] = {\n %u,%u,  // width,height\n ", bpp, i_name, size, width, height);
+    if (convpng.output_size) {
+        fprintf(out->c, "// %u bpp image\nuint8_t %s_data[%u] = {\n %u,%u,  // width,height\n ",
+                bpp, i_name, size, width, height);
+    } else {
+        fprintf(out->c, "// %u bpp image\nuint8_t %s_data[%u] = {\n ",
+                bpp, i_name, size);
+    }
 }
 
 static void c_print_compressed_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size) {

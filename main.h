@@ -82,6 +82,7 @@ typedef struct {
     liq_color ocolor;                // color to omit from output
     bool use_ocolor;                 // use the color ommission
     bool use_oindex;                 // use the index ommission
+    bool output_size;                // output size bytes for images
     
     // for creating global palettes
     bool is_global_palette;          // should we just build a palette rather than a group?
@@ -95,6 +96,7 @@ typedef struct {
     unsigned int numgroups;
     unsigned int numappvars;
     unsigned int curline;
+    bool output_size;                // output size bytes for images
     bool allow_newlines;             // allow newlines in output
     bool bad_conversion;
     bool icon_zds;

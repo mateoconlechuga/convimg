@@ -49,6 +49,7 @@ static void init_convpng_struct(void) {
         g->style = STYLE_NONE;
         g->convert_to_tilemap = false;
         g->palette_fixed_length = false;
+        g->output_size = true;
         g->numimages = 0;
         g->tindex = 0;
         g->oindex = 0;

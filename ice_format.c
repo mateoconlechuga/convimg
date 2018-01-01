@@ -96,7 +96,11 @@ static void ice_print_next_array_line(output_t *out, bool is_long, bool at_end) 
 
 static void ice_print_image(output_t *out, uint8_t bpp, const char *i_name, const unsigned int size, const unsigned int width, const unsigned int height) {
     (void)bpp;
-    fprintf(out->txt, "%s | %u bytes\n%u,%u,\"", i_name, size, width, height);
+    if (convpng.output_size) {
+        fprintf(out->txt, "%s | %u bytes\n%u,%u,\"", i_name, size, width, height);
+    } else {
+        fprintf(out->txt, "%s | %u bytes\n\"", i_name, size);
+    }
 }
 
 static void ice_print_compressed_image(output_t *out, uint8_t bpp, const char *i_name, const unsigned int size) {

@@ -122,7 +122,7 @@ static void asm_print_next_array_line(output_t *out, bool is_long, bool at_end) 
 static void asm_print_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const unsigned int width, const unsigned int height) {
     fprintf(out->asm, "; %u bpp image\n", bpp);
 	fprintf(out->asm, "_%s_size .equ %u\n", i_name, size);
-	fprintf(out->asm, "_%s:\n .db %u,%u\n .db ", i_name, width, height);
+	fprintf(out->asm, "_%s:\n .db %u & 0FFh,%u 7 0FFh\n .db ", i_name, width, height);
 }
 
 static void asm_print_compressed_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size) {

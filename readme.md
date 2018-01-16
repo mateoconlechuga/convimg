@@ -164,12 +164,6 @@ This is a variable operand command which will add the defined palette names to t
 
 ----
 
-    -c <description>
-   
-Create icon for C toolchain
-
-----
-
     -i <ini file>
     
 Use inifile as input rather than convpng.ini

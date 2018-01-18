@@ -43,12 +43,12 @@ static void ice_print_header_header(output_t *out, const char *group_name) {
 
 static void ice_print_palette(output_t *out, const char *group_name, liq_palette *pal, const unsigned int pal_len) {
     fprintf(out->txt, "%s_pallete | %u bytes\n\"", group_name, pal_len << 1);
-    
+
     for (unsigned int j = 0; j < pal_len; j++) {
         liq_color *c = &pal->entries[j];
         fprintf(out->txt, "%04X", rgb1555(c->r, c->g, c->b));
     }
-    
+
     fprintf(out->txt, "\"\n\n");
 }
 
@@ -239,4 +239,3 @@ const format_t ice_format = {
     .print_appvar_palette_header = ice_print_appvar_palette_header,
     .print_appvar_palette = ice_print_appvar_palette,
 };
-

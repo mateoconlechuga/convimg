@@ -46,7 +46,7 @@ static void c_print_header_header(output_t *out, const char *name) {
 
 static void c_print_palette(output_t *out, const char *name, liq_palette *pal, const unsigned int pal_len) {
     fprintf(out->c, "uint16_t %s_pal[%u] = {\n", name, pal_len);
-     
+
     for (unsigned int j = 0; j < pal_len; j++) {
         liq_color *e = &pal->entries[j];
         fprintf(out->c, " 0x%04X,  // %02u :: rgb(%u,%u,%u)\n", rgb1555(e->r, e->g, e->b), j, e->r, e->g, e->b);
@@ -311,5 +311,4 @@ const format_t c_format = {
     .print_appvar_load_function_end = c_print_appvar_load_function_end,
     .print_appvar_palette_header = c_print_appvar_palette_header,
     .print_appvar_palette = c_print_appvar_palette,
-}; 
-
+};

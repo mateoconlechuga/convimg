@@ -116,6 +116,9 @@ void init_convpng(int argc, char **argv) {
         }
     }
 
+    // new line for looks
+    fprintf(stdout, "\n");
+    
     // check if need to change the names
     ini_file_name = ini_file_name ? ini_file_name : ini_main_name;
     log_file_name = log_file_name ? log_file_name : log_main_name;

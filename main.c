@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     time_t c1 = time(NULL);
     
     // print out version information
-    lof("ConvPNG %d.%d by M.Waltz\n\n", VERSION_MAJOR, VERSION_MINOR);
+    fprintf(stdout, "convpng %d.%d by m.waltz\n", VERSION_MAJOR, VERSION_MINOR);
     
     // init the system
     init_convpng(argc, argv);

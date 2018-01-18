@@ -21,12 +21,12 @@ typedef struct {
     uint16_t offsets[MAX_OFFSETS];
     unsigned offset;
     char name[9];
-    
+
     // palette information
     char **palette;
     liq_palette **palette_data;
     unsigned int numpalettes;
-    
+
     // group information
     group_t *g;
 } appvar_t;

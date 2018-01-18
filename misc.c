@@ -81,12 +81,12 @@ void encodePNG(const char* filename, const unsigned char* image, unsigned width,
     unsigned char* png;
     size_t pngsize;
     unsigned error = lodepng_encode32(&png, &pngsize, image, width, height);
-    
+
     /* if there's an error, display it */
     if (error == LODEPNG_ERR_OPEN) { errorf("could not open '%s'", filename); }
     else if (error) { errorf("writting '%s'", filename); }
     else { lodepng_save_file(png, pngsize, filename); }
-    
+
     free(png);
 }
 
@@ -95,7 +95,7 @@ void build_image_palette(const liq_palette *pal, const unsigned length, const ch
     uint8_t *image = safe_malloc(length * 4);
     unsigned int x;
     char *name = str_dupcat(convpng.directory, filename);
-    
+
     for (x = 0; x < length; x++) {
         unsigned int o = x << 2;
         const liq_color *c = &pal->entries[x];
@@ -112,7 +112,7 @@ void build_image_palette(const liq_palette *pal, const unsigned length, const ch
 
 void output_array_compressed(const format_t *format, output_t *out, uint8_t *compressed_data, unsigned len) {
     unsigned j, k;
-    
+
     // write the whole array in a big block
     for (k = j = 0; j < len; j++, k++) {
         format->print_byte(out, compressed_data[j], !(j+1 == len || (k+1) & 32));
@@ -126,7 +126,7 @@ void output_array_compressed(const format_t *format, output_t *out, uint8_t *com
 
 void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned int width, unsigned int height) {
     unsigned int j, k;
-    
+
     // write out the array
     for (k = 0; k < height; k++) {
         unsigned int o = k * width;
@@ -142,7 +142,7 @@ uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode) {
     Optimal *opt;
     uint8_t *ret = NULL;
     size_t s_size = *size;
-    
+
     // select the compression mode
     switch (mode) {
         case COMPRESS_ZX7:
@@ -161,7 +161,7 @@ uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode) {
 void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_buffer, unsigned int *width, unsigned int height, unsigned int *size) {
     unsigned int j,k,i;
     j = k = i = 0;
-    
+
     if (bpp == 16) {
         for (; j < *size; j++) {
             uint16_t _short = rgb565(rgba[i + 0], rgba[i + 1], rgba[i + 2]);
@@ -205,7 +205,7 @@ void force_image_bpp(uint8_t bpp, uint8_t *rgba, uint8_t *data, uint8_t *data_bu
 
 void force_color_index(liq_color *color, liq_palette *pal, unsigned int *pal_len, unsigned int max_pal_len, unsigned int index) {
     unsigned int j;
-    
+
     // if the user wants the index to be elsewhere, expand the array
     if (index > *pal_len) {
         if (max_pal_len) {
@@ -239,9 +239,9 @@ unsigned int remove_elements(uint8_t *array, unsigned int len, uint8_t val) {
 unsigned int group_rlet_output(uint8_t *data, uint8_t *data_buffer, unsigned int width, unsigned int height, uint8_t tp_index) {
     unsigned int size = 0;
     unsigned int j = 0;
-    
+
     memset(data_buffer, 0, width * height * 2);
-    
+
     for (; j < height; j++) {
         unsigned int offset = j * width;
         unsigned int left = width;
@@ -293,14 +293,17 @@ int create_icon(void) {
     unsigned int width,height,size,error,x,y,h;
     liq_color rgba_color;
     char **icon_options;
-    
+    char *filename;
+
     int num = separate_args(convpng.iconc, &icon_options, ',');
-    if(num < 2) { errorf("not enough options."); }
-    
+    if(num < 3) { errorf("not enough options."); }
+
+    filename = icon_options[1];
+
     error = lodepng_decode32_file(&rgba, &width, &height, icon_options[0]);
     if(error) { lof("[error] could not open %s for conversion\n", icon_options[0]); exit(1); }
     if(width != ICON_WIDTH || height != ICON_HEIGHT) { errorf("icon image dimensions are not 16x16."); }
-    
+
     attr = liq_attr_create();
     if(!attr) { errorf("could not create image attributes."); }
     image = liq_image_create_rgba(attr, rgba, ICON_WIDTH, ICON_HEIGHT, 0);
@@ -314,20 +317,20 @@ int create_icon(void) {
         rgba_color.g = xlibc_palette[o + 1];
         rgba_color.b = xlibc_palette[o + 2];
         rgba_color.a = xlibc_palette[o + 3];
-        
+
         liq_image_add_fixed_color(image, rgba_color);
     }
-    
+
     data = safe_malloc(size + 1);
     res = liq_quantize_image(attr, image);
     if(!res) {errorf("could not quantize icon."); }
     liq_write_remapped_image(res, image, data, size);
 
-    FILE *out = fopen("iconc.src", "w");
+    FILE *out = fopen(filename, "w");
     if (convpng.icon_zds) {
-        fprintf(out, " define .icon,space=ram\n segment .icon\n");
         fprintf(out, " .def __program_icon\n .def __program_description\n\n .assume adl=1\n");
-        
+        fprintf(out, " segment .icon\n");
+
         fprintf(out,"\n jp 0%06Xh\n db 1\n__program_icon:\n db %u,%u",icon_offset(icon_options[1]), width, height);
         for (y = 0; y < height; y++) {
             fputs("\n db ", out);
@@ -335,10 +338,10 @@ int create_icon(void) {
                 fprintf(out, "0%02Xh%s", data[x+y*width], x + 1 == width ? "" : ",");
             }
         }
-        
+
         fprintf(out,"\n\n__program_description:\n");
-        fprintf(out," db \"%s\",0\n", icon_options[1]);
-        lof("Converted icon '%s'\n", icon_options[0]);
+        fprintf(out," db \"%s\",0\n", icon_options[2]);
+        lof("Created icon '%s'\n", icon_options[0]);
     } else {
         fprintf(out, "__icon_begin:\n .db 1,%u,%u", width, height);
         for (y = 0; y < height; y++) {
@@ -349,10 +352,10 @@ int create_icon(void) {
         }
 
         fprintf(out, "\n__icon_end:\n__program_description:\n");
-        fprintf(out, " .db \"%s\",0\n__program_description_end:\n", icon_options[1]);
-        lof("Converted icon '%s' -> 'iconc.src'\n", icon_options[0]);
+        fprintf(out, " .db \"%s\",0\n__program_description_end:\n", icon_options[2]);
+        lof("Created icon '%s' -> '%s'\n", icon_options[0], filename);
     }
-    
+
     liq_attr_destroy(attr);
     liq_image_destroy(image);
     free(convpng.iconc);

@@ -9,9 +9,9 @@
 #include "libs/lodepng.h"
 
 #define VERSION_MAJOR 6              // version information
-#define VERSION_MINOR 2              // minor version
+#define VERSION_MINOR 3              // minor version
 
-#define MAX_PAL_LEN   256 
+#define MAX_PAL_LEN   256
 #define NUM_GROUPS    256            // total number of groups able to create
 
 #define ICON_WIDTH    16
@@ -83,7 +83,7 @@ typedef struct {
     bool use_ocolor;                 // use the color ommission
     bool use_oindex;                 // use the index ommission
     bool output_size;                // output size bytes for images
-    
+
     // for creating global palettes
     bool is_global_palette;          // should we just build a palette rather than a group?
 } group_t;
@@ -144,7 +144,7 @@ typedef struct {
     void (*print_transparent_image_header)(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size);
     void (*print_palette_header)(output_t *out, const char *name, unsigned int len);
     void (*print_end_header)(output_t *out);
-    
+
     // appvar functions
     void (*print_appvar_array)(output_t *out, const char *a_name, unsigned int num_images);
     void (*print_appvar_image)(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style);
@@ -160,4 +160,3 @@ extern convpng_t convpng;
 extern group_t group[NUM_GROUPS];
 
 #endif
-

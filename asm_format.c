@@ -117,7 +117,7 @@ static void asm_print_next_array_line(output_t *out, bool is_long, bool at_end) 
     } else {
         if (is_long) {
             fprintf(out->asm, "\n .dl ");
-        } else { 
+        } else {
             fprintf(out->asm, "\n .db ");
         }
     }
@@ -135,7 +135,7 @@ static void asm_print_image(output_t *out, uint8_t bpp, const char *i_name, unsi
 
 static void asm_print_compressed_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size) {
     (void)bpp;
-    fprintf(out->asm, "_%s_compressed_size equ %u\n", i_name, size); 
+    fprintf(out->asm, "_%s_compressed_size equ %u\n", i_name, size);
     fprintf(out->asm, "_%s_compressed:\n .db ", i_name);
 }
 

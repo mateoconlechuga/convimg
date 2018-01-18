@@ -34,20 +34,20 @@ void export_appvars(void) {
     unsigned int t, j;
     const format_t *format;
     output_t *output;
-    
+
     // return if no appvars to export
     if (!convpng.numappvars) {
         return;
     }
-    
+
     for (t = 0; t < convpng.numappvars; t++) {
         unsigned int num;
         appvar_t *a = &appvar[t];
         group_t *g = a->g;
         output = output_create();
-        
+
         lof("exporting appvar: %s.8xp\n", a->name);
-        
+
         // choose the correct output mode
         if (a->mode == MODE_C) {
             format = &c_format;
@@ -59,14 +59,14 @@ void export_appvars(void) {
             errorf("unknown appvar mode");
             return;
         }
-        
+
         // open the outputs
         format->open_output(output, g->outh, OUTPUT_HEADER);
         format->open_output(output, g->outc, OUTPUT_SOURCE);
-        
+
         // get total number of things in appvar
         num = g->numimages + a->numpalettes;
-        
+
         // write out header information
         format->print_header_header(output, g->name);
         format->print_source_header(output, g->outh);
@@ -74,7 +74,7 @@ void export_appvars(void) {
             format->print_appvar_load_function_header(output);
         }
         format->print_appvar_array(output, a->name, num);
-        
+
         // add palette information to the end of the appvar
         if (a->palette) {
             unsigned int i;
@@ -93,7 +93,7 @@ void export_appvars(void) {
                 add_appvar_data(a, pal, pal_len * 2);
             }
         }
-        
+
         // write out the images and pallete information
         for (j = 0; j < num; j++) {
             if (j < g->numimages) {
@@ -116,7 +116,7 @@ void export_appvars(void) {
                 format->print_next_array_line(output, true, j + 1 == num);
             }
         }
-        
+
         // free any included palette
         if (a->palette) {
             unsigned int i = 0;
@@ -129,29 +129,29 @@ void export_appvars(void) {
             free(a->palette);
             free(a->palette_data);
         }
-        
+
         // write the appvar init code
         if (a->write_init) {
             format->print_appvar_load_function(output, a->name, false);
-        
+
             for (j = 0; j < g->numimages; j++) {
                 image_t *i = g->image[j];
                 if (i->create_tilemap_ptrs) {
                     format->print_appvar_load_function_tilemap(output, a->name, i->name, i->numtiles, j, i->compression);
                 }
             }
-            
+
             format->print_appvar_load_function_end(output);
         }
-        
+
         // finish exporting the actual appvar
         output_appvar_complete(a);
-        
+
         // close the outputs
         format->print_end_header(output);
         format->close_output(output, OUTPUT_HEADER);
         format->close_output(output, OUTPUT_SOURCE);
-        
+
         // free all the things
         free(output);
     }
@@ -209,14 +209,14 @@ void add_appvars_palette(const char *pal_name, liq_palette *pal) {
 
 void output_appvar_init(appvar_t *a, int num_images) {
     const uint8_t header[] = { 0x2A,0x2A,0x54,0x49,0x38,0x33,0x46,0x2A,0x1A,0x0A };
-    
+
     // clear data
     a->output = safe_calloc(0x10100, sizeof(uint8_t));
     memset(a->offsets, 0, MAX_OFFSETS * sizeof(uint16_t));
-    
+
     // write header bytes
     memcpy(a->output, header, sizeof header);
-    
+
     // compute storage for image offsets
     a->offsets[0] = 0;
     a->max_data = num_images;
@@ -250,9 +250,9 @@ void add_appvars_data(const void *data, const size_t size) {
 void add_appvar_data(appvar_t *a, const void *data, const size_t size) {
     unsigned int offset = a->offset;
     unsigned int curr   = a->curr_image;
-    
+
     if (offset > 0xFFE0)    { errorf("too much data to output appvar '%s'", a->name); }
-    
+
     if (a->add_offset) {
         a->offsets[curr+1] = a->offsets[curr] + size;
         a->curr_image++;
@@ -267,14 +267,14 @@ void output_appvar_complete(appvar_t *a) {
     unsigned int data_size;
     unsigned int i,checksum;
     FILE *out_file;
-    
+
     // gather structure information
     uint8_t *output = a->output;
     unsigned int offset = a->offset;
-    
+
     // write name
     memcpy(&output[0x3C], a->name, strlen(a->name));
-    
+
     // write config bytes
     output[0x37] = 0x0D;
     output[0x3B] = 0x15;
@@ -312,16 +312,16 @@ void output_appvar_complete(appvar_t *a) {
 
     // write the buffer to the file
     char *name = str_dupcatdir(a->name, ".8xv");
-    
+
     if (!(out_file = fopen(name, "wb"))) {
         errorf("unable to open output appvar file.");
     }
-    
+
     fwrite(output, 1, offset, out_file);
-    
+
     // close the file
     fclose(out_file);
-    
+
     // free the memory
     free(name);
     free(output);

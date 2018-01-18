@@ -14,7 +14,7 @@
 #include "logging.h"
 #include "palettes.h"
 
-#define icon_offset(a) (0xD1A882+16*16+(unsigned int)strlen((a))+8)
+#define icon_offset(a) (0xD1A882+16*16+((unsigned int)strlen((a)))+8)
 
 void *safe_malloc(size_t n) {
     void* p = malloc(n);

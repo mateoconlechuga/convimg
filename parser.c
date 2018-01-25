@@ -268,6 +268,7 @@ add_fixed_colors:
                 f->color.r = (uint8_t)strtol(colors[1], NULL, 10);
                 f->color.g = (uint8_t)strtol(colors[2], NULL, 10);
                 f->color.b = (uint8_t)strtol(colors[3], NULL, 10);
+                f->color.a = 255;
                 f->index = (unsigned int)strtol(colors[0], NULL, 10);
                 g->num_fixed_colors++;
 

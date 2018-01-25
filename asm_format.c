@@ -184,13 +184,25 @@ static void asm_print_appvar_array(output_t *out, const char *a_name, unsigned i
     fprintf(out->inc, "#define %s_num %u\n\n", a_name, num_images);
 }
 
-static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style) {
+static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, unsigned int width, unsigned int height, bool table, bool tp_style) {
     (void)tp_style;
-    fprintf(out->asm, "%u", offset);
+    if (table) {
+        fprintf(out->asm, "%u", offset);
+    }
     if (compressed) {
-        fprintf(out->inc, "#define %s_compressed (%s + %u)\n", i_name, a_name, index * 3);
+        if (table) {
+            fprintf(out->inc, "#define %s_compressed (%s + %u)\n", i_name, a_name, index * 3);
+        }
+        fprintf(out->inc, "#define %s_compressed_offset (%u)\n", i_name, offset);
+        fprintf(out->inc, "#define %s_compressed_width (%u)\n", i_name, width);
+        fprintf(out->inc, "#define %s_compressed_height (%u)\n", i_name, height);
     } else {
-        fprintf(out->inc, "#define %s (%s + %u)\n", i_name, a_name, index * 3);
+        if (table) {
+            fprintf(out->inc, "#define %s (%s + %u)\n", i_name, a_name, index * 3);
+        }
+        fprintf(out->inc, "#define %s_offset (%u)\n", i_name, offset);
+        fprintf(out->inc, "#define %s_width (%u)\n", i_name, width);
+        fprintf(out->inc, "#define %s_height (%u)\n", i_name, height);
     }
 }
 
@@ -223,9 +235,12 @@ static void asm_print_appvar_load_function_end(output_t *out) {
     (void)out;
 }
 
-static void asm_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len) {
+static void asm_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int offset, unsigned int len, bool table) {
     fprintf(out->inc, "#define sizeof_%s_pal %u\n", p_name, len * 2);
-    fprintf(out->inc, "#define %s_pal (%s + %u)\n", p_name, a_name, index * 3);
+    if (table) {
+        fprintf(out->inc, "#define %s_pal (%s + %u)\n", p_name, a_name, index * 3);
+    }
+    fprintf(out->inc, "#define %s_pal_offset (%u)\n", p_name, offset);
 }
 
 static void asm_print_include_header(output_t *out, const char *name) {

@@ -26,6 +26,5 @@ $(TARGET): $(OBJECTS)
 
 clean:
 	$(RM) $(TARGET) $(OBJECTS)
-    
-.PHONY: clean all
 
+.PHONY: clean all

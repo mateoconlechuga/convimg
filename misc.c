@@ -228,8 +228,8 @@ void force_color_index(liq_color *color, liq_palette *pal, unsigned int *pal_len
 unsigned int remove_elements(uint8_t *array, unsigned int len, uint8_t val) {
     unsigned int i;
     unsigned int l = 0;
-    for(i = 0; i < len; i++) {
-        if(array[i] != val) {
+    for (i = 0; i < len; i++) {
+        if (array[i] != val) {
             array[l++] = array[i];
         }
     }
@@ -305,9 +305,9 @@ int create_icon(void) {
     if(width != ICON_WIDTH || height != ICON_HEIGHT) { errorf("icon image dimensions are not 16x16."); }
 
     attr = liq_attr_create();
-    if(!attr) { errorf("could not create image attributes."); }
+    if (!attr) { errorf("could not create image attributes."); }
     image = liq_image_create_rgba(attr, rgba, ICON_WIDTH, ICON_HEIGHT, 0);
-    if(!image) { errorf("could not create icon."); }
+    if (!image) { errorf("could not create icon."); }
 
     size = width * height;
 
@@ -323,7 +323,7 @@ int create_icon(void) {
 
     data = safe_malloc(size + 1);
     res = liq_quantize_image(attr, image);
-    if(!res) {errorf("could not quantize icon."); }
+    if (!res) {errorf("could not quantize icon."); }
     liq_write_remapped_image(res, image, data, size);
 
     FILE *out = fopen(filename, "w");

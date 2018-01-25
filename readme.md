@@ -12,6 +12,8 @@ Note: A `<boolean>` setting can be set to `true` or `false`.
     #PNGImages :
         image
 
+You can use the `/` character at the start of line for comments.
+
 ## Commands
 
 ----
@@ -107,7 +109,7 @@ Output an image of the palette in png format of the group. The image is written 
 
 ----
 
-    #FixedIndexColor : <index>, <red>, <green>, <blue>, (<alpha>)
+    #FixedIndexColor : <index>, <red>, <green>, <blue>
 
 This is used to add a fixed color to the palette which will be preserved at the specified index. This is useful to not allow the palette to shift colors around.
 
@@ -154,24 +156,30 @@ This command will instruct ConvPNG to export code to extract the appvar images t
 
 ----
 
-    #IncludePalettes : <palette name 1>, <palette name 2>, ...
+    #OutputPalettes : <palette name 1>, <palette name 2>, ...
 
 This is a variable operand command which will add the defined palette names to the end of the appvar.
 
-----
+---
+
+    #OutputOffsetTable : <boolean>
+
+By default, convpng outputs a table used for dynamic extraction from appvars. If you want to use hardcoded addresses, feel free to turn this option off.
+
+---
 
 ## Command Line Options
 
-----
+---
 
     -j <icon.png>,<output file>,<description>
 
 Create an icon file for use in an assembly program.
 
-----
+---
 
     -i <ini file>
 
 Use inifile as input rather than convpng.ini
 
-----
+---

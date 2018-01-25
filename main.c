@@ -29,13 +29,13 @@ group_t group[NUM_GROUPS];
 int main(int argc, char **argv) {
     unsigned int s,g,j,k;
     time_t c1 = time(NULL);
-    
+
     // print out version information
     fprintf(stdout, "convpng %d.%d by m.waltz\n", VERSION_MAJOR, VERSION_MINOR);
-    
+
     // init the system
     init_convpng(argc, argv);
-    
+
     // parse the input file
     parse_convpng_ini();
 
@@ -48,11 +48,11 @@ int main(int argc, char **argv) {
         const format_t *format = NULL;
         output_t *g_output = NULL;
         double diff;
-        
+
         // get current group pointer
         group_t   *curr                = &group[g];
         unsigned   g_mode              = curr->mode;
-        
+
         // already inited structure elements
         uint8_t    g_bpp               = curr->bpp;
         unsigned   g_tindex            = curr->tindex;
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
         liq_color  g_transparentcolor  = curr->tcolor;
         liq_color  g_omit_color        = curr->ocolor;
         fixed_t   *g_fixed             = curr->fixed;
-        
+
         // init new elements
         bool       g_is_16_bpp         = g_bpp == 16;
         bool       g_mode_c            = g_mode == MODE_C;
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
         bool       g_style_tp          = g_style == STYLE_RLET;
         bool       g_exported_palette  = false;
         unsigned   g_omit_color_index;
-        
+
         // determine the output format
         if (g_mode_c) {
             format = &c_format;
@@ -104,17 +104,17 @@ int main(int argc, char **argv) {
         if (g_mode_appvar) {
             continue;
         }
-        
+
         // let's check if the palette for this group needs to be exported to an appvar
         g_exported_palette = palette_is_in_an_appvar(g_name);
-        
+
         // create the output pointer
         g_output = output_create();
-        
+
         if (g_style_tp && g_bpp != 8) {
             errorf("unsupported bpp for current style");
         }
-        
+
         // force inputs if 16 bpp image group
         if (g_is_16_bpp) {
             free(g_pal_name);
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
             g_use_tindex      = false;
             g_out_pal_arr     = false;
         }
-        
+
         // log the messages while opening the output files
         if (g_is_global_pal) {
             lof("--- Global Palette %s ---\n", g_name);
@@ -133,45 +133,45 @@ int main(int argc, char **argv) {
             format->open_output(g_output, g_outc_name, OUTPUT_SOURCE);
             format->open_output(g_output, g_outh_name, OUTPUT_HEADER);
         }
-        
+
         // check to make sure the attributes were created correctly
         if (!(attr = liq_attr_create())) { errorf("could not create image attributes."); }
-        
+
         // set the maximum color amount
         if (!g_pal_fixed_len) {
             g_pal_len = pow(2, g_bpp);
         }
-        
+
         // set the maximum colors of the palette
         liq_set_max_colors(attr, g_pal_len);
-        
+
         /* check if we need a custom palette */
         if (g_pal_name) {
             uint8_t *pal_arr = NULL;
             uint8_t *custom_pal = NULL;
-            
+
             // use xlibc palette
             if (!strcmp(g_pal_name, "xlibc")) {
                 pal_arr = xlibc_palette;
                 lof("Using built-in xlibc palette ...\n");
             } else
-                
+
             // use 332 palette
             if (!strcmp(g_pal_name, "rgb332")) {
                 pal_arr = rgb332_palette;
                 lof("Using built-in rgb332 palette ...\n");
-                
+
             // must be some user specified palette
             } else {
                 // some variables
                 unsigned int pal_height;
                 unsigned int pal_width;
-                
+
                 // decode the palette
                 unsigned int error = lodepng_decode32_file(&custom_pal, &pal_width, &pal_height, g_pal_name);
                 if (error) { errorf("decoding palette %s", pal_width); }
                 if (pal_height > 1 || pal_width > 256 || !pal_width) { errorf("palette not formatted correctly."); }
-                
+
                 // we should use the custom palette
                 pal_arr = custom_pal;
                 if (!g_pal_fixed_len) {
@@ -179,14 +179,14 @@ int main(int argc, char **argv) {
                 } else if (pal_width < g_pal_len) {
                     g_pal_len = pal_width;
                 }
-                
+
                 // tell the user what they are doing
                 lof("Using defined palette %s ...\n", g_pal_name);
             }
-            
+
             // store the custom palette to the main palette
             pal.count = g_pal_len;
-            
+
             // loop though all the colors
             for (unsigned int h = 0; h < g_pal_len; ++h) {
                 unsigned int o = h * 4;
@@ -197,14 +197,14 @@ int main(int argc, char **argv) {
                 c.a = pal_arr[o + 3];
                 pal.entries[h] = c;
             }
-            
+
             // if we allocated a custom palette free it
             free(custom_pal);
-            
+
             if (g_valid_tcolor) {
                 lof("warning: might ignore transparent color value for a fixed palette.\n");
             }
-            
+
         // build the palette using maths
         } else if (!g_is_16_bpp) {
             liq_result *res = NULL;
@@ -218,57 +218,57 @@ int main(int argc, char **argv) {
                 unsigned pal_height;
                 liq_image *pal_image;
                 char *pal_in_name = curr->image[s]->in;
-                
+
                 // open the file
                 error = lodepng_decode32_file(&pal_rgba, &pal_width, &pal_height, pal_in_name);
                 if (error) { errorf("decoding %s for palette", pal_in_name); }
-                
+
                 pal_image = liq_image_create_rgba(attr, pal_rgba, pal_width, pal_height, 0);
                 liq_histogram_add_image(hist, attr, pal_image);
                 liq_image_destroy(pal_image);
-                
+
                 // free the opened image
                 free(pal_rgba);
             }
-            
+
             // add transparent color if neeeded
             if (g_use_tcolor) {
                 liq_add_fixed_histogram_color(hist, g_transparentcolor);
             }
-            
+
             // add any fixed palette colors if needed
             if (g_fixed_num) {
                 for (j = 0; j < g_fixed_num; j++) {
                     liq_add_fixed_histogram_color(hist, g_fixed[j].color);
                 }
             }
-            
+
             liq_error err = liq_histogram_quantize(hist, attr, &res);
             if (err != LIQ_OK) { errorf("generating quantized palette"); }
-            
+
             // get the crappiness of the user's image
             memcpy(&pal, liq_get_palette(res), sizeof(liq_palette));
             if ((diff = liq_get_quantization_error(res)) > 15) { convpng.bad_conversion = true; }
-            
+
             // get the new palette length
             g_pal_len = pal.count;
-            
+
             // log palette conversion quality
             lof("Built palette with [%u] indices.\n", g_pal_len);
             lof("Palette quality : %.2f%%\n", 100 - diff < 0 ? 0 : 100 - diff);
-            
+
             // find the transparent color, move by default to index 0
             if (g_use_tcolor) {
                 force_color_index(&g_transparentcolor, &pal, &g_pal_len, g_pal_fixed_len, g_tindex);
             }
-            
+
             // find any fixed colors and move to proper indexes
             if (g_fixed_num) {
                 for (s = 0; s < g_fixed_num; s++) {
                     force_color_index(&g_fixed[s].color, &pal, &g_pal_len, g_pal_fixed_len, g_fixed[s].index);
                 }
             }
-            
+
             // find which index is used for the omit color
             if (g_use_omit_color) {
                 for (j = 0; j < g_pal_len; j++) {
@@ -277,14 +277,14 @@ int main(int argc, char **argv) {
                 }
                 g_omit_color_index = j;
             }
-            
+
             // free the histogram and resultants
             if (res)  { liq_result_destroy(res);     }
             if (hist) { liq_histogram_destroy(hist); }
         } else {
             lof("16 bpp mode detected, no palette needed ...\n");
         }
-        
+
         // output an image of the palette
         if (g_out_pal_img) {
             char *png_file_name = safe_malloc(strlen(g_name)+10);
@@ -293,7 +293,7 @@ int main(int argc, char **argv) {
             build_image_palette(&pal, g_pal_len, png_file_name);
             free(png_file_name);
         }
-        
+
         // check and see if we need to build a global palette
         if (curr->is_global_palette) {
             // build an image which uses the global palette
@@ -311,7 +311,7 @@ int main(int argc, char **argv) {
             } else if (g_out_pal_arr) {
                 format->print_palette(g_output, strip_path(g_name), &pal, g_pal_len);
             }
-            
+
             // log transparent color things
             if (g_use_tcolor) {
                 format->print_transparent_index(g_output, strip_path(g_name), g_tindex);
@@ -333,14 +333,14 @@ int main(int argc, char **argv) {
                 uint8_t      *i_data        = NULL;
                 uint8_t      *i_rgba        = NULL;
                 uint8_t      *i_data_buffer = NULL;
-                
+
                 liq_image    *i_image       = NULL;
                 liq_result   *i_mapped      = NULL;
                 liq_attr     *i_attr        = liq_attr_create();
 
                 unsigned int  i_size_total  = 0;
                 unsigned int  i_size_backup = 0;
-                
+
                 // init the things for each image
                 bool          i_out_size    = g_out_size;
                 char         *i_source_name = i_curr->outc;
@@ -358,11 +358,11 @@ int main(int argc, char **argv) {
                 unsigned int  i_size;
                 unsigned int  i_error;
                 unsigned int  i_decompressed_size;
-                
+
                 // determine if image needs to be exported to an appvar
                 bool i_appvar = image_is_in_an_appvar(i_curr);
                 bool i_style_rlet = i_style == STYLE_RLET;
-                
+
                 // tilemap things
                 bool i_convert_to_tilemap = i_curr->convert_to_tilemap;
                 bool i_create_tilemap_ptrs = i_curr->create_tilemap_ptrs;
@@ -377,6 +377,8 @@ int main(int argc, char **argv) {
 
                 // get the actual size of the image
                 i_size = i_width * i_height;
+                i_curr->width = i_width;
+                i_curr->height = i_height;
 
                 // quick tilemap check
                 if (i_convert_to_tilemap) {
@@ -426,10 +428,10 @@ int main(int argc, char **argv) {
 
                 // write all the image data to the ouputs
                 format->print_image_source_header(i_output, strip_path(g_outh_name));
-                
+
                 // allocate a buffer for storing the new data
                 i_data_buffer = safe_malloc(i_width * i_height * 2 + 2);
-                
+
                 if (i_convert_to_tilemap) {
                     unsigned int tile_num = 0;
                     unsigned int x_offset = 0;
@@ -441,14 +443,14 @@ int main(int argc, char **argv) {
 
                     // disable output to offset stack
                     if (i_appvar) { add_appvars_offsets_state(false); }
-                    
+
                     // special handling needed for printing ice output
                     else if (format == &ice_format) {
                         ice_print_tilemap_header(i_output, i_name, i_num_tiles * (i_tile_width * i_tile_height + SIZE_BYTES), i_tile_width, i_tile_height);
                     }
-                    
+
                     offsets = malloc(i_num_tiles * sizeof(unsigned int));
-                    
+
                     for (; tile_num < i_num_tiles; tile_num++) {
                         i_data_buffer[0] = i_tile_width;
                         i_data_buffer[1] = i_tile_height;
@@ -456,7 +458,7 @@ int main(int argc, char **argv) {
                         i_size = i_tile_width * i_tile_height;
                         i_size_total = i_size + SIZE_BYTES;
                         i_size_backup = i_size_total;
-                        
+
                         // convert a single tile
                         for (j = 0; j < i_tile_height; j++) {
                             offset = j * i_width + y_offset;
@@ -515,11 +517,11 @@ int main(int argc, char **argv) {
                         if (!i_out_size) {
                             i_data_buffer -= SIZE_BYTES;
                         }
-                        
+
                         // store the size
                         offset_size += i_size_total;
                         offsets[tile_num] = offset_size;
-                        
+
                         // move to the correct data location
                         if ((x_offset += i_tile_width) > i_width - 1) {
                             x_offset = 0;
@@ -531,25 +533,25 @@ int main(int argc, char **argv) {
                     if (i_appvar) {
                         add_appvars_offset(offset_size);
                     }
-                    
+
                     // build the tilemap table
                     if (i_create_tilemap_ptrs) {
                         format->print_tile_ptrs(i_output, i_name, i_num_tiles, i_compression, i_appvar, offsets);
                     }
-                    
+
                     if (format == &ice_format) {
                         convpng.allow_newlines = true;
                         if (!i_appvar) {
                             fprintf(i_output->txt, "\"\n");
                         }
                     }
-                    
+
                     // free all the offsets
                     free(offsets);
 
                     // fixes a bug
                     if (i_appvar) { add_appvars_offsets_state(true); }
-                    
+
                 // not a tilemap
                 } else {
                     // store the width and height as well
@@ -558,7 +560,7 @@ int main(int argc, char **argv) {
                     i_size = i_width * i_height;
                     i_size_total = i_size + SIZE_BYTES;
                     i_size_backup = i_size_total;
-                    
+
                     // handle bpp mode here
                     if (i_bpp == 8) {
                         memcpy(&i_data_buffer[SIZE_BYTES], i_data, i_size);
@@ -578,19 +580,19 @@ int main(int argc, char **argv) {
                         i_size = remove_elements(&i_data_buffer[SIZE_BYTES], i_size, g_omit_index);
                         i_size_total = i_size + SIZE_BYTES;
                     }
-                    
+
                     // check if rlet style
                     if (i_style_rlet) {
                         i_size = group_rlet_output(i_data, &i_data_buffer[SIZE_BYTES], i_width, i_height, i_tindex);
                         i_size_total = i_size + SIZE_BYTES;
                     }
-                    
+
                     if (!i_out_size) {
                         i_data_buffer += SIZE_BYTES;
                         i_size_total -= SIZE_BYTES;
                         i_size_backup -= SIZE_BYTES;
                     }
-                    
+
                     // output the image
                     if (i_compression) {
                         i_decompressed_size = i_size_total;
@@ -617,12 +619,12 @@ int main(int argc, char **argv) {
                         }
                     }
                 }
-                
+
                 // restore old pointer
                 if (!i_out_size) {
                     i_data_buffer -= SIZE_BYTES;
                 }
-                
+
                 if (!i_appvar) {
                     if (i_convert_to_tilemap) {
                         format->print_tiles_header(g_output, i_name, i_num_tiles, i_compression, i_appvar);
@@ -638,7 +640,7 @@ int main(int argc, char **argv) {
                         }
                     }
                 }
-                
+
                 // newline for next image
                 lof("\n");
 
@@ -656,7 +658,7 @@ int main(int argc, char **argv) {
                 if (i_image)  { liq_image_destroy(i_image); }
                 if (i_attr)   { liq_attr_destroy(i_attr);   }
             }
-            
+
             if (!g_exported_palette && g_out_pal_arr) {
                 format->print_palette_header(g_output, strip_path(g_name), g_pal_len);
             }
@@ -665,16 +667,16 @@ int main(int argc, char **argv) {
             format->close_output(g_output, OUTPUT_SOURCE);
             free(g_output);
         }
-        
+
         // free *everything*
         if (attr)  { liq_attr_destroy(attr);   }
         if (image) { liq_image_destroy(image); }
         lof("\n");
     }
-    
+
     // export final appvar data
     export_appvars();
-    
+
     // free everything else
     for (g = 0; g < convpng.numgroups; g++) {
         group_t *curr = &group[g];
@@ -696,13 +698,13 @@ int main(int argc, char **argv) {
         free(curr->outh);
         curr->image = NULL;
     }
-    
+
     // say how long it took and if changes should be made
     lof("Converted in %u s\n\n", (unsigned)(time(NULL)-c1));
     if (convpng.bad_conversion) {
         lof("[warning] image quality might be too low.\nplease try grouping similar images, reducing image colors, \nor selecting a better palette if conversion is not ideal.\n\n");
     }
     lof("Finished!\n");
-    
+
     return cleanup_convpng();
 }

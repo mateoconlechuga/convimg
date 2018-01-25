@@ -159,8 +159,11 @@ static void ice_print_appvar_array(output_t *out, const char *a_name, unsigned i
     (void)num_images;
 }
 
-static void ice_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style) {
+static void ice_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, unsigned int width, unsigned int height, bool table, bool tp_style) {
     (void)tp_style;
+    (void)width;
+    (void)height;
+    (void)table;
     if (compressed) {
         fprintf(out->txt, "%s_compressed |\n \"%s\",%u,%u\n\n", i_name, a_name, offset, index);
     } else {
@@ -195,9 +198,11 @@ static void ice_print_appvar_load_function_end(output_t *out) {
     (void)out;
 }
 
-static void ice_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len) {
+static void ice_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int offset, unsigned int len, bool table) {
     (void)len;
     (void)out;
+    (void)offset;
+    (void)table;
     (void)p_name;
     (void)a_name;
     (void)index;

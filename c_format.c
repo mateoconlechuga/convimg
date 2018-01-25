@@ -214,7 +214,11 @@ static void c_print_appvar_array(output_t *out, const char *a_name, unsigned int
     fprintf(out->h, "extern uint8_t *%s[%u];\n", a_name, num_images);
 }
 
-static void c_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style) {
+static void c_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, unsigned int width, unsigned int height, bool table, bool tp_style) {
+    (void)width;
+    (void)height;
+    (void)table;
+    (void)offset;
     const char *s = "gfx_sprite_t";
     if (tp_style) {
         s = "gfx_rletsprite_t";
@@ -272,7 +276,9 @@ static void c_print_appvar_load_function_end(output_t *out) {
     fprintf(out->c, "}\n");
 }
 
-static void c_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len) {
+static void c_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int offset, unsigned int len, bool table) {
+    (void)offset;
+    (void)table;
     fprintf(out->h, "#define sizeof_%s_pal %u\n", p_name, len * 2);
     fprintf(out->h, "#define %s_pal ((uint16_t*)%s[%u])\n", p_name, a_name, index);
 }

@@ -43,6 +43,8 @@ typedef struct {
     bool convert_to_tilemap;         // should we convert to a tilemap?
     bool create_tilemap_ptrs;        // should we create an array of pointers to the tiles?
     unsigned int numtiles;           // number of tiles in the image
+    unsigned int width;              // save image width
+    unsigned int height;             // save image height
 } image_t;
 
 typedef struct {
@@ -147,13 +149,13 @@ typedef struct {
 
     // appvar functions
     void (*print_appvar_array)(output_t *out, const char *a_name, unsigned int num_images);
-    void (*print_appvar_image)(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, bool tp_style);
+    void (*print_appvar_image)(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, unsigned int width, unsigned int height, bool table, bool tp_style);
     void (*print_appvar_palette)(output_t *out, const char *p_name, const char *a_name, unsigned int offset);
     void (*print_appvar_load_function_header)(output_t *out);
     void (*print_appvar_load_function)(output_t *out, const char *a_name, bool has_tilemaps);
     void (*print_appvar_load_function_tilemap)(output_t *out, const char *a_name, char *tilemap_name, unsigned int tilemap_size, unsigned int index, bool compressed);
     void (*print_appvar_load_function_end)(output_t *out);
-    void (*print_appvar_palette_header)(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int len);
+    void (*print_appvar_palette_header)(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int offset, unsigned int len, bool table);
 } format_t;
 
 extern convpng_t convpng;

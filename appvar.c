@@ -73,7 +73,9 @@ void export_appvars(void) {
         if (a->write_init) {
             format->print_appvar_load_function_header(output);
         }
-        format->print_appvar_array(output, a->name, num);
+        if (a->write_table) {
+            format->print_appvar_array(output, a->name, num);
+        }
 
         // add palette information to the end of the appvar
         if (a->palette) {
@@ -101,18 +103,22 @@ void export_appvars(void) {
                 bool i_style_tp = i->style == STYLE_RLET;
                 if (a->mode == MODE_ICE) {
                     format->print_appvar_image(output, a->name, a->offsets[j], i->name,
-                                               i->create_tilemap_ptrs ? i->numtiles * 3 : 3, i->compression, i_style_tp);
+                                               i->create_tilemap_ptrs ? i->numtiles * 3 : 3,
+                                               i->compression, i->width, i->height, a->write_table, i_style_tp);
                 } else {
-                    format->print_appvar_image(output, a->name, a->offsets[j], i->name, j, i->compression, i_style_tp);
+                    format->print_appvar_image(output, a->name, a->offsets[j], i->name, j,
+                                               i->compression, i->width, i->height, a->write_table, i_style_tp);
                 }
                 if (i->create_tilemap_ptrs) {
                     format->print_tiles_ptrs_header(output, i->name, i->numtiles, i->compression);
                     format->print_tiles_header(output, i->name, i->numtiles, i->compression, true);
                 }
             } else {
-                format->print_appvar_palette(output, a->palette[j - g->numimages], a->name, a->offsets[j]);
+                if (a->write_table) {
+                    format->print_appvar_palette(output, a->palette[j - g->numimages], a->name, a->offsets[j]);
+                }
             }
-            if (a->mode != MODE_ICE) {
+            if (a->mode != MODE_ICE && a->write_table) {
                 format->print_next_array_line(output, true, j + 1 == num);
             }
         }
@@ -122,7 +128,9 @@ void export_appvars(void) {
             unsigned int i = 0;
             unsigned int index = g->numimages;
             for (; i < a->numpalettes; i++) {
-                format->print_appvar_palette_header(output, a->palette[i], a->name, index++, a->palette_data[i]->count);
+                index++;
+                format->print_appvar_palette_header(output, a->palette[i], a->name, index,
+                                                    a->offsets[index-1], a->palette_data[i]->count, a->write_table);
                 free(a->palette[i]);
                 free(a->palette_data[i]);
             }

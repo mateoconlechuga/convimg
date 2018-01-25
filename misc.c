@@ -14,8 +14,6 @@
 #include "logging.h"
 #include "palettes.h"
 
-#define icon_offset(a) (0xD1A882+16*16+((unsigned int)strlen((a)))+8)
-
 void *safe_malloc(size_t n) {
     void* p = malloc(n);
     if (!p) { errorf("out of memory."); }
@@ -331,7 +329,7 @@ int create_icon(void) {
         fprintf(out, " .def __program_icon\n .def __program_description\n\n .assume adl=1\n");
         fprintf(out, " segment .icon\n");
 
-        fprintf(out,"\n jp 0%06Xh\n db 1\n__program_icon:\n db %u,%u",icon_offset(icon_options[1]), width, height);
+        fprintf(out,"\n jp __program_description_end\n db 1\n__program_icon:\n db %u,%u", width, height);
         for (y = 0; y < height; y++) {
             fputs("\n db ", out);
             for (x = 0; x < width; x++) {
@@ -341,6 +339,7 @@ int create_icon(void) {
 
         fprintf(out,"\n\n__program_description:\n");
         fprintf(out," db \"%s\",0\n", icon_options[2]);
+        fprintf(out,"__program_description_end:\n");
         fprintf(stdout, "created icon using '%s'\n", icon_options[0]);
     } else {
         fprintf(out, "__icon_begin:\n .db 1,%u,%u", width, height);

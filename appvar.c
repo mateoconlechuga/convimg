@@ -1,15 +1,16 @@
+#include "appvar.h"
+#include "main.h"
+#include "misc.h"
+#include "logging.h"
+
+#include "libs/libimagequant.h"
+#include "libs/zx7.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
-
-#include "libs/libimagequant.h"
-
-#include "main.h"
-#include "misc.h"
-#include "appvar.h"
-#include "logging.h"
 
 #define m8(x)  ((x)&255)
 #define mr8(x) (((x)>>8)&255)
@@ -279,6 +280,17 @@ void output_appvar_complete(appvar_t *a) {
     // gather structure information
     uint8_t *output = a->output;
     unsigned int offset = a->offset;
+
+    if (a->compression == COMPRESS_ZX7) {
+        size_t s_size = offset - 0x4A;
+        long delta;
+        Optimal *opt = optimize(&output[0x4A], s_size);
+        uint8_t *ret = compress(opt, &output[0x4A], s_size, &s_size, &delta);
+        memcpy(&output[0x4A], ret, s_size);
+        offset = s_size + 0x4A;
+        free(opt);
+        free(ret);
+    }
 
     // write name
     memcpy(&output[0x3C], a->name, strlen(a->name));

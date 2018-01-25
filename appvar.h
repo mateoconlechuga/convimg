@@ -16,6 +16,7 @@ typedef struct {
     bool write_init;
     bool add_offset;
     bool write_table;
+    unsigned int compression;
     uint8_t *output;
     uint8_t curr_image;
     uint8_t max_data;

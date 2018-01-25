@@ -386,8 +386,15 @@ add_other_colors_omit:
             } else
 
             if (!strcmp(*argv, "#Compression")) {
+                appvar_t *a = &appvar[convpng.numappvars - 1];
+                unsigned int compression = COMPRESS_NONE;
                 if (!strcmp(argv[1], "zx7")) {
-                    g->compression = COMPRESS_ZX7;
+                    compression = COMPRESS_ZX7;
+                }
+                if (g->mode == MODE_APPVAR) {
+                    a->compression = compression;
+                } else {
+                    g->compression = compression;
                 }
             } else
 

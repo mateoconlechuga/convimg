@@ -256,8 +256,15 @@ add_other_colors:
 
                 if (num <= 1) { args_error(); }
                 num = separate_args(argv[1], &colors, ',');
-                if (num != 3) { args_error(); }
+                if (num == 4) {
+                    f->exact = false;
+                    goto add_fixed_colors;
+                } else if (num < 5 || num > 5) {
+                    args_error();
+                }
 
+                f->exact = strcmp(colors[4], "false");
+add_fixed_colors:
                 f->color.r = (uint8_t)strtol(colors[1], NULL, 10);
                 f->color.g = (uint8_t)strtol(colors[2], NULL, 10);
                 f->color.b = (uint8_t)strtol(colors[3], NULL, 10);
@@ -426,7 +433,6 @@ add_other_colors_omit:
                 g->palette_fixed_length = true;
                 g->palette_length = len;
             } else
-
 
             if (!strcmp(*argv, "#OutputPaletteImage")) {
                 g->output_palette_image = true;

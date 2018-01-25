@@ -50,6 +50,7 @@ typedef struct {
 typedef struct {
     liq_color color;
     unsigned int index;
+    bool exact;
 } fixed_t;
 
 typedef struct {

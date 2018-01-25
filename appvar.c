@@ -220,7 +220,7 @@ void output_appvar_init(appvar_t *a, int num_images) {
     const uint8_t header[] = { 0x2A,0x2A,0x54,0x49,0x38,0x33,0x46,0x2A,0x1A,0x0A };
 
     // clear data
-    a->output = safe_calloc(0x10100, sizeof(uint8_t));
+    a->output = safe_calloc(0x40000, sizeof(uint8_t));
     memset(a->offsets, 0, MAX_OFFSETS * sizeof(uint16_t));
 
     // write header bytes
@@ -260,8 +260,6 @@ void add_appvar_data(appvar_t *a, const void *data, const size_t size) {
     unsigned int offset = a->offset;
     unsigned int curr   = a->curr_image;
 
-    if (offset > 0xFFE0)    { errorf("too much data to output appvar '%s'", a->name); }
-
     if (a->add_offset) {
         a->offsets[curr+1] = a->offsets[curr] + size;
         a->curr_image++;
@@ -291,6 +289,8 @@ void output_appvar_complete(appvar_t *a) {
         free(opt);
         free(ret);
     }
+
+    if (offset > 0xFFE0) { errorf("too much data to output appvar '%s'", a->name); }
 
     // write name
     memcpy(&output[0x3C], a->name, strlen(a->name));

@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
+#include <glob.h>
 
 #include "libs/libimagequant.h"
 #include "libs/lodepng.h"
@@ -96,26 +97,21 @@ int separate_args(char *srcstr, char ***output, const char sep) {
 }
 
 // check if there is a wildcard, if so we need to create a list of images to add
-static char **find_pngs(DIR* dir, const char *path, unsigned int *len) {
-    char **png_array = NULL;
-    *len = 0;
-    if (dir) {
-        unsigned int png_count = 0;
-        struct dirent* file;
+static glob_t *find_pngs(const char *full_path) {
+    char *path;
 
-        // find a list of all the png files in the directory
-        while ((file = readdir(dir))) {
-            const char *name = file->d_name;
-            if (!strcmp(name, ".") || !strcmp(name, "..")) continue;
-            if (strstr(name, ".png")) {
-                png_array = realloc(png_array, (png_count + 1) * sizeof(char *));
-                png_array[png_count++] = str_dupcat(path, name);
-                *len += 1;
-            }
-        }
-        closedir(dir);
+    // add extra .png as nessasary
+    if (!(strstr(full_path, ".png"))) {
+        path = str_dupcat(full_path, ".png");
+    } else {
+        path = str_dup(full_path);
     }
-    return png_array;
+
+    glob_t *globbuf = (glob_t*)calloc(sizeof(glob_t), 1);
+    glob(path, 0, NULL, globbuf);
+    free(path);
+
+    return globbuf;
 }
 
 // adds an image to the indexed array
@@ -124,26 +120,22 @@ static void add_image(char *line) {
     unsigned int len = 1;
     unsigned int i;
     char *in;
-    DIR* dir;
     image_t *s;
     bool open_dir = false;
     char **images = NULL;
+    glob_t *globbuf = NULL;
 
     // check if relative or absolute file path
     if (line[strlen(line)-1] == '/') {
         line[strlen(line)-1] = '\0';
     }
 
-    // check for wildcard at end
-    if (line[strlen(line)-1] == '*') {
-        line[strlen(line)-1] = '\0';
-        if (!strlen(line)) {
-            dir = opendir("./");
-        } else {
-            dir = opendir(line);
-        }
+    // check for directory at end
+    if (strchr(line, '/') || strchr(line, '*')) {
+        globbuf = find_pngs(line);
+        images = globbuf->gl_pathv;
+        len = globbuf->gl_pathc;
         open_dir = true;
-        images = find_pngs(dir, line, &len);
     }
 
     for (i = 0; i < len; i++) {
@@ -186,10 +178,7 @@ static void add_image(char *line) {
     }
 
     if (open_dir) {
-        for(i = 0; i < len; i++) {
-            free(images[i]);
-        }
-        free(images);
+        globfree(globbuf);
     }
 }
 

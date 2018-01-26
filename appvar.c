@@ -280,8 +280,8 @@ void output_appvar_complete(appvar_t *a) {
     unsigned int offset = a->offset;
 
     if (a->compression == COMPRESS_ZX7) {
-        size_t s_size = offset - 0x4A;
         long delta;
+        size_t s_size = offset - 0x4A;
         Optimal *opt = optimize(&output[0x4A], s_size);
         uint8_t *ret = compress(opt, &output[0x4A], s_size, &s_size, &delta);
         memcpy(&output[0x4A], ret, s_size);

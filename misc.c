@@ -342,16 +342,16 @@ int create_icon(void) {
         fprintf(out,"__program_description_end:\n");
         fprintf(stdout, "created icon using '%s'\n", icon_options[0]);
     } else {
-        fprintf(out, "__icon_begin:\n .db 1,%u,%u", width, height);
+        fprintf(out, "__icon_begin:\n db 1,%u,%u", width, height);
         for (y = 0; y < height; y++) {
-            fputs("\n .db ",out);
+            fputs("\n db ",out);
             for (x = 0; x < width; x++) {
                 fprintf(out, "0%02Xh%s", data[x+(y*width)], x + 1 == width ? "" : ",");
             }
         }
 
         fprintf(out, "\n__icon_end:\n__program_description:\n");
-        fprintf(out, " .db \"%s\",0\n__program_description_end:\n", icon_options[2]);
+        fprintf(out, " db \"%s\",0\n__program_description_end:\n", icon_options[2]);
         fprintf(stdout, "Created icon '%s' -> '%s'\n", icon_options[0], filename);
     }
 

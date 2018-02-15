@@ -163,6 +163,7 @@ void export_appvars(void) {
 
         // free all the things
         free(output);
+        free(a->string);
     }
     lof("\n");
 }
@@ -220,17 +221,17 @@ void output_appvar_init(appvar_t *a, int num_images) {
     const uint8_t header[] = { 0x2A,0x2A,0x54,0x49,0x38,0x33,0x46,0x2A,0x1A,0x0A };
 
     // clear data
-    a->output = safe_calloc(0x40000, sizeof(uint8_t));
+    a->output = safe_calloc(0x50000, sizeof(uint8_t));
     memset(a->offsets, 0, MAX_OFFSETS * sizeof(uint16_t));
 
     // write header bytes
     memcpy(a->output, header, sizeof header);
 
     // compute storage for image offsets
-    a->offsets[0] = 0;
+    a->offsets[0] = a->start - 0x4A;
     a->max_data = num_images;
     a->curr_image = 0;
-    a->offset = 0x4A;
+    a->offset = a->start;
 }
 
 void add_appvars_offsets_state(bool state) {
@@ -281,11 +282,11 @@ void output_appvar_complete(appvar_t *a) {
 
     if (a->compression == COMPRESS_ZX7) {
         long delta;
-        size_t s_size = offset - 0x4A;
-        Optimal *opt = optimize(&output[0x4A], s_size);
-        uint8_t *ret = compress(opt, &output[0x4A], s_size, &s_size, &delta);
-        memcpy(&output[0x4A], ret, s_size);
-        offset = s_size + 0x4A;
+        size_t s_size = offset - a->start;
+        Optimal *opt = optimize(&output[a->start], s_size);
+        uint8_t *ret = compress(opt, &output[a->start], s_size, &s_size, &delta);
+        memcpy(&output[a->start], ret, s_size);
+        offset = s_size + a->start;
         free(opt);
         free(ret);
     }
@@ -311,6 +312,11 @@ void output_appvar_complete(appvar_t *a) {
     len_low = m8(data_size);
     output[0x48] = len_low;
     output[0x49] = len_high;
+
+    // write header
+    if (a->string) {
+        memcpy(&output[0x4A], a->string, strlen(a->string));
+    }
 
     // size bytes
     data_size += 2;

@@ -448,6 +448,16 @@ add_other_colors_omit:
                 g->output_palette_array = false;
             } else
 
+            if (!strcmp(*argv, "#OutputHeader")) {
+                if (g->mode == MODE_APPVAR) {
+                    appvar_t *a = &appvar[convpng.numappvars - 1];
+                    a->string = str_dup(argv[1]);
+                    a->start = 0x4A + strlen(a->string);
+                } else {
+                    command_group_error();
+                }
+            } else
+
             if (!strcmp(*argv, "#OutputWidthHeight")) {
                 if (!strcmp(argv[1], "false")) {
                     g->output_size = false;

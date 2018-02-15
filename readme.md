@@ -166,6 +166,12 @@ This is a variable operand command which will add the defined palette names to t
 
 By default, convpng outputs a table used for dynamic extraction from appvars. If you want to use hardcoded addresses, feel free to turn this option off.
 
+---
+
+    #OutputHeader : <string>
+
+This outputs a particular string header at the start of an appvar for later using to search for it.
+
 ### Additional notes
 
 * You can use the `#Compression` option to fully compress appvars.

@@ -179,14 +179,14 @@ static void asm_print_end_header(output_t *out) {
 }
 
 static void asm_print_appvar_array(output_t *out, const char *a_name, unsigned int num_images) {
-    fprintf(out->asm, "_%s: ; %u images\n dl ", a_name, num_images);
+    fprintf(out->asm, "_%s: ; offsets\n dl ", a_name);
     fprintf(out->inc, "%s_num equ %u\n\n", a_name, num_images);
 }
 
 static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, unsigned int width, unsigned int height, bool table, bool tp_style) {
     (void)tp_style;
     if (table) {
-        fprintf(out->asm, "%u", offset);
+        fprintf(out->asm, "%u ; %s", offset, i_name);
     }
     if (compressed) {
         if (table) {
@@ -208,7 +208,7 @@ static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned i
 static void asm_print_appvar_palette(output_t *out, const char *p_name, const char *a_name, unsigned int offset) {
     (void)p_name;
     (void)a_name;
-    fprintf(out->asm, "%u", offset);
+    fprintf(out->asm, "%u ; %s", offset, p_name);
 }
 
 static void asm_print_appvar_load_function_header(output_t *out) {

@@ -66,6 +66,8 @@ static void init_convpng_struct(void) {
         a->add_offset = true;
         a->palette = NULL;
         a->palette_data = NULL;
+        a->string = NULL;
+        a->start = 0x4A;
     }
 }
 

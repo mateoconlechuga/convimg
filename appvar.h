@@ -21,7 +21,9 @@ typedef struct {
     uint8_t curr_image;
     uint8_t max_data;
     uint16_t offsets[MAX_OFFSETS];
-    unsigned offset;
+    unsigned int offset;
+    unsigned int start;
+    char *string;
     char name[9];
 
     // palette information

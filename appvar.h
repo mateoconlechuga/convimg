@@ -20,7 +20,7 @@ typedef struct {
     uint8_t *output;
     uint8_t curr_image;
     uint8_t max_data;
-    uint16_t offsets[MAX_OFFSETS];
+    uint32_t offsets[MAX_OFFSETS];
     unsigned int offset;
     unsigned int start;
     char *string;

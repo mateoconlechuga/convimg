@@ -283,12 +283,14 @@ void output_appvar_complete(appvar_t *a) {
     if (a->compression == COMPRESS_ZX7) {
         long delta;
         size_t s_size = offset - a->start;
+        unsigned int prev_size = (unsigned int)s_size;
         Optimal *opt = optimize(&output[a->start], s_size);
         uint8_t *ret = compress(opt, &output[a->start], s_size, &s_size, &delta);
         memcpy(&output[a->start], ret, s_size);
         offset = s_size + a->start;
         free(opt);
         free(ret);
+        lof("compression: (%u > %u bytes)\n", prev_size, s_size);
     }
 
     if (offset > 0xFFE0) { errorf("too much data to output appvar '%s'", a->name); }

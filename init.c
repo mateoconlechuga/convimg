@@ -136,7 +136,7 @@ void init_convpng(int argc, char **argv) {
     if (!convpng.log && use_file_log) { errorf("could not open file '%s'\nPlease check file permissions\n", log_file_name); }
 
     // log a message that opening succeded
-    lof("Opened %s\n", ini_file_name);
+    lof("opened %s\n", ini_file_name);
 }
 
 int cleanup_convpng(void) {

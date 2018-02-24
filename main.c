@@ -127,9 +127,9 @@ int main(int argc, char **argv) {
 
         // log the messages while opening the output files
         if (g_is_global_pal) {
-            lof("--- Global Palette %s ---\n", g_name);
+            lof("--- palette %s ---\n", g_name);
         } else {
-            lof("--- Group %s (%s) ---\n", g_name, g_mode_asm ? "ASM" : g_mode_c ? "C" : "ICE");
+            lof("--- %s (%s) ---\n", g_name, g_mode_asm ? "ASM" : g_mode_c ? "C" : "ICE");
             format->open_output(g_output, g_outc_name, OUTPUT_SOURCE);
             format->open_output(g_output, g_outh_name, OUTPUT_HEADER);
         }
@@ -153,13 +153,13 @@ int main(int argc, char **argv) {
             // use xlibc palette
             if (!strcmp(g_pal_name, "xlibc")) {
                 pal_arr = xlibc_palette;
-                lof("Using built-in xlibc palette ...\n");
+                lof("using built-in xlibc palette ...\n");
             } else
 
             // use 332 palette
             if (!strcmp(g_pal_name, "rgb332")) {
                 pal_arr = rgb332_palette;
-                lof("Using built-in rgb332 palette ...\n");
+                lof("using built-in rgb332 palette ...\n");
 
             // must be some user specified palette
             } else {
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
                 }
 
                 // tell the user what they are doing
-                lof("Using defined palette %s ...\n", g_pal_name);
+                lof("using defined palette %s ...\n", g_pal_name);
             }
 
             // store the custom palette to the main palette
@@ -209,7 +209,7 @@ int main(int argc, char **argv) {
         } else if (!g_is_16_bpp) {
             liq_result *res = NULL;
             liq_histogram *hist = liq_histogram_create(attr);
-            lof("Building palette with [%u] available indices ...\n", g_pal_len);
+            lof("building palette with [%u] available indices ...\n", g_pal_len);
             for (s = 0; s < g_numimages; s++) {
                 // some variables
                 unsigned error;
@@ -254,8 +254,8 @@ int main(int argc, char **argv) {
             g_pal_len = pal.count;
 
             // log palette conversion quality
-            lof("Built palette with [%u] indices.\n", g_pal_len);
-            lof("Palette quality : %.2f%%\n", 100 - diff < 0 ? 0 : 100 - diff);
+            lof("built palette with [%u] indices.\n", g_pal_len);
+            lof("palette quality : %.2f%%\n", 100 - diff < 0 ? 0 : 100 - diff);
 
             // find the transparent color, move by default to index 0
             if (g_use_tcolor) {
@@ -315,8 +315,8 @@ int main(int argc, char **argv) {
             // log transparent color things
             if (g_use_tcolor) {
                 format->print_transparent_index(g_output, strip_path(g_name), g_tindex);
-                lof("Transparent Color Index : %u\n", g_tindex);
-                lof("Transparent Color : 0x%04X\n", rgb1555(g_transparentcolor.r,
+                lof("transparent color index : %u\n", g_tindex);
+                lof("transparent color : 0x%04X\n", rgb1555(g_transparentcolor.r,
                                                             g_transparentcolor.g,
                                                             g_transparentcolor.b));
             }
@@ -700,11 +700,11 @@ int main(int argc, char **argv) {
     }
 
     // say how long it took and if changes should be made
-    lof("Converted in %u s\n\n", (unsigned)(time(NULL)-c1));
+    lof("converted in %u s\n\n", (unsigned)(time(NULL)-c1));
     if (convpng.bad_conversion) {
         lof("[warning] image quality might be too low.\nplease try grouping similar images, reducing image colors, \nor selecting a better palette if conversion is not ideal.\n\n");
     }
-    lof("Finished!\n");
+    lof("finished!\n");
 
     return cleanup_convpng();
 }

@@ -101,6 +101,7 @@ void export_appvars(void) {
         for (j = 0; j < num; j++) {
             if (j < g->numimages) {
                 image_t *i = g->image[j];
+                lof(" %s\n", i->name, a->offsets[j]);
                 bool i_style_tp = i->style == STYLE_RLET;
                 if (a->mode == MODE_ICE) {
                     format->print_appvar_image(output, a->name, a->offsets[j], i->name,
@@ -126,12 +127,13 @@ void export_appvars(void) {
 
         // free any included palette
         if (a->palette) {
-            unsigned int i = 0;
+            unsigned int i;
             unsigned int index = g->numimages;
-            for (; i < a->numpalettes; i++) {
-                index++;
+            for (i = 0; i < a->numpalettes; i++) {
+                lof(" %s (palette)\n", a->palette[i]);
                 format->print_appvar_palette_header(output, a->palette[i], a->name, index,
                                                     a->offsets[index-1], a->palette_data[i]->count, a->write_table);
+                index++;
                 free(a->palette[i]);
                 free(a->palette_data[i]);
             }
@@ -245,7 +247,8 @@ void add_appvars_offset(unsigned int size) {
     unsigned int j;
     for (j = 0; j < data_num_appvars; j++) {
         appvar_t *a = appvar_ptrs[j];
-        a->offsets[a->curr_image+1] = a->offsets[a->curr_image] + size;
+        unsigned int curr = a->curr_image;
+        a->offsets[curr+1] = a->offsets[curr] + size;
         a->curr_image++;
     }
 }
@@ -259,7 +262,7 @@ void add_appvars_data(const void *data, const size_t size) {
 
 void add_appvar_data(appvar_t *a, const void *data, const size_t size) {
     unsigned int offset = a->offset;
-    unsigned int curr   = a->curr_image;
+    unsigned int curr = a->curr_image;
 
     if (a->add_offset) {
         a->offsets[curr+1] = a->offsets[curr] + size;

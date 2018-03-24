@@ -449,7 +449,8 @@ int main(int argc, char **argv) {
                         ice_print_tilemap_header(i_output, i_name, i_num_tiles * (i_tile_width * i_tile_height + SIZE_BYTES), i_tile_width, i_tile_height);
                     }
 
-                    offsets = malloc(i_num_tiles * sizeof(unsigned int));
+                    offsets = malloc((i_num_tiles + 1) * sizeof(unsigned int));
+                    offsets[0] = 0;
 
                     for (; tile_num < i_num_tiles; tile_num++) {
                         i_data_buffer[0] = i_tile_width;
@@ -520,7 +521,7 @@ int main(int argc, char **argv) {
 
                         // store the size
                         offset_size += i_size_total;
-                        offsets[tile_num] = offset_size;
+                        offsets[tile_num + 1] = offset_size;
 
                         // move to the correct data location
                         if ((x_offset += i_tile_width) > i_width - 1) {

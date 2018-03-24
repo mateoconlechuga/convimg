@@ -218,7 +218,6 @@ static void c_print_appvar_image(output_t *out, const char *a_name, unsigned int
     (void)width;
     (void)height;
     (void)table;
-    (void)offset;
     const char *s = "gfx_sprite_t";
     if (tp_style) {
         s = "gfx_rletsprite_t";

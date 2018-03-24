@@ -30,15 +30,15 @@ static void ice_close_output(output_t *out, bool header) {
     }
 }
 
-static void ice_print_source_header(output_t *out, const char *header_file_name) {
-    (void)header_file_name;
-    fprintf(out->txt, "Converted using ConvPNG\n");
-    fprintf(out->txt, "This file contains all the converted graphics\n\n");
+static void ice_print_source_header(output_t *out, const char *name) {
+    (void)name;
+    fprintf(out->txt, "| convpng\n");
+    fprintf(out->txt, "| this file contains all the converted graphics\n\n");
 }
 
-static void ice_print_header_header(output_t *out, const char *group_name) {
+static void ice_print_header_header(output_t *out, const char *name) {
     (void)out;
-    (void)group_name;
+    (void)name;
 }
 
 static void ice_print_palette(output_t *out, const char *group_name, liq_palette *pal, const unsigned int pal_len) {

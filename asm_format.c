@@ -31,14 +31,14 @@ static void asm_close_output(output_t *out, bool header) {
     }
 }
 
-static void asm_print_source_header(output_t *out, const char *header_file_name) {
-    (void)header_file_name;
-    fprintf(out->asm, "; Converted using ConvPNG\n");
+static void asm_print_source_header(output_t *out, const char *name) {
+    (void)name;
+    fprintf(out->asm, "; convpng\n");
 }
 
 static void asm_print_header_header(output_t *out, const char *name) {
-    fprintf(out->inc, "; Converted using ConvPNG\n");
-    fprintf(out->inc, "; This file contains all the graphics for easier inclusion in a project\n");
+    fprintf(out->inc, "; convpng\n");
+    fprintf(out->inc, "; this file contains all the graphics for easier inclusion in a project\n");
     fprintf(out->inc, "#include \"%s.asm\"\n", name);
 }
 

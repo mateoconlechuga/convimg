@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
         bool       g_use_tcolor        = g_valid_tcolor || g_use_tindex;
         bool       g_style_tp          = g_style == STYLE_RLET;
         bool       g_exported_palette  = false;
-        unsigned   g_omit_color_index;
+        unsigned   g_omit_color_index  = 0;
 
         // determine the output format
         if (g_mode_c) {

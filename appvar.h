@@ -18,8 +18,8 @@ typedef struct {
     bool write_table;
     unsigned int compression;
     uint8_t *output;
-    uint8_t curr_image;
-    uint8_t max_data;
+    unsigned int curr_image;
+    unsigned int max_data;
     uint32_t offsets[MAX_OFFSETS];
     unsigned int offset;
     unsigned int start;

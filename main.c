@@ -24,13 +24,14 @@
 #include "palettes.h"
 
 convpng_t convpng;
+const char *convpng_version_string = "convpng v6.8";
 
 int main(int argc, char **argv) {
     unsigned int s,g,j,k;
     time_t c1 = time(NULL);
 
     // print out version information
-    fprintf(stdout, "convpng %d.%d by m.waltz\n", VERSION_MAJOR, VERSION_MINOR);
+    fprintf(stdout, "%s by m.waltz\n", convpng_version_string);
 
     // init the system
     init_convpng(argc, argv);

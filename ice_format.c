@@ -32,7 +32,7 @@ static void ice_close_output(output_t *out, bool header) {
 
 static void ice_print_source_header(output_t *out, const char *name) {
     (void)name;
-    fprintf(out->txt, "| convpng\n");
+    fprintf(out->txt, "| %s\n", convpng_version_string);
     fprintf(out->txt, "| this file contains all the converted graphics\n\n");
 }
 

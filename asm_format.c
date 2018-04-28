@@ -33,11 +33,11 @@ static void asm_close_output(output_t *out, bool header) {
 
 static void asm_print_source_header(output_t *out, const char *name) {
     (void)name;
-    fprintf(out->asm, "; convpng\n");
+    fprintf(out->asm, "; %s\n", convpng_version_string);
 }
 
 static void asm_print_header_header(output_t *out, const char *name) {
-    fprintf(out->inc, "; convpng\n");
+    fprintf(out->inc, "; %s\n", convpng_version_string);
     fprintf(out->inc, "; this file contains all the graphics for easier inclusion in a project\n");
     fprintf(out->inc, "#include \"%s.asm\"\n", name);
 }
@@ -57,7 +57,7 @@ static void asm_print_transparent_index(output_t *out, const char *name, const u
 
 static void asm_print_image_source_header(output_t *out, const char *group_header_file_name) {
     (void)group_header_file_name;
-    fprintf(out->asm, "; convpng\n\n");
+    fprintf(out->asm, "; %s\n\n", convpng_version_string);
 }
 
 static void asm_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, unsigned int width, unsigned int height) {

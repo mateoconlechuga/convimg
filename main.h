@@ -10,9 +10,6 @@
 #include "libs/libimagequant.h"
 #include "libs/lodepng.h"
 
-#define VERSION_MAJOR 6              // version information
-#define VERSION_MINOR 8              // minor version
-
 #define MAX_PAL_LEN   256
 #define MAX_GROUPS    256            // total number of groups able to create
 #define MAX_APPVARS   16
@@ -23,6 +20,8 @@
 #define SIZE_BYTES    2
 
 #define LODEPNG_ERR_OPEN 78
+
+extern const char *convpng_version_string;
 
 // function prototypes
 void add_rgba(uint8_t *pal, size_t size);

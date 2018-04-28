@@ -32,13 +32,13 @@ static void c_close_output(output_t *out, bool header) {
 }
 
 static void c_print_source_header(output_t *out, const char *name) {
-    fprintf(out->c, "// convpng\n");
+    fprintf(out->c, "// %s\n", convpng_version_string);
     fprintf(out->c, "#include <stdint.h>\n");
     fprintf(out->c, "#include \"%s\"\n\n", name);
 }
 
 static void c_print_header_header(output_t *out, const char *name) {
-    fprintf(out->h, "// convpng\n");
+    fprintf(out->h, "// %s\n", convpng_version_string);
     fprintf(out->h, "// this file contains all the graphics sources for easy inclusion in a project\n");
     fprintf(out->h, "#ifndef __%s__\n#define __%s__\n", name, name);
     fprintf(out->h, "#include <stdint.h>\n\n");
@@ -59,7 +59,7 @@ static void c_print_transparent_index(output_t *out, const char *name, const uns
 }
 
 static void c_print_image_source_header(output_t *out, const char *name) {
-    fprintf(out->c, "// convpng\n");
+    fprintf(out->c, "// %s\n", convpng_version_string);
     fprintf(out->c, "#include <stdint.h>\n");
     fprintf(out->c, "#include \"%s\"\n\n", name);
 }

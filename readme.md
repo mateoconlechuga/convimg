@@ -2,7 +2,7 @@
 
 This is the foremost tool in CE image conversion. Simply hand it a bunch of images, and it will determine the best 8-bit palette and create either a C or ASM include file for use in your programs.
 
-# Useage
+# Usage
 
 ConvPNG uses `convpng.ini` to convert files. It is group-based, which means images can be added to different groups and configured differently all from within the same file. A bare-bones one is shown below; the `#` symbol is used as a command specifier.
 

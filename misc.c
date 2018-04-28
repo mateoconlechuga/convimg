@@ -135,6 +135,15 @@ void output_array(const format_t *format, output_t *out, uint8_t *data, unsigned
     }
 }
 
+void set_image(image_t *i, uint8_t *data, unsigned int size) {
+    data_t *b = &i->block;
+	b->data = safe_realloc(b->data, b->total_size + size);
+	memcpy(&b->data[b->total_size], data, size);
+    b->size[b->num_sizes] = size;
+    b->total_size += size;
+    b->num_sizes++;
+}
+
 uint8_t *compress_image(uint8_t *image, unsigned int *size, unsigned int mode) {
     long delta;
     Optimal *opt;

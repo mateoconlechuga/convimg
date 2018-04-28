@@ -31,8 +31,8 @@ static void init_convpng_struct(void) {
     convpng.using_custom_log = false;
     convpng.allow_newlines = true;
 
-    for (t = 0; t < NUM_GROUPS; t++) {
-        group_t *g = &group[t];
+    for (t = 0; t < MAX_GROUPS; t++) {
+        group_t *g = &convpng.group[t];
         g->palette = NULL;
         g->palette_length = MAX_PAL_LEN;
         g->image = NULL;
@@ -58,16 +58,15 @@ static void init_convpng_struct(void) {
     }
 
     for (t = 0; t < MAX_APPVARS; t++) {
-        appvar_t *a = &appvar[t];
+        appvar_t *a = &convpng.appvar[t];
         a->write_init = true;
         a->write_table = true;
         a->mode = 0;
         a->compression = COMPRESS_NONE;
-        a->add_offset = true;
         a->palette = NULL;
         a->palette_data = NULL;
         a->string = NULL;
-        a->start = 0x4A;
+        a->start = APPVAR_START;
     }
 }
 

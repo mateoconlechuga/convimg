@@ -24,7 +24,6 @@
 #include "palettes.h"
 
 convpng_t convpng;
-group_t group[NUM_GROUPS];
 
 int main(int argc, char **argv) {
     unsigned int s,g,j,k;
@@ -50,7 +49,7 @@ int main(int argc, char **argv) {
         double diff;
 
         // get current group pointer
-        group_t   *curr                = &group[g];
+        group_t   *curr                = &convpng.group[g];
         unsigned   g_mode              = curr->mode;
 
         // already inited structure elements
@@ -359,7 +358,7 @@ int main(int argc, char **argv) {
                 unsigned int  i_error;
                 unsigned int  i_decompressed_size;
 
-                // determine if image needs to be exported to an appvar
+                // determine if image is in an appvar to prevent normal output
                 bool i_appvar = image_is_in_an_appvar(i_curr);
                 bool i_style_rlet = i_style == STYLE_RLET;
 
@@ -375,10 +374,13 @@ int main(int argc, char **argv) {
                 if (i_error == LODEPNG_ERR_OPEN) { errorf("could not open '%s'", i_in_name); }
                 if (i_error) { errorf("decoding '%s'", i_in_name); }
 
-                // get the actual size of the image
+                // get the actual size of the image, init output information
                 i_size = i_width * i_height;
                 i_curr->width = i_width;
                 i_curr->height = i_height;
+                i_curr->block.data = NULL;
+                i_curr->block.size[0] = 0;
+                i_curr->block.num_sizes = 0;
 
                 // quick tilemap check
                 if (i_convert_to_tilemap) {
@@ -437,19 +439,16 @@ int main(int argc, char **argv) {
                     unsigned int x_offset = 0;
                     unsigned int y_offset = 0;
                     unsigned int offset_size = 0;
-                    unsigned int offset;
                     unsigned int *offsets;
                     unsigned int index;
 
-                    // disable output to offset stack
-                    if (i_appvar) { add_appvars_offsets_state(false); }
-
                     // special handling needed for printing ice output
-                    else if (format == &ice_format) {
+                    if (!i_appvar && format == &ice_format) {
                         ice_print_tilemap_header(i_output, i_name, i_num_tiles * (i_tile_width * i_tile_height + SIZE_BYTES), i_tile_width, i_tile_height);
                     }
 
-                    offsets = malloc((i_num_tiles + 1) * sizeof(unsigned int));
+                    // init tilemap offsets
+                    offsets = safe_malloc((i_num_tiles + 1) * sizeof(unsigned int));
                     offsets[0] = 0;
 
                     for (; tile_num < i_num_tiles; tile_num++) {
@@ -462,7 +461,7 @@ int main(int argc, char **argv) {
 
                         // convert a single tile
                         for (j = 0; j < i_tile_height; j++) {
-                            offset = j * i_width + y_offset;
+                            unsigned int offset = j * i_width + y_offset;
                             for (k = 0; k < i_tile_width; k++) {
                                 i_data_buffer[index++] = i_data[k + x_offset + offset];
                             }
@@ -486,9 +485,8 @@ int main(int argc, char **argv) {
 
                         if (i_compression) {
                             uint8_t *c_data = compress_image(i_data_buffer, &i_size_total, i_compression);
-                            if (i_appvar) {
-                                add_appvars_data(c_data, i_size_total);
-                            } else {
+                            set_image(i_curr, c_data, i_size_total);
+                            if (!i_appvar) {
                                 format->print_compressed_tile(i_output, i_name, tile_num, i_size_total);
                                 output_array_compressed(format, i_output, c_data, i_size_total);
                             }
@@ -502,9 +500,8 @@ int main(int argc, char **argv) {
                                 lof(" #warning!");
                             }
                         } else {
-                            if (i_appvar) {
-                                add_appvars_data(i_data_buffer, i_size_total);
-                            } else {
+                            set_image(i_curr, i_data_buffer, i_size_total);
+                            if (!i_appvar) {
                                 uint8_t *i_data = i_out_size ? &i_data_buffer[SIZE_BYTES] : i_data_buffer;
                                 format->print_tile(i_output, i_name, tile_num, i_size_total, i_tile_width, i_tile_height);
                                 if (g_use_omit_color || g_use_omit_index) {
@@ -519,7 +516,7 @@ int main(int argc, char **argv) {
                             i_data_buffer -= SIZE_BYTES;
                         }
 
-                        // store the size
+                        // store the size for the formatted output
                         offset_size += i_size_total;
                         offsets[tile_num + 1] = offset_size;
 
@@ -528,11 +525,6 @@ int main(int argc, char **argv) {
                             x_offset = 0;
                             y_offset += i_width * i_tile_height;
                         }
-                    }
-
-                    // add the image offsets
-                    if (i_appvar) {
-                        add_appvars_offset(offset_size);
                     }
 
                     // build the tilemap table
@@ -547,11 +539,7 @@ int main(int argc, char **argv) {
                         }
                     }
 
-                    // free all the offsets
                     free(offsets);
-
-                    // fixes a bug
-                    if (i_appvar) { add_appvars_offsets_state(true); }
 
                 // not a tilemap
                 } else {
@@ -598,18 +586,16 @@ int main(int argc, char **argv) {
                     if (i_compression) {
                         i_decompressed_size = i_size_total;
                         uint8_t *c_data = compress_image(i_data_buffer, &i_size_total, i_compression);
-                        if (i_appvar) {
-                            add_appvars_data(c_data, i_size_total);
-                        } else {
+                        set_image(i_curr, c_data, i_size_total);
+                        if (!i_appvar) {
                             format->print_compressed_image(i_output, i_bpp, i_name, i_size_total);
                             output_array_compressed(format, i_output, c_data, i_size_total);
                         }
                         lof(" (%u > %d bytes)", i_size_backup, i_size_total);
                         free(c_data);
                     } else {
-                        if (i_appvar) {
-                            add_appvars_data(i_data_buffer, i_size_total);
-                        } else {
+                        set_image(i_curr, i_data_buffer, i_size_total);
+                        if (!i_appvar) {
                             uint8_t *i_data = i_out_size ? &i_data_buffer[SIZE_BYTES] : i_data_buffer;
                             format->print_image(i_output, i_bpp, i_name, i_size_total, i_width, i_height);
                             if (i_style_rlet || g_use_omit_color || g_use_omit_index) {
@@ -680,11 +666,12 @@ int main(int argc, char **argv) {
 
     // free everything else
     for (g = 0; g < convpng.numgroups; g++) {
-        group_t *curr = &group[g];
+        group_t *curr = &convpng.group[g];
         if (curr->mode != MODE_APPVAR) {
             for (s = 0; s < curr->numimages; s++) {
                 image_t *i_curr = curr->image[s];
                 if (i_curr) {
+                    free(i_curr->block.data);
                     free(i_curr->name);
                     free(i_curr->outc);
                     free(i_curr->in);

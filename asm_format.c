@@ -57,7 +57,7 @@ static void asm_print_transparent_index(output_t *out, const char *name, const u
 
 static void asm_print_image_source_header(output_t *out, const char *group_header_file_name) {
     (void)group_header_file_name;
-    fprintf(out->asm, "; Converted using ConvPNG\n\n");
+    fprintf(out->asm, "; convpng\n\n");
 }
 
 static void asm_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, unsigned int width, unsigned int height) {
@@ -124,9 +124,9 @@ static void asm_print_next_array_line(output_t *out, bool is_long, bool at_end) 
 
 static void asm_print_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const unsigned int width, const unsigned int height) {
     fprintf(out->asm, "; %u bpp image\n", bpp);
-	fprintf(out->asm, "_%s_size .equ %u\n", i_name, size);
+	fprintf(out->asm, "_%s_size equ %u\n", i_name, size);
     if (convpng.output_size) {
-	    fprintf(out->asm, "_%s:\n .d%c %u,%u\n db ", i_name, width > 255 || height > 255 ? 'w' : 'b', width, height);
+	    fprintf(out->asm, "_%s:\n d%c %u,%u\n db ", i_name, width > 255 || height > 255 ? 'w' : 'b', width, height);
     } else {
         fprintf(out->asm, "_%s:\n db ", i_name);
     }
@@ -190,18 +190,18 @@ static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned i
     }
     if (compressed) {
         if (table) {
-            fprintf(out->inc, "%s_compressed equ (%s + %u)\n", i_name, a_name, index * 3);
+            fprintf(out->inc, "%s_compressed equ %s + %u\n", i_name, a_name, index * 3);
         }
-        fprintf(out->inc, "%s_compressed_offset equ (%u)\n", i_name, offset);
-        fprintf(out->inc, "%s_compressed_width equ (%u)\n", i_name, width);
-        fprintf(out->inc, "%s_compressed_height equ (%u)\n", i_name, height);
+        fprintf(out->inc, "%s_compressed_offset equ %u\n", i_name, offset);
+        fprintf(out->inc, "%s_compressed_width equ %u\n", i_name, width);
+        fprintf(out->inc, "%s_compressed_height equ %u\n", i_name, height);
     } else {
         if (table) {
-            fprintf(out->inc, "%s equ (%s + %u)\n", i_name, a_name, index * 3);
+            fprintf(out->inc, "%s equ %s + %u\n", i_name, a_name, index * 3);
         }
-        fprintf(out->inc, "%s_offset equ (%u)\n", i_name, offset);
-        fprintf(out->inc, "%s_width equ (%u)\n", i_name, width);
-        fprintf(out->inc, "%s_height equ (%u)\n", i_name, height);
+        fprintf(out->inc, "%s_offset equ %u\n", i_name, offset);
+        fprintf(out->inc, "%s_width equ %u\n", i_name, width);
+        fprintf(out->inc, "%s_height equ %u\n", i_name, height);
     }
 }
 
@@ -237,9 +237,9 @@ static void asm_print_appvar_load_function_end(output_t *out) {
 static void asm_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int offset, unsigned int len, bool table) {
     fprintf(out->inc, "sizeof_%s_pal equ %u\n", p_name, len * 2);
     if (table) {
-        fprintf(out->inc, "%s_pal equ (%s + %u)\n", p_name, a_name, index * 3);
+        fprintf(out->inc, "%s_pal equ %s + %u\n", p_name, a_name, index * 3);
     }
-    fprintf(out->inc, "%s_pal_offset equ (%u)\n", p_name, offset);
+    fprintf(out->inc, "%s_pal_offset equ %u\n", p_name, offset);
 }
 
 static void asm_print_include_header(output_t *out, const char *name) {

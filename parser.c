@@ -116,7 +116,7 @@ static glob_t *find_pngs(const char *full_path) {
 
 // adds an image to the indexed array
 static void add_image(char *line) {
-    group_t *g = &group[convpng.numgroups - 1];
+    group_t *g = &convpng.group[convpng.numgroups - 1];
     unsigned int len = 1;
     unsigned int i;
     char *in;
@@ -147,6 +147,7 @@ static void add_image(char *line) {
         s = g->image[g->numimages] = safe_malloc(sizeof(image_t));
 
         // inherit properties from group
+        s->found = false;
         s->compression = g->compression;
         s->style = g->style;
         s->convert_to_tilemap = g->convert_to_tilemap;
@@ -201,7 +202,7 @@ int parse_input(char *line) {
     if (*line != '\0') {
         if (*line == '#') {
             char **argv;
-            group_t *g = &group[convpng.numgroups - 1];
+            group_t *g = &convpng.group[convpng.numgroups - 1];
             num = separate_args(line, &argv, ':');
 
             // set the transparent color
@@ -306,8 +307,8 @@ add_other_colors_omit:
             } else
 
             if (!strcmp(*argv, "#AppvarC")) {
-                appvar_t *a = &appvar[convpng.numappvars];
-                g = &group[convpng.numgroups];
+                appvar_t *a = &convpng.appvar[convpng.numappvars];
+                g = &convpng.group[convpng.numgroups];
                 memset(a->name, 0, 9);
                 strncpy(a->name, argv[1], 8);
                 g->mode = MODE_APPVAR;
@@ -321,8 +322,8 @@ add_other_colors_omit:
             } else
 
             if (!strcmp(*argv, "#AppvarICE")) {
-                appvar_t *a = &appvar[convpng.numappvars];
-                g = &group[convpng.numgroups];
+                appvar_t *a = &convpng.appvar[convpng.numappvars];
+                g = &convpng.group[convpng.numgroups];
                 memset(a->name, 0, 9);
                 strncpy(a->name, argv[1], 8);
                 g->mode = MODE_APPVAR;
@@ -336,8 +337,8 @@ add_other_colors_omit:
             } else
 
             if (!strcmp(*argv, "#AppvarASM")) {
-                appvar_t *a = &appvar[convpng.numappvars];
-                g = &group[convpng.numgroups];
+                appvar_t *a = &convpng.appvar[convpng.numappvars];
+                g = &convpng.group[convpng.numgroups];
                 memset(a->name, 0, 9);
                 strncpy(a->name, argv[1], 8);
                 g->mode = MODE_APPVAR;
@@ -351,7 +352,7 @@ add_other_colors_omit:
             } else
 
             if (!strcmp(*argv, "#OutputInitCode")) {
-                appvar_t *a = &appvar[convpng.numappvars - 1];
+                appvar_t *a = &convpng.appvar[convpng.numappvars - 1];
                 if (a->mode != MODE_C) {
                     command_group_error();
                 }
@@ -366,7 +367,7 @@ add_other_colors_omit:
                 if (g->mode == MODE_APPVAR) {
                     int i;
                     char **palettes;
-                    appvar_t *a = &appvar[convpng.numappvars - 1];
+                    appvar_t *a = &convpng.appvar[convpng.numappvars - 1];
                     num = separate_args(argv[1], &palettes, ',');
                     if (!num) { args_error(); }
                     a->palette = safe_realloc(a->palette, num * sizeof(char*));
@@ -383,7 +384,7 @@ add_other_colors_omit:
             } else
 
             if (!strcmp(*argv, "#Compression")) {
-                appvar_t *a = &appvar[convpng.numappvars - 1];
+                appvar_t *a = &convpng.appvar[convpng.numappvars - 1];
                 unsigned int compression = COMPRESS_NONE;
                 if (!strcmp(argv[1], "zx7")) {
                     compression = COMPRESS_ZX7;
@@ -405,7 +406,7 @@ add_other_colors_omit:
             } else
 
             if (!strcmp(*argv, "#CreateGlobalPalette") || !strcmp(*argv, "#GroupPalette")) {
-                g = &group[convpng.numgroups];
+                g = &convpng.group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
                 g->is_global_palette = true;
                 g->mode = MODE_C;
@@ -450,7 +451,7 @@ add_other_colors_omit:
 
             if (!strcmp(*argv, "#OutputHeader")) {
                 if (g->mode == MODE_APPVAR) {
-                    appvar_t *a = &appvar[convpng.numappvars - 1];
+                    appvar_t *a = &convpng.appvar[convpng.numappvars - 1];
                     a->string = str_dup(argv[1]);
                     a->start = 0x4A + strlen(a->string);
                 } else {
@@ -468,7 +469,7 @@ add_other_colors_omit:
 
             if (!strcmp(*argv, "#OutputOffsetTable")) {
                 if (g->mode == MODE_APPVAR) {
-                    appvar_t *a = &appvar[convpng.numappvars - 1];
+                    appvar_t *a = &convpng.appvar[convpng.numappvars - 1];
                     if (a->mode != MODE_ASM) {
                         command_group_error();
                     }
@@ -513,7 +514,7 @@ add_other_colors_omit:
 
             // A C conversion type
             if (!strcmp(*argv, "#GroupC")) {
-                g = &group[convpng.numgroups];
+                g = &convpng.group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
                 g->outh = str_dupcatdir(argv[1], ".h");
                 g->outc = str_dupcatdir(argv[1], ".c");
@@ -523,7 +524,7 @@ add_other_colors_omit:
 
             // An ASM group
             if (!strcmp(*argv, "#GroupASM")) {
-                g = &group[convpng.numgroups];
+                g = &convpng.group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
                 g->outh = str_dupcatdir(argv[1], ".inc");
                 g->outc = str_dupcatdir(argv[1], ".asm");
@@ -533,7 +534,7 @@ add_other_colors_omit:
 
             // output in ICE format
             if (!strcmp(*argv, "#GroupICE")) {
-                g = &group[convpng.numgroups];
+                g = &convpng.group[convpng.numgroups];
                 g->name = str_dup(argv[1]);
                 g->outc = str_dupcatdir(argv[1], ".txt");
                 g->outh = NULL;

@@ -17,15 +17,13 @@
 #define m16(x) ((x)&65535)
 
 appvar_t appvar[MAX_APPVARS];
-appvar_t *appvar_ptrs[MAX_APPVARS];
-static unsigned int data_num_appvars = 0;
 
 // initialize all the output appvar structs
 void init_appvars(void) {
     unsigned int s;
     for (s = 0; s < convpng.numappvars; s++) {
-        appvar_t *a = &appvar[s];
-        output_appvar_init(a, a->g->numimages + a->numpalettes);
+        appvar_t *a = &convpng.appvar[s];
+        init_appvar(a);
     }
 }
 
@@ -41,9 +39,12 @@ void export_appvars(void) {
         return;
     }
 
+    // find and add all the images to the appvar's data
+    add_appvars_images();
+
     for (t = 0; t < convpng.numappvars; t++) {
         unsigned int num;
-        appvar_t *a = &appvar[t];
+        appvar_t *a = &convpng.appvar[t];
         group_t *g = a->g;
         output = output_create();
 
@@ -81,7 +82,6 @@ void export_appvars(void) {
         // add palette information to the end of the appvar
         if (a->palette) {
             unsigned int i;
-            a->add_offset = true;
             for (i = 0; i < a->numpalettes; i++) {
                 uint16_t pal[256];
                 unsigned int pal_len;
@@ -93,7 +93,7 @@ void export_appvars(void) {
                     liq_color *e = &a->palette_data[i]->entries[j];
                     pal[j] = rgb1555(e->r, e->g, e->b);
                 }
-                add_appvar_data(a, pal, pal_len * 2);
+                add_appvar_raw(a, pal, pal_len * 2);
             }
         }
 
@@ -132,7 +132,7 @@ void export_appvars(void) {
             for (i = 0; i < a->numpalettes; i++) {
                 lof(" %s (palette)\n", a->palette[i]);
                 format->print_appvar_palette_header(output, a->palette[i], a->name, index,
-                                                    a->offsets[index-1], a->palette_data[i]->count, a->write_table);
+                                                    a->offsets[index], a->palette_data[i]->count, a->write_table);
                 index++;
                 free(a->palette[i]);
                 free(a->palette_data[i]);
@@ -156,7 +156,7 @@ void export_appvars(void) {
         }
 
         // finish exporting the actual appvar
-        output_appvar_complete(a);
+        export_appvar(a);
 
         // close the outputs
         format->print_end_header(output);
@@ -173,10 +173,12 @@ void export_appvars(void) {
 // check if an image exists in an appvar and make a list of pointers to the ones it does
 bool image_is_in_an_appvar(image_t *image) {
     unsigned int i,s;
-    data_num_appvars = 0;
-    if (!image) { return 0; }
+    bool ret = false;
+    if (!image) {
+        return ret;
+    }
     for (i = 0; i < convpng.numappvars; i++) {
-        appvar_t *a = &appvar[i];
+        appvar_t *a = &convpng.appvar[i];
         for (s = 0; s < a->g->numimages; s++) {
             image_t *c = a->g->image[s];
             if (!strcmp(image->name, c->name)) {
@@ -185,18 +187,19 @@ bool image_is_in_an_appvar(image_t *image) {
                 free(c->name);
                 free(c);
                 a->g->image[s] = image;
-                appvar_ptrs[data_num_appvars++] = a;
+                a->g->image[s]->found = true;
+                ret = true;
             }
         }
     }
-    return data_num_appvars != 0;
+    return ret;
 }
 
 // check if the palette is needed in an appvar
 bool palette_is_in_an_appvar(const char *pal_name) {
     unsigned int i,j;
     for (i = 0; i < convpng.numappvars; i++) {
-        appvar_t *a = &appvar[i];
+        appvar_t *a = &convpng.appvar[i];
         for (j = 0; j < a->numpalettes; j++) {
             if (!strcmp(pal_name, a->palette[j])) {
                 return true;
@@ -209,7 +212,7 @@ bool palette_is_in_an_appvar(const char *pal_name) {
 void add_appvars_palette(const char *pal_name, liq_palette *pal) {
     unsigned int i,j;
     for (i = 0; i < convpng.numappvars; i++) {
-        appvar_t *a = &appvar[i];
+        appvar_t *a = &convpng.appvar[i];
         for (j = 0; j < a->numpalettes; j++) {
             if (!strcmp(pal_name, a->palette[j])) {
                 a->palette_data[j] = malloc(sizeof(liq_palette));
@@ -219,7 +222,7 @@ void add_appvars_palette(const char *pal_name, liq_palette *pal) {
     }
 }
 
-void output_appvar_init(appvar_t *a, int num_images) {
+void init_appvar(appvar_t *a) {
     const uint8_t header[] = { 0x2A,0x2A,0x54,0x49,0x38,0x33,0x46,0x2A,0x1A,0x0A };
 
     // clear data
@@ -230,49 +233,49 @@ void output_appvar_init(appvar_t *a, int num_images) {
     memcpy(a->output, header, sizeof header);
 
     // compute storage for image offsets
-    a->offsets[0] = a->start - 0x4A;
-    a->max_data = num_images;
-    a->curr_image = 0;
+    a->curr = 0;
+    a->offsets[0] = a->start - APPVAR_START;
     a->offset = a->start;
 }
 
-void add_appvars_offsets_state(bool state) {
-    unsigned int j;
-    for (j = 0; j < data_num_appvars; j++) {
-        appvar_ptrs[j]->add_offset = state;
+void add_appvars_images(void) {
+    unsigned int a, s;
+    for (a = 0; a < convpng.numappvars; a++) {
+        appvar_t *var = &convpng.appvar[a];
+        for (s = 0; s < var->g->numimages; s++) {
+            image_t *image = var->g->image[s];
+            if (!image->found) {
+                errorf("could not find '%s' for appvar '%s'", image->name, var->name);
+            }
+            add_appvar_block(var, &image->block);
+        }
     }
 }
 
-void add_appvars_offset(unsigned int size) {
-    unsigned int j;
-    for (j = 0; j < data_num_appvars; j++) {
-        appvar_t *a = appvar_ptrs[j];
-        unsigned int curr = a->curr_image;
-        a->offsets[curr+1] = a->offsets[curr] + size;
-        a->curr_image++;
-    }
-}
-
-void add_appvars_data(const void *data, const size_t size) {
-    unsigned int j;
-    for (j = 0; j < data_num_appvars; j++) {
-        add_appvar_data(appvar_ptrs[j], data, size);
-    }
-}
-
-void add_appvar_data(appvar_t *a, const void *data, const size_t size) {
+void add_appvar_raw(appvar_t *a, const void *data, unsigned int size) {
     unsigned int offset = a->offset;
-    unsigned int curr = a->curr_image;
 
-    if (a->add_offset) {
-        a->offsets[curr+1] = a->offsets[curr] + size;
-        a->curr_image++;
-    }
-    memcpy(a->output + offset, data, size);
+    a->offsets[a->curr + 1] = a->offsets[a->curr] + size;
+    a->curr++;
+
+    memcpy(&a->output[offset], data, size);
     a->offset += size;
 }
 
-void output_appvar_complete(appvar_t *a) {
+void add_appvar_block(appvar_t *a, const data_t *block) {
+    unsigned int offset = a->offset;
+
+    if (!block->data) {
+        return;
+    }
+
+    a->offsets[a->curr + 1] = a->offsets[a->curr] + block->total_size;
+    memcpy(&a->output[offset], block->data, block->total_size);
+    a->offset += block->total_size;
+    a->curr++;
+}
+
+void export_appvar(appvar_t *a) {
     uint8_t len_high;
     uint8_t len_low;
     unsigned int data_size;

@@ -141,8 +141,6 @@ This command controls the output of width and height information. The default is
 
 ConvPNG can export image and palette data to appvars. The commands for appvars are shown below. These use the same style as groups.
 
-*Note:* Images are ordered in the appvar based on their first appearance in a #Group. They are **not** ordered based on the listed images.
-
 ---
 
     #AppvarC   : <appvar name>

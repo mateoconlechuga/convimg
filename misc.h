@@ -32,4 +32,6 @@ void force_color_index(liq_color *color, liq_palette *pal, unsigned int *pal_len
 unsigned int remove_elements(uint8_t *array, unsigned int len, uint8_t val);
 unsigned int group_rlet_output(uint8_t *data, uint8_t *data_buffer, unsigned int width, unsigned int height, uint8_t tp_index);
 
+void set_image(image_t *i, uint8_t *data, unsigned int size);
+
 #endif

@@ -5,26 +5,26 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "main.h"
+#include "common.h"
 #include "libs/libimagequant.h"
 
-#define MAX_APPVARS 20
-#define MAX_OFFSETS 512
+#define APPVAR_START 0x4A
+#define MAX_OFFSETS  2048
 
 typedef struct {
     unsigned int mode;
     bool write_init;
-    bool add_offset;
     bool write_table;
+    unsigned int curr;
     unsigned int compression;
-    uint8_t *output;
-    unsigned int curr_image;
-    unsigned int max_data;
-    uint32_t offsets[MAX_OFFSETS];
     unsigned int offset;
     unsigned int start;
     char *string;
     char name[9];
+
+    // block and output information
+    uint8_t *output;
+    uint32_t offsets[MAX_OFFSETS];
 
     // palette information
     char **palette;
@@ -38,20 +38,16 @@ typedef struct {
 void init_appvars(void);
 void export_appvars(void);
 
-void add_appvars_offsets_state(bool state);
-void add_appvars_offset(unsigned int size);
+void init_appvar(appvar_t *a);
+void export_appvar(appvar_t *a);
 
 bool image_is_in_an_appvar(image_t *image);
 bool palette_is_in_an_appvar(const char *pal_name);
-void output_appvar_init(appvar_t *a, int num_images);
+
 void add_appvars_palette(const char *pal_name, liq_palette *pal);
-void add_appvars_data(const void *data, const size_t size);
-void add_appvar_data(appvar_t *a, const void *data, const size_t size);
-void output_appvar_complete(appvar_t *a);
+void add_appvar_raw(appvar_t *a, const void *data, unsigned int size);
+void add_appvar_block(appvar_t *a, const data_t *block);
 
-void fixup_appvars_offsets(void);
-
-extern appvar_t appvar[MAX_APPVARS];
-extern appvar_t *appvar_ptrs[MAX_APPVARS];
+void add_appvars_images(void);
 
 #endif

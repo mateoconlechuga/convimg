@@ -103,7 +103,7 @@ void build_image_palette(const liq_palette *pal, const unsigned length, const ch
         image[o + 3] = 255;
     }
     encodePNG(name, image, length, 1);
-    lof("Wrote palette image (%s)\n", name);
+    lof("wrote palette image (%s)\n", name);
     free(image);
     free(name);
 }

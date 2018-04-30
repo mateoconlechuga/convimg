@@ -322,7 +322,9 @@ int main(int argc, char **argv) {
             }
 
             // log the number of images we are converting
-            lof("%d:\n", g_numimages);
+            if (g_numimages) {
+                lof("%d:\n", g_numimages);
+            }
 
             // okay, now we have the palette used for all the images. Let's fix them to the attributes
             for (s = 0; s < g_numimages; s++) {
@@ -381,6 +383,7 @@ int main(int argc, char **argv) {
                 i_curr->height = i_height;
                 i_curr->block.data = NULL;
                 i_curr->block.size[0] = 0;
+                i_curr->block.total_size = 0;
                 i_curr->block.num_sizes = 0;
 
                 // quick tilemap check
@@ -668,18 +671,6 @@ int main(int argc, char **argv) {
     // free everything else
     for (g = 0; g < convpng.numgroups; g++) {
         group_t *curr = &convpng.group[g];
-        if (curr->mode != MODE_APPVAR) {
-            for (s = 0; s < curr->numimages; s++) {
-                image_t *i_curr = curr->image[s];
-                if (i_curr) {
-                    free(i_curr->block.data);
-                    free(i_curr->name);
-                    free(i_curr->outc);
-                    free(i_curr->in);
-                    free(i_curr);
-                }
-            }
-        }
         free(curr->palette);
         free(curr->image);
         free(curr->name);

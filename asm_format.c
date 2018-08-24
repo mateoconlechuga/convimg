@@ -185,6 +185,8 @@ static void asm_print_appvar_array(output_t *out, const char *a_name, unsigned i
 
 static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, unsigned int width, unsigned int height, bool table, bool tp_style) {
     (void)tp_style;
+    fprintf(out->inc, "%s_width equ %u\n", i_name, width);
+    fprintf(out->inc, "%s_height equ %u\n", i_name, height);
     if (table) {
         fprintf(out->asm, "%u ; %s", offset, i_name);
     }
@@ -193,15 +195,11 @@ static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned i
             fprintf(out->inc, "%s_compressed equ %s + %u\n", i_name, a_name, index * 3);
         }
         fprintf(out->inc, "%s_compressed_offset equ %u\n", i_name, offset);
-        fprintf(out->inc, "%s_compressed_width equ %u\n", i_name, width);
-        fprintf(out->inc, "%s_compressed_height equ %u\n", i_name, height);
     } else {
         if (table) {
             fprintf(out->inc, "%s equ %s + %u\n", i_name, a_name, index * 3);
         }
         fprintf(out->inc, "%s_offset equ %u\n", i_name, offset);
-        fprintf(out->inc, "%s_width equ %u\n", i_name, width);
-        fprintf(out->inc, "%s_height equ %u\n", i_name, height);
     }
 }
 

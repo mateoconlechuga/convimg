@@ -215,9 +215,9 @@ static void c_print_appvar_array(output_t *out, const char *a_name, unsigned int
 }
 
 static void c_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, unsigned int width, unsigned int height, bool table, bool tp_style) {
-    (void)width;
-    (void)height;
     (void)table;
+    fprintf(out->h, "#define %s_width %u\n", i_name, width);
+    fprintf(out->h, "#define %s_height %u\n", i_name, height);
     const char *s = "gfx_sprite_t";
     if (tp_style) {
         s = "gfx_rletsprite_t";

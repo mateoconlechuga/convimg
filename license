@@ -1,4 +1,4 @@
-ConvPNG relies on libimagequant, lodepng, and the Basic Compression Library.
+ConvPNG relies on libimagequant, lodepng, the Basic Compression Library, and gnu glob.
 Please see the src directory for the respective licenses.
 
 Copyright (c) 2016, Matt Waltz

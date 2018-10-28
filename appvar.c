@@ -48,7 +48,7 @@ void export_appvars(void) {
         group_t *g = a->g;
         output = output_create();
 
-        lof("exporting appvar: %s.8xp\n", a->name);
+        lof("exporting appvar: %s.8xv\n", a->name);
 
         // choose the correct output mode
         if (a->mode == MODE_C) {

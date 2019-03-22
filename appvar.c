@@ -31,6 +31,7 @@ void init_appvars(void) {
 // we have to free here because we can't convert appvars
 void export_appvars(void) {
     unsigned int t, j;
+    unsigned int csize, usize;
     const format_t *format;
     output_t *output;
 
@@ -143,7 +144,7 @@ void export_appvars(void) {
 
         // write the appvar init code
         if (a->write_init) {
-            format->print_appvar_load_function(output, a->name, false);
+            format->print_appvar_load_function(output, a->name, false, a->compression != COMPRESS_NONE);
 
             for (j = 0; j < g->numimages; j++) {
                 image_t *i = g->image[j];
@@ -156,7 +157,12 @@ void export_appvars(void) {
         }
 
         // finish exporting the actual appvar
-        export_appvar(a);
+        export_appvar(a, &usize, &csize);
+
+        // print the exported sizes if compressed
+        if (a->compression != COMPRESS_NONE) {
+            format->print_appvar_export_size(output, a->name, usize, csize);
+        }
 
         // close the outputs
         format->print_end_header(output);
@@ -275,7 +281,7 @@ void add_appvar_block(appvar_t *a, const data_t *block) {
     a->curr++;
 }
 
-void export_appvar(appvar_t *a) {
+void export_appvar(appvar_t *a, unsigned int *usize, unsigned int *csize) {
     uint8_t len_high;
     uint8_t len_low;
     unsigned int data_size;
@@ -286,6 +292,12 @@ void export_appvar(appvar_t *a) {
     uint8_t *output = a->output;
     unsigned int offset = a->offset;
 
+    if (usize != NULL) {
+        *usize = (unsigned int)(offset - a->start);
+    }
+    if (csize != NULL) {
+        *csize = *usize;
+    }
     if (a->compression == COMPRESS_ZX7) {
         long delta;
         size_t s_size = offset - a->start;
@@ -297,6 +309,9 @@ void export_appvar(appvar_t *a) {
         free(opt);
         free(ret);
         lof("compression: (%u > %u bytes)\n", prev_size, s_size);
+        if (csize != NULL) {
+            *csize = s_size;
+        }
     }
 
     if (offset > 0xFFE0) { errorf("too much data to output appvar '%s'", a->name); }

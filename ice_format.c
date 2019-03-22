@@ -179,10 +179,18 @@ static void ice_print_appvar_load_function_header(output_t *out) {
     (void)out;
 }
 
-static void ice_print_appvar_load_function(output_t *out, const char *a_name, bool has_tilemaps) {
+static void ice_print_appvar_export_size(output_t *out, const char *a_name, unsigned int usize, unsigned int csize) {
+    (void)out;
+    (void)a_name;
+    (void)usize;
+    (void)csize;
+}
+
+static void ice_print_appvar_load_function(output_t *out, const char *a_name, bool has_tilemaps, bool appvar_compressed) {
     (void)out;
     (void)a_name;
     (void)has_tilemaps;
+    (void)appvar_compressed;
 }
 
 static void ice_print_appvar_load_function_tilemap(output_t *out, const char *a_name, char *tilemap_name, unsigned int tilemap_size, unsigned int index, bool compressed) {
@@ -243,4 +251,5 @@ const format_t ice_format = {
     .print_appvar_load_function_end = ice_print_appvar_load_function_end,
     .print_appvar_palette_header = ice_print_appvar_palette_header,
     .print_appvar_palette = ice_print_appvar_palette,
+    .print_appvar_export_size = ice_print_appvar_export_size,
 };

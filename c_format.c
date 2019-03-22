@@ -240,19 +240,34 @@ static void c_print_appvar_load_function_header(output_t *out) {
     fprintf(out->c, "#include <fileioc.h>\n");
 }
 
-static void c_print_appvar_load_function(output_t *out, const char *a_name, bool has_tilemaps) {
+static void c_print_appvar_export_size(output_t *out, const char *a_name, unsigned int usize, unsigned int csize) {
+    fprintf(out->h, "#define %s_uncompressed_size %u\n", a_name, usize);
+    fprintf(out->h, "#define %s_compressed_size %u\n", a_name, csize);
+}
+
+static void c_print_appvar_load_function(output_t *out, const char *a_name, bool has_tilemaps, bool appvar_compressed) {
     (void)has_tilemaps;
-    fprintf(out->h, "bool %s_init(void);\n", a_name);
-    fprintf(out->c, "\nbool %s_init(void) {\n", a_name);
-    fprintf(out->c, "    unsigned int data, i;\n");
-    fprintf(out->c, "    ti_var_t appvar;\n\n");
-    fprintf(out->c, "    ti_CloseAll();\n\n");
-    fprintf(out->c, "    appvar = ti_Open(\"%s\", \"r\");\n", a_name);
-    fprintf(out->c, "    data = (unsigned int)ti_GetDataPtr(appvar) - (unsigned int)%s[0];\n", a_name);
-    fprintf(out->c, "    for (i = 0; i < %s_num; i++) {\n", a_name);
-    fprintf(out->c, "        %s[i] += data;\n", a_name);
-    fprintf(out->c, "    }\n\n");
-    fprintf(out->c, "    ti_CloseAll();\n\n");
+    if (appvar_compressed) {
+        fprintf(out->h, "bool %s_init(void *decompressed_addr);\n", a_name);
+        fprintf(out->c, "\nbool %s_init(void *decompressed_addr) {\n", a_name);
+        fprintf(out->c, "    unsigned int data, i;\n\n");
+        fprintf(out->c, "    data = (unsigned int)decompressed_addr - (unsigned int)%s[0];\n", a_name);
+        fprintf(out->c, "    for (i = 0; i < %s_num; i++) {\n", a_name);
+        fprintf(out->c, "        %s[i] += data;\n", a_name);
+        fprintf(out->c, "    }\n\n");
+    } else {
+        fprintf(out->h, "bool %s_init(void);\n", a_name);
+        fprintf(out->c, "\nbool %s_init(void) {\n", a_name);
+        fprintf(out->c, "    unsigned int data, i;\n");
+        fprintf(out->c, "    ti_var_t appvar;\n\n");
+        fprintf(out->c, "    ti_CloseAll();\n\n");
+        fprintf(out->c, "    appvar = ti_Open(\"%s\", \"r\");\n", a_name);
+        fprintf(out->c, "    data = (unsigned int)ti_GetDataPtr(appvar) - (unsigned int)%s[0];\n", a_name);
+        fprintf(out->c, "    for (i = 0; i < %s_num; i++) {\n", a_name);
+        fprintf(out->c, "        %s[i] += data;\n", a_name);
+        fprintf(out->c, "    }\n\n");
+        fprintf(out->c, "    ti_CloseAll();\n\n");
+    }
 }
 
 static void c_print_appvar_load_function_tilemap(output_t *out, const char *a_name, char *tilemap_name, unsigned int tilemap_size, unsigned int index, bool compressed) {
@@ -316,4 +331,5 @@ const format_t c_format = {
     .print_appvar_load_function_end = c_print_appvar_load_function_end,
     .print_appvar_palette_header = c_print_appvar_palette_header,
     .print_appvar_palette = c_print_appvar_palette,
+    .print_appvar_export_size = c_print_appvar_export_size,
 };

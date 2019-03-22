@@ -39,7 +39,7 @@ void init_appvars(void);
 void export_appvars(void);
 
 void init_appvar(appvar_t *a);
-void export_appvar(appvar_t *a);
+void export_appvar(appvar_t *a, unsigned int *usize, unsigned int *csize);
 
 bool image_is_in_an_appvar(image_t *image);
 bool palette_is_in_an_appvar(const char *pal_name);

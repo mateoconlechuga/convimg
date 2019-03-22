@@ -100,10 +100,11 @@ typedef struct {
     void (*print_appvar_image)(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, unsigned int width, unsigned int height, bool table, bool tp_style);
     void (*print_appvar_palette)(output_t *out, const char *p_name, const char *a_name, unsigned int offset);
     void (*print_appvar_load_function_header)(output_t *out);
-    void (*print_appvar_load_function)(output_t *out, const char *a_name, bool has_tilemaps);
+    void (*print_appvar_load_function)(output_t *out, const char *a_name, bool has_tilemaps, bool appvar_compressed);
     void (*print_appvar_load_function_tilemap)(output_t *out, const char *a_name, char *tilemap_name, unsigned int tilemap_size, unsigned int index, bool compressed);
     void (*print_appvar_load_function_end)(output_t *out);
     void (*print_appvar_palette_header)(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int offset, unsigned int len, bool table);
+    void (*print_appvar_export_size)(output_t *out, const char *a_name, unsigned int usize, unsigned int csize);
 } format_t;
 
 extern convpng_t convpng;

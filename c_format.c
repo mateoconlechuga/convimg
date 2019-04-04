@@ -51,7 +51,7 @@ static void c_print_palette(output_t *out, const char *name, liq_palette *pal, c
         liq_color *e = &pal->entries[j];
         fprintf(out->c, " 0x%04X,  // %02u :: rgb(%u,%u,%u)\n", rgb1555(e->r, e->g, e->b), j, e->r, e->g, e->b);
     }
-    fprintf(out->c, "};");
+    fprintf(out->c, "};\n");
 }
 
 static void c_print_transparent_index(output_t *out, const char *name, const unsigned int index) {

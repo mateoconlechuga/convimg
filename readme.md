@@ -4,7 +4,7 @@ This is the foremost tool in CE image conversion. Simply hand it a bunch of imag
 
 # Usage
 
-ConvPNG uses `convpng.ini` to convert files. It is group-based, which means images can be added to different groups and configured differently all from within the same file. A bare-bones one is shown below; the `#` symbol is used as a command specifier.
+ConvPNG uses `convpng.ini` to convert files. The file consists of potentially multiple sections called "groups". These groups consist of all the properties and settings for conversion of images, followed by a list of images to convert. A bare-bones `convpng.ini` file with one group is shown below; the `#` symbol is used as a command specifier.
 
 Note: A `<boolean>` setting can be set to `true` or `false`.
 
@@ -34,6 +34,7 @@ Images are converted to their own separate files; and then linked together into 
     #PNGImages :
 
 A list of the png images follows this command; each with a newline. The `.png` extention is optional. Relative paths are also available.
+(It is optional to include this command).
 
 ----
 
@@ -70,6 +71,8 @@ Create a tileset from the image; 1st argument is tile width, 2nd argument is til
 Specify the transparent color used in the image according to the rbg channels. Optionally the alpha channel is supported.
 
 The transparent color is located at index 0 if used. (This is overridable with `#TransparentIndex`)
+
+Note that if using a fixed palette (e.g. `xlibc`), this command will probably not work. You should get the transparent color from the fixed palette and use it in the images instead.
 
 ----
 

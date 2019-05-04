@@ -4,7 +4,7 @@ This is the foremost tool in CE image conversion. Simply hand it a bunch of imag
 
 # usage
 
-ConvPNG uses `convpng.ini` to convert files. The file consists of potentially multiple sections called "groups". These groups consist of all the properties and settings for conversion of images, followed by a list of images to convert. A bare-bones `convpng.ini` file with one group is shown below; the `#` symbol is used as a command specifier.
+convpng uses `convpng.ini` to convert files. The file consists of potentially multiple sections called "groups". These groups consist of all the properties and settings for conversion of images, followed by a list of images to convert. A bare-bones `convpng.ini` file with one group is shown below; the `#` symbol is used as a command specifier.
 
 Note: A `<boolean>` setting can be set to `true` or `false`.
 
@@ -140,7 +140,7 @@ This command controls the output of width and height information. The default is
 
 ## exporting to appvars
 
-ConvPNG can export image and palette data to appvars. The commands for appvars are shown below. These use the same style as groups.
+convpng can export image and palette data to appvars. The commands for appvars are shown below. These use the same style as groups.
 
 ---
 
@@ -153,7 +153,7 @@ These two commands are used to create either a C or assembly accesible appvar. T
 
     #OutputInitCode : <boolean>
 
-This command will instruct ConvPNG to export code to extract the appvar images to static pointers. This saves time of calculating offsets.
+This command will instruct convpng to export code to extract the appvar images to static pointers. This saves time of calculating offsets.
 
 ----
 

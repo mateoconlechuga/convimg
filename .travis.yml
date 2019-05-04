@@ -1,0 +1,15 @@
+
+dist: xenial
+
+language: c
+
+branches:
+  only:
+    - master
+
+script:
+  - make
+  - cd examples
+  - chmod +x test.sh
+  - res=0; for d in ./*/; do cd "$d"; ../../convpng; res=`expr $res + $?`; done; return $res
+

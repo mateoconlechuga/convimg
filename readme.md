@@ -112,11 +112,11 @@ Output an image of the palette in png format of the group. The image is written 
 
 ----
 
-    #FixedIndexColor : <index>, <red>, <green>, <blue>
+    #FixedIndexColor : <index>, <red>, <green>, <blue>, (<name>)
 
 This is used to add a fixed color to the palette which will be preserved at the specified index. This is useful to not allow the palette to shift colors around.
 
-The alpha channel is optional.
+If `name` is specified, a macro will be created for using the color. For example, adding `#FixedIndexColor: 2, 255, 255, 255, WHITE` to a group named `all_gfx` in `convpng.ini` would add the line `#define GFX_GROUP_WHITE 2` to `all_gfx.h`.
 
 ----
 

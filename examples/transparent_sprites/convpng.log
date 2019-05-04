@@ -1,0 +1,18 @@
+opened convpng.ini
+
+--- sprites_gfx (C) ---
+using built-in xlibc palette ...
+warning: might ignore transparent color value for a fixed palette.
+transparent color index : 2
+transparent color : 0x7C10
+2:
+ sprite_1 : converted!
+ sprite_2 : converted!
+
+converted in 0 s
+
+[warning] image quality might be too low.
+please try grouping similar images, reducing image colors, 
+or selecting a better palette if conversion is not ideal.
+
+finished!

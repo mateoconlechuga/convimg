@@ -239,21 +239,23 @@ add_other_colors:
             if (!strcmp(*argv, "#FixedIndexColor")) {
                 char **colors;
                 unsigned int numf = g->num_fixed_colors;
+
                 fixed_t *f = &g->fixed[numf];
-                if (numf > 200) {
+                if (numf > MAX_FIXED_COLORS) {
                     errorf("too many fixed color indexes");
                 }
+
+                f->name = NULL;
 
                 if (num <= 1) { args_error(); }
                 num = separate_args(argv[1], &colors, ',');
                 if (num == 4) {
-                    f->exact = false;
                     goto add_fixed_colors;
                 } else if (num < 5 || num > 5) {
                     args_error();
                 }
 
-                f->exact = strcmp(colors[4], "false");
+                f->name = str_dup(colors[4]);
 add_fixed_colors:
                 f->color.r = (uint8_t)strtol(colors[1], NULL, 10);
                 f->color.g = (uint8_t)strtol(colors[2], NULL, 10);

@@ -9,6 +9,8 @@
 #include "libs/libimagequant.h"
 #include "libs/lodepng.h"
 
+#define MAX_FIXED_COLORS 256
+
 typedef struct {
     uint8_t *data;                   // converted image data
     unsigned int total_size;         // converted total size
@@ -34,7 +36,7 @@ typedef struct {
 typedef struct {
     liq_color color;
     unsigned int index;
-    bool exact;
+    char *name;
 } fixed_t;
 
 typedef struct {
@@ -63,7 +65,7 @@ typedef struct {
     bool output_palette_array;       // does the user want an array of the palette?
     bool output_palette_appvar;      // does the user want the palette inside the appvar?
     uint8_t bpp;                     // bits per pixel in each image
-    fixed_t fixed[256];              // fixed colors to add
+    fixed_t fixed[MAX_FIXED_COLORS]; // fixed colors to add
     unsigned int num_fixed_colors;   // number of fixed colors
     unsigned int oindex;             // index to use as the omit color
     liq_color ocolor;                // color to omit from output

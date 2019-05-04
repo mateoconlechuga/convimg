@@ -24,7 +24,7 @@
 #include "palettes.h"
 
 convpng_t convpng;
-const char *convpng_version_string = "convpng v7.0";
+const char *convpng_version_string = "convpng v7.1";
 
 int main(int argc, char **argv) {
     unsigned int s,g,j,k;
@@ -427,13 +427,14 @@ int main(int argc, char **argv) {
 
                 if (!g_mode_ice) {
                     i_output = output_create();
-                    format->open_output(i_output, i_source_name, OUTPUT_SOURCE);
+                    if (!i_appvar) {
+                        format->open_output(i_output, i_source_name, OUTPUT_SOURCE);
+                        format->print_image_source_header(i_output, strip_path(g_outh_name));
+                    }
                 } else {
                     i_output = g_output;
+                    format->print_image_source_header(i_output, strip_path(g_outh_name));
                 }
-
-                // write all the image data to the ouputs
-                format->print_image_source_header(i_output, strip_path(g_outh_name));
 
                 // allocate a buffer for storing the new data
                 i_data_buffer = safe_malloc(i_width * i_height * 2 + 2);
@@ -637,7 +638,9 @@ int main(int argc, char **argv) {
 
                 // close the outputs
                 if (!g_mode_ice) {
-                    format->close_output(i_output, OUTPUT_SOURCE);
+                    if (!i_appvar) {
+                        format->close_output(i_output, OUTPUT_SOURCE);
+                    }
                     free(i_output);
                 }
 

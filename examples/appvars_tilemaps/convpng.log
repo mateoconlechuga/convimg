@@ -1,0 +1,12 @@
+opened convpng.ini
+
+--- palette main.png ---
+building palette with [256] available indices ...
+built palette with [136] indices.
+palette quality : 100.00%
+wrote palette image (main.png)
+
+--- tileset_gfx (C) ---
+using defined palette main.png ...
+1:
+ orig_tileset : converted!

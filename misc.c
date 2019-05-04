@@ -46,6 +46,16 @@ uint16_t rgb565(const uint8_t r8, const uint8_t g8, const uint8_t b8) {
     return (b5 << 11) | (g6 << 5) | r5;
 }
 
+char *str_toupper(char *str) {
+    if (str != NULL) {
+        while (*str) {
+            *str = toupper((int)*str);
+            str++;
+        }
+    }
+    return str;
+}
+
 char *str_dup(const char *s) {
     char *d = safe_malloc(strlen(s)+1);  // allocate memory
     if (d) strcpy(d, s);                 // copy string if okay

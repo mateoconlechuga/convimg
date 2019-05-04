@@ -1,0 +1,12 @@
+| convpng v7.0
+| this file contains all the converted graphics
+
+sprites_gfx_pallete | 4 bytes
+"D9B30000"
+
+sprite_1 | 34 bytes
+2,16,"000000EC0112027D06930B11111310ED2001203B2025202520A54455523B3DEF"
+
+sprite_2 | 34 bytes
+2,16,"0000000000000000000000000000000000000000000000000000000000000000"
+

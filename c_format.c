@@ -10,15 +10,15 @@
 
 static void c_open_output(output_t *out, const char *input, bool header) {
     if (input) {
-        FILE *file;
-        if (!(file = fopen(input, "w"))) {
+        FILE *fd;
+        if ((fd = fopen(input, "w")) == NULL || out == NULL) {
             errorf("opening %s for output.", input);
         }
 
         if (header) {
-            out->h = file;
+            out->h = fd;
         } else {
-            out->c = file;
+            out->c = fd;
         }
     }
 }
@@ -285,8 +285,12 @@ static void c_print_appvar_load_function_tilemap(output_t *out, const char *a_na
     }
 }
 
-static void c_print_appvar_load_function_end(output_t *out) {
-    fprintf(out->c, "    return (bool)appvar;\n");
+static void c_print_appvar_load_function_end(output_t *out, bool compressed) {
+    if (compressed) {
+        fprintf(out->c, "    return true;\n");
+    } else {
+        fprintf(out->c, "    return (bool)appvar;\n");
+    }
     fprintf(out->c, "}\n");
 }
 

@@ -153,7 +153,7 @@ void export_appvars(void) {
                 }
             }
 
-            format->print_appvar_load_function_end(output);
+            format->print_appvar_load_function_end(output, a->compression != COMPRESS_NONE);
         }
 
         // finish exporting the actual appvar

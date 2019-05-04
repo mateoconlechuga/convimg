@@ -202,8 +202,9 @@ static void ice_print_appvar_load_function_tilemap(output_t *out, const char *a_
     (void)compressed;
 }
 
-static void ice_print_appvar_load_function_end(output_t *out) {
+static void ice_print_appvar_load_function_end(output_t *out, bool compressed) {
     (void)out;
+    (void)compressed;
 }
 
 static void ice_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int offset, unsigned int len, bool table) {

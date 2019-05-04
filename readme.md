@@ -66,9 +66,9 @@ Create a tileset from the image; 1st argument is tile width, 2nd argument is til
 
 ----
 
-    #TransparentColor : <red>, <green>, <blue>, (<alpha>)
+    #TransparentColor : <red>, <green>, <blue>
 
-Specify the transparent color used in the image according to the rbg channels. Optionally the alpha channel is supported.
+Specify the transparent color used in the image according to the rbg channels.
 
 The transparent color is located at index 0 if used. (This is overridable with `#TransparentIndex`)
 
@@ -120,11 +120,9 @@ If `name` is specified, a macro will be created for using the color. For example
 
 ----
 
-    #OmitColor : <red>, <green>, <blue>, (<alpha>)
+    #OmitColor : <red>, <green>, <blue>
 
 This omits a color from the exported images, but not from the palette. It is useful when working with custom sprite drawing routines that may require the image to be formated a particular way, such as an isometric tile.
-
-The alpha channel is optional.
 
 ----
 

@@ -1,4 +1,8 @@
 *.c
 *.h
 *.8xv
+*.asm
+*.inc
+*.txt
+*.log
 

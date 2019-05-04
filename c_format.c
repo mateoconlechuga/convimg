@@ -9,6 +9,10 @@
 // C format output functions
 
 static void c_open_output(output_t *out, const char *input, bool header) {
+    if (out == NULL) {
+        return;
+    }
+
     if (input) {
         FILE *fd;
         if ((fd = fopen(input, "w")) == NULL || out == NULL) {
@@ -24,6 +28,10 @@ static void c_open_output(output_t *out, const char *input, bool header) {
 }
 
 static void c_close_output(output_t *out, bool header) {
+    if (out == NULL) {
+        return;
+    }
+
     if (header) {
         if (out->h) { fclose(out->h); }
     } else {
@@ -32,12 +40,20 @@ static void c_close_output(output_t *out, bool header) {
 }
 
 static void c_print_source_header(output_t *out, const char *name) {
+    if (out == NULL) {
+        return;
+    }
+
     fprintf(out->c, "// %s\n", convpng_version_string);
     fprintf(out->c, "#include <stdint.h>\n");
     fprintf(out->c, "#include \"%s\"\n\n", name);
 }
 
 static void c_print_header_header(output_t *out, const char *name) {
+    if (out == NULL) {
+        return;
+    }
+
     fprintf(out->h, "// %s\n", convpng_version_string);
     fprintf(out->h, "// this file contains all the graphics sources for easy inclusion in a project\n");
     fprintf(out->h, "#ifndef __%s__\n#define __%s__\n", name, name);
@@ -45,6 +61,10 @@ static void c_print_header_header(output_t *out, const char *name) {
 }
 
 static void c_print_palette(output_t *out, const char *name, liq_palette *pal, const unsigned int pal_len) {
+    if (out == NULL) {
+        return;
+    }
+
     fprintf(out->c, "uint16_t %s_pal[%u] = {\n", name, pal_len);
 
     for (unsigned int j = 0; j < pal_len; j++) {
@@ -55,16 +75,28 @@ static void c_print_palette(output_t *out, const char *name, liq_palette *pal, c
 }
 
 static void c_print_transparent_index(output_t *out, const char *name, const unsigned int index) {
+    if (out == NULL) {
+        return;
+    }
+
     fprintf(out->h, "#define %s_transparent_color_index %u\n\n", name, index);
 }
 
 static void c_print_image_source_header(output_t *out, const char *name) {
+    if (out == NULL) {
+        return;
+    }
+
     fprintf(out->c, "// %s\n", convpng_version_string);
     fprintf(out->c, "#include <stdint.h>\n");
     fprintf(out->c, "#include \"%s\"\n\n", name);
 }
 
 static void c_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, unsigned int width, unsigned int height) {
+    if (out == NULL) {
+        return;
+    }
+
     if (convpng.output_size) {
         fprintf(out->c, "uint8_t %s_tile_%u_data[%u] = {\n %u,\t// tile_width\n %u,\t// tile_height\n ",
                 i_name, tile_num, size, width, height);
@@ -75,8 +107,11 @@ static void c_print_tile(output_t *out, const char *i_name, unsigned int tile_nu
 }
 
 static void c_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar, unsigned int *offsets) {
+    if (out == NULL || out->c == NULL) {
+        return;
+    }
+    
     unsigned int i = 0;
-
     if (compressed) {
         fprintf(out->c, "uint8_t *%s_tiles_compressed[%u] = {\n", i_name, num_tiles);
         if (in_appvar) {
@@ -104,15 +139,27 @@ static void c_print_tile_ptrs(output_t *out, const char *i_name, unsigned int nu
 }
 
 static void c_print_compressed_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size) {
+    if (out == NULL || out->c == NULL) {
+        return;
+    }
+
     fprintf(out->c, "uint8_t %s_tile_%u_compressed[%u] = {\n ", i_name, tile_num, size);
 }
 
 static void c_print_byte(output_t *out, uint8_t byte, bool need_comma) {
+    if (out == NULL || out->c == NULL) {
+        return;
+    }
+
     (void)need_comma;
     fprintf(out->c, "0x%02X,", byte);
 }
 
 static void c_print_next_array_line(output_t *out, bool is_long, bool at_end) {
+    if (out == NULL || out->c == NULL) {
+        return;
+    }
+
     (void)is_long;
     if (at_end) {
         fprintf(out->c, "\n};\n");
@@ -122,6 +169,10 @@ static void c_print_next_array_line(output_t *out, bool is_long, bool at_end) {
 }
 
 static void c_print_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const unsigned int width, const unsigned int height) {
+    if (out == NULL || out->c == NULL) {
+        return;
+    }
+
     if (convpng.output_size) {
         fprintf(out->c, "// %u bpp image\nuint8_t %s_data[%u] = {\n %u,%u,  // width,height\n ",
                 bpp, i_name, size, width, height);
@@ -132,10 +183,18 @@ static void c_print_image(output_t *out, uint8_t bpp, const char *i_name, unsign
 }
 
 static void c_print_compressed_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size) {
+    if (out == NULL || out->c == NULL) {
+        return;
+    }
+
     fprintf(out->c, "// %u bpp image\nuint8_t %s_compressed[%u] = {\n ", bpp, i_name, size);
 }
 
 static void c_print_tiles_header(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar) {
+    if (out == NULL || out->h == NULL) {
+        return;
+    }
+
     unsigned int i = 0;
     if (compressed) {
         if (in_appvar) {
@@ -162,6 +221,10 @@ static void c_print_tiles_header(output_t *out, const char *i_name, unsigned int
 }
 
 static void c_print_tiles_ptrs_header(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
+    if (out == NULL || out->h == NULL) {
+        return;
+    }
+
     if (compressed) {
         fprintf(out->h, "#define %s_tiles_num %u\n", i_name, num_tiles);
         fprintf(out->h, "extern uint8_t *%s_tiles_compressed[%u];\n", i_name, num_tiles);
@@ -173,6 +236,10 @@ static void c_print_tiles_ptrs_header(output_t *out, const char *i_name, unsigne
 }
 
 static void c_print_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size) {
+    if (out == NULL || out->h == NULL) {
+        return;
+    }
+
     fprintf(out->h, "#define %s_width %u\n", i_name, width);
     fprintf(out->h, "#define %s_height %u\n", i_name, height);
     if (compressed) {
@@ -186,6 +253,10 @@ static void c_print_image_header(output_t *out, const char *i_name, unsigned int
 }
 
 static void c_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size) {
+    if (out == NULL || out->h == NULL) {
+        return;
+    }
+
     fprintf(out->h, "#define %s_width %u\n", i_name, width);
     fprintf(out->h, "#define %s_height %u\n", i_name, height);
     if (compressed) {
@@ -199,15 +270,27 @@ static void c_print_transparent_image_header(output_t *out, const char *i_name, 
 }
 
 static void c_print_palette_header(output_t *out, const char *name, unsigned int len) {
+    if (out == NULL || out->h == NULL) {
+        return;
+    }
+
     fprintf(out->h, "#define sizeof_%s_pal %u\n", name, len * 2);
     fprintf(out->h, "extern uint16_t %s_pal[%u];\n", name, len);
 }
 
 static void c_print_end_header(output_t *out) {
+    if (out == NULL || out->h == NULL) {
+        return;
+    }
+
     fprintf(out->h, "\n#endif\n");
 }
 
 static void c_print_appvar_array(output_t *out, const char *a_name, unsigned int num_images) {
+    if (out == NULL || out->c == NULL || out->h == NULL) {
+        return;
+    }
+
     fprintf(out->c, "uint8_t *%s[%u] = {\n ", a_name, num_images);
     fprintf(out->h,"#include <stdbool.h>\n\n");
     fprintf(out->h, "#define %s_num %u\n\n", a_name, num_images);
@@ -215,6 +298,10 @@ static void c_print_appvar_array(output_t *out, const char *a_name, unsigned int
 }
 
 static void c_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, unsigned int width, unsigned int height, bool table, bool tp_style) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)table;
     fprintf(out->h, "#define %s_width %u\n", i_name, width);
     fprintf(out->h, "#define %s_height %u\n", i_name, height);
@@ -231,21 +318,37 @@ static void c_print_appvar_image(output_t *out, const char *a_name, unsigned int
 }
 
 static void c_print_appvar_palette(output_t *out, const char *p_name, const char *a_name, unsigned int offset) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)p_name;
     (void)a_name;
     fprintf(out->c, "(uint8_t*)%u,", offset);
 }
 
 static void c_print_appvar_load_function_header(output_t *out) {
+    if (out == NULL) {
+        return;
+    }
+
     fprintf(out->c, "#include <fileioc.h>\n");
 }
 
 static void c_print_appvar_export_size(output_t *out, const char *a_name, unsigned int usize, unsigned int csize) {
+    if (out == NULL) {
+        return;
+    }
+
     fprintf(out->h, "#define %s_uncompressed_size %u\n", a_name, usize);
     fprintf(out->h, "#define %s_compressed_size %u\n", a_name, csize);
 }
 
 static void c_print_appvar_load_function(output_t *out, const char *a_name, bool has_tilemaps, bool appvar_compressed) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)has_tilemaps;
     if (appvar_compressed) {
         fprintf(out->h, "bool %s_init(void *decompressed_addr);\n", a_name);
@@ -271,6 +374,10 @@ static void c_print_appvar_load_function(output_t *out, const char *a_name, bool
 }
 
 static void c_print_appvar_load_function_tilemap(output_t *out, const char *a_name, char *tilemap_name, unsigned int tilemap_size, unsigned int index, bool compressed) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)tilemap_size;
     if (compressed) {
         fprintf(out->c, "    data = (unsigned int)%s[%u] - (unsigned int)%s_tiles_compressed[0];\n", a_name, index, tilemap_name);
@@ -286,6 +393,10 @@ static void c_print_appvar_load_function_tilemap(output_t *out, const char *a_na
 }
 
 static void c_print_appvar_load_function_end(output_t *out, bool compressed) {
+    if (out == NULL) {
+        return;
+    }
+
     if (compressed) {
         fprintf(out->c, "    return true;\n");
     } else {
@@ -295,6 +406,10 @@ static void c_print_appvar_load_function_end(output_t *out, bool compressed) {
 }
 
 static void c_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int offset, unsigned int len, bool table) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)offset;
     (void)table;
     fprintf(out->h, "#define sizeof_%s_pal %u\n", p_name, len * 2);
@@ -302,6 +417,10 @@ static void c_print_appvar_palette_header(output_t *out, const char *p_name, con
 }
 
 static void c_print_include_header(output_t *out, const char *name) {
+    if (out == NULL) {
+        return;
+    }
+
     fprintf(out->c, "#include \"%s.h\"\n", name);
 }
 

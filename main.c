@@ -610,11 +610,11 @@ int main(int argc, char **argv) {
                             }
                         }
                     }
-                }
 
-                // restore old pointer
-                if (!i_out_size) {
-                    i_data_buffer -= SIZE_BYTES;
+                    // restore old pointer
+                    if (!i_out_size) {
+                        i_data_buffer -= SIZE_BYTES;
+                    }
                 }
 
                 if (!i_appvar) {
@@ -679,7 +679,11 @@ int main(int argc, char **argv) {
         free(curr->name);
         free(curr->outc);
         free(curr->outh);
+        curr->palette = NULL;
         curr->image = NULL;
+        curr->name = NULL;
+        curr->outc = NULL;
+        curr->outh = NULL;
     }
 
     // say how long it took and if changes should be made

@@ -180,6 +180,7 @@ static void add_image(char *line) {
 
     if (open_dir) {
         globfree(globbuf);
+        free(globbuf);
     }
 }
 

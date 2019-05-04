@@ -10,20 +10,24 @@
 
 static void asm_open_output(output_t *out, const char *input, bool header) {
     if (input) {
-        FILE *file;
-        if (!(file = fopen(input, "w"))) {
+        FILE *fd;
+        if (!(fd = fopen(input, "w"))) {
             errorf("opening %s for output.", input);
         }
 
         if (header) {
-            out->inc = file;
+            out->inc = fd;
         } else {
-            out->asm = file;
+            out->asm = fd;
         }
     }
 }
 
 static void asm_close_output(output_t *out, bool header) {
+    if (out == NULL) {
+        return;
+    }
+
     if (header) {
         if (out->inc) { fclose(out->inc); }
     } else {
@@ -32,17 +36,29 @@ static void asm_close_output(output_t *out, bool header) {
 }
 
 static void asm_print_source_header(output_t *out, const char *name) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
     (void)name;
     fprintf(out->asm, "; %s\n", convpng_version_string);
 }
 
 static void asm_print_header_header(output_t *out, const char *name) {
+    if (out == NULL || out->inc == NULL) {
+        return;
+    }
+
     fprintf(out->inc, "; %s\n", convpng_version_string);
     fprintf(out->inc, "; this file contains all the graphics for easier inclusion in a project\n");
     fprintf(out->inc, "#include \"%s.asm\"\n", name);
 }
 
 static void asm_print_palette(output_t *out, const char *name, liq_palette *pal, const unsigned int pal_len) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
     fprintf(out->asm, "_%s_pal_size equ %u\n", name, pal_len << 1);
     fprintf(out->asm, "_%s_pal:\n", name);
     for (unsigned int j = 0; j < pal_len; j++) {
@@ -52,15 +68,27 @@ static void asm_print_palette(output_t *out, const char *name, liq_palette *pal,
 }
 
 static void asm_print_transparent_index(output_t *out, const char *name, const unsigned int index) {
+    if (out == NULL || out->inc == NULL) {
+        return;
+    }
+
     fprintf(out->inc, "%s_transparent_color_index equ %u\n\n", name, index);
 }
 
 static void asm_print_image_source_header(output_t *out, const char *group_header_file_name) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
     (void)group_header_file_name;
     fprintf(out->asm, "; %s\n\n", convpng_version_string);
 }
 
 static void asm_print_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size, unsigned int width, unsigned int height) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
 	fprintf(out->asm, "_%s_tile_%u_size equ %u\n", i_name, tile_num, size);
     if (convpng.output_size) {
         fprintf(out->asm, "_%s_tile_%u: ; %u bytes\n db %u,%u ; width,height\n db ", i_name, tile_num, size, width, height);
@@ -70,6 +98,10 @@ static void asm_print_tile(output_t *out, const char *i_name, unsigned int tile_
 }
 
 static void asm_print_tile_ptrs(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar, unsigned int *offsets) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
     unsigned int i = 0;
 
     if (compressed) {
@@ -98,11 +130,19 @@ static void asm_print_tile_ptrs(output_t *out, const char *i_name, unsigned int 
 }
 
 static void asm_print_compressed_tile(output_t *out, const char *i_name, unsigned int tile_num, unsigned int size) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
     fprintf(out->asm, "_%s_tile_%u_size equ %u\n", i_name, tile_num, size);
     fprintf(out->asm, "_%s_tile_%u_compressed:\n db ", i_name, tile_num);
 }
 
 static void asm_print_byte(output_t *out, uint8_t byte, bool need_comma) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
     if (need_comma) {
         fprintf(out->asm, "0%02Xh,", byte);
     } else {
@@ -111,6 +151,10 @@ static void asm_print_byte(output_t *out, uint8_t byte, bool need_comma) {
 }
 
 static void asm_print_next_array_line(output_t *out, bool is_long, bool at_end) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
     if (at_end) {
         fprintf(out->asm, "\n");
     } else {
@@ -123,6 +167,10 @@ static void asm_print_next_array_line(output_t *out, bool is_long, bool at_end) 
 }
 
 static void asm_print_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size, const unsigned int width, const unsigned int height) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
     fprintf(out->asm, "; %u bpp image\n", bpp);
 	fprintf(out->asm, "_%s_size equ %u\n", i_name, size);
     if (convpng.output_size) {
@@ -133,12 +181,20 @@ static void asm_print_image(output_t *out, uint8_t bpp, const char *i_name, unsi
 }
 
 static void asm_print_compressed_image(output_t *out, uint8_t bpp, const char *i_name, unsigned int size) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
     (void)bpp;
     fprintf(out->asm, "_%s_compressed_size equ %u\n", i_name, size);
     fprintf(out->asm, "_%s_compressed:\n db ", i_name);
 }
 
 static void asm_print_tiles_header(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed, bool in_appvar) {
+    if (out == NULL || out->inc == NULL) {
+        return;
+    }
+
     (void)compressed;
     (void)num_tiles;
     (void)in_appvar;
@@ -146,6 +202,10 @@ static void asm_print_tiles_header(output_t *out, const char *i_name, unsigned i
 }
 
 static void asm_print_tiles_ptrs_header(output_t *out, const char *i_name, unsigned int num_tiles, bool compressed) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)compressed;
     (void)num_tiles;
     (void)i_name;
@@ -153,6 +213,10 @@ static void asm_print_tiles_ptrs_header(output_t *out, const char *i_name, unsig
 }
 
 static void asm_print_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size) {
+    if (out == NULL || out->inc == NULL) {
+        return;
+    }
+
     (void)compressed;
     (void)width;
     (void)height;
@@ -161,6 +225,10 @@ static void asm_print_image_header(output_t *out, const char *i_name, unsigned i
 }
 
 static void asm_print_transparent_image_header(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size) {
+    if (out == NULL || out->inc == NULL) {
+        return;
+    }
+
     (void)compressed;
     (void)width;
     (void)height;
@@ -169,21 +237,37 @@ static void asm_print_transparent_image_header(output_t *out, const char *i_name
 }
 
 static void asm_print_palette_header(output_t *out, const char *name, unsigned int len) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)out;
     (void)name;
     (void)len;
 }
 
 static void asm_print_end_header(output_t *out) {
+    if (out == NULL || out->inc == NULL) {
+        return;
+    }
+
     fprintf(out->inc, "\n");
 }
 
 static void asm_print_appvar_array(output_t *out, const char *a_name, unsigned int num_images) {
+    if (out == NULL || out->inc == NULL || out->asm == NULL) {
+        return;
+    }
+
     fprintf(out->asm, "_%s: ; offsets\n dl ", a_name);
     fprintf(out->inc, "%s_num equ %u\n\n", a_name, num_images);
 }
 
 static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned int offset, const char *i_name, unsigned int index, bool compressed, unsigned int width, unsigned int height, bool table, bool tp_style) {
+    if (out == NULL || out->inc == NULL) {
+        return;
+    }
+
     (void)tp_style;
     fprintf(out->inc, "%s_width equ %u\n", i_name, width);
     fprintf(out->inc, "%s_height equ %u\n", i_name, height);
@@ -204,16 +288,28 @@ static void asm_print_appvar_image(output_t *out, const char *a_name, unsigned i
 }
 
 static void asm_print_appvar_palette(output_t *out, const char *p_name, const char *a_name, unsigned int offset) {
+    if (out == NULL || out->asm == NULL) {
+        return;
+    }
+
     (void)p_name;
     (void)a_name;
     fprintf(out->asm, "%u ; %s", offset, p_name);
 }
 
 static void asm_print_appvar_load_function_header(output_t *out) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)out;
 }
 
 static void asm_print_appvar_export_size(output_t *out, const char *a_name, unsigned int usize, unsigned int csize) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)out;
     (void)a_name;
     (void)usize;
@@ -221,6 +317,10 @@ static void asm_print_appvar_export_size(output_t *out, const char *a_name, unsi
 }
 
 static void asm_print_appvar_load_function(output_t *out, const char *a_name, bool has_tilemaps, bool appvar_compressed) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)out;
     (void)a_name;
     (void)has_tilemaps;
@@ -228,6 +328,10 @@ static void asm_print_appvar_load_function(output_t *out, const char *a_name, bo
 }
 
 static void asm_print_appvar_load_function_tilemap(output_t *out, const char *a_name, char *tilemap_name, unsigned int tilemap_size, unsigned int index, bool compressed) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)out;
     (void)a_name;
     (void)tilemap_name;
@@ -237,11 +341,19 @@ static void asm_print_appvar_load_function_tilemap(output_t *out, const char *a_
 }
 
 static void asm_print_appvar_load_function_end(output_t *out, bool compressed) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)out;
     (void)compressed;
 }
 
 static void asm_print_appvar_palette_header(output_t *out, const char *p_name, const char *a_name, unsigned int index, unsigned int offset, unsigned int len, bool table) {
+    if (out == NULL || out->inc == NULL) {
+        return;
+    }
+
     fprintf(out->inc, "sizeof_%s_pal equ %u\n", p_name, len * 2);
     if (table) {
         fprintf(out->inc, "%s_pal equ %s + %u\n", p_name, a_name, index * 3);
@@ -250,6 +362,10 @@ static void asm_print_appvar_palette_header(output_t *out, const char *p_name, c
 }
 
 static void asm_print_include_header(output_t *out, const char *name) {
+    if (out == NULL) {
+        return;
+    }
+
     (void)out;
     (void)name;
 }

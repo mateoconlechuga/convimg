@@ -1,8 +1,8 @@
-# About
+# convpng [![status](https://travis-ci.com/mateoconlechuga/convpng.svg?branch=master)](https://travis-ci.com/mateoconlechuga/convpng)
 
 This is the foremost tool in CE image conversion. Simply hand it a bunch of images, and it will determine the best 8-bit palette and create either a C or ASM include file for use in your programs.
 
-# Usage
+# usage
 
 ConvPNG uses `convpng.ini` to convert files. The file consists of potentially multiple sections called "groups". These groups consist of all the properties and settings for conversion of images, followed by a list of images to convert. A bare-bones `convpng.ini` file with one group is shown below; the `#` symbol is used as a command specifier.
 
@@ -14,7 +14,7 @@ Note: A `<boolean>` setting can be set to `true` or `false`.
 
 You can use the `/` character at the start of line for comments.
 
-## Commands
+## commands
 
 ----
 
@@ -140,7 +140,7 @@ This command controls the output of width and height information. The default is
 
 ---
 
-## Exporting to Appvars
+## exporting to appvars
 
 ConvPNG can export image and palette data to appvars. The commands for appvars are shown below. These use the same style as groups.
 
@@ -175,13 +175,13 @@ By default, convpng outputs a table used for dynamic extraction from appvars. If
 
 This outputs a particular string header at the start of an appvar for later using to search for it.
 
-### Additional notes
+### additional notes
 
 * You can use the `#Compression` option to fully compress appvars.
 
 ---
 
-## Command Line Options
+## command line options
 
 ---
 

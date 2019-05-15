@@ -116,7 +116,7 @@ Output an image of the palette in png format of the group. The image is written 
 
 This is used to add a fixed color to the palette which will be preserved at the specified index. This is useful to not allow the palette to shift colors around.
 
-If `name` is specified, a macro will be created for using the color. For example, adding `#FixedIndexColor: 2, 255, 255, 255, WHITE` to a group named `all_gfx` in `convpng.ini` would add the line `#define GFX_GROUP_WHITE 2` to `all_gfx.h`.
+If `name` is specified, a macro will be created for using the color. For example, adding `#FixedIndexColor: 2, 255, 255, 255, WHITE_COLOR` to a group named `all_gfx` in `convpng.ini` would add the line `#define WHITE_COLOR 2` to `all_gfx.h`.
 
 ----
 

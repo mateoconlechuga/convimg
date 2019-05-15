@@ -656,6 +656,9 @@ int main(int argc, char **argv) {
             if (!g_exported_palette && g_out_pal_arr) {
                 format->print_palette_header(g_output, strip_path(g_name), g_pal_len);
             }
+            if (g_fixed_num) {
+                format->print_palette_fixed_header(g_output, g_fixed, g_fixed_num);
+            }
             format->print_end_header(g_output);
             format->close_output(g_output, OUTPUT_HEADER);
             format->close_output(g_output, OUTPUT_SOURCE);

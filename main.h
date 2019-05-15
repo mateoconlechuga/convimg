@@ -93,6 +93,7 @@ typedef struct {
     void (*print_image_header)(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size);
     void (*print_transparent_image_header)(output_t *out, const char *i_name, unsigned int size, unsigned int width, unsigned int height, bool compressed, unsigned int decompressed_size);
     void (*print_palette_header)(output_t *out, const char *name, unsigned int len);
+    void (*print_palette_fixed_header)(output_t *out, fixed_t *colors, int len);
     void (*print_end_header)(output_t *out);
 
     // appvar functions

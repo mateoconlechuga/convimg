@@ -221,6 +221,17 @@ static void ice_print_palette_header(output_t *out, const char *name, unsigned i
     (void)len;
 }
 
+static void ice_print_palette_fixed_header(output_t *out, fixed_t *colors, int len) {
+    if (out == NULL || out->txt == NULL) {
+        return;
+    }
+
+    (void)out;
+    (void)colors;
+    (void)len;
+}
+
+
 static void ice_print_end_header(output_t *out) {
     if (out == NULL || out->txt == NULL) {
         return;
@@ -355,6 +366,7 @@ const format_t ice_format = {
     .print_image_header = ice_print_image_header,
     .print_transparent_image_header = ice_print_transparent_image_header,
     .print_palette_header = ice_print_palette_header,
+    .print_palette_fixed_header = ice_print_palette_fixed_header,
     .print_end_header = ice_print_end_header,
     .print_appvar_array = ice_print_appvar_array,
     .print_appvar_image = ice_print_appvar_image,

@@ -278,6 +278,19 @@ static void c_print_palette_header(output_t *out, const char *name, unsigned int
     fprintf(out->h, "extern uint16_t %s_pal[%u];\n", name, len);
 }
 
+static void c_print_palette_fixed_header(output_t *out, fixed_t *colors, int len) {
+    if (out == NULL || out->h == NULL) {
+        return;
+    }
+    int i;
+
+    for (i = 0; i < len; i++) {
+        if (colors[i].name != NULL) {
+             fprintf(out->h, "#define %s %u\n", colors[i].name, colors[i].index);
+        }
+    }
+}
+
 static void c_print_end_header(output_t *out) {
     if (out == NULL || out->h == NULL) {
         return;
@@ -445,6 +458,7 @@ const format_t c_format = {
     .print_image_header = c_print_image_header,
     .print_transparent_image_header = c_print_transparent_image_header,
     .print_palette_header = c_print_palette_header,
+    .print_palette_fixed_header = c_print_palette_fixed_header,
     .print_end_header = c_print_end_header,
     .print_appvar_array = c_print_appvar_array,
     .print_appvar_image = c_print_appvar_image,

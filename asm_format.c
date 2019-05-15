@@ -246,6 +246,16 @@ static void asm_print_palette_header(output_t *out, const char *name, unsigned i
     (void)len;
 }
 
+static void asm_print_palette_fixed_header(output_t *out, fixed_t *colors, int len) {
+    if (out == NULL) {
+        return;
+    }
+
+    (void)out;
+    (void)colors;
+    (void)len;
+}
+
 static void asm_print_end_header(output_t *out) {
     if (out == NULL || out->inc == NULL) {
         return;
@@ -391,6 +401,7 @@ const format_t asm_format = {
     .print_image_header = asm_print_image_header,
     .print_transparent_image_header = asm_print_transparent_image_header,
     .print_palette_header = asm_print_palette_header,
+    .print_palette_fixed_header = asm_print_palette_fixed_header,
     .print_end_header = asm_print_end_header,
     .print_appvar_array = asm_print_appvar_array,
     .print_appvar_image = asm_print_appvar_image,

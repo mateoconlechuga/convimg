@@ -359,7 +359,7 @@ int main(int argc, char **argv) {
                 unsigned int  i_height;
                 unsigned int  i_size;
                 unsigned int  i_error;
-                unsigned int  i_decompressed_size;
+                unsigned int  i_decompressed_size = 0;
 
                 // determine if image is in an appvar to prevent normal output
                 bool i_appvar = image_is_in_an_appvar(i_curr);

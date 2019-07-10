@@ -1,0 +1,23 @@
+# AppVeyor CI config
+
+install:
+  - set PATH=C:\MinGW\bin;%PATH%
+
+build_script:
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - mingw32-make
+
+after_build:
+  - cd %APPVEYOR_BUILD_FOLDER%
+
+on_success:
+  - cd %APPVEYOR_BUILD_FOLDER%
+
+on_failure:
+  - cd %APPVEYOR_BUILD_FOLDER%
+
+artifacts:
+ - path: convpng.exe
+   name: convpng
+   type: auto
+

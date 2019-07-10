@@ -24,7 +24,7 @@
 #include "palettes.h"
 
 convpng_t convpng;
-const char *convpng_version_string = "convpng v7.1";
+const char *convpng_version_string = "convpng v7.2";
 
 int main(int argc, char **argv) {
     unsigned int s,g,j,k;

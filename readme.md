@@ -1,4 +1,4 @@
-# convpng [![status](https://travis-ci.com/mateoconlechuga/convpng.svg?branch=master)](https://travis-ci.com/mateoconlechuga/convpng)
+# convpng [![linux status](https://travis-ci.com/mateoconlechuga/convpng.svg?branch=master)](https://travis-ci.com/mateoconlechuga/convpng) [![windows status](https://ci.appveyor.com/api/projects/status/dis7l8xdhash5r3d/branch/master?svg=true)](https://ci.appveyor.com/project/MattWaltz/convpng/branch/master)
 
 This is the foremost tool in CE image conversion. Simply hand it a bunch of images, and it will determine the best 8-bit palette and create either a C or ASM include file for use in your programs.
 

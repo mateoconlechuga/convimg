@@ -1,6 +1,6 @@
 CC      := gcc
 CFLAGS  := -Wall -Wextra -Wno-unknown-pragmas -O3 -DNDEBUG -std=c99 -I.
-LDFLAGS := -flto
+LDFLAGS := -flto -static
 SOURCES := $(wildcard *.c libs/*.c)
 
 ifeq ($(OS),Windows_NT)

@@ -1,6 +1,6 @@
 CC      := gcc
 CFLAGS  := -Wall -Wextra -Wno-unknown-pragmas -O3 -DNDEBUG -std=c99 -I.
-LDFLAGS := -flto -static
+LDFLAGS := -flto
 SOURCES := $(wildcard *.c libs/*.c)
 
 ifeq ($(OS),Windows_NT)
@@ -18,7 +18,6 @@ endif
 OBJECTS := $(SOURCES:.c=.o)
 
 all: $(TARGET)
-	strip --strip-all $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ -lm

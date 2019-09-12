@@ -8,33 +8,26 @@ convpng uses `convpng.ini` to convert files. The file consists of potentially mu
 
 Note: A `<boolean>` setting can be set to `true` or `false`.
 
-    #GroupC    : gfx_group
-    #PNGImages :
-        image
+    #GroupC : gfx_group
+     image1.png
+     image2.png
+     image3.png
 
+Note that the `.png` extention is optional. Relative paths are also available, and wildcards can be supplied using the `*` character.
 You can use the `/` character at the start of line for comments.
 
 ## commands
 
 ----
 
+Groups control the output of the converted image. C, assembly, and ICE groups are currently supported, and can be selected based on the following list:
+
     #GroupC   : <group name>
     #GroupASM : <group name>
     #GroupICE : <group name>
     #GroupPalette : <palette name>
 
-This shows four different commands; each used for defining different types of groups. C, assembly, and ICE groups are currently supported.
-
 The `GroupPalette` command is a special type of group used for creating a palette from images; rather than exporting the image data.
-
-Images are converted to their own separate files; and then linked together into groups through the use of `<group name>`.
-
-----
-
-    #PNGImages :
-
-A list of the png images follows this command; each with a newline. The `.png` extention is optional. Relative paths are also available.
-(It is optional to include this command).
 
 ----
 

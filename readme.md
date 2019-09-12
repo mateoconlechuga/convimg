@@ -4,19 +4,20 @@ This is the foremost tool in CE image conversion. Simply hand it a bunch of imag
 
 # usage
 
-convpng uses `convpng.ini` to convert files. The file consists of potentially multiple sections called "groups". These groups consist of all the properties and settings for conversion of images, followed by a list of images to convert. A bare-bones `convpng.ini` file with one group is shown below; the `#` symbol is used as a command specifier.
-
-Note: A `<boolean>` setting can be set to `true` or `false`.
+convpng uses a user-created file named `convpng.ini` to convert images. This file consists of potentially multiple sections called "groups". These groups contain commands for modifying how convpng processes a following list of images, including specification of palette, compression, etc. A bare-bones `convpng.ini` file with one group is shown below; the `#` symbol is used as a command specifier.
 
     #GroupC : gfx_group
+    #Palette : xlibc
      image1.png
      image2.png
      image3.png
 
-Note that the `.png` extention is optional. Relative paths are also available, and wildcards can be supplied using the `*` character.
-You can use the `/` character at the start of line for comments.
+The `.png` extention is optional. Relative paths or absolute paths can be used, and wildcards can be supplied using the `*` character.
+The `/` character is used at the start of line for comments as needed.
 
 ## commands
+
+**Note**: A `<boolean>` setting can be set to `true` or `false`.
 
 ----
 

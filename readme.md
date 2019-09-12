@@ -15,13 +15,9 @@ convpng uses a user-created file named `convpng.ini` to convert images. This fil
 The `.png` extention is optional. Relative paths or absolute paths can be used, and wildcards can be supplied using the `*` character.
 The `/` character is used at the start of line for comments as needed.
 
-## commands
-
-**Note**: A `<boolean>` setting can be set to `true` or `false`.
-
 ----
 
-Groups control the output of the converted image. C, assembly, and ICE groups are currently supported, and can be selected based on the following list:
+Groups consist of multiple images that should be converted using the same commands. C, assembly, and ICE groups are currently supported, and can be selected based on the following list:
 
     #GroupC   : <group name>
     #GroupASM : <group name>
@@ -29,6 +25,10 @@ Groups control the output of the converted image. C, assembly, and ICE groups ar
     #GroupPalette : <palette name>
 
 The `GroupPalette` command is a special type of group used for creating a palette from images; rather than exporting the image data.
+
+## commands
+
+**Note**: A `<boolean>` setting can be set to `true` or `false`.
 
 ----
 

@@ -62,7 +62,9 @@ static void ice_print_palette(output_t *out, const char *group_name, liq_palette
 
     for (unsigned int j = 0; j < pal_len; j++) {
         liq_color *c = &pal->entries[j];
-        fprintf(out->txt, "%04X", rgb1555(c->r, c->g, c->b));
+        uint16_t cr = rgb1555(c->r, c->g, c->b);
+
+        fprintf(out->txt, "%02X%02X", cr & 255, (cr >> 8) & 255);
     }
 
     fprintf(out->txt, "\"\n\n");

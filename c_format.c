@@ -110,7 +110,7 @@ static void c_print_tile_ptrs(output_t *out, const char *i_name, unsigned int nu
     if (out == NULL || out->c == NULL) {
         return;
     }
-    
+
     unsigned int i = 0;
     if (compressed) {
         fprintf(out->c, "uint8_t *%s_tiles_compressed[%u] = {\n", i_name, num_tiles);

@@ -30,9 +30,6 @@ int main(int argc, char **argv) {
     unsigned int s,g,j,k;
     time_t c1 = time(NULL);
 
-    // print out version information
-    fprintf(stdout, "%s by m.waltz\n", convpng_version_string);
-
     // init the system
     init_convpng(argc, argv);
 

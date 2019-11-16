@@ -29,10 +29,12 @@
  */
 
 #include "convert.h"
+#include "strings.h"
 #include "compress.h"
 #include "log.h"
 
 #include <string.h>
+#include <glob.h>
 
 /*
  * Allocates a convert structure.
@@ -69,7 +71,7 @@ convert_t *convert_alloc(void)
 /*
  * Adds a image file to a convert (does not load).
  */
-int convert_add_image(convert_t *convert, const char *name)
+static int convert_add_image(convert_t *convert, const char *name)
 {
     image_t *image;
 
@@ -93,6 +95,39 @@ int convert_add_image(convert_t *convert, const char *name)
     image->height = 0;
 
     convert->numImages++;
+
+    return 0;
+}
+
+/*
+ * Adds a path which may or may not include images.
+ */
+int convert_add_path(convert_t *convert, const char *path)
+{
+    glob_t *globbuf = NULL;
+    char **paths = NULL;
+    int i;
+    int len;
+
+    if (convert == NULL || path == NULL)
+    {
+        return 1;
+    }
+
+    globbuf = strings_find_images(path);
+    paths = globbuf->gl_pathv;
+    len = globbuf->gl_pathc;
+
+    if (len == 0)
+    {
+        LL_ERROR("Could not find file(s): \'%s\'", path);
+        return 1;
+    }
+
+    for (i = 0; i < len; ++i)
+    {
+        convert_add_image(convert, paths[i]);
+    }
 
     return 0;
 }

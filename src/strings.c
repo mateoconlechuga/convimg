@@ -28,52 +28,55 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PALETTE_H
-#define PALETTE_H
+#include "strings.h"
 
-#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "bpp.h"
-#include "image.h"
-#include "color.h"
-#include "deps/libimagequant/libimagequant.h"
-
-#define PALETTE_MAX_ENTRIES 256
-#define PALETTE_DEFAULT_QUANTIZE_SPEED 3
-
-typedef struct
+/*
+ * strdup with a strcat.
+ */
+char *strdupcat(const char *s, const char *c)
 {
-    color_t color;
-    unsigned int index;
-} palette_entry_t;
+    char *d;
 
-typedef struct palette
-{
-    char *name;
-    image_t *images;
-    int numImages;
-    int maxEntries;
-    int numEntries;
-    int numFixedEntries;
-    int quantizeSpeed;
-    palette_entry_t entries[PALETTE_MAX_ENTRIES];
-    palette_entry_t fixedEntries[PALETTE_MAX_ENTRIES];
-    int transparentFixedEntry;
-    color_mode_t mode;
-    bpp_t bpp;
-} palette_t;
+    if (s == NULL)
+    {
+        return strdup(c);
+    }
+    else if (c == NULL)
+    {
+        return strdup(s);
+    }
 
-palette_t *palette_alloc(void);
-void palette_free(palette_t *palette);
-int pallete_add_path(palette_t *palette, const char *path);
-int palette_generate(palette_t *palette);
-
-#ifdef __cplusplus
+    d = malloc(strlen(s) + strlen(c) + 1);
+    if (d != NULL)
+    {
+        strcpy(d, s);
+        strcat(d, c);
+    }
+    return d;
 }
-#endif
 
-#endif
+/*
+ * Finds images in directories.
+ */
+glob_t *strings_find_images(const char *fullPath)
+{
+    char *path;
+
+    if (!strstr(fullPath, ".png"))
+    {
+        path = strdupcat(fullPath, ".png");
+    }
+    else
+    {
+        path = strdup(fullPath);
+    }
+
+    glob_t *globbuf = calloc(sizeof(glob_t), 1);
+    glob(path, 0, NULL, globbuf);
+    free(path);
+
+    return globbuf;
+}

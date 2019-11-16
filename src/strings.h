@@ -28,49 +28,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PALETTE_H
-#define PALETTE_H
-
-#include <stdint.h>
+#ifndef STRINGS_H
+#define STRINGS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "bpp.h"
-#include "image.h"
-#include "color.h"
-#include "deps/libimagequant/libimagequant.h"
+#include <glob.h>
 
-#define PALETTE_MAX_ENTRIES 256
-#define PALETTE_DEFAULT_QUANTIZE_SPEED 3
-
-typedef struct
-{
-    color_t color;
-    unsigned int index;
-} palette_entry_t;
-
-typedef struct palette
-{
-    char *name;
-    image_t *images;
-    int numImages;
-    int maxEntries;
-    int numEntries;
-    int numFixedEntries;
-    int quantizeSpeed;
-    palette_entry_t entries[PALETTE_MAX_ENTRIES];
-    palette_entry_t fixedEntries[PALETTE_MAX_ENTRIES];
-    int transparentFixedEntry;
-    color_mode_t mode;
-    bpp_t bpp;
-} palette_t;
-
-palette_t *palette_alloc(void);
-void palette_free(palette_t *palette);
-int pallete_add_path(palette_t *palette, const char *path);
-int palette_generate(palette_t *palette);
+char *strdupcat(const char *s, const char *c);
+glob_t *strings_find_images(const char *fullPath);
 
 #ifdef __cplusplus
 }

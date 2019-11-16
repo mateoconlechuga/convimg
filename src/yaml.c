@@ -376,7 +376,7 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
 
     if (command[0] == '-')
     {
-        ret = palette_add_image(palette, &command[1]);
+        ret = pallete_add_path(palette, &command[1]);
     }
     else if (!strcmp(command, "generate-palette"))
     {
@@ -450,7 +450,7 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
 
     if (command[0] == '-')
     {
-        ret = convert_add_image(convert, &command[1]);
+        ret = convert_add_path(convert, &command[1]);
     }
     else if (!strcmp(command, "convert"))
     {

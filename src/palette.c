@@ -29,6 +29,7 @@
  */
 
 #include "palette.h"
+#include "strings.h"
 #include "image.h"
 #include "log.h"
 
@@ -36,7 +37,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
+#include <glob.h>
 
 /*
  * Builtin palettes.
@@ -96,6 +99,40 @@ int palette_add_image(palette_t *palette, const char *name)
     image->height = 0;
 
     palette->numImages++;
+
+    return 0;
+}
+
+
+/*
+ * Adds a path which may or may not include images.
+ */
+int pallete_add_path(palette_t *palette, const char *path)
+{
+    glob_t *globbuf = NULL;
+    char **paths = NULL;
+    int i;
+    int len;
+
+    if (palette == NULL || path == NULL)
+    {
+        return 1;
+    }
+
+    globbuf = strings_find_images(path);
+    paths = globbuf->gl_pathv;
+    len = globbuf->gl_pathc;
+
+    if (len == 0)
+    {
+        LL_ERROR("Could not find file(s): \'%s\'", path);
+        return 1;
+    }
+
+    for (i = 0; i < len; ++i)
+    {
+        palette_add_image(palette, paths[i]);
+    }
 
     return 0;
 }

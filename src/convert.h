@@ -64,7 +64,7 @@ typedef struct
 
 convert_t *convert_alloc(void);
 void convert_free(convert_t *convert);
-int convert_add_image(convert_t *convert, const char *name);
+int convert_add_path(convert_t *convert, const char *path);
 int convert_images(convert_t *convert, palette_t **palettes, int numPalettes);
 
 #ifdef __cplusplus

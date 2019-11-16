@@ -48,6 +48,8 @@ typedef struct
     output_file_t *file;
 } output_t;
 
+output_t *output_alloc(void);
+
 #ifdef	__cplusplus
 }
 #endif

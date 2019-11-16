@@ -29,3 +29,25 @@
  */
 
 #include "output.h"
+#include "log.h"
+
+#include <stdlib.h>
+
+/*
+ * Allocates an output structure.
+ */
+output_t *output_alloc(void)
+{
+    output_t *output = NULL;
+
+    output = malloc(sizeof(output_t));
+    if (output == NULL)
+    {
+        return NULL;
+    }
+
+    output->file->name = NULL;
+	output->file->data = NULL;
+
+    return output;
+}

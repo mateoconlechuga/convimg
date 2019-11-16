@@ -29,4 +29,31 @@
  */
 
 #include "convert.h"
+#include "compress.h"
 #include "log.h"
+
+/*
+ * Allocates a convert structure.
+ */
+convert_t *convert_alloc(void)
+{
+    convert_t *convert = NULL;
+
+    convert = malloc(sizeof(convert_t));
+    if (convert == NULL)
+    {
+        return NULL;
+    }
+
+    convert->images = NULL;
+    convert->numImages = 0;
+    convert->compression = COMPRESS_NONE;
+    convert->palette = NULL;
+    convert->tileset.enabled = false;
+    convert->style = CONVERT_STYLE_NORMAL;
+    convert->numOmitIndices = 0;
+    convert->widthAndHeight = true;
+    convert->bpp = BPP_8;
+
+    return convert;
+}

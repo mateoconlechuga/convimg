@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     ret = options_get(argc, argv, &options);
     if (ret == OPTIONS_SUCCESS)
     {
-
+        ret = yaml_parse_file(&options.yamlfile);
     }
 
     return ret == OPTIONS_IGNORE ? 0 : ret;

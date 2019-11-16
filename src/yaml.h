@@ -41,15 +41,24 @@ extern "C" {
 
 #include <stdint.h>
 
+typedef enum
+{
+    YAML_ST_INIT,
+    YAML_ST_PALETTE,
+    YAML_ST_CONVERT,
+    YAML_ST_OUTPUT,
+} yaml_state_t;
+
 typedef struct
 {
     char *name;
-    palette_t *palette;
-    convert_t *convert;
-    output_t *output;
-    unsigned int numpalettes;
-    unsigned int numconverts;
-    unsigned int numoutputs;
+    palette_t **palettes;
+    convert_t **converts;
+    output_t **outputs;
+    unsigned int numPalettes;
+    unsigned int numConverts;
+    unsigned int numOutputs;
+    yaml_state_t state;
 } yaml_file_t;
 
 #ifdef	__cplusplus

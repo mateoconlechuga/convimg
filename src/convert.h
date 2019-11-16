@@ -42,22 +42,25 @@ extern "C" {
 
 typedef enum
 {
-    STYLE_NORMAL,
-    STYLE_RLET,
+    CONVERT_STYLE_NORMAL,
+    CONVERT_STYLE_RLET,
 } convert_style_t;
 
 typedef struct
 {
-    image_t *image;
-    unsigned int numimages;
+    image_t *images;
+    unsigned int numImages;
     compression_t compression;
     palette_t *palette;
     tileset_t tileset;
     convert_style_t style;
-    int omitindex[PALETTE_MAX_ENTRIES];
-    bool widthheight;
+    int omitIndices[PALETTE_MAX_ENTRIES];
+    int numOmitIndices;
+    bool widthAndHeight;
     bpp_t bpp;
 } convert_t;
+
+convert_t *convert_alloc(void);
 
 #ifdef	__cplusplus
 }

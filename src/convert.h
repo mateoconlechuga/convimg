@@ -48,8 +48,10 @@ typedef enum
 
 typedef struct
 {
+    const char *name;
+    const char *paletteName;
     image_t *images;
-    unsigned int numImages;
+    int numImages;
     compression_t compression;
     palette_t *palette;
     tileset_t tileset;
@@ -61,8 +63,10 @@ typedef struct
 } convert_t;
 
 convert_t *convert_alloc(void);
+void convert_free(convert_t *convert);
+int convert_add_image(convert_t *convert, const char *name);
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 

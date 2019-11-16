@@ -35,22 +35,35 @@
 extern "C" {
 #endif
 
+#include "appvar.h"
+#include "compress.h"
+
 #include <stdint.h>
 
-typedef struct
+typedef enum
 {
-    char *name;
-    uint8_t *data;
-} output_file_t;
+    OUTPUT_FORMAT_INVALID,
+    OUTPUT_FORMAT_C,
+    OUTPUT_FORMAT_ASM,
+    OUTPUT_FORMAT_ICE,
+    OUTPUT_FORMAT_APPVAR,
+    OUTPUT_FORMAT_BIN
+} output_format_t;
 
 typedef struct
 {
-    output_file_t *file;
+    char **convertNames;
+    int numConverts;
+    output_format_t format;
+    compression_t compress;
+    appvar_t appvar;
 } output_t;
 
 output_t *output_alloc(void);
+void output_free(output_t *output);
+int output_add_convert(output_t *output, const char *convertName);
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 

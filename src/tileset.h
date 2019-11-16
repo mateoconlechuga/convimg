@@ -41,11 +41,13 @@ typedef struct
 {
     int width;
     int height;
-    bool ptable;
+    int tileHeight;
+    int tileWidth;
+    bool pTable;
     bool enabled;
 } tileset_t;
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 

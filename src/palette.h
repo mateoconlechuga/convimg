@@ -53,7 +53,7 @@ typedef struct
 typedef struct
 {
     const char *name;
-    image_t *image;
+    image_t *images;
     int numImages;
     int maxEntries;
     int numEntries;
@@ -70,7 +70,7 @@ void palette_free(palette_t *palette);
 int palette_add_image(palette_t *palette, const char *name);
 int palette_generate(palette_t *palette);
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 

@@ -32,6 +32,8 @@
 #include "compress.h"
 #include "log.h"
 
+#include <string.h>
+
 /*
  * Allocates a convert structure.
  */
@@ -50,10 +52,66 @@ convert_t *convert_alloc(void)
     convert->compression = COMPRESS_NONE;
     convert->palette = NULL;
     convert->tileset.enabled = false;
+    convert->tileset.tileWidth = 0;
+    convert->tileset.tileHeight = 0;
+    convert->tileset.pTable = true;
     convert->style = CONVERT_STYLE_NORMAL;
     convert->numOmitIndices = 0;
     convert->widthAndHeight = true;
     convert->bpp = BPP_8;
 
     return convert;
+}
+
+/*
+ * Adds a image file to a convert (does not load).
+ */
+int convert_add_image(convert_t *convert, const char *name)
+{
+    image_t *image;
+
+    if (convert == NULL || name == NULL)
+    {
+        return 1;
+    }
+
+    convert->images =
+        realloc(convert->images, (convert->numImages + 1) * sizeof(image_t));
+    if (convert->images == NULL)
+    {
+        return 1;
+    }
+
+    image = &convert->images[convert->numImages];
+
+    image->name = strdup(name);
+    image->data = NULL;
+    image->width = 0;
+    image->height = 0;
+
+    convert->numImages++;
+
+    return 0;
+}
+
+/*
+ * Frees an allocated convert.
+ */
+void convert_free(convert_t *convert)
+{
+    int i;
+
+    if (convert == NULL)
+    {
+        return;
+    }
+
+    for (i = 0; i < convert->numImages; ++i)
+    {
+        free(convert->images[i].name);
+        convert->images[i].name = NULL;
+    }
+
+    free(convert->images);
+    convert->images = NULL;
 }

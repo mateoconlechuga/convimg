@@ -46,7 +46,7 @@ typedef enum
 
 int compress_array(unsigned char **arr, size_t *size, compression_t mode);
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 

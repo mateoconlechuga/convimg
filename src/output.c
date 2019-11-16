@@ -32,6 +32,7 @@
 #include "log.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 /*
  * Allocates an output structure.
@@ -46,8 +47,67 @@ output_t *output_alloc(void)
         return NULL;
     }
 
-    output->file->name = NULL;
-	output->file->data = NULL;
+    output->convertNames = NULL;
+    output->numConverts = 0;
+    output->format = OUTPUT_FORMAT_INVALID;
+    output->appvar.name = NULL;
+    output->appvar.archived = true;
+    output->appvar.init = true;
+    output->appvar.source = APPVAR_SOURCE_C;
 
     return output;
+}
+
+/*
+ * Adds a new convert to the output structure.
+ */
+int output_add_convert(output_t *output, const char *convertName)
+{
+    if (output == NULL ||
+        convertName == NULL ||
+        output->format == OUTPUT_FORMAT_INVALID)
+    {
+        LL_DEBUG("Invalid param in %s'.", __func__);
+        return 1;
+    }
+
+    output->convertNames =
+        realloc(output->convertNames, (output->numConverts + 1) * sizeof(char *));
+    if (output->convertNames == NULL)
+    {
+        LL_ERROR("Memory error in %s'.", __func__);
+        return 1;
+    }
+
+    output->convertNames[output->numConverts] = strdup(convertName);
+    output->numConverts++;
+
+    return 0;
+}
+
+/*
+ * Frees an allocated output structure.
+ */
+void output_free(output_t *output)
+{
+    int i;
+
+    if (output == NULL)
+    {
+        return;
+    }
+
+    for (i = 0; i < output->numConverts; ++i)
+    {
+        free(output->convertNames[i]);
+        output->convertNames[i] = NULL;
+    }
+
+    free(output->convertNames);
+    output->convertNames = NULL;
+
+    free(output->appvar.name);
+    output->appvar.name = NULL;
+
+    output->numConverts = 0;
 }

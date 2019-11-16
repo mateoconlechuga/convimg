@@ -38,14 +38,14 @@
  */
 int image_load(image_t *image)
 {
-	int channels;
-	image->data = (uint8_t *)stbi_load(image->name,
-									   &image->width,
-									   &image->height,
-									   &channels,
-									   STBI_rgb_alpha);
+    int channels;
+    image->data = (uint8_t *)stbi_load(image->name,
+                                       &image->width,
+                                       &image->height,
+                                       &channels,
+                                       STBI_rgb_alpha);
 
-	return image->data == NULL ? 1 : 0;
+    return image->data == NULL ? 1 : 0;
 }
 
 /*
@@ -53,13 +53,13 @@ int image_load(image_t *image)
  */
 void image_unload(image_t *image)
 {
-	if( image == NULL )
-	{
-		return;
-	}
+    if( image == NULL )
+    {
+        return;
+    }
 
-	if( image->data != NULL )
-	{
-		STBI_FREE(image->data);
-	}
+    if( image->data != NULL )
+    {
+        STBI_FREE(image->data);
+    }
 }

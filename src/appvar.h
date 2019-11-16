@@ -35,12 +35,24 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
+
+typedef enum
+{
+    APPVAR_SOURCE_C,
+    APPVAR_SOURCE_ASM,
+    APPVAR_SOURCE_ICE,
+} appvar_source_t;
+
 typedef struct
 {
-    char dummy;
+    char *name;
+    bool archived;
+    appvar_source_t source;
+    bool init;
 } appvar_t;
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 

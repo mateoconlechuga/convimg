@@ -48,7 +48,7 @@ typedef struct
 int image_load(image_t *image);
 void image_unload(image_t *image);
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 

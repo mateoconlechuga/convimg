@@ -75,7 +75,7 @@ do {                                               \
 
 void log_set_level(log_level_t level);
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 

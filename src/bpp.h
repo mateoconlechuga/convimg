@@ -44,7 +44,7 @@ typedef enum
     BPP_16
 } bpp_t;
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 

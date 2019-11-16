@@ -65,22 +65,22 @@ void color_convert(color_t *color, color_mode_t mode)
     {
         case COLOR_MODE_1555_GRGB:
             color_888_to_1555(&color->rgb, &color->target, false);
-			color_1555_to_888(&color->target, &color->rgb, false);
-			break;
+            color_1555_to_888(&color->target, &color->rgb, false);
+            break;
 
         case COLOR_MODE_1555_GBGR:
             color_888_to_1555(&color->rgb, &color->target, true);
-			color_1555_to_888(&color->target, &color->rgb, true);
-			break;
+            color_1555_to_888(&color->target, &color->rgb, true);
+            break;
 
         case COLOR_MODE_565_RGB:
             color_888_to_565(&color->rgb, &color->target, false);
-			color_565_to_888(&color->target, &color->rgb, false);
-			break;
+            color_565_to_888(&color->target, &color->rgb, false);
+            break;
 
         case COLOR_MODE_565_BGR:
             color_888_to_565(&color->rgb, &color->target, true);
-			color_565_to_888(&color->target, &color->rgb, true);
-			break;
+            color_565_to_888(&color->target, &color->rgb, true);
+            break;
     }
 }

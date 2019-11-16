@@ -51,7 +51,7 @@ palette_t *palette_alloc(void)
         return NULL;
     }
 
-    palette->image = NULL;
+    palette->images = NULL;
     palette->numImages = 0;
     palette->maxEntries = PALETTE_MAX_ENTRIES;
     palette->numEntries = 0;
@@ -73,14 +73,14 @@ int palette_add_image(palette_t *palette, const char *name)
         return 1;
     }
 
-    palette->image =
-        realloc(palette->image, (palette->numImages + 1) * sizeof(image_t));
-    if (palette->image == NULL)
+    palette->images =
+        realloc(palette->images, (palette->numImages + 1) * sizeof(image_t));
+    if (palette->images == NULL)
     {
         return 1;
     }
 
-    image = &palette->image[palette->numImages];
+    image = &palette->images[palette->numImages];
 
     image->name = strdup(name);
     image->data = NULL;
@@ -106,12 +106,12 @@ void palette_free(palette_t *palette)
 
     for (i = 0; i < palette->numImages; ++i)
     {
-        free(palette->image[i].name);
-        palette->image[i].name = NULL;
+        free(palette->images[i].name);
+        palette->images[i].name = NULL;
     }
 
-    free(palette->image);
-    palette->image = NULL;
+    free(palette->images);
+    palette->images = NULL;
 }
 
 /*
@@ -150,7 +150,7 @@ int palette_generate(palette_t *palette)
 
     for (i = 0; i < palette->numImages; ++i)
     {
-        image_t *image = &palette->image[i];
+        image_t *image = &palette->images[i];
         liq_image *liqimage;
 
         LL_PRINT("[info] \'%s\' (%d of %d)\n",

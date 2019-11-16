@@ -55,7 +55,7 @@ typedef struct
 
 void color_convert(color_t *color, color_mode_t mode);
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 

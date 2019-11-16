@@ -497,13 +497,22 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
     {
         ret = yaml_parse_tileset(yamlfile, line, &convert->tileset);
     }
+    else if (!strcmp(command, "width-and-height"))
+    {
+        convert->widthAndHeight = !strcmp(args, "true");
+    }
+    else if (!strcmp(command, "omit-palette-index"))
+    {
+        convert->omitIndices[convert->numOmitIndices] = strtol(args, NULL, 0);
+        convert->numOmitIndices++;
+    }
+    else if (!strcmp(command, "width-and-height"))
+    {
+        convert->widthAndHeight = !strcmp(args, "true");
+    }
     else if (!strcmp(command, "bpp"))
     {
-        if (!strcmp(args, "16"))
-        {
-            convert->bpp = BPP_16;
-        }
-        else if (!strcmp(args, "8"))
+        if (!strcmp(args, "8"))
         {
             convert->bpp = BPP_8;
         }

@@ -43,8 +43,6 @@ typedef enum
 {
     COLOR_MODE_1555_GRGB,
     COLOR_MODE_1555_GBGR,
-    COLOR_MODE_565_RGB,
-    COLOR_MODE_565_BGR,
 } color_mode_t;
 
 typedef struct

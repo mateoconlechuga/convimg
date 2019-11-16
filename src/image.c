@@ -83,7 +83,6 @@ int image_quantize(image_t *image, palette_t *palette)
 	if (liqattr == NULL)
 	{
 	    LL_ERROR("Failed to create image attributes \'%s\'\n", image->name);
-	    liq_attr_destroy(liqattr);
 	    return 1;
 	}
 

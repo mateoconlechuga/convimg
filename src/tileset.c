@@ -28,38 +28,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TILESET_H
-#define TILESET_H
+#include "tileset.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdlib.h>
+#include <string.h>
 
-#include <stdbool.h>
-#include <stdint.h>
-
-typedef struct
+/*
+ * Allocates storage for each tile.
+ */
+int tileset_alloc_tiles(tileset_t *tileset)
 {
-	uint8_t *data;
-	int size;
-} tileset_tile_t;
+	int i;
+	int tileSize = tileset->tileWidth * tileset->tileHeight;
 
-typedef struct
-{
-    int tileHeight;
-    int tileWidth;
-	int tileSize;
-    bool pTable;
-    bool enabled;
-	tileset_tile_t *tiles;
-	int numTiles;
-} tileset_t;
+	tileset->tiles =
+		malloc(tileset->numTiles * sizeof(tileset_tile_t));
+	if (tileset->tiles == NULL)
+	{
+		return 1;
+	}
 
-int tileset_alloc_tiles(tileset_t *tileset);
-void tileset_free(tileset_t *tileset);
+	for (i = 0; i < tileset->numTiles; ++i)
+	{
+		tileset->tiles[i].data = malloc(tileSize);
+		if (tileset->tiles[i].data == NULL)
+		{
+			return 1;
+		}
 
-#ifdef __cplusplus
+		tileset->tiles[i].size = tileSize;
+	}
+
+	return 0;
 }
-#endif
 
-#endif
+/*
+ * Frees an allocated tileset.
+ */
+void tileset_free(tileset_t *tileset)
+{
+	int i;
+
+	if (tileset == NULL || tileset->tiles == NULL)
+	{
+		return;
+	}
+
+	for (i = 0; i < tileset->numTiles; ++i)
+	{
+		free(tileset->tiles[i].data);
+		tileset->tiles[i].data = NULL;
+	}
+
+	free(tileset->tiles);
+	tileset->tiles = NULL;
+}

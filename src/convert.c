@@ -55,6 +55,7 @@ convert_t *convert_alloc(void)
     convert->tileset.tileWidth = 0;
     convert->tileset.tileHeight = 0;
     convert->tileset.pTable = true;
+    convert->tileset.tiles = NULL;
     convert->style = CONVERT_STYLE_NORMAL;
     convert->numOmitIndices = 0;
     convert->widthAndHeight = true;
@@ -113,6 +114,11 @@ void convert_free(convert_t *convert)
         image_free(&convert->images[i]);
     }
 
+    if (convert->tileset.enabled)
+    {
+        tileset_free(&convert->tileset);
+    }
+
     free(convert->images);
     convert->images = NULL;
 
@@ -150,6 +156,114 @@ int convert_find_palette(convert_t *convert, palette_t **palettes, int numPalett
 }
 
 /*
+ * Removes omited indicies from the converted data.
+ * Reallocs array as needed.
+ */
+int convert_remove_omits(convert_t *convert, uint8_t **data, int *size)
+{
+    int i, j;
+    int newSize = 0;
+    uint8_t *newData;
+
+    if (convert->numOmitIndices == 0)
+    {
+        return 0;
+    }
+
+    newData = malloc(*size);
+    if (newData == NULL)
+    {
+        return 1;
+    }
+
+    for (i = 0; i < *size; ++i)
+    {
+        for (j = 0; j < convert->numOmitIndices; ++j)
+        {
+            if ((*data)[i] == convert->omitIndices[j])
+            {
+                goto nextbyte;
+            }
+        }
+
+        newData[newSize] = (*data)[i];
+        newSize++;
+
+nextbyte:
+        continue;
+    }
+
+    free(*data);
+    *data = newData;
+    *size = newSize;
+
+    return 0;
+}
+
+/*
+ * Converts a tileset to multiple data blocks for conversion.
+ */
+int convert_tileset(convert_t *convert, tileset_t *tileset, image_t *image)
+{
+    int ret = 0;
+    int i, j, k;
+    int y;
+    int x;
+    int byte;
+
+    tileset->numTiles =
+        (image->width / tileset->tileWidth) *
+        (image->height / tileset->tileHeight);
+
+    if (image->width % tileset->tileWidth)
+    {
+        LL_ERROR("Image dimensions do not support tile width");
+        return 1;
+    }
+    if (image->height % tileset->tileHeight)
+    {
+        LL_ERROR("Image dimensions do not support tile height");
+        return 1;
+    }
+
+    tileset_alloc_tiles(tileset);
+
+    y = x = 0;
+
+    for (i = 0; i < tileset->numTiles; ++i)
+    {
+        uint8_t *data = tileset->tiles[i].data;
+        byte = 0;
+
+        for (j = 0; j < tileset->tileHeight; j++)
+        {
+            int offset = j * image->width + y;
+            for (k = 0; k < tileset->tileWidth; k++)
+            {
+                data[byte] = image->data[k + x + offset];
+                byte++;
+            }
+        }
+
+        ret = convert_remove_omits(convert, &data, &tileset->tiles[i].size);
+        if (ret != 0)
+        {
+            break;
+        }
+
+        x += tileset->tileWidth;
+
+        if (x >= image->width)
+        {
+            x = 0;
+            y += image->width * tileset->tileHeight;
+        }
+    }
+
+    return ret;
+}
+
+/*
  * Converts an image to a palette or raw data as needed.
  */
 int convert_images(convert_t *convert, palette_t **palettes, int numPalettes)
@@ -164,40 +278,48 @@ int convert_images(convert_t *convert, palette_t **palettes, int numPalettes)
 
     LL_INFO("Converting images \'%s\'", convert->name);
 
-    if (ret == 0)
+    ret = convert_find_palette(convert, palettes, numPalettes);
+    if (ret != 0)
     {
-        ret = convert_find_palette(convert, palettes, numPalettes);
+        return ret;
     }
 
-    if (ret == 0)
+    for (i = 0; i < convert->numImages; ++i)
     {
-        for (i = 0; i < convert->numImages; ++i)
+        image_t *image = &convert->images[i];
+
+        LL_INFO(" Reading \'%s\' (%d of %d)",
+            image->name,
+            i + 1,
+            convert->numImages);
+
+        ret = image_load(image);
+        if (ret != 0)
         {
-            image_t *image = &convert->images[i];
+            LL_ERROR("Failed to load image %s", image->name);
+            break;
+        }
 
-            LL_INFO(" Reading \'%s\' (%d of %d)",
-                image->name,
-                i + 1,
-                convert->numImages);
+        ret = image_quantize(image, convert->palette);
+        if (ret != 0)
+        {
+            break;
+        }
 
-            ret = image_load(image);
+        if (convert->tileset.enabled)
+        {
+            ret = convert_tileset(convert, &convert->tileset, image);
             if (ret != 0)
             {
-                LL_ERROR("Failed to load image %s", image->name);
                 break;
             }
-
-            if (convert->bpp == BPP_16)
+        }
+        else
+        {
+            ret = convert_remove_omits(convert, &image->data, &image->size);
+            if (ret != 0)
             {
-
-            }
-            else
-            {
-                ret = image_quantize(image, convert->palette);
-                if (ret != 0)
-                {
-                    break;
-                }
+                break;
             }
         }
     }

@@ -47,11 +47,27 @@ int main(int argc, char **argv)
 
         ret = yaml_parse_file(yamlfile);
 
+        /* generate palettes */
         if (ret == 0)
         {
             for (i = 0; i < yamlfile->numPalettes; ++i)
             {
                 ret = palette_generate(yamlfile->palettes[i]);
+                if (ret != 0)
+                {
+                    break;
+                }
+            }
+        }
+
+        /* convert images using palettes */
+        if (ret == 0)
+        {
+            for (i = 0; i < yamlfile->numConverts; ++i)
+            {
+                ret = convert_images(yamlfile->converts[i],
+                                     yamlfile->palettes,
+                                     yamlfile->numPalettes);
                 if (ret != 0)
                 {
                     break;

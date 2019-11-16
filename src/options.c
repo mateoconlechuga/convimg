@@ -68,9 +68,19 @@ static void options_show(const char *prgm)
  */
 static int options_verify(options_t *options)
 {
-    (void)options;
+    if (options->yamlfile.name == NULL)
+    {
+        goto error;
+    }
 
     return OPTIONS_SUCCESS;
+
+error:
+    LL_ERROR("Missing input file.");
+    LL_INFO("Run %s --help for usage guidlines.", options->prgm);
+    LL_INFO("Run %s --create to create a default \'convimg.yaml\' file.", options->prgm);
+
+    return OPTIONS_FAILED;
 }
 
 /*
@@ -84,7 +94,7 @@ static void options_set_default(options_t *options)
     }
 
     options->prgm = 0;
-    options->yamlfile.name = "convimg.yaml";
+    options->yamlfile.name = NULL;
 }
 
 /*
@@ -95,7 +105,7 @@ int options_get(int argc, char *argv[], options_t *options)
 {
     log_set_level(LOG_BUILD_LEVEL);
 
-    if (argc < 2 || argv == NULL || options == NULL)
+    if (argc < 1 || argv == NULL || options == NULL)
     {
         options_show(argc < 1 ? PRGM_NAME : argv[0]);
         return OPTIONS_FAILED;

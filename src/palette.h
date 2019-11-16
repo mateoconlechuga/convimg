@@ -43,6 +43,7 @@ extern "C" {
 #include "deps/libimagequant/libimagequant.h"
 
 #define PALETTE_MAX_ENTRIES 256
+#define PALETTE_DEFAULT_QUANTIZE_SPEED 3
 
 typedef struct
 {
@@ -50,7 +51,7 @@ typedef struct
     unsigned int index;
 } palette_entry_t;
 
-typedef struct
+typedef struct palette
 {
     char *name;
     image_t *images;
@@ -58,6 +59,7 @@ typedef struct
     int maxEntries;
     int numEntries;
     int numFixedEntries;
+    int quantizeSpeed;
     palette_entry_t entries[PALETTE_MAX_ENTRIES];
     palette_entry_t fixedEntries[PALETTE_MAX_ENTRIES];
     int transparentFixedEntry;

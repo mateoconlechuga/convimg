@@ -60,7 +60,7 @@ convert_t *convert_alloc(void)
     convert->widthAndHeight = true;
     convert->bpp = BPP_8;
     convert->name = NULL;
-    convert->paletteName = NULL;
+    convert->paletteName = "xlibc";
 
     return convert;
 }
@@ -110,8 +110,7 @@ void convert_free(convert_t *convert)
 
     for (i = 0; i < convert->numImages; ++i)
     {
-        free(convert->images[i].name);
-        convert->images[i].name = NULL;
+        image_free(&convert->images[i]);
     }
 
     free(convert->images);
@@ -122,4 +121,86 @@ void convert_free(convert_t *convert)
 
     free(convert->paletteName);
     convert->paletteName = NULL;
+}
+
+/*
+ * Gets the pallete data used for converting.
+ */
+int convert_find_palette(convert_t *convert, palette_t **palettes, int numPalettes)
+{
+    int i;
+
+    if (convert == NULL || palettes == NULL)
+    {
+        return 1;
+    }
+
+    for (i = 0; i < numPalettes; ++i)
+    {
+        if (!strcmp(convert->paletteName, palettes[i]->name))
+        {
+            convert->palette = palettes[i];
+            return 0;
+        }
+    }
+
+    LL_ERROR("No matching palette name found to convert \'%s\'",
+        convert->name);
+    return 1;
+}
+
+/*
+ * Converts an image to a palette or raw data as needed.
+ */
+int convert_images(convert_t *convert, palette_t **palettes, int numPalettes)
+{
+    int i;
+    int ret = 0;
+
+    if (convert == NULL)
+    {
+        return 1;
+    }
+
+    LL_INFO("Converting images \'%s\'", convert->name);
+
+    if (ret == 0)
+    {
+        ret = convert_find_palette(convert, palettes, numPalettes);
+    }
+
+    if (ret == 0)
+    {
+        for (i = 0; i < convert->numImages; ++i)
+        {
+            image_t *image = &convert->images[i];
+
+            LL_INFO(" Reading \'%s\' (%d of %d)",
+                image->name,
+                i + 1,
+                convert->numImages);
+
+            ret = image_load(image);
+            if (ret != 0)
+            {
+                LL_ERROR("Failed to load image %s", image->name);
+                break;
+            }
+
+            if (convert->bpp == BPP_16)
+            {
+
+            }
+            else
+            {
+                ret = image_quantize(image, convert->palette);
+                if (ret != 0)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    return ret;
 }

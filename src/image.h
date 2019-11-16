@@ -43,10 +43,15 @@ typedef struct
     uint8_t *data;
     int width;
     int height;
+	int size;
 } image_t;
 
+/* I despise forward declartions, but meh */
+typedef struct palette palette_t;
+
 int image_load(image_t *image);
-void image_unload(image_t *image);
+void image_free(image_t *image);
+int image_quantize(image_t *image, palette_t *palette);
 
 #ifdef __cplusplus
 }

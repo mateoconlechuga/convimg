@@ -395,6 +395,16 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
     {
         palette->maxEntries = strtol(args, NULL, 0);
     }
+    else if (!strcmp(command, "speed"))
+    {
+        palette->quantizeSpeed = strtol(args, NULL, 0);
+        if (palette->quantizeSpeed < 1 || palette->quantizeSpeed > 10)
+        {
+            LL_WARNING("Ignoring invalid quantization speed (line %d).",
+                yamlfile->line);
+            palette->quantizeSpeed = PALETTE_DEFAULT_QUANTIZE_SPEED;
+        }
+    }
     else if (!strcmp(command, "fixedcolor"))
     {
         ret = yaml_parse_fixed_color(yamlfile, line, &entry);

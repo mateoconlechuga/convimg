@@ -134,6 +134,9 @@ int pallete_add_path(palette_t *palette, const char *path)
         palette_add_image(palette, paths[i]);
     }
 
+    globfree(globbuf);
+    free(globbuf);
+
     return 0;
 }
 

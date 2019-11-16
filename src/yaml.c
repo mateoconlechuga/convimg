@@ -593,6 +593,7 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
     {
         if (args != NULL)
         {
+            yamlfile->curOutput->name = strdup(args);
             if (!strcmp(args, "c"))
             {
                 yamlfile->curOutput->format = OUTPUT_FORMAT_C;
@@ -699,6 +700,8 @@ int yaml_parse_file(yaml_file_t *yamlfile)
         LL_DEBUG("Invalid param in %s", __func__);
         return 1;
     }
+
+    LL_INFO("Reading file \'%s\'", yamlfile->name);
 
     fdi = fopen(yamlfile->name, "rb");
     if( fdi == NULL )

@@ -129,6 +129,9 @@ int convert_add_path(convert_t *convert, const char *path)
         convert_add_image(convert, paths[i]);
     }
 
+    globfree(globbuf);
+    free(globbuf);
+
     return 0;
 }
 

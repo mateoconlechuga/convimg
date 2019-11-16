@@ -75,6 +75,21 @@ int main(int argc, char **argv)
             }
         }
 
+        /* output converted files */
+        if (ret == 0)
+        {
+            for (i = 0; i < yamlfile->numConverts; ++i)
+            {
+                ret = output_converts(yamlfile->outputs[i],
+                                      yamlfile->converts,
+                                      yamlfile->numConverts);
+                if (ret != 0)
+                {
+                    break;
+                }
+            }
+        }
+
         yaml_release_file(yamlfile);
     }
 

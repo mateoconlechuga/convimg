@@ -38,28 +38,28 @@
  */
 int tileset_alloc_tiles(tileset_t *tileset)
 {
-	int i;
-	int tileSize = tileset->tileWidth * tileset->tileHeight;
+    int i;
+    int tileSize = tileset->tileWidth * tileset->tileHeight;
 
-	tileset->tiles =
-		malloc(tileset->numTiles * sizeof(tileset_tile_t));
-	if (tileset->tiles == NULL)
-	{
-		return 1;
-	}
+    tileset->tiles =
+        malloc(tileset->numTiles * sizeof(tileset_tile_t));
+    if (tileset->tiles == NULL)
+    {
+        return 1;
+    }
 
-	for (i = 0; i < tileset->numTiles; ++i)
-	{
-		tileset->tiles[i].data = malloc(tileSize);
-		if (tileset->tiles[i].data == NULL)
-		{
-			return 1;
-		}
+    for (i = 0; i < tileset->numTiles; ++i)
+    {
+        tileset->tiles[i].data = malloc(tileSize);
+        if (tileset->tiles[i].data == NULL)
+        {
+            return 1;
+        }
 
-		tileset->tiles[i].size = tileSize;
-	}
+        tileset->tiles[i].size = tileSize;
+    }
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -67,19 +67,19 @@ int tileset_alloc_tiles(tileset_t *tileset)
  */
 void tileset_free(tileset_t *tileset)
 {
-	int i;
+    int i;
 
-	if (tileset == NULL || tileset->tiles == NULL)
-	{
-		return;
-	}
+    if (tileset == NULL || tileset->tiles == NULL)
+    {
+        return;
+    }
 
-	for (i = 0; i < tileset->numTiles; ++i)
-	{
-		free(tileset->tiles[i].data);
-		tileset->tiles[i].data = NULL;
-	}
+    for (i = 0; i < tileset->numTiles; ++i)
+    {
+        free(tileset->tiles[i].data);
+        tileset->tiles[i].data = NULL;
+    }
 
-	free(tileset->tiles);
-	tileset->tiles = NULL;
+    free(tileset->tiles);
+    tileset->tiles = NULL;
 }

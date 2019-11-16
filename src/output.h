@@ -36,6 +36,7 @@ extern "C" {
 #endif
 
 #include "appvar.h"
+#include "convert.h"
 #include "compress.h"
 
 #include <stdint.h>
@@ -52,7 +53,9 @@ typedef enum
 
 typedef struct
 {
+    char *name;
     char **convertNames;
+    convert_t **converts;
     int numConverts;
     output_format_t format;
     compression_t compress;
@@ -62,6 +65,7 @@ typedef struct
 output_t *output_alloc(void);
 void output_free(output_t *output);
 int output_add_convert(output_t *output, const char *convertName);
+int output_converts(output_t *output, convert_t **converts, int numConverts);
 
 #ifdef __cplusplus
 }

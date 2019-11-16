@@ -47,8 +47,10 @@ output_t *output_alloc(void)
         return NULL;
     }
 
+    output->name = NULL;
     output->convertNames = NULL;
     output->numConverts = 0;
+    output->converts = NULL;
     output->format = OUTPUT_FORMAT_INVALID;
     output->appvar.name = NULL;
     output->appvar.archived = true;
@@ -109,5 +111,97 @@ void output_free(output_t *output)
     free(output->appvar.name);
     output->appvar.name = NULL;
 
+    free(output->converts);
+    output->converts = NULL;
+
     output->numConverts = 0;
+}
+
+/*
+ * Find the convert containing the data to output.
+ */
+int output_find_convert(output_t *output, convert_t **converts, int numConverts)
+{
+    int i, j;
+
+    if (output == NULL || output == NULL)
+    {
+        LL_DEBUG("Invalid param in %s.", __func__);
+        return 1;
+    }
+
+    output->converts = malloc(output->numConverts * sizeof(convert_t *));
+    if (output->converts == NULL)
+    {
+        LL_DEBUG("Memory error in %s.", __func__);
+        return 1;
+    }
+
+    for (i = 0; i < output->numConverts; ++i)
+    {
+        for (j = 0; j < numConverts; ++j)
+        {
+            if (!strcmp(output->convertNames[i], converts[j]->name))
+            {
+                output->converts[i] = converts[j];
+                goto nextconvert;
+            }
+        }
+
+        LL_ERROR("No matching convert name \'%s\' found for output.",
+                 output->convertNames[i]);
+        return 1;
+
+nextconvert:
+        continue;
+    }
+
+    return 0;
+}
+
+/*
+ * Output converted images into the desired format.
+ */
+int output_converts(output_t *output, convert_t **converts, int numConverts)
+{
+    int ret = 0;
+    int i;
+
+    ret = output_find_convert(output, converts, numConverts);
+
+    for (i = 0; i < output->numConverts; ++i)
+    {
+        LL_INFO("Generating output \'%s\' for \'%s\'",
+                output->name,
+                output->converts[i]->name);
+
+        switch (output->format)
+        {
+            case OUTPUT_FORMAT_C:
+                ret = 0;
+                break;
+
+            case OUTPUT_FORMAT_ASM:
+                ret = 0;
+                break;
+
+            case OUTPUT_FORMAT_ICE:
+                ret = 0;
+                break;
+
+            case OUTPUT_FORMAT_APPVAR:
+                ret = 0;
+                break;
+
+            case OUTPUT_FORMAT_BIN:
+                ret = 0;
+                break;
+
+            default:
+                ret = 1;
+                break;
+        }
+    }
+
+    return ret;
 }

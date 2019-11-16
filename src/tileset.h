@@ -40,19 +40,19 @@ extern "C" {
 
 typedef struct
 {
-	uint8_t *data;
-	int size;
+    uint8_t *data;
+    int size;
 } tileset_tile_t;
 
 typedef struct
 {
     int tileHeight;
     int tileWidth;
-	int tileSize;
+    int tileSize;
     bool pTable;
     bool enabled;
-	tileset_tile_t *tiles;
-	int numTiles;
+    tileset_tile_t *tiles;
+    int numTiles;
 } tileset_t;
 
 int tileset_alloc_tiles(tileset_t *tileset);

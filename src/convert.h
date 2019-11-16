@@ -48,8 +48,8 @@ typedef enum
 
 typedef struct
 {
-    const char *name;
-    const char *paletteName;
+    char *name;
+    char *paletteName;
     image_t *images;
     int numImages;
     compression_t compression;

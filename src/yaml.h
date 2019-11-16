@@ -58,9 +58,9 @@ typedef struct
     palette_t *curPalette;
     convert_t *curConvert;
     output_t *curOutput;
-    unsigned int numPalettes;
-    unsigned int numConverts;
-    unsigned int numOutputs;
+    int numPalettes;
+    int numConverts;
+    int numOutputs;
     yaml_state_t state;
     int line;
 } yaml_file_t;

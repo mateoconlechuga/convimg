@@ -690,6 +690,13 @@ int yaml_parse_file(yaml_file_t *yamlfile)
     }
 
     yamlfile->line = 1;
+    yamlfile->palettes = NULL;
+    yamlfile->converts = NULL;
+    yamlfile->outputs = NULL;
+    yamlfile->numPalettes = 0;
+    yamlfile->numConverts = 0;
+    yamlfile->numOutputs = 0;
+    yamlfile->state = YAML_ST_INIT;
 
     do
     {
@@ -744,4 +751,39 @@ int yaml_parse_file(yaml_file_t *yamlfile)
     fclose(fdi);
 
     return ret;
+}
+
+/*
+ * Frees structures in yaml.
+ */
+void yaml_release_file(yaml_file_t *yamlfile)
+{
+    int i;
+
+    for (i = 0; i < yamlfile->numOutputs; i++ )
+    {
+        output_free(yamlfile->outputs[i]);
+        free(yamlfile->outputs[i]);
+        yamlfile->outputs[i] = NULL;
+    }
+    free(yamlfile->outputs);
+    yamlfile->outputs = NULL;
+
+    for (i = 0; i < yamlfile->numConverts; i++ )
+    {
+        convert_free(yamlfile->converts[i]);
+        free(yamlfile->converts[i]);
+        yamlfile->converts[i] = NULL;
+    }
+    free(yamlfile->converts);
+    yamlfile->converts = NULL;
+
+    for (i = 0; i < yamlfile->numPalettes; i++ )
+    {
+        palette_free(yamlfile->palettes[i]);
+        free(yamlfile->palettes[i]);
+        yamlfile->palettes[i] = NULL;
+    }
+    free(yamlfile->palettes);
+    yamlfile->palettes = NULL;
 }

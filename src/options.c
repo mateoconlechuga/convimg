@@ -85,15 +85,7 @@ static void options_set_default(options_t *options)
     }
 
     options->prgm = 0;
-    options->yamlfile.line = 1;
     options->yamlfile.name = NULL;
-    options->yamlfile.palettes = NULL;
-    options->yamlfile.converts = NULL;
-    options->yamlfile.outputs = NULL;
-    options->yamlfile.numPalettes = 0;
-    options->yamlfile.numConverts = 0;
-    options->yamlfile.numOutputs = 0;
-    options->yamlfile.state = YAML_ST_INIT;
 }
 
 /*

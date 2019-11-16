@@ -59,6 +59,8 @@ convert_t *convert_alloc(void)
     convert->numOmitIndices = 0;
     convert->widthAndHeight = true;
     convert->bpp = BPP_8;
+    convert->name = NULL;
+    convert->paletteName = NULL;
 
     return convert;
 }
@@ -114,4 +116,10 @@ void convert_free(convert_t *convert)
 
     free(convert->images);
     convert->images = NULL;
+
+    free(convert->name);
+    convert->name = NULL;
+
+    free(convert->paletteName);
+    convert->paletteName = NULL;
 }

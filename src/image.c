@@ -29,6 +29,7 @@
  */
 
 #include "image.h"
+#include "log.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "deps/stb/stb_image.h"

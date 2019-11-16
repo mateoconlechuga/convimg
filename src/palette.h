@@ -52,7 +52,7 @@ typedef struct
 
 typedef struct
 {
-    const char *name;
+    char *name;
     image_t *images;
     int numImages;
     int maxEntries;

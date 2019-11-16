@@ -760,7 +760,7 @@ void yaml_release_file(yaml_file_t *yamlfile)
 {
     int i;
 
-    for (i = 0; i < yamlfile->numOutputs; i++ )
+    for (i = 0; i < yamlfile->numOutputs; ++i)
     {
         output_free(yamlfile->outputs[i]);
         free(yamlfile->outputs[i]);
@@ -769,7 +769,7 @@ void yaml_release_file(yaml_file_t *yamlfile)
     free(yamlfile->outputs);
     yamlfile->outputs = NULL;
 
-    for (i = 0; i < yamlfile->numConverts; i++ )
+    for (i = 0; i < yamlfile->numConverts; ++i)
     {
         convert_free(yamlfile->converts[i]);
         free(yamlfile->converts[i]);
@@ -778,7 +778,7 @@ void yaml_release_file(yaml_file_t *yamlfile)
     free(yamlfile->converts);
     yamlfile->converts = NULL;
 
-    for (i = 0; i < yamlfile->numPalettes; i++ )
+    for (i = 0; i < yamlfile->numPalettes; ++i)
     {
         palette_free(yamlfile->palettes[i]);
         free(yamlfile->palettes[i]);

@@ -57,6 +57,7 @@ palette_t *palette_alloc(void)
     palette->numEntries = 0;
     palette->numFixedEntries = 0;
     palette->bpp = BPP_8;
+    palette->mode = COLOR_MODE_1555_GBGR;
 
     return palette;
 }
@@ -112,6 +113,9 @@ void palette_free(palette_t *palette)
 
     free(palette->images);
     palette->images = NULL;
+
+    free(palette->name);
+    palette->name = NULL;
 }
 
 /*
@@ -153,7 +157,7 @@ int palette_generate(palette_t *palette)
         image_t *image = &palette->images[i];
         liq_image *liqimage;
 
-        LL_PRINT("[info] \'%s\' (%d of %d)\n",
+        LL_PRINT("[info]  Reading \'%s\' (%d of %d)\n",
             image->name,
             i + 1,
             palette->numImages);

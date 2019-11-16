@@ -65,6 +65,9 @@ typedef struct
     int line;
 } yaml_file_t;
 
+int yaml_parse_file(yaml_file_t *yamlfile);
+void yaml_release_file(yaml_file_t *yamlfile);
+
 #ifdef __cplusplus
 }
 #endif

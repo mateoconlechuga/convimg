@@ -37,22 +37,36 @@
  */
 static void color_888_to_1555(liq_color *in, uint16_t *out, bool bgr)
 {
-
+	*out = 0;
 }
 
 static void color_888_to_565(liq_color *in, uint16_t *out, bool bgr)
 {
-
+	*out = 0;
 }
 
 static void color_1555_to_888(uint16_t *in, liq_color *out, bool bgr)
 {
+	liq_color color;
 
+	color.r = 0;
+	color.g = 0;
+	color.b = 0;
+	color.a = 255;
+
+	*out = color;
 }
 
 static void color_565_to_888(uint16_t *in, liq_color *out, bool bgr)
 {
+	liq_color color;
 
+	color.r = 0;
+	color.g = 0;
+	color.b = 0;
+	color.a = 255;
+
+	*out = color;
 }
 
 /*

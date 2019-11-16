@@ -42,9 +42,24 @@ int main(int argc, char **argv)
     ret = options_get(argc, argv, &options);
     if (ret == OPTIONS_SUCCESS)
     {
-        ret = yaml_parse_file(&options.yamlfile);
+        int i;
+        yaml_file_t *yamlfile = &options.yamlfile;
 
-        yaml_release_file(&options.yamlfile);
+        ret = yaml_parse_file(yamlfile);
+
+        if (ret == 0)
+        {
+            for (i = 0; i < yamlfile->numPalettes; ++i)
+            {
+                ret = palette_generate(yamlfile->palettes[i]);
+                if (ret != 0)
+                {
+                    break;
+                }
+            }
+        }
+
+        yaml_release_file(yamlfile);
     }
 
     return ret == OPTIONS_IGNORE ? 0 : ret;

@@ -68,10 +68,9 @@ static void options_show(const char *prgm)
  */
 static int options_verify(options_t *options)
 {
-    return OPTIONS_SUCCESS;
+    (void)options;
 
-error:
-    return OPTIONS_FAILED;
+    return OPTIONS_SUCCESS;
 }
 
 /*
@@ -85,7 +84,7 @@ static void options_set_default(options_t *options)
     }
 
     options->prgm = 0;
-    options->yamlfile.name = NULL;
+    options->yamlfile.name = "convimg.yaml";
 }
 
 /*

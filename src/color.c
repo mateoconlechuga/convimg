@@ -35,38 +35,56 @@
 /*
  * Color conversion functions
  */
-static void color_888_to_1555(liq_color *in, uint16_t *out, bool bgr)
+static void color_888_to_1555(liq_color *in, uint16_t *out)
 {
-	*out = 0;
+    uint8_t r5 = (in->r * 31 + 128) / 255;
+    uint8_t g6 = (in->g * 63 + 128) / 255;
+    uint8_t b5 = (in->b * 31 + 128) / 255;
+
+    *out = (r5 << 10) | (g6 << 5) | b5;
 }
 
-static void color_888_to_565(liq_color *in, uint16_t *out, bool bgr)
+static void color_888_to_565(liq_color *in, uint16_t *out)
 {
-	*out = 0;
+    uint8_t r5 = (in->r * 31 + 128) / 255;
+    uint8_t g6 = (in->g * 63 + 128) / 255;
+    uint8_t b5 = (in->b * 31 + 128) / 255;
+
+    *out = (g6 << 15) | (r5 << 10) | ((g6 >> 1) << 5) | b5;
 }
 
-static void color_1555_to_888(uint16_t *in, liq_color *out, bool bgr)
+static void color_1555_to_888(uint16_t *in, liq_color *out)
 {
-	liq_color color;
+    uint8_t r5 = (*in >> 10) & 31;
+    uint8_t g6 = ((*in >> 4) & 62) | (*in >> 15);
+    uint8_t b5 = *in & 31;
 
-	color.r = 0;
-	color.g = 0;
-	color.b = 0;
-	color.a = 255;
+    liq_color color =
+        {
+            .r = (r5 * 527 + 23) >> 6,
+            .g = (g6 * 255 + 32) / 63,
+            .b = (b5 * 527 + 23) >> 6,
+            .a = 255,
+        };
 
-	*out = color;
+    *out = color;
 }
 
-static void color_565_to_888(uint16_t *in, liq_color *out, bool bgr)
+static void color_565_to_888(uint16_t *in, liq_color *out)
 {
-	liq_color color;
+    uint8_t r5 = (*in >> 11) & 31;
+    uint8_t g6 = (*in >> 5) & 63;
+    uint8_t b5 = *in & 31;
 
-	color.r = 0;
-	color.g = 0;
-	color.b = 0;
-	color.a = 255;
+    liq_color color =
+        {
+            .r = (r5 * 527 + 23) >> 6,
+            .g = (g6 * 255 + 32) / 63,
+            .b = (b5 * 527 + 23) >> 6,
+            .a = 255,
+        };
 
-	*out = color;
+    *out = color;
 }
 
 /*
@@ -78,23 +96,15 @@ void color_convert(color_t *color, color_mode_t mode)
     switch (mode)
     {
         case COLOR_MODE_1555_GRGB:
-            color_888_to_1555(&color->rgb, &color->target, false);
-            color_1555_to_888(&color->target, &color->rgb, false);
-            break;
-
         case COLOR_MODE_1555_GBGR:
-            color_888_to_1555(&color->rgb, &color->target, true);
-            color_1555_to_888(&color->target, &color->rgb, true);
+            color_888_to_1555(&color->rgb, &color->target);
+            color_1555_to_888(&color->target, &color->rgb);
             break;
 
         case COLOR_MODE_565_RGB:
-            color_888_to_565(&color->rgb, &color->target, false);
-            color_565_to_888(&color->target, &color->rgb, false);
-            break;
-
         case COLOR_MODE_565_BGR:
-            color_888_to_565(&color->rgb, &color->target, true);
-            color_565_to_888(&color->target, &color->rgb, true);
+            color_888_to_565(&color->rgb, &color->target);
+            color_565_to_888(&color->target, &color->rgb);
             break;
     }
 }

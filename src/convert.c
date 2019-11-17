@@ -63,7 +63,7 @@ convert_t *convert_alloc(void)
     convert->widthAndHeight = true;
     convert->bpp = BPP_8;
     convert->name = NULL;
-    convert->paletteName = "xlibc";
+    convert->paletteName = strdup("xlibc");
 
     return convert;
 }
@@ -174,8 +174,10 @@ int convert_find_palette(convert_t *convert, palette_t **palettes, int numPalett
 {
     int i;
 
-    if (convert == NULL || palettes == NULL)
+    if (convert == NULL || palettes == NULL || convert->paletteName == NULL)
     {
+        LL_ERROR("A palette with the same name \'%s\' already exists.",
+            convert->name);
         return 1;
     }
 

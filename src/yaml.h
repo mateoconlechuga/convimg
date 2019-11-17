@@ -43,6 +43,12 @@ extern "C" {
 
 typedef enum
 {
+    YAML_OUTPUT_CONVERTS,
+    YAML_OUTPUT_PALETTES,
+} yaml_output_mode_t;
+
+typedef enum
+{
     YAML_ST_INIT,
     YAML_ST_PALETTE,
     YAML_ST_CONVERT,

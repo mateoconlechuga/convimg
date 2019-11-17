@@ -29,6 +29,7 @@
  */
 
 #include "yaml.h"
+#include "strings.h"
 #include "log.h"
 
 #include <getopt.h>
@@ -59,27 +60,24 @@ static char *ymal_get_line(FILE *fdi)
             c = 0;
         }
 
-        if (!isspace(c))
+        if (i % REALLOC_BYTES == 0)
         {
-            if (i % REALLOC_BYTES == 0)
+            line = realloc(line, ((i / REALLOC_BYTES) + 1) * REALLOC_BYTES);
+            if (line == NULL)
             {
-                line = realloc(line, ((i / REALLOC_BYTES) + 1) * REALLOC_BYTES);
-                if (line == NULL)
-                {
-                    LL_ERROR("%s", strerror(errno));
-                    return NULL;
-                }
-            }
-
-            line[i] = (char)c;
-            i++;
-
-            if (i >= MAX_LINE_SIZE)
-            {
-                LL_ERROR("Input line too large.");
-                free(line);
+                LL_ERROR("%s", strerror(errno));
                 return NULL;
             }
+        }
+
+        line[i] = (char)c;
+        i++;
+
+        if (i >= MAX_LINE_SIZE)
+        {
+            LL_ERROR("Input line too large.");
+            free(line);
+            return NULL;
         }
     } while (c);
 
@@ -174,6 +172,21 @@ int yaml_alloc_output(yaml_file_t *yamlfile)
 }
 
 /*
+ * Finds values from key.
+ */
+static char *yaml_get_args(const char *delim)
+{
+    char *args = strtok(NULL, delim);
+
+    if (args != NULL)
+    {
+        args = strings_trim(args);
+    }
+
+    return args;
+}
+
+/*
  * Takes a line that has braces and converts to a color.
  */
 static int yaml_parse_fixed_color(yaml_file_t *yamlfile, char *line, palette_entry_t *entry)
@@ -219,6 +232,13 @@ static int yaml_parse_fixed_color(yaml_file_t *yamlfile, char *line, palette_ent
 
             value = strtok(NULL, ":");
             if (value == NULL)
+            {
+                goto error;
+            }
+
+            value = strings_trim(value);
+            key = strings_trim(key);
+            if (key == NULL || value == NULL)
             {
                 goto error;
             }
@@ -299,6 +319,13 @@ static int yaml_parse_tileset(yaml_file_t *yamlfile, char *line, tileset_t *tile
                 goto error;
             }
 
+            value = strings_trim(value);
+            key = strings_trim(key);
+            if (key == NULL || value == NULL)
+            {
+                goto error;
+            }
+
             if (!strcmp(key, "tile-width"))
             {
                 tileset->tileWidth = strtol(value, NULL, 0);
@@ -336,7 +363,13 @@ static int yaml_get_command(yaml_file_t *yamlfile, char *command, char *line)
         return 0;
     }
 
-    if (!strcmp(command, "generate-palette"))
+    command = strings_trim(command);
+    if (command == NULL)
+    {
+        return 1;
+    }
+
+    if (!strcmp(command, "palette"))
     {
         yamlfile->state = YAML_ST_PALETTE;
         ret = yaml_alloc_palette(yamlfile);
@@ -370,7 +403,8 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
         return 0;
     }
 
-    args = strtok(NULL, ":");
+    command = strings_trim(command);
+    args = yaml_get_args(":");
 
     LL_DEBUG("Palette Command: %s:%s", command, args);
 
@@ -384,10 +418,10 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
         }
         else
         {
-            ret = pallete_add_path(palette, &command[1]);
+            ret = pallete_add_path(palette, strings_trim(&command[1]));
         }
     }
-    else if (!strcmp(command, "generate-palette"))
+    else if (!strcmp(command, "palette"))
     {
         if (args != NULL)
         {
@@ -400,27 +434,30 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
             ret = 1;
         }
     }
-    else if (!strcmp(command, "maxentries"))
+    else if (!strcmp(command, "max-entries"))
     {
         palette->maxEntries = strtol(args, NULL, 0);
     }
     else if (!strcmp(command, "speed"))
     {
-        palette->quantizeSpeed = strtol(args, NULL, 0);
-        if (palette->quantizeSpeed < 1 || palette->quantizeSpeed > 10)
+        if (args != NULL)
+        {
+            palette->quantizeSpeed = strtol(args, NULL, 0);
+        }
+        if (args == NULL || palette->quantizeSpeed < 1 || palette->quantizeSpeed > 10)
         {
             LL_WARNING("Ignoring invalid quantization speed (line %d).",
                 yamlfile->line);
             palette->quantizeSpeed = PALETTE_DEFAULT_QUANTIZE_SPEED;
         }
     }
-    else if (!strcmp(command, "fixedcolor"))
+    else if (!strcmp(command, "fixed-color"))
     {
         ret = yaml_parse_fixed_color(yamlfile, line, &entry);
         palette->entries[palette->numFixedEntries] = entry;
         palette->numFixedEntries++;
     }
-    else if (!strcmp(command, "transparentcolor"))
+    else if (!strcmp(command, "transparent-color"))
     {
         ret = yaml_parse_fixed_color(yamlfile, line, &entry);
         palette->entries[palette->numFixedEntries] = entry;
@@ -457,13 +494,14 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
         return 0;
     }
 
-    args = strtok(NULL, ":");
+    command = strings_trim(command);
+    args = yaml_get_args(":");
 
     LL_DEBUG("Convert Command: %s:%s", command, args);
 
     if (command[0] == '-')
     {
-        ret = convert_add_path(convert, &command[1]);
+        ret = convert_add_path(convert, strings_trim(&command[1]));
     }
     else if (!strcmp(command, "convert"))
     {
@@ -473,8 +511,7 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
         }
         else
         {
-            LL_ERROR("Missing name for convert command \'%s\' (line %d).",
-                convert->name,
+            LL_ERROR("Missing name for convert command (line %d).",
                 yamlfile->line);
             ret = 1;
         }
@@ -483,6 +520,11 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
     {
         if (args != NULL)
         {
+            if (convert->paletteName != NULL)
+            {
+                free(convert->paletteName);
+                convert->paletteName = NULL;
+            }
             convert->paletteName = strdup(args);
         }
         else
@@ -597,6 +639,8 @@ compression_t yaml_get_compress_mode(yaml_file_t *yamlfile, char *arg)
  */
 static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
 {
+    static yaml_output_mode_t outputMode = YAML_OUTPUT_CONVERTS;
+    output_t *output = yamlfile->curOutput;
     char *args;
     int ret = 0;
 
@@ -605,38 +649,46 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
         return 0;
     }
 
-    args = strtok(NULL, ":");
+    command = strings_trim(command);
+    args = yaml_get_args(":");
 
     LL_DEBUG("Output Command: %s:%s", command, args);
 
     if (command[0] == '-')
     {
-        ret = output_add_convert(yamlfile->curOutput, &command[1]);
+        if (outputMode == YAML_OUTPUT_PALETTES)
+        {
+            ret = output_add_palette(output, strings_trim(&command[1]));
+        }
+        else
+        {
+            ret = output_add_convert(output, strings_trim(&command[1]));
+        }
     }
     else if (!strcmp(command, "output"))
     {
         if (args != NULL)
         {
-            yamlfile->curOutput->name = strdup(args);
+            output->name = strdup(args);
             if (!strcmp(args, "c"))
             {
-                yamlfile->curOutput->format = OUTPUT_FORMAT_C;
+                output->format = OUTPUT_FORMAT_C;
             }
             else if (!strcmp(args, "asm"))
             {
-                yamlfile->curOutput->format = OUTPUT_FORMAT_ASM;
+                output->format = OUTPUT_FORMAT_ASM;
             }
             else if (!strcmp(args, "ice"))
             {
-                yamlfile->curOutput->format = OUTPUT_FORMAT_ICE;
+                output->format = OUTPUT_FORMAT_ICE;
             }
             else if (!strcmp(args, "appvar"))
             {
-                yamlfile->curOutput->format = OUTPUT_FORMAT_APPVAR;
+                output->format = OUTPUT_FORMAT_APPVAR;
             }
             else if (!strcmp(args, "bin"))
             {
-                yamlfile->curOutput->format = OUTPUT_FORMAT_BIN;
+                output->format = OUTPUT_FORMAT_BIN;
             }
         }
         else
@@ -646,33 +698,33 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
             ret = 1;
         }
     }
-    else if (yamlfile->curOutput->format == OUTPUT_FORMAT_APPVAR)
+    else if (output->format == OUTPUT_FORMAT_APPVAR)
     {
         if (!strcmp(command, "name"))
         {
-            yamlfile->curOutput->appvar.name = strdup(args);
+            output->appvar.name = strdup(args);
         }
         else if (!strcmp(command, "archived"))
         {
-            yamlfile->curOutput->appvar.archived = !strcmp(args, "true");
+            output->appvar.archived = !strcmp(args, "true");
         }
         else if (!strcmp(command, "source-init"))
         {
-            yamlfile->curOutput->appvar.init = !strcmp(args, "true");
+            output->appvar.init = !strcmp(args, "true");
         }
         else if (!strcmp(command, "source-format"))
         {
             if (!strcmp(args, "c"))
             {
-                yamlfile->curOutput->appvar.source = APPVAR_SOURCE_C;
+                output->appvar.source = APPVAR_SOURCE_C;
             }
             else if (!strcmp(args, "asm"))
             {
-                yamlfile->curOutput->appvar.source = APPVAR_SOURCE_ASM;
+                output->appvar.source = APPVAR_SOURCE_ASM;
             }
             else if (!strcmp(args, "ice"))
             {
-                yamlfile->curOutput->appvar.source = APPVAR_SOURCE_ICE;
+                output->appvar.source = APPVAR_SOURCE_ICE;
             }
             else
             {
@@ -681,12 +733,30 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
                 ret = 1;
             }
         }
+        else if (!strcmp(command, "include-file"))
+        {
+            if (args != NULL)
+            {
+                output->includeFileName = strdup(args);
+            }
+            else
+            {
+                LL_ERROR("Missing include file name on line %d.",
+                    yamlfile->line);
+                ret = 1;
+            }
+        }
         else if (!strcmp(command, "compress"))
         {
-            yamlfile->curOutput->compress = yaml_get_compress_mode(yamlfile, args);
+            output->compress = yaml_get_compress_mode(yamlfile, args);
         }
         else if (!strcmp(command, "converts"))
         {
+            outputMode = YAML_OUTPUT_CONVERTS;
+        }
+        else if (!strcmp(command, "palettes"))
+        {
+            outputMode = YAML_OUTPUT_PALETTES;
         }
         else
         {
@@ -694,12 +764,43 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
                 yamlfile->line);
         }
     }
+    else if (!strcmp(command, "include-file"))
+    {
+        if (args != NULL)
+        {
+            output->includeFileName = strdup(args);
+        }
+        else
+        {
+            LL_ERROR("Missing include file name on line %d.",
+                yamlfile->line);
+            ret = 1;
+        }
+    }
+    else if (!strcmp(command, "name"))
+    {
+        if (args != NULL)
+        {
+            output->name = strdup(args);
+        }
+        else
+        {
+            LL_ERROR("Missing name on line %d.",
+                yamlfile->line);
+            ret = 1;
+        }
+    }
     else if (!strcmp(command, "compress"))
     {
-        yamlfile->curOutput->compress = yaml_get_compress_mode(yamlfile, args);
+        output->compress = yaml_get_compress_mode(yamlfile, args);
+    }
+    else if (!strcmp(command, "palettes"))
+    {
+        outputMode = YAML_OUTPUT_PALETTES;
     }
     else if (!strcmp(command, "converts"))
     {
+        outputMode = YAML_OUTPUT_CONVERTS;
     }
     else
     {
@@ -764,10 +865,13 @@ int yaml_parse_file(yaml_file_t *yamlfile)
         fullLine = strdup(line);
         command = strtok(line, ":");
 
-        ret = yaml_get_command(yamlfile, command, fullLine);
-        if (ret == 1)
+        if (isspace(line[0]) == 0)
         {
-            break;
+            ret = yaml_get_command(yamlfile, command, fullLine);
+            if (ret == 1)
+            {
+                break;
+            }
         }
 
         switch (yamlfile->state)

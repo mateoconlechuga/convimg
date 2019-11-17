@@ -30,6 +30,7 @@
 
 #include "options.h"
 #include "convert.h"
+#include "log.h"
 
 /*
  * Main entry function, cli arguments.
@@ -46,6 +47,16 @@ int main(int argc, char **argv)
         yaml_file_t *yamlfile = &options.yamlfile;
 
         ret = yaml_parse_file(yamlfile);
+
+        /* check to see if there are actually outputs */
+        if (ret == 0)
+        {
+            if (yamlfile->numOutputs == 0)
+            {
+                LL_ERROR("No output rules in file, quitting.");
+                ret = 1;
+            }
+        }
 
         /* generate palettes */
         if (ret == 0)
@@ -77,11 +88,19 @@ int main(int argc, char **argv)
             }
         }
 
-        /* output converted files */
+        /* output converted files (converts and palettes) */
         if (ret == 0)
         {
-            for (i = 0; i < yamlfile->numConverts; ++i)
+            for (i = 0; i < yamlfile->numOutputs; ++i)
             {
+                ret = output_palettes(yamlfile->outputs[i],
+                                      yamlfile->palettes,
+                                      yamlfile->numPalettes);
+                if (ret != 0)
+                {
+                    break;
+                }
+
                 ret = output_converts(yamlfile->outputs[i],
                                       yamlfile->converts,
                                       yamlfile->numConverts);

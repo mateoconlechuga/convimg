@@ -268,6 +268,12 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
         }
     }
 
+    if (palette->numImages == 0)
+    {
+        LL_ERROR("No images to convert for palette \'%s\'", palette->name);
+        return 1;
+    }
+
     attr = liq_attr_create();
 
     liq_set_speed(attr, palette->quantizeSpeed);

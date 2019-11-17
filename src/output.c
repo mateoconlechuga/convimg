@@ -48,9 +48,13 @@ output_t *output_alloc(void)
     }
 
     output->name = NULL;
+    output->includeFileName = NULL;
     output->convertNames = NULL;
     output->numConverts = 0;
     output->converts = NULL;
+    output->paletteNames = NULL;
+    output->palettes = NULL;
+    output->numPalettes = 0;
     output->format = OUTPUT_FORMAT_INVALID;
     output->appvar.name = NULL;
     output->appvar.archived = true;
@@ -88,6 +92,33 @@ int output_add_convert(output_t *output, const char *convertName)
 }
 
 /*
+ * Adds a new palette to the output structure.
+ */
+int output_add_palette(output_t *output, const char *paletteName)
+{
+    if (output == NULL ||
+        paletteName == NULL ||
+        output->format == OUTPUT_FORMAT_INVALID)
+    {
+        LL_DEBUG("Invalid param in %s'.", __func__);
+        return 1;
+    }
+
+    output->paletteNames =
+        realloc(output->paletteNames, (output->numPalettes + 1) * sizeof(char *));
+    if (output->paletteNames == NULL)
+    {
+        LL_ERROR("Memory error in %s'.", __func__);
+        return 1;
+    }
+
+    output->paletteNames[output->numPalettes] = strdup(paletteName);
+    output->numPalettes++;
+
+    return 0;
+}
+
+/*
  * Frees an allocated output structure.
  */
 void output_free(output_t *output)
@@ -105,8 +136,17 @@ void output_free(output_t *output)
         output->convertNames[i] = NULL;
     }
 
+    for (i = 0; i < output->numPalettes; ++i)
+    {
+        free(output->paletteNames[i]);
+        output->paletteNames[i] = NULL;
+    }
+
     free(output->convertNames);
     output->convertNames = NULL;
+
+    free(output->paletteNames);
+    output->paletteNames = NULL;
 
     free(output->appvar.name);
     output->appvar.name = NULL;
@@ -114,17 +154,27 @@ void output_free(output_t *output)
     free(output->converts);
     output->converts = NULL;
 
+    free(output->palettes);
+    output->palettes = NULL;
+
+    free(output->includeFileName);
+    output->includeFileName = NULL;
+
+    free(output->name);
+    output->name = NULL;
+
     output->numConverts = 0;
+    output->numPalettes = 0;
 }
 
 /*
  * Find the convert containing the data to output.
  */
-int output_find_convert(output_t *output, convert_t **converts, int numConverts)
+static int output_find_converts(output_t *output, convert_t **converts, int numConverts)
 {
     int i, j;
 
-    if (output == NULL || output == NULL)
+    if (output == NULL || converts == NULL)
     {
         LL_DEBUG("Invalid param in %s.", __func__);
         return 1;
@@ -160,6 +210,48 @@ nextconvert:
 }
 
 /*
+ * Find the palettes containing the data to output.
+ */
+static int output_find_palettes(output_t *output, palette_t **palettes, int numPalettes)
+{
+    int i, j;
+
+    if (output == NULL || palettes == NULL)
+    {
+        LL_DEBUG("Invalid param in %s.", __func__);
+        return 1;
+    }
+
+    output->palettes = malloc(output->numPalettes * sizeof(palette_t *));
+    if (output->palettes == NULL)
+    {
+        LL_DEBUG("Memory error in %s.", __func__);
+        return 1;
+    }
+
+    for (i = 0; i < output->numPalettes; ++i)
+    {
+        for (j = 0; j < numPalettes; ++j)
+        {
+            if (!strcmp(output->paletteNames[i], palettes[j]->name))
+            {
+                output->palettes[i] = palettes[j];
+                goto nextpalette;
+            }
+        }
+
+        LL_ERROR("No matching convert name \'%s\' found for output.",
+                 output->paletteNames[i]);
+        return 1;
+
+nextpalette:
+        continue;
+    }
+
+    return 0;
+}
+
+/*
  * Output converted images into the desired format.
  */
 int output_converts(output_t *output, convert_t **converts, int numConverts)
@@ -167,7 +259,16 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
     int ret = 0;
     int i;
 
-    ret = output_find_convert(output, converts, numConverts);
+    if (numConverts == 0)
+    {
+        return 0;
+    }
+
+    ret = output_find_converts(output, converts, numConverts);
+    if (ret != 0)
+    {
+        return ret;
+    }
 
     for (i = 0; i < output->numConverts; ++i)
     {
@@ -203,5 +304,60 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
         }
     }
 
+    return ret;
+}
+
+/*
+ * Output converted palettes into the desired format.
+ */
+int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
+{
+    int ret = 0;
+    int i;
+
+    if (numPalettes == 0)
+    {
+        return 0;
+    }
+
+    ret = output_find_palettes(output, palettes, numPalettes);
+    if (ret != 0)
+    {
+        return ret;
+    }
+
+    for (i = 0; i < output->numPalettes; ++i)
+    {
+        LL_INFO("Generating output \'%s\' for \'%s\'",
+                output->name,
+                output->palettes[i]->name);
+
+        switch (output->format)
+        {
+            case OUTPUT_FORMAT_C:
+                ret = 0;
+                break;
+
+            case OUTPUT_FORMAT_ASM:
+                ret = 0;
+                break;
+
+            case OUTPUT_FORMAT_ICE:
+                ret = 0;
+                break;
+
+            case OUTPUT_FORMAT_APPVAR:
+                ret = 0;
+                break;
+
+            case OUTPUT_FORMAT_BIN:
+                ret = 0;
+                break;
+
+            default:
+                ret = 1;
+                break;
+        }
+    }
     return ret;
 }

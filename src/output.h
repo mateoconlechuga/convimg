@@ -37,6 +37,7 @@ extern "C" {
 
 #include "appvar.h"
 #include "convert.h"
+#include "palette.h"
 #include "compress.h"
 
 #include <stdint.h>
@@ -54,9 +55,13 @@ typedef enum
 typedef struct
 {
     char *name;
+    char *includeFileName;
     char **convertNames;
     convert_t **converts;
     int numConverts;
+    char **paletteNames;
+    palette_t **palettes;
+    int numPalettes;
     output_format_t format;
     compression_t compress;
     appvar_t appvar;
@@ -65,7 +70,9 @@ typedef struct
 output_t *output_alloc(void);
 void output_free(output_t *output);
 int output_add_convert(output_t *output, const char *convertName);
+int output_add_palette(output_t *output, const char *paletteName);
 int output_converts(output_t *output, convert_t **converts, int numConverts);
+int output_palettes(output_t *output, palette_t **palettes, int numPalettes);
 
 #ifdef __cplusplus
 }

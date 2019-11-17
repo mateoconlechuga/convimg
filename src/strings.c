@@ -32,6 +32,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 /*
  * strdup with a strcat.
@@ -59,13 +60,42 @@ char *strdupcat(const char *s, const char *c)
 }
 
 /*
+ * Removes leading and trailing whitespace.
+ */
+char *strings_trim(char *str)
+{
+    char *end;
+
+    while (isspace((int)*str))
+    {
+        str++;
+    }
+
+    if (*str == '\0')
+    {
+        return str;
+    }
+
+    end = str + strlen(str) - 1;
+    while (end > str && isspace((int)*end))
+    {
+        end--;
+    }
+
+    end[1] = '\0';
+
+    return str;
+}
+
+/*
  * Finds images in directories.
  */
 glob_t *strings_find_images(const char *fullPath)
 {
     char *path;
 
-    if (!strstr(fullPath, ".png"))
+    if (!strstr(fullPath, ".png") &&
+        !strstr(fullPath, ".bmp"))
     {
         path = strdupcat(fullPath, ".png");
     }

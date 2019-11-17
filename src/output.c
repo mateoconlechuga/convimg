@@ -29,6 +29,7 @@
  */
 
 #include "output.h"
+#include "output-formats.h"
 #include "log.h"
 
 #include <stdlib.h>
@@ -272,35 +273,81 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
 
     for (i = 0; i < output->numConverts; ++i)
     {
+        convert_t *convert = output->converts[i];
+        int j;
+
         LL_INFO("Generating output \'%s\' for \'%s\'",
                 output->name,
-                output->converts[i]->name);
+                convert->name);
 
-        switch (output->format)
+        for (j = 0; j < convert->numImages; ++j)
         {
-            case OUTPUT_FORMAT_C:
-                ret = 0;
-                break;
+            image_t *image = &convert->images[j];
 
-            case OUTPUT_FORMAT_ASM:
-                ret = 0;
-                break;
+            switch (output->format)
+            {
+                case OUTPUT_FORMAT_C:
+                    ret = output_c_image(image);
+                    break;
 
-            case OUTPUT_FORMAT_ICE:
-                ret = 0;
-                break;
+                case OUTPUT_FORMAT_ASM:
+                    ret = output_asm_image(image);
+                    break;
 
-            case OUTPUT_FORMAT_APPVAR:
-                ret = 0;
-                break;
+                case OUTPUT_FORMAT_ICE:
+                    ret = 0;
+                    break;
 
-            case OUTPUT_FORMAT_BIN:
-                ret = 0;
-                break;
+                case OUTPUT_FORMAT_APPVAR:
+                    ret = 0;
+                    break;
 
-            default:
-                ret = 1;
-                break;
+                case OUTPUT_FORMAT_BIN:
+                    ret = 0;
+                    break;
+
+                default:
+                    ret = 1;
+                    break;
+            }
+        }
+
+        for (j = 0; j < convert->numTilesetGroups; ++j)
+        {
+            tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
+            int k;
+
+            for (k = 0; k < tilesetGroup->numTilesets; ++k)
+            {
+                tileset_t *tileset = &tilesetGroup->tilesets[k];
+
+                switch (output->format)
+                {
+                    case OUTPUT_FORMAT_C:
+                        ret = output_c_tileset(tileset);
+                        break;
+
+                    case OUTPUT_FORMAT_ASM:
+                        ret = output_asm_tileset(tileset);
+                        break;
+
+                    case OUTPUT_FORMAT_ICE:
+                        ret = 0;
+                        break;
+
+                    case OUTPUT_FORMAT_APPVAR:
+                        ret = 0;
+                        break;
+
+                    case OUTPUT_FORMAT_BIN:
+                        ret = 0;
+                        break;
+
+                    default:
+                        ret = 1;
+                        break;
+                }
+            }
         }
     }
 
@@ -328,18 +375,20 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
 
     for (i = 0; i < output->numPalettes; ++i)
     {
+        palette_t *palette = output->palettes[i];
+
         LL_INFO("Generating output \'%s\' for \'%s\'",
                 output->name,
-                output->palettes[i]->name);
+                palette->name);
 
         switch (output->format)
         {
             case OUTPUT_FORMAT_C:
-                ret = 0;
+                ret = output_c_palette(palette);
                 break;
 
             case OUTPUT_FORMAT_ASM:
-                ret = 0;
+                ret = output_asm_palette(palette);
                 break;
 
             case OUTPUT_FORMAT_ICE:
@@ -359,5 +408,22 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
                 break;
         }
     }
+    return ret;
+}
+
+/*
+ * Output a header for using with everything.
+ */
+int output_include_header(output_t *output,
+                          palette_t **palettes, int numPalettes,
+                          convert_t **converts, int numConverts)
+{
+    int ret = 0;
+
+    if (numPalettes == 0 && numConverts == 0)
+    {
+        return 0;
+    }
+
     return ret;
 }

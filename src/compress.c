@@ -64,7 +64,7 @@ static int compress_zx7(unsigned char **arr, size_t *size)
  * Compress output array before writing to output.
  * Returns compressed array, or NULL if error.
  */
-int compress_array(unsigned char **arr, size_t *size, compression_t mode)
+int compress_array(unsigned char **arr, size_t *size, compress_t mode)
 {
     /* zx7 is only compression mode */
     (void)mode;

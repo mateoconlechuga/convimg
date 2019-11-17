@@ -34,6 +34,52 @@
 #include <string.h>
 
 /*
+ * Allocates storage for a tileset.
+ */
+tileset_t *tileset_alloc(void)
+{
+    tileset_t *tileset = NULL;
+
+    tileset = malloc(sizeof(tileset_t));
+    if (tileset == NULL)
+    {
+        return NULL;
+    }
+
+    tileset->tileHeight = 16;
+    tileset->tileWidth = 16;
+    tileset->pTable = true;
+    tileset->tiles = NULL;
+    tileset->numTiles = 0;
+    tileset->image.name = NULL;
+    tileset->image.path = NULL;
+    tileset->image.data = NULL;
+    tileset->image.width = 0;
+    tileset->image.height = 0;
+
+    return tileset;
+}
+
+/*
+ * Allocates a new tileset group.
+ */
+tileset_group_t *tileset_group_alloc(void)
+{
+    tileset_group_t *tilesetGroup;
+
+    tilesetGroup = malloc(sizeof(tileset_group_t));
+    if (tilesetGroup == NULL)
+    {
+        return NULL;
+    }
+
+    tilesetGroup->tilesets = NULL;
+    tilesetGroup->numTilesets = 0;
+
+    return tilesetGroup;
+}
+
+/*
  * Allocates storage for each tile.
  */
 int tileset_alloc_tiles(tileset_t *tileset)
@@ -69,17 +115,48 @@ void tileset_free(tileset_t *tileset)
 {
     int i;
 
-    if (tileset == NULL || tileset->tiles == NULL)
+    if (tileset == NULL)
     {
         return;
     }
 
     for (i = 0; i < tileset->numTiles; ++i)
     {
-        free(tileset->tiles[i].data);
-        tileset->tiles[i].data = NULL;
+        if (tileset->tiles != NULL)
+        {
+            free(tileset->tiles[i].data);
+            tileset->tiles[i].data = NULL;
+        }
     }
 
     free(tileset->tiles);
     tileset->tiles = NULL;
+
+    image_free(&tileset->image);
+}
+
+/*
+ * Frees a whole tileset group.
+ */
+void tileset_group_free(tileset_group_t *tilesetGroup)
+{
+    int i;
+
+    if (tilesetGroup == NULL)
+    {
+        return;
+    }
+
+    for (i = 0; i < tilesetGroup->numTilesets; ++i)
+    {
+        if (tilesetGroup->tilesets != NULL)
+        {
+            tileset_free(&tilesetGroup->tilesets[i]);
+        }
+    }
+
+    free(tilesetGroup->tilesets);
+    tilesetGroup->tilesets = NULL;
+
+    tilesetGroup->numTilesets = 0;
 }

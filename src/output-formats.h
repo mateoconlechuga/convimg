@@ -28,39 +28,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef IMAGE_H
-#define IMAGE_H
+#ifndef OUTPUT_FORMATS_H
+#define OUTPUT_FORMATS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "compress.h"
+#include "output.h"
 
-#include <stdint.h>
+/*
+ * Output is CRLF to please the Windows losers.
+ */
 
-typedef struct
-{
-    char *name;
-    char *path;
-    uint8_t *data;
-    int width;
-    int height;
-	int size;
-} image_t;
+/*
+ * C Format.
+ */
+int output_c_image(image_t *image);
+int output_c_tileset(tileset_t *tileset);
+int output_c_palette(palette_t *palette);
+int output_c_include_file(output_t *output);
 
-#define WIDTH_HEIGHT_SIZE 2
+/*
+ * Assembly Format.
+ */
+int output_asm_image(image_t *image);
+int output_asm_tileset(tileset_t *tileset);
+int output_asm_palette(palette_t *palette);
+int output_asm_include_file(output_t *output);
 
-/* I despise forward declartions, but meh */
-typedef struct palette palette_t;
+/*
+ * ICE Format.
+ */
+int output_ice_image(image_t *image);
+int output_ice_tileset(tileset_t *tileset);
+int output_ice_palette(palette_t *palette);
+int output_ice_include_file(output_t *output);
 
-int image_load(image_t *image);
-int image_rlet(image_t *image, int tIndex);
-int image_add_width_and_height(image_t *image);
-int image_compress(image_t *image, compress_t compress);
-int image_remove_omits(image_t *image, int *omitIndices, int numOmitIndices);
-int image_quantize(image_t *image, palette_t *palette);
-void image_free(image_t *image);
+/*
+ * Appvar Format.
+ */
+int output_appvar_image(image_t *image);
+int output_appvar_tileset(tileset_t *tileset);
+int output_appvar_palette(palette_t *palette);
+int output_appvar_include_file(output_t *output);
+
+/*
+ * Binary Format.
+ */
+int output_bin_image(image_t *image);
+int output_bin_tileset(tileset_t *tileset);
+int output_bin_palette(palette_t *palette);
+int output_bin_include_file(output_t *output);
 
 #ifdef __cplusplus
 }

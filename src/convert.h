@@ -52,20 +52,24 @@ typedef struct convert
     char *paletteName;
     image_t *images;
     int numImages;
-    compression_t compression;
+    tileset_group_t **tilesetGroups;
+    int numTilesetGroups;
+    compress_t compress;
     palette_t *palette;
-    tileset_t tileset;
     convert_style_t style;
     int omitIndices[PALETTE_MAX_ENTRIES];
     int numOmitIndices;
+    int transparentIndex;
     bool widthAndHeight;
     bpp_t bpp;
 } convert_t;
 
 convert_t *convert_alloc(void);
 void convert_free(convert_t *convert);
-int convert_add_path(convert_t *convert, const char *path);
-int convert_images(convert_t *convert, palette_t **palettes, int numPalettes);
+int convert_alloc_tileset_group(convert_t *convert);
+int convert_add_image_path(convert_t *convert, const char *path);
+int convert_add_tileset_path(convert_t *convert, const char *path);
+int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes);
 
 #ifdef __cplusplus
 }

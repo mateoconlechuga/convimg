@@ -45,7 +45,7 @@
 int image_load(image_t *image)
 {
     int channels;
-    image->data = (uint8_t *)stbi_load(image->name,
+    image->data = (uint8_t *)stbi_load(image->path,
                                        &image->width,
                                        &image->height,
                                        &channels,
@@ -67,7 +67,173 @@ void image_free(image_t *image)
     }
 
     free(image->name);
+    free(image->path);
     free(image->data);
+}
+
+/*
+ * Adds width and height to image.
+ */
+int image_add_width_and_height(image_t *image)
+{
+    if (image == NULL)
+    {
+        LL_DEBUG("Invalid param in %s", __func__);
+        return 1;
+    }
+
+    image->data = realloc(image->data, image->size + WIDTH_HEIGHT_SIZE);
+    if (image->data == NULL)
+    {
+        return 1;
+    }
+
+    memmove(image->data + WIDTH_HEIGHT_SIZE, image->data, image->size);
+
+    image->data[0] = image->width;
+    image->data[1] = image->height;
+
+    image->size += WIDTH_HEIGHT_SIZE;
+
+    return 0;
+}
+
+/*
+ * Converts image to RLET encoded.
+ */
+int image_rlet(image_t *image, int tIndex)
+{
+    uint8_t *newData = calloc(image->width * image->height * 2, sizeof(uint8_t));
+    int newSize = 0;
+    int i;
+
+    if (newData == NULL)
+    {
+        LL_DEBUG("Memory error in %s", __func__);
+        return 1;
+    }
+
+    if (tIndex < 0)
+    {
+        LL_ERROR("Transparent color index not specified for RLET mode.");
+        return 1;
+    }
+
+    for (i = 0; i < image->height; i++)
+    {
+        int offset = i * image->width;
+        int left = image->width;
+
+        while (left)
+        {
+            int o, t;
+
+            t = o = 0;
+            while (t < left && tIndex == image->data[t + offset])
+            {
+                t++;
+            }
+
+            newData[newSize] = t;
+            newSize++;
+
+            if ((left -= t))
+            {
+                uint8_t *opaqueLen = &newData[newSize];
+                newSize++;
+
+                while (o < left && tIndex != image->data[t + o + offset])
+                {
+                    newData[newSize] = image->data[t + o + offset];
+                    newSize++;
+                    o++;
+                }
+
+                *opaqueLen = o;
+                left -= o;
+            }
+
+            offset += o + t;
+        }
+    }
+
+    free(image->data);
+    image->data = newData;
+    image->size = newSize;
+
+    return 0;
+}
+
+/*
+ * Removes omited indicies from the converted data.
+ * Reallocs array as needed.
+ */
+int image_remove_omits(image_t *image, int *omitIndices, int numOmitIndices)
+{
+    int i, j;
+    int newSize = 0;
+    uint8_t *newData;
+
+    if (numOmitIndices == 0)
+    {
+        return 0;
+    }
+
+    newData = malloc(image->size);
+    if (newData == NULL)
+    {
+        return 1;
+    }
+
+    for (i = 0; i < image->size; ++i)
+    {
+        for (j = 0; j < numOmitIndices; ++j)
+        {
+            if (image->data[i] == omitIndices[j])
+            {
+                goto nextbyte;
+            }
+        }
+
+        newData[newSize] = image->data[i];
+        newSize++;
+
+nextbyte:
+        continue;
+    }
+
+    free(image->data);
+    image->data = newData;
+    image->size = newSize;
+
+    return 0;
+}
+
+/*
+ * Compresses data (includes width and height if they exist).
+ * Reallocs array as needed.
+ */
+int image_compress(image_t *image, compress_t compress)
+{
+    size_t newSize;
+    int ret = 0;
+
+    if (image == NULL)
+    {
+        LL_DEBUG("Invalid param in %s", __func__);
+        return 1;
+    }
+
+    if (compress == COMPRESS_NONE)
+    {
+        return 0;
+    }
+
+    newSize = image->size;
+    ret = compress_array(&image->data, &newSize, compress);
+    image->size = newSize;
+
+    return ret;
 }
 
 /*
@@ -84,7 +250,7 @@ int image_quantize(image_t *image, palette_t *palette)
 	liqattr = liq_attr_create();
 	if (liqattr == NULL)
 	{
-	    LL_ERROR("Failed to create image attributes \'%s\'\n", image->name);
+	    LL_ERROR("Failed to create image attributes \'%s\'\n", image->path);
 	    return 1;
 	}
 
@@ -97,7 +263,7 @@ int image_quantize(image_t *image, palette_t *palette)
 	                                 0);
 	if (liqimage == NULL)
 	{
-	    LL_ERROR("Failed to create image \'%s\'\n", image->name);
+	    LL_ERROR("Failed to create image \'%s\'\n", image->path);
 	    liq_attr_destroy(liqattr);
 	    return 1;
 	}
@@ -110,7 +276,7 @@ int image_quantize(image_t *image, palette_t *palette)
 	liqresult = liq_quantize_image(liqattr, liqimage);
 	if (liqresult == NULL)
 	{
-	    LL_ERROR("Failed to quantize image \'%s\'\n", image->name);
+	    LL_ERROR("Failed to quantize image \'%s\'\n", image->path);
 	    liq_image_destroy(liqimage);
 	    liq_attr_destroy(liqattr);
 	    return 1;
@@ -119,7 +285,7 @@ int image_quantize(image_t *image, palette_t *palette)
 	data = malloc(image->size);
 	if (data == NULL)
 	{
-	    LL_ERROR("Failed to allocate image memory \'%s\'\n", image->name);
+	    LL_ERROR("Failed to allocate image memory \'%s\'\n", image->path);
 	    liq_result_destroy(liqresult);
 	    liq_image_destroy(liqimage);
 	    liq_attr_destroy(liqattr);

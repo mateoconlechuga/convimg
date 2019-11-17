@@ -78,9 +78,9 @@ int main(int argc, char **argv)
         {
             for (i = 0; i < yamlfile->numConverts; ++i)
             {
-                ret = convert_images(yamlfile->converts[i],
-                                     yamlfile->palettes,
-                                     yamlfile->numPalettes);
+                ret = convert_convert(yamlfile->converts[i],
+                                      yamlfile->palettes,
+                                      yamlfile->numPalettes);
                 if (ret != 0)
                 {
                     break;
@@ -104,6 +104,16 @@ int main(int argc, char **argv)
                 ret = output_converts(yamlfile->outputs[i],
                                       yamlfile->converts,
                                       yamlfile->numConverts);
+                if (ret != 0)
+                {
+                    break;
+                }
+
+                ret = output_include_header(yamlfile->outputs[i],
+                                            yamlfile->palettes,
+                                            yamlfile->numPalettes,
+                                            yamlfile->converts,
+                                            yamlfile->numConverts);
                 if (ret != 0)
                 {
                     break;

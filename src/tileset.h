@@ -35,6 +35,8 @@
 extern "C" {
 #endif
 
+#include "image.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -46,17 +48,30 @@ typedef struct
 
 typedef struct
 {
-    int tileHeight;
-    int tileWidth;
-    int tileSize;
-    bool pTable;
-    bool enabled;
     tileset_tile_t *tiles;
     int numTiles;
+    image_t image;
+
+    /* duplicate parameters from parent */
+    int tileHeight;
+    int tileWidth;
+    bool pTable;
 } tileset_t;
 
+typedef struct
+{
+    tileset_t *tilesets;
+    int numTilesets;
+    int tileHeight;
+    int tileWidth;
+    bool pTable;
+} tileset_group_t;
+
+tileset_t *tileset_alloc(void);
+tileset_group_t *tileset_group_alloc(void);
 int tileset_alloc_tiles(tileset_t *tileset);
 void tileset_free(tileset_t *tileset);
+void tileset_group_free(tileset_group_t *tilesetGroup);
 
 #ifdef __cplusplus
 }

@@ -88,6 +88,30 @@ char *strings_trim(char *str)
 }
 
 /*
+ * Gets the basename of a file path.
+ */
+char *strings_basename(const char *path)
+{
+    char *result = strdup(path);
+    char *tmp;
+
+    tmp = strrchr(result, '/');
+    if (tmp != NULL)
+    {
+        memmove(result, tmp, strlen(tmp));
+        *tmp = '\0';
+    }
+
+    tmp = strchr(result, '.');
+    if (tmp != NULL)
+    {
+        *tmp = '\0';
+    }
+
+    return result;
+}
+
+/*
  * Finds images in directories.
  */
 glob_t *strings_find_images(const char *fullPath)

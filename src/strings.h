@@ -39,6 +39,7 @@ extern "C" {
 
 char *strdupcat(const char *s, const char *c);
 glob_t *strings_find_images(const char *fullPath);
+char *strings_basename(const char *path);
 char *strings_trim(char *str);
 
 #ifdef __cplusplus

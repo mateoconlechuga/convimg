@@ -273,7 +273,7 @@ error:
 /*
  * Takes a line that has braces and converts to a tileset.
  */
-static int yaml_parse_tileset(yaml_file_t *yamlfile, char *line, tileset_t *tileset)
+static int yaml_parse_tileset_group(yaml_file_t *yamlfile, char *line, tileset_group_t *tilesetGroup)
 {
     char *args = strchr(line, '{');
 
@@ -328,20 +328,18 @@ static int yaml_parse_tileset(yaml_file_t *yamlfile, char *line, tileset_t *tile
 
             if (!strcmp(key, "tile-width"))
             {
-                tileset->tileWidth = strtol(value, NULL, 0);
+                tilesetGroup->tileWidth = strtol(value, NULL, 0);
             }
             else if (!strcmp(key, "tile-height"))
             {
-                tileset->tileHeight = strtol(value, NULL, 0);
+                tilesetGroup->tileHeight = strtol(value, NULL, 0);
             }
             else if (!strcmp(key, "ptable"))
             {
-                tileset->pTable = !strcmp(value, "true");
+                tilesetGroup->pTable = !strcmp(value, "true");
             }
         }
     }
-
-    tileset->enabled = true;
 
     return 0;
 
@@ -457,13 +455,6 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
         palette->entries[palette->numFixedEntries] = entry;
         palette->numFixedEntries++;
     }
-    else if (!strcmp(command, "transparent-color"))
-    {
-        ret = yaml_parse_fixed_color(yamlfile, line, &entry);
-        palette->entries[palette->numFixedEntries] = entry;
-        palette->transparentFixedEntry = palette->numFixedEntries;
-        palette->numFixedEntries++;
-    }
     else if (!strcmp(command, "images"))
     {
         if (args != NULL && !strcmp(args, "automatic"))
@@ -485,6 +476,7 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
  */
 static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line)
 {
+    static yaml_convert_mode_t mode = YAML_CONVERT_IMAGES;
     convert_t *convert = yamlfile->curConvert;
     char *args;
     int ret = 0;
@@ -501,7 +493,16 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
 
     if (command[0] == '-')
     {
-        ret = convert_add_path(convert, strings_trim(&command[1]));
+        switch (mode)
+        {
+            case YAML_CONVERT_IMAGES:
+                ret = convert_add_image_path(convert, strings_trim(&command[1]));
+                break;
+
+            case YAML_CONVERT_TILESETS:
+                ret = convert_add_tileset_path(convert, strings_trim(&command[1]));
+                break;
+        }
     }
     else if (!strcmp(command, "convert"))
     {
@@ -534,11 +535,43 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
             ret = 1;
         }
     }
+    else if (!strcmp(command, "style"))
+    {
+        if (args != NULL && !strcmp(args, "rlet"))
+        {
+            convert->style = CONVERT_STYLE_RLET;
+        }
+        else
+        {
+            LL_ERROR("Invalid style (line %d).", yamlfile->line);
+            ret = 1;
+        }
+    }
+    else if (!strcmp(command, "transparent-color-index"))
+    {
+        if (args == NULL)
+        {
+            LL_ERROR("Invalid color index for transparency (line %d).",
+                yamlfile->line);
+            ret = 1;
+        }
+        else
+        {
+            convert->transparentIndex = strtol(args, NULL, 0);
+            if (convert->transparentIndex >= PALETTE_MAX_ENTRIES ||
+                convert->transparentIndex < 0)
+            {
+                LL_ERROR("Invalid color index for transparency (line %d).",
+                    yamlfile->line);
+                ret = 1;
+            }
+        }
+    }
     else if (!strcmp(command, "compress"))
     {
         if (args != NULL && !strcmp(args, "zx7"))
         {
-            convert->compression = COMPRESS_ZX7;
+            convert->compress = COMPRESS_ZX7;
         }
         else
         {
@@ -548,9 +581,15 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
             ret = 1;
         }
     }
-    else if (!strcmp(command, "tileset"))
+    else if (!strcmp(command, "tilesets"))
     {
-        ret = yaml_parse_tileset(yamlfile, line, &convert->tileset);
+        mode = YAML_CONVERT_TILESETS;
+        ret = convert_alloc_tileset_group(convert);
+        if (ret == 0)
+        {
+            tileset_group_t *tilesetGroup = convert->tilesetGroups[convert->numTilesetGroups - 1];
+            ret = yaml_parse_tileset_group(yamlfile, line, tilesetGroup);
+        }
     }
     else if (!strcmp(command, "width-and-height"))
     {
@@ -558,8 +597,17 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
     }
     else if (!strcmp(command, "omit-palette-index"))
     {
-        convert->omitIndices[convert->numOmitIndices] = strtol(args, NULL, 0);
-        convert->numOmitIndices++;
+        if (args == NULL)
+        {
+            LL_ERROR("Invalid color index for omission (line %d).",
+                yamlfile->line);
+            ret = 1;
+        }
+        else
+        {
+            convert->omitIndices[convert->numOmitIndices] = strtol(args, NULL, 0);
+            convert->numOmitIndices++;
+        }
     }
     else if (!strcmp(command, "width-and-height"))
     {
@@ -600,9 +648,10 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
     }
     else if (!strcmp(command, "images"))
     {
+        mode = YAML_CONVERT_IMAGES;
         if (args != NULL && !strcmp(args, "automatic"))
         {
-            ret = convert_add_path(convert, "*");
+            ret = convert_add_image_path(convert, "*");
         }
     }
     else
@@ -617,9 +666,9 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
 /*
  * Gets compression mode from string.
  */
-compression_t yaml_get_compress_mode(yaml_file_t *yamlfile, char *arg)
+compress_t yaml_get_compress_mode(yaml_file_t *yamlfile, char *arg)
 {
-    compression_t compress = COMPRESS_INVALID;
+    compress_t compress = COMPRESS_INVALID;
 
     if (!strcmp(arg, "zx7"))
     {

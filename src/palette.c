@@ -77,11 +77,11 @@ palette_t *palette_alloc(void)
 /*
  * Adds a image file to a palette (does not load).
  */
-int palette_add_image(palette_t *palette, const char *name)
+static int palette_add_image(palette_t *palette, const char *path)
 {
     image_t *image;
 
-    if (palette == NULL || name == NULL)
+    if (palette == NULL || path == NULL)
     {
         return 1;
     }
@@ -95,7 +95,8 @@ int palette_add_image(palette_t *palette, const char *name)
 
     image = &palette->images[palette->numImages];
 
-    image->name = strdup(name);
+    image->path = strdup(path);
+    image->name = strings_basename(path);
     image->data = NULL;
     image->width = 0;
     image->height = 0;
@@ -156,8 +157,13 @@ void palette_free(palette_t *palette)
 
     for (i = 0; i < palette->numImages; ++i)
     {
-        free(palette->images[i].name);
-        palette->images[i].name = NULL;
+        image_t *image = &palette->images[i];
+
+        free(image->name);
+        image->name = NULL;
+
+        free(image->path);
+        image->path = NULL;
     }
 
     free(palette->images);
@@ -205,17 +211,31 @@ int palette_generate_builtin(palette_t *palette,
  */
 int palette_automatic_build(palette_t *palette, convert_t **converts, int numConverts)
 {
-    int i, j;
+    int i, j, k;
     int ret = 0;
 
     for (i = 0; i < numConverts; ++i)
     {
         for (j = 0; j < converts[i]->numImages; ++j)
         {
-            ret = palette_add_image(palette, converts[i]->images[j].name);
+            ret = palette_add_image(palette, converts[i]->images[j].path);
             if (ret != 0)
             {
                 goto error;
+            }
+        }
+
+        for (j = 0; j < converts[i]->numTilesetGroups; ++j)
+        {
+            tileset_group_t *tilesetGroup = converts[i]->tilesetGroups[j];
+
+            for (k = 0; k < tilesetGroup->numTilesets; ++k)
+            {
+                ret = palette_add_image(palette, tilesetGroup->tilesets[k].image.path);
+                if (ret != 0)
+                {
+                    goto error;
+                }
             }
         }
     }
@@ -295,14 +315,12 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
         image_t *image = &palette->images[i];
         liq_image *liqimage;
 
-        LL_INFO(" Reading \'%s\' (%d of %d)",
-            image->name,
-            i + 1,
-            palette->numImages);
+        LL_INFO(" - Reading \'%s\'",
+            image->path);
 
         if( image_load(image) != 0 )
         {
-            LL_ERROR("Failed to load image %s", image->name);
+            LL_ERROR("Failed to load image \'%s\'", image->path);
             liq_histogram_destroy(hist);
             liq_attr_destroy(attr);
             return 1;

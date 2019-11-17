@@ -49,6 +49,12 @@ typedef enum
 
 typedef enum
 {
+    YAML_CONVERT_IMAGES,
+    YAML_CONVERT_TILESETS,
+} yaml_convert_mode_t;
+
+typedef enum
+{
     YAML_ST_INIT,
     YAML_ST_PALETTE,
     YAML_ST_CONVERT,

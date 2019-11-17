@@ -116,7 +116,6 @@ int output_c_image(image_t *image)
         goto error;
     }
 
-
     fprintf(fds, "unsigned char %s[%d] =\r\n{", image->name, image->size);
     output_c(image->data, image->size, fds);
 
@@ -311,8 +310,9 @@ int output_c_palette(palette_t *palette)
     {
         color_t *color = &palette->entries[i].color;
 
-        fprintf(fds, "    0x%04x /* %3d: rgb(%3d, %3d, %3d) */\r\n",
-                color->target,
+        fprintf(fds, "    0x%02x, 0x%02x /* %3d: rgb(%3d, %3d, %3d) */\r\n",
+                color->target & 255,
+                (color->target >> 8) & 255,
                 i,
                 color->rgb.r,
                 color->rgb.g,

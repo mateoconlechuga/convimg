@@ -60,10 +60,10 @@ int output_asm_include_file(output_t *output);
 /*
  * ICE Format.
  */
-int output_ice_image(image_t *image);
-int output_ice_tileset(tileset_t *tileset);
-int output_ice_palette(palette_t *palette);
-int output_ice_include_file(output_t *output);
+int output_ice_image(image_t *image, char *file);
+int output_ice_tileset(tileset_t *tileset, char *file);
+int output_ice_palette(palette_t *palette, char *file);
+int output_ice_include_file(output_t *output, char *file);
 
 /*
  * Appvar Format.

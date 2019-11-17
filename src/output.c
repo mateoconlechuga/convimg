@@ -295,7 +295,7 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                     break;
 
                 case OUTPUT_FORMAT_ICE:
-                    ret = 0;
+                    ret = output_ice_image(image, output->includeFileName);
                     break;
 
                 case OUTPUT_FORMAT_APPVAR:
@@ -336,7 +336,7 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                         break;
 
                     case OUTPUT_FORMAT_ICE:
-                        ret = 0;
+                        ret = output_ice_tileset(tileset, output->includeFileName);
                         break;
 
                     case OUTPUT_FORMAT_APPVAR:
@@ -396,7 +396,7 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
                 break;
 
             case OUTPUT_FORMAT_ICE:
-                ret = 0;
+                ret = output_ice_palette(palette, output->includeFileName);
                 break;
 
             case OUTPUT_FORMAT_APPVAR:
@@ -438,7 +438,7 @@ int output_include_header(output_t *output)
             break;
 
         case OUTPUT_FORMAT_ICE:
-            ret = 0;
+            ret = output_ice_include_file(output, output->includeFileName);
             break;
 
         case OUTPUT_FORMAT_APPVAR:

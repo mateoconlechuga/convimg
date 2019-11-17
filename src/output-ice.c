@@ -27,3 +27,113 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "output.h"
+#include "tileset.h"
+#include "strings.h"
+#include "image.h"
+#include "log.h"
+
+#include <stdio.h>
+#include <stdint.h>
+#include <errno.h>
+#include <string.h>
+
+/*
+ * Outputs to ICE format.
+ */
+static int output_ice(unsigned char *data, size_t size, FILE *fd)
+{
+    size_t i;
+
+    fprintf(fd, "\"");
+
+    for (i = 0; i < size; ++i)
+    {
+        fprintf(fd, "%02X", data[i]);
+    }
+
+    fprintf(fd, "\"\r\n\r\n");
+
+    return 0;
+}
+
+/*
+ * Outputs a converted C image.
+ */
+int output_ice_image(image_t *image, char *file)
+{
+    FILE *fd;
+
+    fd = fopen(file, "a");
+    if (fd == NULL)
+    {
+        LL_ERROR(" Could not open file: %s", strerror(errno));
+        return 1;
+    }
+
+    fprintf(fd, "%s | %d bytes\r\n", image->name, image->size);
+    output_ice(image->data, image->size, fd);
+
+    fclose(fd);
+
+    return 0;
+}
+
+/*
+ * Outputs a converted ICE tileset.
+ */
+int output_ice_tileset(tileset_t *tileset, char *file)
+{
+    LL_ERROR("Tilesets are not supported for ICE output!");
+
+    (void)tileset;
+    (void)file;
+
+    return 1;
+}
+
+/*
+ * Outputs a converted C tileset.
+ */
+int output_ice_palette(palette_t *palette, char *file)
+{
+    int size = palette->numEntries * 2;
+    FILE *fd;
+    int i;
+
+    fd = fopen(file, "a");
+    if (fd == NULL)
+    {
+        LL_ERROR(" Could not open file: %s", strerror(errno));
+        return 1;
+    }
+
+    fprintf(fd, "%s | %d bytes\r\n\"", palette->name, size);
+
+    for (i = 0; i < palette->numEntries; ++i)
+    {
+        color_t *color = &palette->entries[i].color;
+
+        fprintf(fd, "%02X%02X",
+                color->target & 255,
+                (color->target >> 8) & 255);
+    }
+    fprintf(fd, "\"\r\n\r\n");
+
+    fclose(fd);
+
+    return 0;
+}
+
+/*
+ * Outputs an include file for the output structure
+ */
+int output_ice_include_file(output_t *output, char *file)
+{
+    LL_INFO(" - Wrote \'%s\'", file);
+
+    (void)output;
+
+    return 0;
+}

@@ -230,8 +230,9 @@ int output_c_palette(palette_t *palette)
     {
         color_t *color = &palette->entries[i].color;
 
-        fprintf(fds, "    0x%04x /* rgb(%3d, %3d, %3d) */\r\n",
+        fprintf(fds, "    0x%04x /* %3d: rgb(%3d, %3d, %3d) */\r\n",
                 color->target,
+                i,
                 color->rgb.r,
                 color->rgb.g,
                 color->rgb.b);

@@ -151,8 +151,9 @@ int output_asm_palette(palette_t *palette)
     {
         color_t *color = &palette->entries[i].color;
 
-        fprintf(fds, "    $%04x ; rgb(%3d, %3d, %3d)\r\n",
+        fprintf(fds, "\tdb\t$%04x ; %3d: rgb(%3d, %3d, %3d)\r\n",
                 color->target,
+                i,
                 color->rgb.r,
                 color->rgb.g,
                 color->rgb.b);
@@ -174,25 +175,63 @@ error:
  */
 int output_asm_include_file(output_t *output)
 {
-    char *include = output->includeFileName;
+    char *includeFile = output->includeFileName;
+    char *includeName = strdup(output->includeFileName);
+    char *tmp;
     FILE *fdi;
+    int i, j, k;
 
-    LL_INFO(" - Writing \'%s\'", include);
+    tmp = strchr(includeName, '.');
+    if (tmp != NULL)
+    {
+        *tmp = '\0';
+    }
 
-    fdi = fopen(include, "w");
+    LL_INFO(" - Writing \'%s\'", includeFile);
+
+    fdi = fopen(includeFile, "w");
     if (fdi == NULL)
     {
         LL_ERROR(" Could not open file: %s", strerror(errno));
         goto error;
     }
 
+    for (i = 0; i < output->numPalettes; ++i)
+    {
+        fprintf(fdi, "include \'%s.asm\'\r\n", output->palettes[i]->name);
+    }
+
+    for (i = 0; i < output->numConverts; ++i)
+    {
+        convert_t *convert = output->converts[i];
+
+        for (j = 0; j < convert->numImages; ++j)
+        {
+            image_t *image = &convert->images[j];
+
+            fprintf(fdi, "include \'%s.asm\'\r\n", image->name);
+        }
+
+        for (j = 0; j < convert->numTilesetGroups; ++j)
+        {
+            tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
+
+            for (k = 0; k < tilesetGroup->numTilesets; ++k)
+            {
+                tileset_t *tileset = &tilesetGroup->tilesets[k];
+
+                fprintf(fdi, "include \'%s.asm\'\r\n", tileset->image.name);
+            }
+        }
+    }
+
     fclose(fdi);
 
-    free(include);
+    free(includeName);
 
     return 0;
 
 error:
-    free(include);
+    free(includeName);
     return 1;
 }

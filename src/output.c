@@ -303,7 +303,7 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                     break;
 
                 case OUTPUT_FORMAT_BIN:
-                    ret = 0;
+                    ret = output_bin_image(image);
                     break;
 
                 default:
@@ -331,15 +331,15 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                         ret = output_asm_tileset(tileset);
                         break;
 
+                    case OUTPUT_FORMAT_BIN:
+                        ret = output_bin_tileset(tileset);
+                        break;
+
                     case OUTPUT_FORMAT_ICE:
                         ret = 0;
                         break;
 
                     case OUTPUT_FORMAT_APPVAR:
-                        ret = 0;
-                        break;
-
-                    case OUTPUT_FORMAT_BIN:
                         ret = 0;
                         break;
 
@@ -391,15 +391,15 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
                 ret = output_asm_palette(palette);
                 break;
 
+            case OUTPUT_FORMAT_BIN:
+                ret = output_bin_palette(palette);
+                break;
+
             case OUTPUT_FORMAT_ICE:
                 ret = 0;
                 break;
 
             case OUTPUT_FORMAT_APPVAR:
-                ret = 0;
-                break;
-
-            case OUTPUT_FORMAT_BIN:
                 ret = 0;
                 break;
 
@@ -433,15 +433,15 @@ int output_include_header(output_t *output)
             ret = output_asm_include_file(output);
             break;
 
+        case OUTPUT_FORMAT_BIN:
+            ret = output_bin_include_file(output);
+            break;
+
         case OUTPUT_FORMAT_ICE:
             ret = 0;
             break;
 
         case OUTPUT_FORMAT_APPVAR:
-            ret = 0;
-            break;
-
-        case OUTPUT_FORMAT_BIN:
             ret = 0;
             break;
 

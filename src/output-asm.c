@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "output.h"
 #include "tileset.h"
 #include "strings.h"
@@ -93,6 +94,10 @@ int output_asm_image(image_t *image)
 
     fclose(fds);
 
+    free(source);
+
+    return 0;
+
 error:
     free(source);
     return 1;
@@ -151,7 +156,7 @@ int output_asm_palette(palette_t *palette)
     {
         color_t *color = &palette->entries[i].color;
 
-        fprintf(fds, "\tdb\t$%04x ; %3d: rgb(%3d, %3d, %3d)\r\n",
+        fprintf(fds, "\tdw\t$%04x ; %3d: rgb(%3d, %3d, %3d)\r\n",
                 color->target,
                 i,
                 color->rgb.r,

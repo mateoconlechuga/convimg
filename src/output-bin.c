@@ -27,3 +27,191 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "output.h"
+#include "tileset.h"
+#include "strings.h"
+#include "image.h"
+#include "log.h"
+
+#include <stdio.h>
+#include <stdint.h>
+#include <errno.h>
+#include <string.h>
+
+/*
+ * Outputs to Binary format.
+ */
+static int output_bin(const char *name, unsigned char *data, size_t size, FILE *fdo)
+{
+    int ret = fwrite(data, size, 1, fdo);
+    (void)name;
+
+    return ret == 1 ? 0 : 1;
+}
+
+/*
+ * Outputs a converted image to Binary.
+ */
+int output_bin_image(image_t *image)
+{
+    char *source = strdupcat(image->name, ".bin");
+    FILE *fds;
+    int ret;
+
+    LL_INFO(" - Writing \'%s\'", source);
+
+    fds = fopen(source, "w");
+    if (fds == NULL)
+    {
+        LL_ERROR(" Could not open file: %s", strerror(errno));
+        goto error;
+    }
+
+    ret = output_bin(image->name, image->data, image->size, fds);
+
+    fclose(fds);
+
+    free(source);
+
+    return ret;
+
+error:
+    free(source);
+    return 1;
+}
+
+/*
+ * Outputs a converted Assembly tileset.
+ */
+int output_bin_tileset(tileset_t *tileset)
+{
+    char *source = strdupcat(tileset->image.name, ".bin");
+    FILE *fds;
+
+    LL_INFO(" - Writing \'%s\'", source);
+
+    fds = fopen(source, "w");
+    if (fds == NULL)
+    {
+        LL_ERROR(" Could not open file: %s", strerror(errno));
+        goto error;
+    }
+
+    fclose(fds);
+
+    free(source);
+
+    return 0;
+
+error:
+    free(source);
+    return 1;
+}
+
+/*
+ * Outputs a converted Assembly tileset.
+ */
+int output_bin_palette(palette_t *palette)
+{
+    char *source = strdupcat(palette->name, ".bin");
+    FILE *fds;
+    int i;
+
+    LL_INFO(" - Writing \'%s\'", source);
+
+    fds = fopen(source, "w");
+    if (fds == NULL)
+    {
+        LL_ERROR(" Could not open file: %s", strerror(errno));
+        goto error;
+    }
+
+    for (i = 0; i < palette->numEntries; ++i)
+    {
+        color_t *color = &palette->entries[i].color;
+
+        fwrite(&color->target, sizeof(uint16_t), 1, fds);
+    }
+
+    fclose(fds);
+
+    free(source);
+
+    return 0;
+
+error:
+    free(source);
+    return 1;
+}
+
+/*
+ * Outputs an include file for the output structure
+ */
+int output_bin_include_file(output_t *output)
+{
+    char *includeFile = output->includeFileName;
+    char *includeName = strdup(output->includeFileName);
+    char *tmp;
+    FILE *fdi;
+    int i, j, k;
+
+    if (output->includeFileName == NULL)
+    {
+        return 0;
+    }
+
+    tmp = strchr(includeName, '.');
+    if (tmp != NULL)
+    {
+        *tmp = '\0';
+    }
+
+    LL_INFO(" - Writing \'%s\'", includeFile);
+
+    fdi = fopen(includeFile, "w");
+    if (fdi == NULL)
+    {
+        LL_ERROR(" Could not open file: %s", strerror(errno));
+        goto error;
+    }
+
+    for (i = 0; i < output->numPalettes; ++i)
+    {
+        fprintf(fdi, "%s.bin\r\n", output->palettes[i]->name);
+    }
+
+    for (i = 0; i < output->numConverts; ++i)
+    {
+        convert_t *convert = output->converts[i];
+
+        for (j = 0; j < convert->numImages; ++j)
+        {
+            image_t *image = &convert->images[j];
+
+            fprintf(fdi, "%s.bin\r\n", image->name);
+        }
+
+        for (j = 0; j < convert->numTilesetGroups; ++j)
+        {
+            tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
+
+            for (k = 0; k < tilesetGroup->numTilesets; ++k)
+            {
+                tileset_t *tileset = &tilesetGroup->tilesets[k];
+
+                fprintf(fdi, "%s.bin\r\n", tileset->image.name);
+            }
+        }
+    }
+
+    fclose(fdi);
+
+    free(includeName);
+
+    return 0;
+
+error:
+    free(includeName);
+    return 1;
+}

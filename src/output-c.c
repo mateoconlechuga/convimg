@@ -256,25 +256,78 @@ error:
  */
 int output_c_include_file(output_t *output)
 {
-    char *include = output->includeFileName;
+    char *includeFile = output->includeFileName;
+    char *includeName = strdup(output->includeFileName);
+    char *tmp;
     FILE *fdi;
+    int i, j, k;
 
-    LL_INFO(" - Writing \'%s\'", include);
+    tmp = strchr(includeName, '.');
+    if (tmp != NULL)
+    {
+        *tmp = '\0';
+    }
 
-    fdi = fopen(include, "w");
+    LL_INFO(" - Writing \'%s\'", includeFile);
+
+    fdi = fopen(includeFile, "w");
     if (fdi == NULL)
     {
         LL_ERROR(" Could not open file: %s", strerror(errno));
         goto error;
     }
 
+    fprintf(fdi, "#ifndef %s_include_file\r\n", includeName);
+    fprintf(fdi, "#define %s_include_file\r\n", includeName);
+    fprintf(fdi, "\r\n");
+    fprintf(fdi, "#ifdef __cplusplus\r\n");
+    fprintf(fdi, "extern \"C\" {\r\n");
+    fprintf(fdi, "#endif\r\n");
+    fprintf(fdi, "\r\n");
+
+    for (i = 0; i < output->numPalettes; ++i)
+    {
+        fprintf(fdi, "#include \"%s.h\"\r\n", output->palettes[i]->name);
+    }
+
+    for (i = 0; i < output->numConverts; ++i)
+    {
+        convert_t *convert = output->converts[i];
+
+        for (j = 0; j < convert->numImages; ++j)
+        {
+            image_t *image = &convert->images[j];
+
+            fprintf(fdi, "#include \"%s.h\"\r\n", image->name);
+        }
+
+        for (j = 0; j < convert->numTilesetGroups; ++j)
+        {
+            tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
+
+            for (k = 0; k < tilesetGroup->numTilesets; ++k)
+            {
+                tileset_t *tileset = &tilesetGroup->tilesets[k];
+
+                fprintf(fdi, "#include \"%s.h\"\r\n", tileset->image.name);
+            }
+        }
+    }
+
+    fprintf(fdi, "\r\n");
+    fprintf(fdi, "#ifdef __cplusplus\r\n");
+    fprintf(fdi, "}\r\n");
+    fprintf(fdi, "#endif\r\n");
+    fprintf(fdi, "\r\n");
+    fprintf(fdi, "#endif\r\n");
+
     fclose(fdi);
 
-    free(include);
+    free(includeName);
 
     return 0;
 
 error:
-    free(include);
+    free(includeName);
     return 1;
 }

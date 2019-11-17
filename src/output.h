@@ -73,9 +73,7 @@ int output_add_convert(output_t *output, const char *convertName);
 int output_add_palette(output_t *output, const char *paletteName);
 int output_converts(output_t *output, convert_t **converts, int numConverts);
 int output_palettes(output_t *output, palette_t **palettes, int numPalettes);
-int output_include_header(output_t *output,
-                          palette_t **palettes, int numPalettes,
-                          convert_t **converts, int numConverts);
+int output_include_header(output_t *output);
 
 #ifdef __cplusplus
 }

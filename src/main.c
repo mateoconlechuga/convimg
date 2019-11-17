@@ -109,11 +109,7 @@ int main(int argc, char **argv)
                     break;
                 }
 
-                ret = output_include_header(yamlfile->outputs[i],
-                                            yamlfile->palettes,
-                                            yamlfile->numPalettes,
-                                            yamlfile->converts,
-                                            yamlfile->numConverts);
+                ret = output_include_header(yamlfile->outputs[i]);
                 if (ret != 0)
                 {
                     break;

@@ -414,15 +414,40 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
 /*
  * Output a header for using with everything.
  */
-int output_include_header(output_t *output,
-                          palette_t **palettes, int numPalettes,
-                          convert_t **converts, int numConverts)
+int output_include_header(output_t *output)
 {
     int ret = 0;
 
-    if (numPalettes == 0 && numConverts == 0)
+    if (output->numPalettes == 0 && output->numConverts == 0)
     {
         return 0;
+    }
+
+    switch (output->format)
+    {
+        case OUTPUT_FORMAT_C:
+            ret = output_c_include_file(output);
+            break;
+
+        case OUTPUT_FORMAT_ASM:
+            ret = output_asm_include_file(output);
+            break;
+
+        case OUTPUT_FORMAT_ICE:
+            ret = 0;
+            break;
+
+        case OUTPUT_FORMAT_APPVAR:
+            ret = 0;
+            break;
+
+        case OUTPUT_FORMAT_BIN:
+            ret = 0;
+            break;
+
+        default:
+            ret = 1;
+            break;
     }
 
     return ret;

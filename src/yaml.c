@@ -376,7 +376,16 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
 
     if (command[0] == '-')
     {
-        ret = pallete_add_path(palette, &command[1]);
+        if (palette->automatic)
+        {
+            LL_ERROR("Cannot specify image sources in automatic mode (line %d).",
+                 yamlfile->line);
+            ret = 1;
+        }
+        else
+        {
+            ret = pallete_add_path(palette, &command[1]);
+        }
     }
     else if (!strcmp(command, "generate-palette"))
     {
@@ -420,6 +429,10 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
     }
     else if (!strcmp(command, "images"))
     {
+        if (args != NULL && !strcmp(args, "automatic"))
+        {
+            palette->automatic = true;
+        }
     }
     else
     {
@@ -481,7 +494,7 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
     }
     else if (!strcmp(command, "compress"))
     {
-        if (!strcmp(args, "zx7"))
+        if (args != NULL && !strcmp(args, "zx7"))
         {
             convert->compression = COMPRESS_ZX7;
         }
@@ -499,7 +512,7 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
     }
     else if (!strcmp(command, "width-and-height"))
     {
-        convert->widthAndHeight = !strcmp(args, "true");
+        convert->widthAndHeight = args != NULL && !strcmp(args, "true");
     }
     else if (!strcmp(command, "omit-palette-index"))
     {
@@ -508,11 +521,18 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
     }
     else if (!strcmp(command, "width-and-height"))
     {
-        convert->widthAndHeight = !strcmp(args, "true");
+        convert->widthAndHeight = args != NULL && !strcmp(args, "true");
     }
     else if (!strcmp(command, "bpp"))
     {
-        if (!strcmp(args, "8"))
+        if (args == NULL)
+        {
+            LL_ERROR("Invalid bpp argument for palette \'%s\' (line %d).",
+                convert->name,
+                yamlfile->line);
+            ret = 1;
+        }
+        else if (!strcmp(args, "8"))
         {
             convert->bpp = BPP_8;
         }
@@ -538,6 +558,10 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
     }
     else if (!strcmp(command, "images"))
     {
+        if (args != NULL && !strcmp(args, "automatic"))
+        {
+            ret = convert_add_path(convert, "*");
+        }
     }
     else
     {

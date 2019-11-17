@@ -31,8 +31,6 @@
 #ifndef PALETTE_H
 #define PALETTE_H
 
-#include <stdint.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,7 +38,11 @@ extern "C" {
 #include "bpp.h"
 #include "image.h"
 #include "color.h"
+
 #include "deps/libimagequant/libimagequant.h"
+
+#include <stdint.h>
+#include <stdbool.h>
 
 #define PALETTE_MAX_ENTRIES 256
 #define PALETTE_DEFAULT_QUANTIZE_SPEED 3
@@ -65,12 +67,16 @@ typedef struct palette
     int transparentFixedEntry;
     color_mode_t mode;
     bpp_t bpp;
+    bool automatic;
 } palette_t;
+
+/* I despise forward declartions, but meh */
+typedef struct convert convert_t;
 
 palette_t *palette_alloc(void);
 void palette_free(palette_t *palette);
 int pallete_add_path(palette_t *palette, const char *path);
-int palette_generate(palette_t *palette);
+int palette_generate(palette_t *palette, convert_t **converts, int numConverts);
 
 #ifdef __cplusplus
 }

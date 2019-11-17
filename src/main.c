@@ -52,7 +52,9 @@ int main(int argc, char **argv)
         {
             for (i = 0; i < yamlfile->numPalettes; ++i)
             {
-                ret = palette_generate(yamlfile->palettes[i]);
+                ret = palette_generate(yamlfile->palettes[i],
+                                       yamlfile->converts,
+                                       yamlfile->numConverts);
                 if (ret != 0)
                 {
                     break;

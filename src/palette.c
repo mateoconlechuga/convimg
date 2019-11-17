@@ -29,6 +29,7 @@
  */
 
 #include "palette.h"
+#include "convert.h"
 #include "strings.h"
 #include "image.h"
 #include "log.h"
@@ -68,6 +69,7 @@ palette_t *palette_alloc(void)
     palette->bpp = BPP_8;
     palette->mode = COLOR_MODE_1555_GBGR;
     palette->quantizeSpeed = PALETTE_DEFAULT_QUANTIZE_SPEED;
+    palette->automatic = false;
 
     return palette;
 }
@@ -199,16 +201,41 @@ int palette_generate_builtin(palette_t *palette,
 }
 
 /*
- * Reads all input images, and generates a palette for convert.
+ * In automatic mode, read the images from the converts using the palette.
  */
-int palette_generate(palette_t *palette)
+int palette_automatic_build(palette_t *palette, convert_t **converts, int numConverts)
 {
     int i, j;
+    int ret = 0;
+
+    for (i = 0; i < numConverts; ++i)
+    {
+        for (j = 0; j < converts[i]->numImages; ++j)
+        {
+            ret = palette_add_image(palette, converts[i]->images[j].name);
+            if (ret != 0)
+            {
+                goto error;
+            }
+        }
+    }
+
+error:
+    return ret;
+}
+
+/*
+ * Reads all input images, and generates a palette for convert.
+ */
+int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
+{
     liq_attr *attr = NULL;
     liq_histogram *hist = NULL;
     liq_result *liqresult = NULL;
     const liq_palette *liqpalette = NULL;
     liq_error liqerr;
+    int i, j;
+    int ret;
 
     if (palette == NULL)
     {
@@ -231,6 +258,15 @@ int palette_generate(palette_t *palette)
     }
 
     LL_INFO("Generating palette \'%s\'", palette->name);
+
+    if (palette->automatic)
+    {
+        ret = palette_automatic_build(palette, converts, numConverts);
+        if (ret != 0)
+        {
+            return ret;
+        }
+    }
 
     attr = liq_attr_create();
 

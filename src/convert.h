@@ -46,7 +46,7 @@ typedef enum
     CONVERT_STYLE_RLET,
 } convert_style_t;
 
-typedef struct
+typedef struct convert
 {
     char *name;
     char *paletteName;

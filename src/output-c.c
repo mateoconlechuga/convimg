@@ -42,11 +42,9 @@
 /*
  * Outputs to C format.
  */
-static int output_c(const char *name, unsigned char *arr, size_t size, FILE *fdo)
+static int output_c(unsigned char *arr, size_t size, FILE *fdo)
 {
     size_t i;
-
-    fprintf(fdo, "unsigned char %s[%lu] =\r\n{", name, size);
 
     for (i = 0; i < size; ++i)
     {
@@ -64,7 +62,7 @@ static int output_c(const char *name, unsigned char *arr, size_t size, FILE *fdo
             fprintf(fdo, "0x%02x,", arr[i]);
         }
     }
-    fputs("\r\n};\r\n", fdo);
+    fprintf(fdo, "\r\n};\r\n");
 
     return 0;
 }
@@ -118,7 +116,9 @@ int output_c_image(image_t *image)
         goto error;
     }
 
-    output_c(image->name, image->data, image->size, fds);
+
+    fprintf(fds, "unsigned char %s[%d] =\r\n{", image->name, image->size);
+    output_c(image->data, image->size, fds);
 
     fclose(fds);
 
@@ -167,27 +167,27 @@ int output_c_tileset(tileset_t *tileset)
         tileset_tile_t *tile = &tileset->tiles[i];
 
         fprintf(fdh, "extern unsigned char %s_tile_%d_data[%d];\r\n",
-                     tileset->image.name,
-                     i,
-                     tile->size);
+            tileset->image.name,
+            i,
+            tile->size);
         fprintf(fdh, "#define %s_tile_%d ((gfx_sprite_t*)%s_tile_%d_data)\r\n",
-                     tileset->image.name,
-                     i,
-                     tileset->image.name,
-                     i);
+            tileset->image.name,
+            i,
+            tileset->image.name,
+            i);
     }
 
     fprintf(fdh, "#define %s_num_tiles %d\r\n",
-                 tileset->image.name,
-                 tileset->numTiles);
+        tileset->image.name,
+        tileset->numTiles);
 
     fprintf(fdh, "extern unsigned char *%s_tiles_data[%d]\r\n",
-                 tileset->image.name,
-                 tileset->numTiles);
+        tileset->image.name,
+        tileset->numTiles);
 
     fprintf(fdh, "#define %s_tiles ((gfx_sprite_t**)%s_tiles_data)\r\n",
-                 tileset->image.name,
-                 tileset->image.name);
+        tileset->image.name,
+        tileset->image.name);
 
     fprintf(fdh, "\r\n");
     fprintf(fdh, "#ifdef __cplusplus\r\n");
@@ -209,21 +209,39 @@ int output_c_tileset(tileset_t *tileset)
 
     for (i = 0; i < tileset->numTiles; ++i)
     {
-        size_t allocSize = strlen(tileset->image.name) + 64;
         tileset_tile_t *tile = &tileset->tiles[i];
-        char *name;
 
-        name = malloc(allocSize);
-        if (name == NULL)
+        fprintf(fds, "unsigned char %s_tile_%d_data[%d] =\r\n{",
+            tileset->image.name,
+            i,
+            tile->size);
+
+        output_c(tile->data, tile->size, fds);
+    }
+
+    if (tileset->pTable == true)
+    {
+        fprintf(fds, "unsigned char *%s_tiles_data[%d] =\r\n{\r\n",
+            tileset->image.name,
+            tileset->numTiles);
+
+        for (i = 0; i < tileset->numTiles; ++i)
         {
-            break;
+            if (i + 1 == tileset->numTiles)
+            {
+                fprintf(fds, "    %s_tile_%d_data\r\n",
+                    tileset->image.name,
+                    i);
+            }
+            else
+            {
+                fprintf(fds, "    %s_tile_%d_data,\r\n",
+                    tileset->image.name,
+                    i);
+            }
         }
 
-        snprintf(name, allocSize, "%s_tile_%d_data", tileset->image.name, i);
-
-        output_c(name, tile->data, tile->size, fds);
-
-        free(name);
+        fprintf(fds, "};\r\n");
     }
 
     fclose(fds);

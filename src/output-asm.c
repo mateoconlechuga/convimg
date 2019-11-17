@@ -42,11 +42,10 @@
 /*
  * Outputs to Assembly format.
  */
-static int output_asm(const char *name, unsigned char *arr, size_t size, FILE *fdo)
+static int output_asm(unsigned char *arr, size_t size, FILE *fdo)
 {
     size_t i;
 
-    fprintf(fdo, "%s:\n\tdb\t", name);
     for (i = 0; i < size; ++i)
     {
         bool last = i + 1 == size;
@@ -56,7 +55,7 @@ static int output_asm(const char *name, unsigned char *arr, size_t size, FILE *f
             fprintf(fdo, "$%02x", arr[i]);
             if (!last)
             {
-                fputs("\n\tdb\t", fdo);
+                fputs("\r\n\tdb\t", fdo);
             }
         }
         else
@@ -64,7 +63,7 @@ static int output_asm(const char *name, unsigned char *arr, size_t size, FILE *f
              fprintf(fdo, "$%02x,", arr[i]);
         }
     }
-    fputc('\n', fdo);
+    fputs("\r\n", fdo);
 
     return 0;
 }
@@ -86,11 +85,12 @@ int output_asm_image(image_t *image)
         goto error;
     }
 
-    fprintf(fds, "%s_width := %d\n", image->name, image->width);
-    fprintf(fds, "%s_height := %d\n", image->name, image->height);
-    fprintf(fds, "%s_size := %d\n", image->name, image->size);
+    fprintf(fds, "%s_width := %d\r\n", image->name, image->width);
+    fprintf(fds, "%s_height := %d\r\n", image->name, image->height);
+    fprintf(fds, "%s_size := %d\r\n", image->name, image->size);
+    fprintf(fds, "%s:\r\n\tdb\t", image->name);
 
-    output_asm(image->name, image->data, image->size, fds);
+    output_asm(image->data, image->size, fds);
 
     fclose(fds);
 
@@ -110,6 +110,7 @@ int output_asm_tileset(tileset_t *tileset)
 {
     char *source = strdupcat(tileset->image.name, ".asm");
     FILE *fds;
+    int i;
 
     LL_INFO(" - Writing \'%s\'", source);
 
@@ -120,7 +121,31 @@ int output_asm_tileset(tileset_t *tileset)
         goto error;
     }
 
-    fclose(fds);
+    fprintf(fds, "%s_num_tiles := %d\r\n",
+        tileset->image.name,
+        tileset->numTiles);
+
+    for (i = 0; i < tileset->numTiles; ++i)
+    {
+        tileset_tile_t *tile = &tileset->tiles[i];
+
+        fprintf(fds, "%s_tile_%d:\r\n\tdb\t", tileset->image.name, i);
+
+        output_asm(tile->data, tile->size, fds);
+    }
+
+    if (tileset->pTable == true)
+    {
+        fprintf(fds, "%s_tiles:\r\n",
+            tileset->image.name);
+
+        for (i = 0; i < tileset->numTiles; ++i)
+        {
+            fprintf(fds, "\tdl\t%s_tile_%d\r\n",
+                tileset->image.name,
+                i);
+        }
+    }
 
     free(source);
 

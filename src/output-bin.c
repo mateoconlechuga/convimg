@@ -42,10 +42,9 @@
 /*
  * Outputs to Binary format.
  */
-static int output_bin(const char *name, unsigned char *data, size_t size, FILE *fdo)
+static int output_bin(unsigned char *data, size_t size, FILE *fdo)
 {
     int ret = fwrite(data, size, 1, fdo);
-    (void)name;
 
     return ret == 1 ? 0 : 1;
 }
@@ -68,7 +67,7 @@ int output_bin_image(image_t *image)
         goto error;
     }
 
-    ret = output_bin(image->name, image->data, image->size, fds);
+    ret = output_bin(image->data, image->size, fds);
 
     fclose(fds);
 
@@ -88,6 +87,7 @@ int output_bin_tileset(tileset_t *tileset)
 {
     char *source = strdupcat(tileset->image.name, ".bin");
     FILE *fds;
+    int i;
 
     LL_INFO(" - Writing \'%s\'", source);
 
@@ -96,6 +96,31 @@ int output_bin_tileset(tileset_t *tileset)
     {
         LL_ERROR(" Could not open file: %s", strerror(errno));
         goto error;
+    }
+
+    if (tileset->pTable == true)
+    {
+        int offset = tileset->numTiles * 3;
+
+        for (i = 0; i < tileset->numTiles; ++i)
+        {
+            unsigned char tileOffset[3];
+
+            tileOffset[0] = offset & 255;
+            tileOffset[1] = (offset >> 8) & 255;
+            tileOffset[2] = (offset >> 16) & 255;
+
+            output_bin(tileOffset, sizeof tileOffset, fds);
+
+            offset += tileset->tiles[i].size;
+        }
+    }
+
+    for (i = 0; i < tileset->numTiles; ++i)
+    {
+        tileset_tile_t *tile = &tileset->tiles[i];
+
+        output_bin(tile->data, tile->size, fds);
     }
 
     fclose(fds);

@@ -75,6 +75,9 @@ tileset_group_t *tileset_group_alloc(void)
 
     tilesetGroup->tilesets = NULL;
     tilesetGroup->numTilesets = 0;
+    tilesetGroup->tileHeight = 16;
+    tilesetGroup->tileWidth = 16;
+    tilesetGroup->pTable = true;
 
     return tilesetGroup;
 }

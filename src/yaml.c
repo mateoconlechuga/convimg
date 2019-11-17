@@ -812,6 +812,30 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
 }
 
 /*
+ * Allocate any builtings that exist when converting.
+ */
+int yaml_alloc_builtins(yaml_file_t *yamlfile)
+{
+    int ret = 0;
+
+    ret = yaml_alloc_palette(yamlfile);
+    if (ret != 0 )
+    {
+        return ret;
+    }
+    yamlfile->curPalette->name = strdup("xlibc");
+
+    ret = yaml_alloc_palette(yamlfile);
+    if (ret != 0 )
+    {
+        return ret;
+    }
+    yamlfile->curPalette->name = strdup("rgb332");
+
+    return ret;
+}
+
+/*
  * Parses a YAML file and stores the results to a structure.
  */
 int yaml_parse_file(yaml_file_t *yamlfile)
@@ -844,6 +868,12 @@ int yaml_parse_file(yaml_file_t *yamlfile)
     yamlfile->numConverts = 0;
     yamlfile->numOutputs = 0;
     yamlfile->state = YAML_ST_INIT;
+
+    ret = yaml_alloc_builtins(yamlfile);
+    if (ret != 0 )
+    {
+        return ret;
+    }
 
     do
     {

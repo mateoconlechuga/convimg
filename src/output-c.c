@@ -143,6 +143,7 @@ int output_c_tileset(tileset_t *tileset)
     char *source = strdupcat(tileset->image.name, ".c");
     FILE *fdh;
     FILE *fds;
+    int i;
 
     LL_INFO(" - Writing \'%s\'", header);
 
@@ -153,6 +154,48 @@ int output_c_tileset(tileset_t *tileset)
         goto error;
     }
 
+    fprintf(fdh, "#ifndef %s_include_file\r\n", tileset->image.name);
+    fprintf(fdh, "#define %s_include_file\r\n", tileset->image.name);
+    fprintf(fdh, "\r\n");
+    fprintf(fdh, "#ifdef __cplusplus\r\n");
+    fprintf(fdh, "extern \"C\" {\r\n");
+    fprintf(fdh, "#endif\r\n");
+    fprintf(fdh, "\r\n");
+
+    for (i = 0; i < tileset->numTiles; ++i)
+    {
+        tileset_tile_t *tile = &tileset->tiles[i];
+
+        fprintf(fdh, "extern unsigned char %s_tile_%d_data[%d];\r\n",
+                     tileset->image.name,
+                     i,
+                     tile->size);
+        fprintf(fdh, "#define %s_tile_%d ((gfx_sprite_t*)%s_tile_%d_data)\r\n",
+                     tileset->image.name,
+                     i,
+                     tileset->image.name,
+                     i);
+    }
+
+    fprintf(fdh, "#define %s_num_tiles %d\r\n",
+                 tileset->image.name,
+                 tileset->numTiles);
+
+    fprintf(fdh, "extern unsigned char *%s_tiles_data[%d]\r\n",
+                 tileset->image.name,
+                 tileset->numTiles);
+
+    fprintf(fdh, "#define %s_tiles ((gfx_sprite_t**)%s_tiles_data)\r\n",
+                 tileset->image.name,
+                 tileset->image.name);
+
+    fprintf(fdh, "\r\n");
+    fprintf(fdh, "#ifdef __cplusplus\r\n");
+    fprintf(fdh, "}\r\n");
+    fprintf(fdh, "#endif\r\n");
+    fprintf(fdh, "\r\n");
+    fprintf(fdh, "#endif\r\n");
+
     fclose(fdh);
 
     LL_INFO(" - Writing \'%s\'", source);
@@ -162,6 +205,25 @@ int output_c_tileset(tileset_t *tileset)
     {
         LL_ERROR(" Could not open file: %s", strerror(errno));
         goto error;
+    }
+
+    for (i = 0; i < tileset->numTiles; ++i)
+    {
+        size_t allocSize = strlen(tileset->image.name) + 64;
+        tileset_tile_t *tile = &tileset->tiles[i];
+        char *name;
+
+        name = malloc(allocSize);
+        if (name == NULL)
+        {
+            break;
+        }
+
+        snprintf(name, allocSize, "%s_tile_%d_data", tileset->image.name, i);
+
+        output_c(name, tile->data, tile->size, fds);
+
+        free(name);
     }
 
     fclose(fds);

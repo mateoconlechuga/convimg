@@ -314,6 +314,11 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
         convert_t *convert = output->converts[i];
         int j;
 
+        if (ret != 0)
+        {
+            break;
+        }
+
         LL_INFO("Generating output \'%s\' for \'%s\'",
                 output->name,
                 convert->name);
@@ -323,6 +328,11 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
             image_t *image = &convert->images[j];
             image->directory =
                 strdupcat(output->directory, image->name);
+
+            if (ret != 0)
+            {
+                break;
+            }
 
             switch (output->format)
             {
@@ -358,6 +368,11 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
         {
             tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
             int k;
+
+            if (ret != 0)
+            {
+                break;
+            }
 
             for (k = 0; k < tilesetGroup->numTilesets; ++k)
             {
@@ -428,6 +443,11 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
         LL_INFO("Generating output \'%s\' for \'%s\'",
                 output->name,
                 palette->name);
+
+        if (ret != 0)
+        {
+            break;
+        }
 
         switch (output->format)
         {

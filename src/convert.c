@@ -401,6 +401,11 @@ int convert_tileset(convert_t *convert, tileset_t *tileset)
             };
         byte = 0;
 
+        if (ret != 0)
+        {
+            break;
+        }
+
         for (j = 0; j < tile.height; j++)
         {
             int offset = j * tile.width + y;
@@ -457,6 +462,11 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
     {
         image_t *image = &convert->images[i];
 
+        if (ret != 0)
+        {
+            break;
+        }
+
         LL_INFO(" - Reading image \'%s\'",
             image->path);
 
@@ -489,10 +499,20 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
     {
         tileset_group_t *tilesetGroup = convert->tilesetGroups[i];
 
+        if (ret != 0)
+        {
+            break;
+        }
+
         for (j = 0; j < tilesetGroup->numTilesets; ++j)
         {
             tileset_t *tileset = &tilesetGroup->tilesets[i];
             image_t *image = &tileset->image;
+
+            if (ret != 0)
+            {
+                break;
+            }
 
             LL_INFO(" - Reading tileset \'%s\'",
                 image->path);

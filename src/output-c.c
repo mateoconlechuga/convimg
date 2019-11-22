@@ -99,12 +99,12 @@ int output_c_image(image_t *image)
 
     if (image->compressed)
     {
-        fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_data)\r\n", image->name, image->name);
-        fprintf(fdh, "extern unsigned char %s_data[%d];\r\n", image->name, image->size);
+        fprintf(fdh, "extern unsigned char %s_compressed[%d];\r\n", image->name, image->size);
     }
     else
     {
-        fprintf(fdh, "extern unsigned char %s_compressed[%d];\r\n", image->name, image->size);
+        fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_data)\r\n", image->name, image->name);
+        fprintf(fdh, "extern unsigned char %s_data[%d];\r\n", image->name, image->size);
     }
 
     fprintf(fdh, "\r\n");
@@ -368,7 +368,7 @@ int output_c_palette(palette_t *palette)
     {
         color_t *color = &palette->entries[i].color;
 
-        fprintf(fds, "    0x%02x, 0x%02x /* %3d: rgb(%3d, %3d, %3d) */\r\n",
+        fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) */\r\n",
                 color->target & 255,
                 (color->target >> 8) & 255,
                 i,

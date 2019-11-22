@@ -216,6 +216,11 @@ int palette_automatic_build(palette_t *palette, convert_t **converts, int numCon
 
     for (i = 0; i < numConverts; ++i)
     {
+        if (strcmp(palette->name, converts[i]->paletteName))
+        {
+            continue;
+        }
+
         for (j = 0; j < converts[i]->numImages; ++j)
         {
             ret = palette_add_image(palette, converts[i]->images[j].path);

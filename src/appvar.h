@@ -81,6 +81,9 @@ typedef struct
     uint8_t *data;
     int size;
     int numEntries;
+
+    /* set by output */
+    char *directory;
 } appvar_t;
 
 int appvar_write(appvar_t *a, FILE *fdv);

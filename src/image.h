@@ -51,6 +51,9 @@ typedef struct
 
     /* set by convert */
     bool compressed;
+
+    /* set by output */
+    char *directory;
 } image_t;
 
 #define WIDTH_HEIGHT_SIZE 2

@@ -73,7 +73,7 @@ static int output_asm(unsigned char *arr, size_t size, FILE *fdo)
  */
 int output_asm_image(image_t *image)
 {
-    char *source = strdupcat(image->name, ".asm");
+    char *source = strdupcat(image->directory, ".asm");
     FILE *fds;
 
     LL_INFO(" - Writing \'%s\'", source);
@@ -108,7 +108,7 @@ error:
  */
 int output_asm_tileset(tileset_t *tileset)
 {
-    char *source = strdupcat(tileset->image.name, ".asm");
+    char *source = strdupcat(tileset->directory, ".asm");
     FILE *fds;
     int i;
 
@@ -161,7 +161,7 @@ error:
  */
 int output_asm_palette(palette_t *palette)
 {
-    char *source = strdupcat(palette->name, ".asm");
+    char *source = strdupcat(palette->directory, ".asm");
     FILE *fds;
     int i;
 

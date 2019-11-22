@@ -62,6 +62,7 @@ typedef struct
 
     /* set by output */
     int appvarIndex;
+    char *directory;
 } tileset_t;
 
 typedef struct

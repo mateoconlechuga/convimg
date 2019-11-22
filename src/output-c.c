@@ -72,8 +72,8 @@ static int output_c(unsigned char *arr, size_t size, FILE *fdo)
  */
 int output_c_image(image_t *image)
 {
-    char *header = strdupcat(image->name, ".h");
-    char *source = strdupcat(image->name, ".c");
+    char *header = strdupcat(image->directory, ".h");
+    char *source = strdupcat(image->directory, ".c");
     FILE *fdh;
     FILE *fds;
 
@@ -155,8 +155,8 @@ error:
  */
 int output_c_tileset(tileset_t *tileset)
 {
-    char *header = strdupcat(tileset->image.name, ".h");
-    char *source = strdupcat(tileset->image.name, ".c");
+    char *header = strdupcat(tileset->directory, ".h");
+    char *source = strdupcat(tileset->directory, ".c");
     FILE *fdh;
     FILE *fds;
     int i;
@@ -319,8 +319,8 @@ error:
  */
 int output_c_palette(palette_t *palette)
 {
-    char *header = strdupcat(palette->name, ".h");
-    char *source = strdupcat(palette->name, ".c");
+    char *header = strdupcat(palette->directory, ".h");
+    char *source = strdupcat(palette->directory, ".c");
     int size = palette->numEntries * 2;
     FILE *fdh;
     FILE *fds;

@@ -245,7 +245,7 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
     {
         if (appvar->compress != COMPRESS_NONE)
         {
-            fprintf(fdh, "unsigned char %s_init(void *decompressed_address);\r\n",
+            fprintf(fdh, "unsigned char %s_init(void *addr);\r\n",
                 appvar->name);
         }
         else
@@ -373,10 +373,10 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
             fprintf(fds, "unsigned char %s_init(void *addr)\r\n", appvar->name);
             fprintf(fds, "{\r\n");
             fprintf(fds, "    unsigned int data, i;\r\n\r\n");
-            fprintf(fds, "    data = (unsigned int)addr - (unsigned int)%s[0];\r\n", appvar->name);
+            fprintf(fds, "    data = (unsigned int)addr - (unsigned int)%s_appvar[0];\r\n", appvar->name);
             fprintf(fds, "    for (i = 0; i < %s_num; i++)\r\n", appvar->name);
             fprintf(fds, "    {\r\n");
-            fprintf(fds, "        %s[i] += data;\r\n", appvar->name);
+            fprintf(fds, "        %s_appvar[i] += data;\r\n", appvar->name);
             fprintf(fds, "    }\r\n\r\n");
         }
         else
@@ -391,10 +391,10 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
             fprintf(fds, "    {\r\n");
             fprintf(fds, "        return 0;\r\n");
             fprintf(fds, "    }\r\n\r\n");
-            fprintf(fds, "    data = (unsigned int)ti_GetDataPtr(appvar) - (unsigned int)%s[0];\n", appvar->name);
+            fprintf(fds, "    data = (unsigned int)ti_GetDataPtr(appvar) - (unsigned int)%s_appvar[0];\n", appvar->name);
             fprintf(fds, "    for (i = 0; i < %s_num; i++)\r\n", appvar->name);
             fprintf(fds, "    {\r\n");
-            fprintf(fds, "        %s[i] += data;\r\n", appvar->name);
+            fprintf(fds, "        %s_appvar[i] += data;\r\n", appvar->name);
             fprintf(fds, "    }\r\n\r\n");
             fprintf(fds, "    ti_CloseAll();\r\n\r\n");
         }
@@ -414,7 +414,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
 
                     if (tileset->compressed)
                     {
-                        fprintf(fds, "    data = (unsigned int)%s[%u] - (unsigned int)%s_tiles_compressed[0];\r\n",
+                        fprintf(fds, "    data = (unsigned int)%s_appvar[%u] - (unsigned int)%s_tiles_compressed[0];\r\n",
                             appvar->name,
                             tileset->appvarIndex,
                             tileset->image.name);
@@ -427,7 +427,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                     }
                     else
                     {
-                        fprintf(fds, "    data = (unsigned int)%s[%u] - (unsigned int)%s_tiles_data[0];\n",
+                        fprintf(fds, "    data = (unsigned int)%s_appvar[%u] - (unsigned int)%s_tiles_data[0];\n",
                             appvar->name,
                             tileset->appvarIndex,
                             tileset->image.name);
@@ -452,8 +452,8 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
  */
 int output_appvar_include_file(output_t *output, appvar_t *appvar)
 {
-    char *varName = strdupcat(appvar->name, ".8xv");
-    char *varCName = strdupcat(appvar->name, ".c");
+    char *varName = strdupcat(appvar->directory, ".8xv");
+    char *varCName = strdupcat(appvar->directory, ".c");
     FILE *fdh;
     FILE *fds;
     FILE *fdv;

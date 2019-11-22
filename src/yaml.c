@@ -815,6 +815,26 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
         {
             outputMode = YAML_OUTPUT_PALETTES;
         }
+        else if (!strcmp(command, "directory"))
+        {
+            if (args != NULL)
+            {
+                char *tmp = strdup(args);
+                if (tmp == NULL)
+                {
+                    LL_DEBUG("Memory error in %s", __func__);
+                }
+                if (*tmp && tmp[strlen(tmp) - 1] != '/')
+                {
+                    output->directory = strdupcat(tmp, "/");
+                    free(tmp);
+                }
+                else
+                {
+                    output->directory = tmp;
+                }
+            }
+        }
         else
         {
             LL_WARNING("Ignoring invalid line %d.",

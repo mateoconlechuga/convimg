@@ -54,7 +54,7 @@ static int output_bin(unsigned char *data, size_t size, FILE *fdo)
  */
 int output_bin_image(image_t *image)
 {
-    char *source = strdupcat(image->name, ".bin");
+    char *source = strdupcat(image->directory, ".bin");
     FILE *fds;
     int ret;
 
@@ -85,7 +85,7 @@ error:
  */
 int output_bin_tileset(tileset_t *tileset)
 {
-    char *source = strdupcat(tileset->image.name, ".bin");
+    char *source = strdupcat(tileset->directory, ".bin");
     FILE *fds;
     int i;
 
@@ -139,7 +139,7 @@ error:
  */
 int output_bin_palette(palette_t *palette)
 {
-    char *source = strdupcat(palette->name, ".bin");
+    char *source = strdupcat(palette->directory, ".bin");
     FILE *fds;
     int i;
 

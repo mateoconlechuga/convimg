@@ -67,6 +67,9 @@ typedef struct palette
     color_mode_t mode;
     bpp_t bpp;
     bool automatic;
+
+    /* set by output */
+    char *directory;
 } palette_t;
 
 /* I despise forward declartions, but meh */

@@ -56,6 +56,7 @@ typedef struct
 {
     char *name;
     char *includeFileName;
+    char *directory;
     char **convertNames;
     convert_t **converts;
     int numConverts;

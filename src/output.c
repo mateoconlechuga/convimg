@@ -30,6 +30,7 @@
 
 #include "output.h"
 #include "output-formats.h"
+#include "strings.h"
 #include "log.h"
 
 #include <stdlib.h>
@@ -50,6 +51,7 @@ output_t *output_alloc(void)
 
     output->name = NULL;
     output->includeFileName = NULL;
+    output->directory = strdup("");
     output->convertNames = NULL;
     output->numConverts = 0;
     output->converts = NULL;
@@ -170,6 +172,9 @@ void output_free(output_t *output)
     free(output->name);
     output->name = NULL;
 
+    free(output->directory);
+    output->directory = NULL;
+
     output->numConverts = 0;
     output->numPalettes = 0;
 }
@@ -289,6 +294,8 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
         for (j = 0; j < convert->numImages; ++j)
         {
             image_t *image = &convert->images[j];
+            image->directory =
+                strdupcat(output->directory, image->name);
 
             switch (output->format)
             {
@@ -316,6 +323,8 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                     ret = 1;
                     break;
             }
+
+            free(image->directory);
         }
 
         for (j = 0; j < convert->numTilesetGroups; ++j)
@@ -326,6 +335,8 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
             for (k = 0; k < tilesetGroup->numTilesets; ++k)
             {
                 tileset_t *tileset = &tilesetGroup->tilesets[k];
+                tileset->directory =
+                    strdupcat(output->directory, tileset->image.name);
 
                 switch (output->format)
                 {
@@ -353,6 +364,8 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                         ret = 1;
                         break;
                 }
+
+                free(tileset->directory);
             }
         }
     }
@@ -382,6 +395,8 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
     for (i = 0; i < output->numPalettes; ++i)
     {
         palette_t *palette = output->palettes[i];
+        palette->directory =
+            strdupcat(output->directory, palette->name);
 
         LL_INFO("Generating output \'%s\' for \'%s\'",
                 output->name,
@@ -413,6 +428,8 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
                 ret = 1;
                 break;
         }
+
+        free(palette->directory);
     }
     return ret;
 }
@@ -423,6 +440,18 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
 int output_include_header(output_t *output)
 {
     int ret = 0;
+    char *tmp;
+
+    tmp = output->includeFileName;;
+    output->includeFileName =
+        strdupcat(output->directory, output->includeFileName);
+    free(tmp);
+
+    if (output->appvar.name != NULL)
+    {
+        output->appvar.directory =
+            strdupcat(output->directory, output->appvar.name);
+    }
 
     if (output->numPalettes == 0 && output->numConverts == 0)
     {
@@ -454,6 +483,11 @@ int output_include_header(output_t *output)
         default:
             ret = 1;
             break;
+    }
+
+    if (output->appvar.name != NULL)
+    {
+        free(output->appvar.directory);
     }
 
     return ret;

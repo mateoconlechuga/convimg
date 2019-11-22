@@ -61,6 +61,8 @@ output_t *output_alloc(void)
     output->appvar.archived = true;
     output->appvar.init = true;
     output->appvar.source = APPVAR_SOURCE_C;
+    output->appvar.data = NULL;
+    output->appvar.size = 0;
 
     return output;
 }

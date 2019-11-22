@@ -35,12 +35,39 @@
 extern "C" {
 #endif
 
+#include "compress.h"
+
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+
+#define APPVAR_MAX_FILE_SIZE (64 * 1024 + 300)
+#define APPVAR_MAX_DATA_SIZE (64 * 1024 - 300)
+
+#define APPVAR_TYPE_FLAG 21
+#define APPVAR_ARCHIVE_FLAG 128
+
+#define APPVAR_CHECKSUM_LEN 2
+#define APPVAR_VARB_SIZE_LEN 2
+#define APPVAR_VAR_HEADER_LEN 17
+#define APPVAR_FILE_HEADER_LEN 55
+
+#define APPVAR_FILE_HEADER_POS 0x00
+#define APPVAR_DATA_SIZE_POS 0x35
+#define APPVAR_VAR_HEADER_POS 0x37
+#define APPVAR_VAR_SIZE0_POS 0x39
+#define APPVAR_TYPE_POS 0x3b
+#define APPVAR_NAME_POS 0x3c
+#define APPVAR_ARCHIVE_POS 0x45
+#define APPVAR_VAR_SIZE1_POS 0x46
+#define APPVAR_VARB_SIZE_POS 0x48
+#define APPVAR_DATA_POS 0x4a
+
+#define APPVAR_MAGIC 0x0d
 
 typedef enum
 {
     APPVAR_SOURCE_C,
-    APPVAR_SOURCE_ASM,
     APPVAR_SOURCE_ICE,
 } appvar_source_t;
 
@@ -50,7 +77,13 @@ typedef struct
     bool archived;
     appvar_source_t source;
     bool init;
+    compress_t compress;
+    uint8_t *data;
+    int size;
+    int numEntries;
 } appvar_t;
+
+int appvar_write(appvar_t *a, FILE *fdv);
 
 #ifdef __cplusplus
 }

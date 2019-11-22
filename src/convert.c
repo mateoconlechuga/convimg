@@ -165,6 +165,7 @@ static int convert_add_tileset(convert_t *convert, const char *path)
     image->data = NULL;
     image->width = 0;
     image->height = 0;
+    image->compressed = false;
 
     tilesetGroup->numTilesets++;
 
@@ -348,6 +349,8 @@ static int convert_image(convert_t *convert, image_t *image)
         {
             return ret;
         }
+
+        image->compressed = true;
     }
 
     return 0;
@@ -378,6 +381,8 @@ int convert_tileset(convert_t *convert, tileset_t *tileset)
         LL_ERROR("Image dimensions do not support tile height");
         return 1;
     }
+
+    tileset->compressed = convert->compress != COMPRESS_NONE;
 
     tileset_alloc_tiles(tileset);
 

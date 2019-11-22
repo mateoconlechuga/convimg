@@ -722,14 +722,17 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
             if (!strcmp(args, "c"))
             {
                 output->format = OUTPUT_FORMAT_C;
+                output->includeFileName = strdup("gfx.h");
             }
             else if (!strcmp(args, "asm"))
             {
                 output->format = OUTPUT_FORMAT_ASM;
+                output->includeFileName = strdup("gfx.inc");
             }
             else if (!strcmp(args, "ice"))
             {
                 output->format = OUTPUT_FORMAT_ICE;
+                output->includeFileName = strdup("ice.txt");
             }
             else if (!strcmp(args, "appvar"))
             {
@@ -738,6 +741,7 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
             else if (!strcmp(args, "bin"))
             {
                 output->format = OUTPUT_FORMAT_BIN;
+                output->includeFileName = strdup("gfx.txt");
             }
         }
         else
@@ -751,6 +755,10 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
     {
         if (!strcmp(command, "name"))
         {
+            if (output->appvar.name != NULL)
+            {
+                free(output->appvar.name);
+            }
             output->appvar.name = strdup(args);
         }
         else if (!strcmp(command, "archived"))
@@ -767,10 +775,6 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
             {
                 output->appvar.source = APPVAR_SOURCE_C;
             }
-            else if (!strcmp(args, "asm"))
-            {
-                output->appvar.source = APPVAR_SOURCE_ASM;
-            }
             else if (!strcmp(args, "ice"))
             {
                 output->appvar.source = APPVAR_SOURCE_ICE;
@@ -786,6 +790,10 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
         {
             if (args != NULL)
             {
+                if (output->includeFileName != NULL)
+                {
+                    free(output->includeFileName);
+                }
                 output->includeFileName = strdup(args);
             }
             else
@@ -797,7 +805,7 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
         }
         else if (!strcmp(command, "compress"))
         {
-            output->compress = yaml_get_compress_mode(yamlfile, args);
+            output->appvar.compress = yaml_get_compress_mode(yamlfile, args);
         }
         else if (!strcmp(command, "converts"))
         {
@@ -817,6 +825,10 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
     {
         if (args != NULL)
         {
+            if (output->includeFileName != NULL)
+            {
+                free(output->includeFileName);
+            }
             output->includeFileName = strdup(args);
         }
         else
@@ -830,6 +842,10 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
     {
         if (args != NULL)
         {
+            if (output->name != NULL)
+            {
+                free(output->name);
+            }
             output->name = strdup(args);
         }
         else
@@ -838,10 +854,6 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
                 yamlfile->line);
             ret = 1;
         }
-    }
-    else if (!strcmp(command, "compress"))
-    {
-        output->compress = yaml_get_compress_mode(yamlfile, args);
     }
     else if (!strcmp(command, "palettes"))
     {

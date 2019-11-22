@@ -56,6 +56,12 @@ typedef struct
     int tileHeight;
     int tileWidth;
     bool pTable;
+
+    /* set by convert */
+    bool compressed;
+
+    /* set by output */
+    int appvarIndex;
 } tileset_t;
 
 typedef struct

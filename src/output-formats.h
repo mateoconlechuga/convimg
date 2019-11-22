@@ -36,6 +36,7 @@ extern "C" {
 #endif
 
 #include "output.h"
+#include "appvar.h"
 
 /*
  * Output is CRLF to please the Windows losers.
@@ -58,6 +59,14 @@ int output_asm_palette(palette_t *palette);
 int output_asm_include_file(output_t *output);
 
 /*
+ * Binary Format.
+ */
+int output_bin_image(image_t *image);
+int output_bin_tileset(tileset_t *tileset);
+int output_bin_palette(palette_t *palette);
+int output_bin_include_file(output_t *output);
+
+/*
  * ICE Format.
  */
 int output_ice_image(image_t *image, char *file);
@@ -68,18 +77,10 @@ int output_ice_include_file(output_t *output, char *file);
 /*
  * Appvar Format.
  */
-int output_appvar_image(image_t *image);
-int output_appvar_tileset(tileset_t *tileset);
-int output_appvar_palette(palette_t *palette);
-int output_appvar_include_file(output_t *output);
-
-/*
- * Binary Format.
- */
-int output_bin_image(image_t *image);
-int output_bin_tileset(tileset_t *tileset);
-int output_bin_palette(palette_t *palette);
-int output_bin_include_file(output_t *output);
+int output_appvar_image(image_t *image, appvar_t *appvar);
+int output_appvar_tileset(tileset_t *tileset, appvar_t *appvar);
+int output_appvar_palette(palette_t *palette, appvar_t *appvar);
+int output_appvar_include_file(output_t *output, appvar_t *appvar);
 
 #ifdef __cplusplus
 }

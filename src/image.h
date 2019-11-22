@@ -38,6 +38,7 @@ extern "C" {
 #include "compress.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct
 {
@@ -47,6 +48,9 @@ typedef struct
     int width;
     int height;
 	int size;
+
+    /* set by convert */
+    bool compressed;
 } image_t;
 
 #define WIDTH_HEIGHT_SIZE 2

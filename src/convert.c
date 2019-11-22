@@ -442,7 +442,10 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
         return 1;
     }
 
-    LL_INFO("Converting images for \'%s\'", convert->name);
+    if (convert->numImages > 0)
+    {
+        LL_INFO("Converting images for \'%s\'", convert->name);
+    }
 
     ret = convert_find_palette(convert, palettes, numPalettes);
     if (ret != 0)
@@ -477,7 +480,10 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
         }
     }
 
-    LL_INFO("Converting tilesets for \'%s\'", convert->name);
+    if (convert->numTilesetGroups > 0)
+    {
+        LL_INFO("Converting tilesets for \'%s\'", convert->name);
+    }
 
     for (i = 0; i < convert->numTilesetGroups; ++i)
     {

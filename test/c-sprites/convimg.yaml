@@ -1,0 +1,15 @@
+output: c
+  include-file: gfx.h
+  palettes:
+    - mypalette
+  converts:
+    - myimages
+
+palette: mypalette
+  images: automatic
+
+convert: myimages
+  palette: mypalette
+  images:
+    - oiram.png
+    - thwomp.png

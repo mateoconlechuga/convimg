@@ -485,7 +485,7 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
             fdh = fopen(output->includeFileName, "w");
             if (fdh == NULL)
             {
-                LL_ERROR(" Could not open file: %s", strerror(errno));
+                LL_ERROR("Could not open file: %s", strerror(errno));
                 goto error;
             }
 
@@ -497,7 +497,7 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
             if (fds == NULL)
             {
                 fclose(fdh);
-                LL_ERROR(" Could not open file: %s", strerror(errno));
+                LL_ERROR("Could not open file: %s", strerror(errno));
                 goto error;
             }
 
@@ -516,7 +516,7 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
     fdv = fopen(varName, "w");
     if (fdv == NULL)
     {
-        LL_ERROR(" Could not open file: %s", strerror(errno));
+        LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 

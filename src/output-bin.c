@@ -63,7 +63,7 @@ int output_bin_image(image_t *image)
     fds = fopen(source, "w");
     if (fds == NULL)
     {
-        LL_ERROR(" Could not open file: %s", strerror(errno));
+        LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 
@@ -94,7 +94,7 @@ int output_bin_tileset(tileset_t *tileset)
     fds = fopen(source, "w");
     if (fds == NULL)
     {
-        LL_ERROR(" Could not open file: %s", strerror(errno));
+        LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 
@@ -148,7 +148,7 @@ int output_bin_palette(palette_t *palette)
     fds = fopen(source, "w");
     if (fds == NULL)
     {
-        LL_ERROR(" Could not open file: %s", strerror(errno));
+        LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 
@@ -197,7 +197,7 @@ int output_bin_include_file(output_t *output)
     fdi = fopen(includeFile, "w");
     if (fdi == NULL)
     {
-        LL_ERROR(" Could not open file: %s", strerror(errno));
+        LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 

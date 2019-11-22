@@ -1,0 +1,15 @@
+output: c
+  directory: outputs
+  palettes:
+    - mypalette
+  converts:
+    - myimages
+
+palette: mypalette
+  images: automatic
+
+convert: myimages
+  palette: mypalette
+  images:
+    - ./inputs/*
+

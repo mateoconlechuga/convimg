@@ -1,0 +1,15 @@
+output: bin
+  include-file: gfx.txt
+  palettes:
+    - mypalette
+  converts:
+    - myimages
+
+palette: mypalette
+  images: automatic
+
+convert: myimages
+  palette: mypalette
+  images:
+    - oiram.png
+    - thwomp.png

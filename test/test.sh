@@ -26,3 +26,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+for d in ./*/
+do
+    ( cd "$d" && ../../bin/convimg -i convimg.yaml ) || { exit 1; }
+done

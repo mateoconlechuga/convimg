@@ -68,7 +68,7 @@ int output_ice_image(image_t *image, char *file)
     fd = fopen(file, "a");
     if (fd == NULL)
     {
-        LL_ERROR(" Could not open file: %s", strerror(errno));
+        LL_ERROR("Could not open file: %s", strerror(errno));
         return 1;
     }
 
@@ -105,7 +105,7 @@ int output_ice_palette(palette_t *palette, char *file)
     fd = fopen(file, "a");
     if (fd == NULL)
     {
-        LL_ERROR(" Could not open file: %s", strerror(errno));
+        LL_ERROR("Could not open file: %s", strerror(errno));
         return 1;
     }
 

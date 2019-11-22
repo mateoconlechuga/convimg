@@ -31,7 +31,7 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define PRGM_NAME "convpng"
+#define PRGM_NAME "convimg"
 #define VERSION_STRING "8.0"
 
 #endif

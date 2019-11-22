@@ -93,6 +93,12 @@ int main(int argc, char **argv)
         {
             for (i = 0; i < yamlfile->numOutputs; ++i)
             {
+                ret = output_init(yamlfile->outputs[i]);
+                if (ret != 0)
+                {
+                    break;
+                }
+
                 ret = output_palettes(yamlfile->outputs[i],
                                       yamlfile->palettes,
                                       yamlfile->numPalettes);

@@ -60,6 +60,7 @@ output_t *output_alloc(void)
     output->numPalettes = 0;
     output->format = OUTPUT_FORMAT_INVALID;
     output->appvar.name = NULL;
+    output->appvar.directory = NULL;
     output->appvar.archived = true;
     output->appvar.init = true;
     output->appvar.source = APPVAR_SOURCE_C;
@@ -177,6 +178,32 @@ void output_free(output_t *output)
 
     output->numConverts = 0;
     output->numPalettes = 0;
+}
+
+/*
+ * Sets up paths for output.
+ */
+int output_init(output_t *output)
+{
+    char *tmp;
+
+    tmp = output->includeFileName;
+    output->includeFileName =
+        strdupcat(output->directory, output->includeFileName);
+    free(tmp);
+
+    if (output->format == OUTPUT_FORMAT_ICE)
+    {
+        remove(output->includeFileName);
+    }
+
+    if (output->appvar.name != NULL)
+    {
+        output->appvar.directory =
+            strdupcat(output->directory, output->appvar.name);
+    }
+
+    return 0;
 }
 
 /*
@@ -440,18 +467,6 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
 int output_include_header(output_t *output)
 {
     int ret = 0;
-    char *tmp;
-
-    tmp = output->includeFileName;;
-    output->includeFileName =
-        strdupcat(output->directory, output->includeFileName);
-    free(tmp);
-
-    if (output->appvar.name != NULL)
-    {
-        output->appvar.directory =
-            strdupcat(output->directory, output->appvar.name);
-    }
 
     if (output->numPalettes == 0 && output->numConverts == 0)
     {

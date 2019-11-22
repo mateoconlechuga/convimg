@@ -61,7 +61,8 @@ output_t *output_alloc(void)
     output->appvar.archived = true;
     output->appvar.init = true;
     output->appvar.source = APPVAR_SOURCE_C;
-    output->appvar.data = NULL;
+    output->appvar.compress = COMPRESS_NONE;
+    output->appvar.data = malloc(APPVAR_MAX_DATA_SIZE);
     output->appvar.size = 0;
 
     return output;
@@ -153,6 +154,9 @@ void output_free(output_t *output)
 
     free(output->appvar.name);
     output->appvar.name = NULL;
+
+    free(output->appvar.data);
+    output->appvar.data = NULL;
 
     free(output->converts);
     output->converts = NULL;
@@ -301,7 +305,7 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                     break;
 
                 case OUTPUT_FORMAT_APPVAR:
-                    ret = 0;
+                    ret = output_appvar_image(image, &output->appvar);
                     break;
 
                 case OUTPUT_FORMAT_BIN:
@@ -342,7 +346,7 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                         break;
 
                     case OUTPUT_FORMAT_APPVAR:
-                        ret = 0;
+                        ret = output_appvar_tileset(tileset, &output->appvar);
                         break;
 
                     default:
@@ -402,7 +406,7 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
                 break;
 
             case OUTPUT_FORMAT_APPVAR:
-                ret = 0;
+                ret = output_appvar_palette(palette, &output->appvar);
                 break;
 
             default:
@@ -444,7 +448,7 @@ int output_include_header(output_t *output)
             break;
 
         case OUTPUT_FORMAT_APPVAR:
-            ret = 0;
+            ret = output_appvar_include_file(output, &output->appvar);
             break;
 
         default:

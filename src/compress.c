@@ -67,8 +67,22 @@ static int compress_zx7(unsigned char **arr, size_t *size)
  */
 int compress_array(unsigned char **arr, size_t *size, compress_t mode)
 {
-    /* zx7 is only compression mode */
-    (void)mode;
+    int ret = 0;
 
-    return compress_zx7(arr, size);
+    switch (mode)
+    {
+        case COMPRESS_NONE:
+            ret = 0;
+            break;
+
+        case COMPRESS_ZX7:
+            ret = compress_zx7(arr, size);
+            break;
+
+        case COMPRESS_INVALID:
+            ret = 1;
+            break;
+    }
+
+    return ret;
 }

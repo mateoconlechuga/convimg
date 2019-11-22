@@ -71,13 +71,16 @@ int appvar_write(appvar_t *a, FILE *fdv)
 
     size = a->size;
 
-    ret = compress_array(&a->data, &size, a->compress);
-    if (ret != 0)
+    if (a->compress != COMPRESS_NONE)
     {
-        LL_ERROR("Failed to compress data for AppVar \'%s\'.", a->name);
-        return ret;
+        ret = compress_array(&a->data, &size, a->compress);
+        if (ret != 0)
+        {
+            LL_ERROR("Failed to compress data for AppVar \'%s\'.", a->name);
+            return ret;
+        }
+        a->size = size;
     }
-    a->size = size;
 
     if (a->size > APPVAR_MAX_DATA_SIZE)
     {

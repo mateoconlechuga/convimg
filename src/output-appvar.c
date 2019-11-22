@@ -390,7 +390,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
             fprintf(fds, "    if (appvar == 0)\r\n");
             fprintf(fds, "    {\r\n");
             fprintf(fds, "        return 0;\r\n");
-            fprintf(fds, "    }\r\n");
+            fprintf(fds, "    }\r\n\r\n");
             fprintf(fds, "    data = (unsigned int)ti_GetDataPtr(appvar) - (unsigned int)%s[0];\n", appvar->name);
             fprintf(fds, "    for (i = 0; i < %s_num; i++)\r\n", appvar->name);
             fprintf(fds, "    {\r\n");
@@ -450,15 +450,26 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
 /*
  * Outputs an include file for the output structure
  */
-int output_appvar_include_file(output_t *output)
+int output_appvar_include_file(output_t *output, appvar_t *appvar)
 {
-    appvar_t *appvar = &output->appvar;
     char *varName = strdupcat(appvar->name, ".8xv");
     char *varCName = strdupcat(appvar->name, ".c");
     FILE *fdh;
     FILE *fds;
     FILE *fdv;
     int ret = 1;
+
+    if (appvar == NULL)
+    {
+        LL_DEBUG("Invalid param in %s", __func__);
+        return 1;
+    }
+
+    if (appvar->name == NULL)
+    {
+        LL_ERROR("Missing \"name\" parameter for AppVar.");
+        return 1;
+    }
 
     if (varName == NULL || varCName == NULL)
     {

@@ -51,7 +51,8 @@ int image_load(image_t *image)
                                        &channels,
                                        STBI_rgb_alpha);
 
-	image->size = image->width * image->height;
+    image->size = image->width * image->height;
+    image->compressed = false;
 
     return image->data == NULL ? 1 : 0;
 }
@@ -241,64 +242,64 @@ int image_compress(image_t *image, compress_t compress)
  */
 int image_quantize(image_t *image, palette_t *palette)
 {
-	int j;
-	liq_image *liqimage = NULL;
-	liq_result *liqresult = NULL;
-	liq_attr *liqattr = NULL;
-	uint8_t *data = NULL;
+    int j;
+    liq_image *liqimage = NULL;
+    liq_result *liqresult = NULL;
+    liq_attr *liqattr = NULL;
+    uint8_t *data = NULL;
 
-	liqattr = liq_attr_create();
-	if (liqattr == NULL)
-	{
-	    LL_ERROR("Failed to create image attributes \'%s\'\n", image->path);
-	    return 1;
-	}
+    liqattr = liq_attr_create();
+    if (liqattr == NULL)
+    {
+        LL_ERROR("Failed to create image attributes \'%s\'\n", image->path);
+        return 1;
+    }
 
-	liq_set_speed(liqattr, 10);
-	liq_set_max_colors(liqattr, palette->numEntries);
-	liqimage = liq_image_create_rgba(liqattr,
-	                                 image->data,
-	                                 image->width,
-	                                 image->height,
-	                                 0);
-	if (liqimage == NULL)
-	{
-	    LL_ERROR("Failed to create image \'%s\'\n", image->path);
-	    liq_attr_destroy(liqattr);
-	    return 1;
-	}
+    liq_set_speed(liqattr, 10);
+    liq_set_max_colors(liqattr, palette->numEntries);
+    liqimage = liq_image_create_rgba(liqattr,
+                                     image->data,
+                                     image->width,
+                                     image->height,
+                                     0);
+    if (liqimage == NULL)
+    {
+        LL_ERROR("Failed to create image \'%s\'\n", image->path);
+        liq_attr_destroy(liqattr);
+        return 1;
+    }
 
-	for (j = 0; j < palette->numEntries; j++)
-	{
-	    liq_image_add_fixed_color(liqimage, palette->entries[j].color.rgb);
-	}
+    for (j = 0; j < palette->numEntries; j++)
+    {
+        liq_image_add_fixed_color(liqimage, palette->entries[j].color.rgb);
+    }
 
-	liqresult = liq_quantize_image(liqattr, liqimage);
-	if (liqresult == NULL)
-	{
-	    LL_ERROR("Failed to quantize image \'%s\'\n", image->path);
-	    liq_image_destroy(liqimage);
-	    liq_attr_destroy(liqattr);
-	    return 1;
-	}
+    liqresult = liq_quantize_image(liqattr, liqimage);
+    if (liqresult == NULL)
+    {
+        LL_ERROR("Failed to quantize image \'%s\'\n", image->path);
+        liq_image_destroy(liqimage);
+        liq_attr_destroy(liqattr);
+        return 1;
+    }
 
-	data = malloc(image->size);
-	if (data == NULL)
-	{
-	    LL_ERROR("Failed to allocate image memory \'%s\'\n", image->path);
-	    liq_result_destroy(liqresult);
-	    liq_image_destroy(liqimage);
-	    liq_attr_destroy(liqattr);
-	    return 1;
-	}
+    data = malloc(image->size);
+    if (data == NULL)
+    {
+        LL_ERROR("Failed to allocate image memory \'%s\'\n", image->path);
+        liq_result_destroy(liqresult);
+        liq_image_destroy(liqimage);
+        liq_attr_destroy(liqattr);
+        return 1;
+    }
 
-	liq_write_remapped_image(liqresult, liqimage, data, image->size);
+    liq_write_remapped_image(liqresult, liqimage, data, image->size);
     free(image->data);
-	image->data = data;
+    image->data = data;
 
-	liq_result_destroy(liqresult);
-	liq_image_destroy(liqimage);
-	liq_attr_destroy(liqattr);
+    liq_result_destroy(liqresult);
+    liq_image_destroy(liqimage);
+    liq_attr_destroy(liqattr);
 
-	return 0;
+    return 0;
 }

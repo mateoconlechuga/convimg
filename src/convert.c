@@ -333,6 +333,15 @@ static int convert_image(convert_t *convert, image_t *image)
         }
     }
 
+    if (convert->bpp != BPP_8)
+    {
+        ret = image_set_bpp(image, convert->bpp, convert->palette->numEntries);
+        if (ret != 0)
+        {
+            return ret;
+        }
+    }
+
     if (convert->widthAndHeight == true)
     {
         ret = image_add_width_and_height(image);

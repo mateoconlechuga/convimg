@@ -36,6 +36,7 @@ extern "C" {
 #endif
 
 #include "compress.h"
+#include "bpp.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -66,6 +67,7 @@ int image_rlet(image_t *image, int tIndex);
 int image_add_width_and_height(image_t *image);
 int image_compress(image_t *image, compress_t compress);
 int image_remove_omits(image_t *image, int *omitIndices, int numOmitIndices);
+int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries);
 int image_quantize(image_t *image, palette_t *palette);
 void image_free(image_t *image);
 

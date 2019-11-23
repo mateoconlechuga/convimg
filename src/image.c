@@ -36,8 +36,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "deps/stb/stb_image.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "deps/stb/stb_image_write.h"
+
+#include <math.h>
 
 /*
  * Loads an image to its data array.
@@ -161,6 +161,89 @@ int image_rlet(image_t *image, int tIndex)
     free(image->data);
     image->data = newData;
     image->size = newSize;
+
+    return 0;
+}
+
+/*
+ * Sets the bpp for the converted image.
+ */
+int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries)
+{
+    int shift;
+    int inc;
+    int j, k;
+    int newSize;
+    uint8_t *newData;
+
+    switch (bpp)
+    {
+        case BPP_1:
+            if (paletteNumEntries > 2)
+            {
+                LL_ERROR("Palette has too many entries for BPP mode. (max 2)");
+                return 1;
+            }
+            shift = 3;
+            break;
+        case BPP_2:
+            if (paletteNumEntries > 4)
+            {
+                LL_ERROR("Palette has too many entries for BPP mode. (max 4)");
+                return 1;
+            }
+            shift = 2;
+            break;
+        case BPP_4:
+            if (paletteNumEntries > 16)
+            {
+                LL_ERROR("Palette has too many entries for BPP mode. (max 16)");
+                return 1;
+            }
+            shift = 1;
+            break;
+        case BPP_8:
+            return 0;
+        default:
+            LL_ERROR("Invalid BPP mode.");
+            return 1;
+    }
+
+    newSize = 0;
+    newData = malloc(image->size);
+    if (newData == NULL)
+    {
+        LL_DEBUG("Memory error in %s", __func__);
+        return 1;
+    }
+
+    inc = pow(2, shift);
+
+    for (j = 0; j < image->height; ++j)
+    {
+        int line = j * image->width;
+
+        for (k = 0; k < image->width; k += inc)
+        {
+            int currInc = inc;
+            int col;
+            uint8_t byte = 0;
+
+            for (col = 0; col < inc; col++)
+            {
+                byte |= image->data[k + line + col] << --currInc;
+            }
+
+            newData[newSize] = byte;
+            newSize++;
+        }
+    }
+
+    free(image->data);
+    image->data = newData;
+
+    image->width /= inc;
+    image->size = image->width * image->height;
 
     return 0;
 }

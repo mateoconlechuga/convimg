@@ -1,7 +1,7 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3
-CFLAGS_LIQ := -Wall -std=c99 -O3 -DNDEBUG -DUSE_SSE=1 -fno-math-errno -funroll-loops -fomit-frame-pointer -msse -mfpmath=sse -Wno-unknown-pragmas -Wno-attributes
-LDFLAGS := -flto
+CFLAGS = -Wall -Wextra -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3
+CFLAGS_LIQ = -Wall -std=c99 -O3 -DNDEBUG -DUSE_SSE=1 -fno-math-errno -funroll-loops -fomit-frame-pointer -msse -mfpmath=sse -Wno-unknown-pragmas -Wno-attributes
+LDFLAGS = -flto
 
 BINDIR := ./bin
 OBJDIR := ./obj
@@ -43,6 +43,7 @@ ifeq ($(OS),Windows_NT)
   MKDIR = if not exist "$1" mkdir "$1"
   RMDIR = del /f "$1" 2>nul
   STRIP = strip --strip-all "$1"
+  CFLAGS += -DWINDOWS32 -DHAVE_CONFIG_H
   SOURCES += $(DEPDIR)/glob/glob.c \
              $(DEPDIR)/glob/fnmatch.c
   INCLUDEDIRS += $(DEPDIR)/glob

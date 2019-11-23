@@ -11,7 +11,6 @@ language: c
 branches:
   only:
     - master
-    - convimg
 
 script:
   - git submodule update --init --recursive

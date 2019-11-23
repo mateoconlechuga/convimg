@@ -193,6 +193,8 @@ static int yaml_parse_fixed_color(yaml_file_t *yamlfile, char *line, palette_ent
 {
     char *args = strchr(line, '{');
 
+    memset(entry, 0, sizeof(palette_entry_t));
+
     if (args == NULL)
     {
         goto error;
@@ -452,7 +454,7 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
     else if (!strcmp(command, "fixed-color"))
     {
         ret = yaml_parse_fixed_color(yamlfile, line, &entry);
-        palette->entries[palette->numFixedEntries] = entry;
+        palette->fixedEntries[palette->numFixedEntries] = entry;
         palette->numFixedEntries++;
     }
     else if (!strcmp(command, "images"))

@@ -336,14 +336,21 @@ static int options_write_new(void)
  */
 static int options_verify(options_t *options)
 {
+    FILE *fd;
+
     if (options->convertIcon == true)
     {
         return OPTIONS_SUCCESS;
     }
 
-    if (fopen(options->yamlfile.name, "r") == NULL)
+    fd = fopen(options->yamlfile.name, "r");
+    if (fd == NULL)
     {
         goto error;
+    }
+    else
+    {
+        fclose(fd);
     }
 
     return OPTIONS_SUCCESS;

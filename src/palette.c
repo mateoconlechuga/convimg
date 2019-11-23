@@ -197,8 +197,6 @@ int palette_generate_builtin(palette_t *palette,
         ec->rgb = color;
 
         color_convert(ec, mode);
-
-        palette->entries[i].index = i;
     }
 
     palette->numEntries = numEntries;
@@ -384,24 +382,24 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
         color_convert(&color, palette->mode);
 
         palette->entries[i].color = color;
-        palette->entries[i].index = i;
     }
 
     for (i = 0; i < palette->numFixedEntries; ++i)
     {
-        color_t *fc = &palette->fixedEntries[i].color;
+        palette_entry_t *fixedEntry = &palette->fixedEntries[i];
 
         for (j = 0; j < (int)liqpalette->count; ++j)
         {
-            color_t *ec = &palette->entries[j].color;
+            palette_entry_t *entry = &palette->entries[j];
 
-            if( ec->target == fc->target )
+            if( fixedEntry->color.target == entry->color.target )
             {
-                color_t tmp = *ec;
-                *ec = *fc;
-                *fc = tmp;
+                palette_entry_t tmpEntry;
 
-                i = -1;
+                tmpEntry = palette->entries[j];
+                palette->entries[j] = palette->entries[fixedEntry->index];
+                palette->entries[fixedEntry->index] = tmpEntry;
+
                 break;
             }
         }

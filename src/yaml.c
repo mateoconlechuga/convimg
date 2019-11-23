@@ -1026,6 +1026,7 @@ void yaml_release_file(yaml_file_t *yamlfile)
         free(yamlfile->outputs[i]);
         yamlfile->outputs[i] = NULL;
     }
+
     free(yamlfile->outputs);
     yamlfile->outputs = NULL;
 
@@ -1035,6 +1036,7 @@ void yaml_release_file(yaml_file_t *yamlfile)
         free(yamlfile->converts[i]);
         yamlfile->converts[i] = NULL;
     }
+
     free(yamlfile->converts);
     yamlfile->converts = NULL;
 
@@ -1044,6 +1046,10 @@ void yaml_release_file(yaml_file_t *yamlfile)
         free(yamlfile->palettes[i]);
         yamlfile->palettes[i] = NULL;
     }
+
     free(yamlfile->palettes);
     yamlfile->palettes = NULL;
+
+    free(yamlfile->name);
+    yamlfile->name = NULL;
 }

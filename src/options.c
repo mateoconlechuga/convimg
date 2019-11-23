@@ -334,7 +334,7 @@ static int options_write_new(void)
  */
 static int options_verify(options_t *options)
 {
-    if (options->yamlfile.name == NULL)
+    if (fopen(options->yamlfile.name, "r") == NULL)
     {
         goto error;
     }
@@ -360,7 +360,7 @@ static void options_set_default(options_t *options)
     }
 
     options->prgm = 0;
-    options->yamlfile.name = NULL;
+    options->yamlfile.name = strdup("convimg.yaml");
 }
 
 /*
@@ -403,7 +403,7 @@ int options_get(int argc, char *argv[], options_t *options)
         switch (c)
         {
             case 'i':
-                options->yamlfile.name = optarg;
+                options->yamlfile.name = strdup(optarg);
                 break;
 
             case 'n':

@@ -609,10 +609,6 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
             convert->numOmitIndices++;
         }
     }
-    else if (!strcmp(command, "width-and-height"))
-    {
-        convert->widthAndHeight = args != NULL && !strcmp(args, "true");
-    }
     else if (!strcmp(command, "bpp"))
     {
         if (args == NULL)
@@ -854,23 +850,6 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
         else
         {
             LL_ERROR("Missing include file name on line %d.",
-                yamlfile->line);
-            ret = 1;
-        }
-    }
-    else if (!strcmp(command, "name"))
-    {
-        if (args != NULL)
-        {
-            if (output->name != NULL)
-            {
-                free(output->name);
-            }
-            output->name = strdup(args);
-        }
-        else
-        {
-            LL_ERROR("Missing name on line %d.",
                 yamlfile->line);
             ret = 1;
         }

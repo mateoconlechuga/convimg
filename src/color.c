@@ -29,6 +29,7 @@
  */
 
 #include "color.h"
+#include "math.h"
 
 #include <stdbool.h>
 
@@ -37,11 +38,11 @@
  */
 static void color_888_to_1555(liq_color *in, uint16_t *out)
 {
-    uint8_t r5 = (in->r * 31 + 128) / 255;
-    uint8_t g6 = (in->g * 63 + 128) / 255;
-    uint8_t b5 = (in->b * 31 + 128) / 255;
+    uint8_t r5 = round((int)in->r * 31.0 / 255.0);
+    uint8_t g6 = round((int)in->g * 63.0 / 255.0);
+    uint8_t b5 = round((int)in->b * 31.0 / 255.0);
 
-    *out = (r5 << 10) | (g6 << 5) | b5;
+    *out = ((g6 & 1) << 15) | (r5 << 10) | ((g6 >> 1) << 5) | b5;
 }
 
 static void color_1555_to_888(uint16_t *in, liq_color *out)
@@ -52,9 +53,9 @@ static void color_1555_to_888(uint16_t *in, liq_color *out)
 
     liq_color color =
         {
-            .r = (r5 * 527 + 23) >> 6,
-            .g = (g6 * 255 + 32) / 63,
-            .b = (b5 * 527 + 23) >> 6,
+            .r = round((int)r5 * 255.0 / 31.0),
+            .g = round((int)g6 * 255.0 / 63.0),
+            .b = round((int)b5 * 255.0 / 31.0),
             .a = 255,
         };
 

@@ -319,6 +319,7 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
     {
         image_t *image = &palette->images[i];
         liq_image *liqimage;
+        int j;
 
         LL_INFO(" - Reading \'%s\'",
             image->path);
@@ -329,6 +330,23 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
             liq_histogram_destroy(hist);
             liq_attr_destroy(attr);
             return 1;
+        }
+
+        for (j = 0; j < image->width * image->height; ++j)
+        {
+            int o = j * 4;
+            color_t color;
+            color.rgb.r = image->data[o + 0];
+            color.rgb.g = image->data[o + 1];
+            color.rgb.b = image->data[o + 2];
+            color.rgb.a = image->data[o + 3];
+
+            color_convert(&color, palette->mode);
+
+            image->data[o + 0] = color.rgb.r;
+            image->data[o + 1] = color.rgb.g;
+            image->data[o + 2] = color.rgb.b;
+            image->data[o + 3] = color.rgb.a;
         }
 
         liqimage = liq_image_create_rgba(attr,

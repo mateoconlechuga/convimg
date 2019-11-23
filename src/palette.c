@@ -375,12 +375,15 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
 
     for (i = 0; i < (int)liqpalette->count; ++i)
     {
-        color_t *ec = &palette->entries[i].color;
+        color_t color;
 
-        ec->rgb = liqpalette->entries[i];
+        color.rgb.r = liqpalette->entries[i].r;
+        color.rgb.g = liqpalette->entries[i].g;
+        color.rgb.b = liqpalette->entries[i].b;
 
-        color_convert(ec, palette->mode);
+        color_convert(&color, palette->mode);
 
+        palette->entries[i].color = color;
         palette->entries[i].index = i;
     }
 

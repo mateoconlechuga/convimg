@@ -43,7 +43,7 @@ ifeq ($(OS),Windows_NT)
   MKDIR = if not exist "$1" mkdir "$1"
   RMDIR = del /f "$1" 2>nul
   STRIP = strip --strip-all "$1"
-  CFLAGS += -DWINDOWS32 -DHAVE_CONFIG_H
+  CFLAGS_GLOB = -Wall -Wextra -Wno-sign-compare -O3 -DNDEBUG -DWINDOWS32 -DHAVE_CONFIG_H
   SOURCES += $(DEPDIR)/glob/glob.c \
              $(DEPDIR)/glob/fnmatch.c
   INCLUDEDIRS += $(DEPDIR)/glob
@@ -71,13 +71,17 @@ $(BINDIR)/$(TARGET): $(OBJECTS)
 	@$(call MKDIR,$(call NATIVEPATH,$(@D)))
 	$(CC) $(LDFLAGS) $(call NATIVEPATH,$^) -o $(call NATIVEPATH,$@) $(addprefix -l, $(LIBRARIES))
 
+$(OBJDIR)/deps/glob/%.o: $(SRCDIR)/deps/glob/%.c
+	@$(call MKDIR,$(call NATIVEPATH,$(@D)))
+	$(CC) -c $(call NATIVEPATH,$<) $(CFLAGS_GLOB) $(addprefix -I, $(INCLUDEDIRS)) -o $(call NATIVEPATH,$@)
+
 $(OBJDIR)/deps/libimagequant/%.o: $(SRCDIR)/deps/libimagequant/%.c
 	@$(call MKDIR,$(call NATIVEPATH,$(@D)))
-	$(CC) -c $(call NATIVEPATH,$<) $(CFLAGS_LIQ) -o $(call NATIVEPATH,$@) $(addprefix -I, $(INCLUDEDIRS))
+	$(CC) -c $(call NATIVEPATH,$<) $(CFLAGS_LIQ) $(addprefix -I, $(INCLUDEDIRS)) -o $(call NATIVEPATH,$@)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@$(call MKDIR,$(call NATIVEPATH,$(@D)))
-	$(CC) -c $(call NATIVEPATH,$<) $(CFLAGS) -o $(call NATIVEPATH,$@) $(addprefix -I, $(INCLUDEDIRS))
+	$(CC) -c $(call NATIVEPATH,$<) $(CFLAGS) $(addprefix -I, $(INCLUDEDIRS)) -o $(call NATIVEPATH,$@)
 
 clean:
 	$(call RMDIR,$(call NATIVEPATH,$(BINDIR)))

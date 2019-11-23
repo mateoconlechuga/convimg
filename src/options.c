@@ -53,9 +53,11 @@ static void options_show(const char *prgm)
     LL_PRINT("    -i, --input <yaml file>  Input file, format is described below.\n");
     LL_PRINT("\n");
     LL_PRINT("Optional options:\n");
-    LL_PRINT("    --new                    Create a new template YAML file.\n");
-    LL_PRINT("    --icon-c <file>          Create a C source icon.\n");
-    LL_PRINT("    --icon-ice <file>        Create an ICE source icon.\n");
+    LL_PRINT("    --icon <file>            Create an icon for use by shell.\n");
+    LL_PRINT("    --icon-description <txt> Specify icon/program description.\n");
+    LL_PRINT("    --icon-format <fmt>      Specify icon format, 'ice' or 'asm'.\n");
+    LL_PRINT("    --icon-output <output>   Specify icon output filename.\n");
+    LL_PRINT("    -n, --new                Create a new template YAML file.\n");
     LL_PRINT("    -h, --help               Show this screen.\n");
     LL_PRINT("    -v, --version            Show program version.\n");
     LL_PRINT("    -l, --log-level <level>  Set program logging level.\n");
@@ -334,6 +336,11 @@ static int options_write_new(void)
  */
 static int options_verify(options_t *options)
 {
+    if (options->convertIcon == true)
+    {
+        return OPTIONS_SUCCESS;
+    }
+
     if (fopen(options->yamlfile.name, "r") == NULL)
     {
         goto error;
@@ -360,6 +367,7 @@ static void options_set_default(options_t *options)
     }
 
     options->prgm = 0;
+    options->convertIcon = false;
     options->yamlfile.name = strdup("convimg.yaml");
 }
 
@@ -384,16 +392,21 @@ int options_get(int argc, char *argv[], options_t *options)
 
     for( ;; )
     {
+        int optidx = 0;
         static struct option long_options[] =
         {
-            {"input",      required_argument, 0, 'i'},
-            {"help",       no_argument,       0, 'h'},
-            {"new",        no_argument,       0, 'n'},
-            {"version",    no_argument,       0, 'v'},
-            {"log-level",  required_argument, 0, 'l'},
+            {"icon",             required_argument, 0, 0},
+            {"icon-output",      required_argument, 0, 0},
+            {"icon-description", required_argument, 0, 0},
+            {"icon-format",      required_argument, 0, 0},
+            {"new",              no_argument,       0, 'n'},
+            {"input",            required_argument, 0, 'i'},
+            {"help",             no_argument,       0, 'h'},
+            {"version",          no_argument,       0, 'v'},
+            {"log-level",        required_argument, 0, 'l'},
             {0, 0, 0, 0}
         };
-        int c = getopt_long(argc, argv, "i:l:nhv", long_options, NULL);
+        int c = getopt_long(argc, argv, "i:l:nhv", long_options, &optidx);
 
         if (c == - 1)
         {
@@ -402,6 +415,41 @@ int options_get(int argc, char *argv[], options_t *options)
 
         switch (c)
         {
+            case 0:
+                options->convertIcon = true;
+                switch (optidx)
+                {
+                    case 0:
+                        options->icon.imageFile = optarg;
+                        break;
+
+                    case 1:
+                        options->icon.outputFile = optarg;
+                        break;
+
+                    case 2:
+                        options->icon.description = optarg;
+                        break;
+
+                    case 3:
+                        if (optarg != NULL)
+                        {
+                            if (!strcmp(optarg, "asm"))
+                            {
+                                options->icon.format = ICON_FORMAT_ASM;
+                            }
+                            else if (!strcmp(optarg, "ice"))
+                            {
+                                options->icon.format = ICON_FORMAT_ICE;
+                            }
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+                break;
+
             case 'i':
                 options->yamlfile.name = strdup(optarg);
                 break;
@@ -423,7 +471,6 @@ int options_get(int argc, char *argv[], options_t *options)
                 return OPTIONS_IGNORE;
 
             default:
-                options_show(options->prgm);
                 return OPTIONS_FAILED;
         }
     }

@@ -62,6 +62,7 @@ int appvar_write(appvar_t *a, FILE *fdv)
     static const uint8_t file_header[10] =
     	{ 0x2A,0x2A,0x54,0x49,0x38,0x33,0x46,0x2A,0x1A,0x0A };
 
+    size_t name_size;
     size_t file_size;
     size_t data_size;
     size_t varb_size;
@@ -100,8 +101,10 @@ int appvar_write(appvar_t *a, FILE *fdv)
     var_size = a->size + APPVAR_VARB_SIZE_LEN;
     varb_size = a->size;
 
+    name_size = strlen(a->name) > 8 ? 8 : strlen(a->name);
+
     memcpy(output + APPVAR_FILE_HEADER_POS, file_header, sizeof file_header);
-    memcpy(output + APPVAR_NAME_POS, a->name, strlen(a->name));
+    memcpy(output + APPVAR_NAME_POS, a->name, name_size);
     memcpy(output + APPVAR_DATA_POS, a->data, varb_size);
 
     output[APPVAR_VAR_HEADER_POS] = APPVAR_MAGIC;

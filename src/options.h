@@ -36,6 +36,7 @@ extern "C" {
 #endif
 
 #include "yaml.h"
+#include "icon.h"
 
 #include <stdbool.h>
 
@@ -50,6 +51,8 @@ typedef struct
 {
     const char *prgm;
     yaml_file_t yamlfile;
+    icon_t icon;
+    bool convertIcon;
 } options_t;
 
 int options_get(int argc, char *argv[], options_t *options);

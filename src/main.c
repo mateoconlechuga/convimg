@@ -30,6 +30,7 @@
 
 #include "options.h"
 #include "convert.h"
+#include "icon.h"
 #include "log.h"
 
 /*
@@ -41,6 +42,16 @@ int main(int argc, char **argv)
     static options_t options;
 
     ret = options_get(argc, argv, &options);
+
+    if (ret == OPTIONS_SUCCESS)
+    {
+        if (options.convertIcon)
+        {
+            ret = icon_convert(&options.icon);
+            ret = ret == 0 ? OPTIONS_IGNORE : ret;
+        }
+    }
+
     if (ret == OPTIONS_SUCCESS)
     {
         int i;

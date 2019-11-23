@@ -12,6 +12,7 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(SRCDIR)/color.c \
           $(SRCDIR)/compress.c \
           $(SRCDIR)/convert.c \
+          $(SRCDIR)/icon.c \
           $(SRCDIR)/image.c \
           $(SRCDIR)/log.c \
           $(SRCDIR)/main.c \

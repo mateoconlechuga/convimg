@@ -274,7 +274,7 @@ static void options_show(const char *prgm)
     LL_PRINT("\n");
     LL_PRINT("----------------------------------------------------------------------------\n");
     LL_PRINT("\n");
-    LL_PRINT("Credits:");
+    LL_PRINT("Credits:\n");
     LL_PRINT("    (c) 2017-2019 by Matt \"MateoConLechuga\" Waltz.\n");
     LL_PRINT("\n");
     LL_PRINT("    This program utilizes the following neat libraries:\n");

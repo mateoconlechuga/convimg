@@ -8,12 +8,14 @@ This program is used to convert images to other formats, specifically for the TI
         ./convimg [options] -i <yaml file>
 
     Required options:
-        -i, --input <yaml>       Input file, format of file is described below.
+        -i, --input <yaml file>  Input file, format is described below.
 
     Optional options:
-        --new                    Create a new template YAML file.
-        --icon-c <file>          Create a C source icon.
-        --icon-ice <file>        Create an ICE source icon.
+        --icon <file>            Create an icon for use by shell.
+        --icon-description <txt> Specify icon/program description.
+        --icon-format <fmt>      Specify icon format, 'ice' or 'asm'.
+        --icon-output <output>   Specify icon output filename.
+        -n, --new                Create a new template YAML file.
         -h, --help               Show this screen.
         -v, --version            Show program version.
         -l, --log-level <level>  Set program logging level.
@@ -230,7 +232,8 @@ This program is used to convert images to other formats, specifically for the TI
 
     ----------------------------------------------------------------------------
 
-    Credits:    (c) 2017-2019 by Matt "MateoConLechuga" Waltz.
+    Credits:
+        (c) 2017-2019 by Matt "MateoConLechuga" Waltz.
 
         This program utilizes the following neat libraries:
             libimagequant: (c) 2009-2019 by Kornel Lesiński.

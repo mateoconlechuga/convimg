@@ -35,6 +35,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 /*
  * Shows the available options and cli arguments.
@@ -52,7 +53,7 @@ static void options_show(const char *prgm)
     LL_PRINT("    -i, --input <yaml>      Input file, format of file is described below.\n");
     LL_PRINT("\n");
     LL_PRINT("Optional options:\n");
-    LL_PRINT("    -c, --create <yaml>     Create template yaml file.\n");
+    LL_PRINT("    -n, --new <yaml>     Create template yaml file.\n");
     LL_PRINT("    -h, --help              Show this screen.\n");
     LL_PRINT("    -v, --version           Show program version.\n");
     LL_PRINT("    -l, --log-level <level> Set program logging level.\n");
@@ -61,6 +62,52 @@ static void options_show(const char *prgm)
     LL_PRINT("YAML File Format:\n");
 }
 
+/*
+ * Verify the options supplied are valid.
+ * Return 0 if valid, otherwise nonzero.
+ */
+static int options_write_new(void)
+{
+    FILE *fd;
+    static const char *name = "convimg.yaml";
+
+    fd = fopen(name, "r");
+    if (fd != NULL)
+    {
+        LL_ERROR("\'%s\' already exists.", name);
+        return 1;
+    }
+
+    fd = fopen(name, "w");
+    if (fd == NULL)
+    {
+        LL_ERROR("Could not write \'%s\': %s", name, strerror(errno));
+        return 1;
+    }
+
+    fprintf(fd, "output: c\r\n");
+    fprintf(fd, "  include-file: gfx.h\r\n");
+    fprintf(fd, "  palettes:\r\n");
+    fprintf(fd, "    - mypalette\r\n");
+    fprintf(fd, "  converts:\r\n");
+    fprintf(fd, "    - myimages\r\n");
+    fprintf(fd, "\r\n");
+    fprintf(fd, "palette: mypalette\r\n");
+    fprintf(fd, "  images: automatic\r\n");
+    fprintf(fd, "\r\n");
+    fprintf(fd, "convert: myimages\r\n");
+    fprintf(fd, "  palette: mypalette\r\n");
+    fprintf(fd, "  images:\r\n");
+    fprintf(fd, "    - image.png\r\n");
+    fprintf(fd, "    - image.png\r\n");
+    fprintf(fd, "    - image.png\r\n");
+
+    fclose(fd);
+
+    LL_INFO("Wrote \'%s\'", name);
+
+    return 0;
+}
 
 /*
  * Verify the options supplied are valid.
@@ -103,6 +150,8 @@ static void options_set_default(options_t *options)
  */
 int options_get(int argc, char *argv[], options_t *options)
 {
+    int ret;
+
     log_set_level(LOG_BUILD_LEVEL);
 
     if (argc < 1 || argv == NULL || options == NULL)
@@ -120,11 +169,12 @@ int options_get(int argc, char *argv[], options_t *options)
         {
             {"input",      required_argument, 0, 'i'},
             {"help",       no_argument,       0, 'h'},
+            {"new",        no_argument,       0, 'n'},
             {"version",    no_argument,       0, 'v'},
             {"log-level",  required_argument, 0, 'l'},
             {0, 0, 0, 0}
         };
-        int c = getopt_long(argc, argv, "i:l:hv", long_options, NULL);
+        int c = getopt_long(argc, argv, "i:l:nhv", long_options, NULL);
 
         if (c == - 1)
         {
@@ -136,6 +186,10 @@ int options_get(int argc, char *argv[], options_t *options)
             case 'i':
                 options->yamlfile.name = optarg;
                 break;
+
+            case 'n':
+                ret = options_write_new();
+                return ret == 0 ? OPTIONS_IGNORE : ret;
 
             case 'v':
                 LL_PRINT("%s v%s by mateoconlechuga\n", PRGM_NAME, VERSION_STRING);

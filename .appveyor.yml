@@ -4,8 +4,11 @@ install:
   - set PATH=C:\MinGW\bin;%PATH%
 
 build_script:
+  - git submodule update --init --recursive
   - cd %APPVEYOR_BUILD_FOLDER%
+  - mingw32-make clean
   - mingw32-make
+  - mingw32-make release
 
 after_build:
   - cd %APPVEYOR_BUILD_FOLDER%
@@ -17,7 +20,6 @@ on_failure:
   - cd %APPVEYOR_BUILD_FOLDER%
 
 artifacts:
- - path: convpng.exe
-   name: convpng
+ - path: ./bin/convimg.exe
+   name: convimg
    type: auto
-

@@ -14,8 +14,10 @@ branches:
     - convimg
 
 script:
+  - git submodule update --init --recursive
+  - make clean
   - make
-  - cd examples
+  - make release
+  - cd ./test
   - chmod +x test.sh
-  - res=0; for d in ./*/; do cd "$d"; ../../convpng; res=`expr $res + $?`; done; return $res
-
+  - ./test.sh; res=`expr $?`; return $res

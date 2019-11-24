@@ -231,7 +231,7 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
         fprintf(fdh, "#define sizeof_%s %d\r\n",
             palette->name,
             size);
-        fprintf(fdh, "#define %s %s_appvar[%d];\r\n",
+        fprintf(fdh, "#define %s %s_appvar[%d]\r\n",
             palette->name,
             appvar->name,
             index);
@@ -240,6 +240,10 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
     }
 
     appvar->numEntries = index;
+
+    fprintf(fdh, "extern unsigned char *%s_appvar[%d];\r\n",
+        appvar->name,
+        appvar->numEntries);
 
     if (appvar->init)
     {

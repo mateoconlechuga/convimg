@@ -122,6 +122,22 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
     fprintf(fdh, "#endif\r\n");
     fprintf(fdh, "\r\n");
 
+    for (i = 0; i < output->numPalettes; ++i)
+    {
+        palette_t *palette = output->palettes[i];
+        int size = palette->numEntries * 2;
+
+        fprintf(fdh, "#define sizeof_%s %d\r\n",
+            palette->name,
+            size);
+        fprintf(fdh, "#define %s (%s_appvar[%d])\r\n",
+            palette->name,
+            appvar->name,
+            index);
+
+        index++;
+    }
+
     for (i = 0; i < output->numConverts; ++i)
     {
         convert_t *convert = output->converts[i];
@@ -223,22 +239,6 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
         }
     }
 
-    for (i = 0; i < output->numPalettes; ++i)
-    {
-        palette_t *palette = output->palettes[i];
-        int size = palette->numEntries * 2;
-
-        fprintf(fdh, "#define sizeof_%s %d\r\n",
-            palette->name,
-            size);
-        fprintf(fdh, "#define %s %s_appvar[%d]\r\n",
-            palette->name,
-            appvar->name,
-            index);
-
-        index++;
-    }
-
     appvar->numEntries = index;
 
     fprintf(fdh, "extern unsigned char *%s_appvar[%d];\r\n",
@@ -284,6 +284,16 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
         appvar->numEntries);
 
     /* output global appvar mapping */
+    for (i = 0; i < output->numPalettes; ++i)
+    {
+        palette_t *palette = output->palettes[i];
+
+        fprintf(fds, "    (unsigned char*)%d,\r\n",
+            offset);
+
+        offset += palette->numEntries * 2;
+    }
+
     for (i = 0; i < output->numConverts; ++i)
     {
         convert_t *convert = output->converts[i];
@@ -316,16 +326,6 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                 offset += tilesetOffset;
             }
         }
-    }
-
-    for (i = 0; i < output->numPalettes; ++i)
-    {
-        palette_t *palette = output->palettes[i];
-
-        fprintf(fds, "    (unsigned char*)%d,\r\n",
-            offset);
-
-        offset += palette->numEntries * 2;
     }
 
     fprintf(fds, "};\r\n\r\n");

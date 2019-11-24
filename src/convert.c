@@ -406,7 +406,7 @@ int convert_tileset(convert_t *convert, tileset_t *tileset)
             .name = NULL,
             .path = NULL
         };
-        uint8_t byte = 0;
+        int byte = 0;
 
         if (ret != 0)
         {
@@ -415,7 +415,7 @@ int convert_tileset(convert_t *convert, tileset_t *tileset)
 
         for (j = 0; j < tile.height; ++j)
         {
-            int offset = j * tile.width + y;
+            int offset = j * tileset->image.width + y;
             for (k = 0; k < tile.width; ++k)
             {
                 tile.data[byte] = tileset->image.data[k + x + offset];

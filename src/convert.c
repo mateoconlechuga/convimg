@@ -92,6 +92,8 @@ static int convert_add_image(convert_t *convert, const char *path)
     image->data = NULL;
     image->width = 0;
     image->height = 0;
+    image->rlet = false;
+    image->compressed = false;
 
     convert->numImages++;
 
@@ -166,6 +168,7 @@ static int convert_add_tileset(convert_t *convert, const char *path)
     image->width = 0;
     image->height = 0;
     image->compressed = false;
+    image->rlet = false;
 
     tilesetGroup->numTilesets++;
 
@@ -322,6 +325,8 @@ static int convert_image(convert_t *convert, image_t *image)
         {
             return ret;
         }
+
+        image->rlet = true;
     }
 
     if (convert->numOmitIndices != 0)

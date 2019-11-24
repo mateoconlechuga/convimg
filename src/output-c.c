@@ -103,7 +103,14 @@ int output_c_image(image_t *image)
     }
     else
     {
-        fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_data)\r\n", image->name, image->name);
+        if (image->rlet)
+        {
+            fprintf(fdh, "#define %s ((gfx_rletsprite_t*)%s_data)\r\n", image->name, image->name);
+        }
+        else
+        {
+            fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_data)\r\n", image->name, image->name);
+        }
         fprintf(fdh, "extern unsigned char %s_data[%d];\r\n", image->name, image->size);
     }
 

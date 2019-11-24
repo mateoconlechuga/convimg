@@ -317,7 +317,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
 
                 for (l = 0; l < tileset->numTiles; l++)
                 {
-                    tilesetOffset += tileset->tiles[i].size;
+                    tilesetOffset += tileset->tiles[l].size;
                 }
 
                 fprintf(fds, "    (unsigned char*)%d,\r\n",
@@ -362,7 +362,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                     fprintf(fds, "    (unsigned char*)%d,\r\n",
                         tilesetOffset);
 
-                    tilesetOffset += tileset->tiles[i].size;
+                    tilesetOffset += tileset->tiles[l].size;
                 }
 
                 fprintf(fds, "};\r\n\r\n");

@@ -272,7 +272,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
     int offset = 0;
     int i, j, k, l;
 
-    fprintf(fds, "#include \"%s.h\"\r\n", appvar->name);
+    fprintf(fds, "#include \"%s\"\r\n", output->includeFileName);
     fprintf(fds, "#include <fileioc.h>\r\n");
     fprintf(fds, "\r\n");
     fprintf(fds, "unsigned char *%s_appvar[%d] =\r\n{\r\n",

@@ -251,14 +251,14 @@ int output_c_tileset(tileset_t *tileset)
 
         if (tileset->compressed)
         {
-            fprintf(fds, "unsigned char %s_tile_%d_data[%d] =\r\n{",
+            fprintf(fds, "unsigned char %s_tile_%d_compressed[%d] =\r\n{",
                 tileset->image.name,
                 i,
                 tile->size);
         }
         else
         {
-            fprintf(fds, "unsigned char %s_tile_%d_compressed[%d] =\r\n{",
+            fprintf(fds, "unsigned char %s_tile_%d_data[%d] =\r\n{",
                 tileset->image.name,
                 i,
                 tile->size);

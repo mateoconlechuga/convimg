@@ -197,7 +197,7 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
                     fprintf(fdh, "#define %s_tiles_num %d\n",
                         tileset->image.name,
                         tileset->numTiles);
-                    fprintf(fdh, "extern unsigned char *%s_tiles_compressed[%d]\n",
+                    fprintf(fdh, "extern unsigned char *%s_tiles_compressed[%d];\n",
                         tileset->image.name,
                         tileset->numTiles);
                     for (l = 0; l < tileset->numTiles; l++)
@@ -218,7 +218,7 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
                     fprintf(fdh, "#define %s_tiles_num %d\n",
                         tileset->image.name,
                         tileset->numTiles);
-                    fprintf(fdh, "extern unsigned char *%s_tiles_data[%d]\n",
+                    fprintf(fdh, "extern unsigned char *%s_tiles_data[%d];\n",
                         tileset->image.name,
                         tileset->numTiles);
                     fprintf(fdh, "#define %s_tiles ((gfx_sprite_t**)%s_tiles_data)\n",

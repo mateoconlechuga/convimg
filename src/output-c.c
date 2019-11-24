@@ -211,13 +211,13 @@ int output_c_tileset(tileset_t *tileset)
     {
         if (tileset->compressed)
         {
-            fprintf(fdh, "extern unsigned char *%s_tiles_compressed[%d]\r\n",
+            fprintf(fdh, "extern unsigned char *%s_tiles_compressed[%d];\r\n",
                 tileset->image.name,
                 tileset->numTiles);
         }
         else
         {
-            fprintf(fdh, "extern unsigned char *%s_tiles_data[%d]\r\n",
+            fprintf(fdh, "extern unsigned char *%s_tiles_data[%d];\r\n",
                 tileset->image.name,
                 tileset->numTiles);
 

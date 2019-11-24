@@ -372,9 +372,7 @@ int convert_tileset(convert_t *convert, tileset_t *tileset)
 {
     int ret = 0;
     int i, j, k;
-    int y;
-    int x;
-    int byte;
+    int x, y;
 
     tileset->numTiles =
         (tileset->image.width / tileset->tileWidth) *
@@ -400,25 +398,25 @@ int convert_tileset(convert_t *convert, tileset_t *tileset)
     for (i = 0; i < tileset->numTiles; ++i)
     {
         image_t tile =
-            {
-                .data = tileset->tiles[i].data,
-                .width = tileset->tileWidth,
-                .height = tileset->tileHeight,
-                .size = tileset->tiles[i].size,
-                .name = NULL,
-                .path = NULL
-            };
-        byte = 0;
+        {
+            .data = tileset->tiles[i].data,
+            .width = tileset->tileWidth,
+            .height = tileset->tileHeight,
+            .size = tileset->tiles[i].size,
+            .name = NULL,
+            .path = NULL
+        };
+        uint8_t byte = 0;
 
         if (ret != 0)
         {
             break;
         }
 
-        for (j = 0; j < tile.height; j++)
+        for (j = 0; j < tile.height; ++j)
         {
             int offset = j * tile.width + y;
-            for (k = 0; k < tile.width; k++)
+            for (k = 0; k < tile.width; ++k)
             {
                 tile.data[byte] = tileset->image.data[k + x + offset];
                 byte++;
@@ -430,6 +428,9 @@ int convert_tileset(convert_t *convert, tileset_t *tileset)
         {
             break;
         }
+
+        tileset->tiles[i].size = tile.size;
+        tileset->tiles[i].data = tile.data;
 
         x += tileset->tileWidth;
 

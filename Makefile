@@ -84,8 +84,11 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@$(call MKDIR,$(call NATIVEPATH,$(@D)))
 	$(CC) -c $(call NATIVEPATH,$<) $(CFLAGS) $(addprefix -I, $(INCLUDEDIRS)) -o $(call NATIVEPATH,$@)
 
+test:
+	cd test && bash ./test.sh
+
 clean:
 	$(call RMDIR,$(call NATIVEPATH,$(BINDIR)))
 	$(call RMDIR,$(call NATIVEPATH,$(OBJDIR)))
 
-.PHONY: all release clean
+.PHONY: all release test clean

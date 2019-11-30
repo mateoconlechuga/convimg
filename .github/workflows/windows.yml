@@ -31,5 +31,5 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: ${{matrix.os}}-convimg.exe
+        name: windows-convimg
         path: bin/convimg.exe

@@ -57,7 +57,7 @@ This program is used to convert images to other formats, specifically for the TI
     ----------------------------------------------------------------------------
 
     output:
-        The YMAL file can have as many output blocks as needed, consisting of
+        The YAML file can have as many output blocks as needed, consisting of
         different formats. The currently available formats are:
 
             output: c                 : C source and header files

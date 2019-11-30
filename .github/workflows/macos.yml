@@ -27,4 +27,10 @@ jobs:
     - name: Test Release
       run: make test
       continue-on-error: true
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{matrix.os}}-convimg
+        path: bin/convimg
    

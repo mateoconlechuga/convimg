@@ -99,7 +99,7 @@ static void options_show(const char *prgm)
     LL_PRINT("----------------------------------------------------------------------------\n");
     LL_PRINT("\n");
     LL_PRINT("output:\n");
-    LL_PRINT("    The YMAL file can have as many output blocks as needed, consisting of\n");
+    LL_PRINT("    The YAML file can have as many output blocks as needed, consisting of\n");
     LL_PRINT("    different formats. The currently available formats are:\n");
     LL_PRINT("\n");
     LL_PRINT("        output: c                 : C source and header files\n");
@@ -155,7 +155,7 @@ static void options_show(const char *prgm)
     LL_PRINT("----------------------------------------------------------------------------\n");
     LL_PRINT("\n");
     LL_PRINT("palette:\n");
-    LL_PRINT("    The YMAL file can have as many palette blocks as needed, consisting of\n");
+    LL_PRINT("    The YAML file can have as many palette blocks as needed, consisting of\n");
     LL_PRINT("    different palettes to generate. The available options are:\n");
     LL_PRINT("\n");
     LL_PRINT("                                  : convert blocks for detecting which\n");

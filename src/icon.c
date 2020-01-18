@@ -144,6 +144,9 @@ int icon_convert(icon_t *icon)
 
         if (icon->format == ICON_FORMAT_ASM)
         {
+            fprintf(fd, "\tsection .icon\r\n");
+            fprintf(fd, "\r\n");
+            fprintf(fd, "\tpublic ___icon\r\n");
             fprintf(fd, "\tjp\t___prgm_init\r\n");
             fprintf(fd, "___icon:\r\n");
             fprintf(fd, "\tdb\t$01, $%02X, $%02X", image.width, image.height);

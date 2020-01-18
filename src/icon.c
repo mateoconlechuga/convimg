@@ -144,6 +144,7 @@ int icon_convert(icon_t *icon)
 
         if (icon->format == ICON_FORMAT_ASM)
         {
+            fprintf(fd, "\tjp\t___prgm_init\r\n");
             fprintf(fd, "___icon:\r\n");
             fprintf(fd, "\tdb\t$01, $%02X, $%02X", image.width, image.height);
             for (y = 0; y < image.height; y++)
@@ -175,6 +176,7 @@ int icon_convert(icon_t *icon)
                 fprintf(fd, "___description:\r\n");
                 fprintf(fd, "\tdb\t0\r\n");
             }
+            fprintf(fd, "___prgm_init:\r\n");
         }
         else if (icon->format == ICON_FORMAT_ICE)
         {

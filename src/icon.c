@@ -61,7 +61,7 @@ int icon_convert(icon_t *icon)
         image.path = icon->imageFile;
     }
 
-    if( image.path != NULL )
+    if (image.path != NULL)
     {
         if (ret == 0)
         {
@@ -152,7 +152,7 @@ int icon_convert(icon_t *icon)
             fprintf(fd, "\tsection .icon\r\n");
             fprintf(fd, "\r\n");
             fprintf(fd, "\tjp\t___prgm_init\r\n");
-            if( image.path != NULL )
+            if (image.path != NULL)
             {
                 fprintf(fd, "\tdb\t$01\r\n");
                 fprintf(fd, "\tpublic ___icon\r\n");

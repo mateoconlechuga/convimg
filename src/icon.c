@@ -149,15 +149,18 @@ int icon_convert(icon_t *icon)
 
         if (icon->format == ICON_FORMAT_ASM)
         {
-            fprintf(fd, "\tsection .icon\r\n");
+            fprintf(fd, "\t.def __program_icon\r\n");
+            fprintf(fd, "\t.def __program_description\r\n");
             fprintf(fd, "\r\n");
-            fprintf(fd, "\tjp\t___prgm_init\r\n");
+            fprintf(fd, "\t.assume adl=1\r\n");
+            fprintf(fd, "\tsegment .icon\r\n");
+            fprintf(fd, "\r\n");
+            fprintf(fd, "\tjp __program_description_end\r\n");
             if (image.path != NULL)
             {
-                fprintf(fd, "\tdb\t$01\r\n");
-                fprintf(fd, "\tpublic ___icon\r\n");
-                fprintf(fd, "___icon:\r\n");
-                fprintf(fd, "\tdb\t$%02X, $%02X", image.width, image.height);
+                fprintf(fd, "\tdb\t1\r\n");
+                fprintf(fd, "__program_icon:\r\n");
+                fprintf(fd, "\tdb\t0%02Xh, 0%02Xh", image.width, image.height);
                 for (y = 0; y < image.height; y++)
                 {
                     int offset = y * image.width;
@@ -167,32 +170,32 @@ int icon_convert(icon_t *icon)
                     {
                         if (x + 1 == image.width)
                         {
-                            fprintf(fd, "$%02X", data[x + offset]);
+                            fprintf(fd, "0%02Xh", data[x + offset]);
                         }
                         else
                         {
-                            fprintf(fd, "$%02X, ", data[x + offset]);
+                            fprintf(fd, "0%02Xh, ", data[x + offset]);
                         }
                     }
                 }
             }
             else
             {
-                fprintf(fd, "\tdb\t$02\r\n");
+                fprintf(fd, "\tdb\t2\r\n");
             }
 
             fprintf(fd, "\r\n");
             if (icon->description != NULL && *icon->description)
             {
-                fprintf(fd, "___description:\r\n");
+                fprintf(fd, "__program_description:\r\n");
                 fprintf(fd, "\tdb\t\"%s\", 0\r\n", icon->description);
             }
             else
             {
-                fprintf(fd, "___description:\r\n");
+                fprintf(fd, "__program_description:\r\n");
                 fprintf(fd, "\tdb\t0\r\n");
             }
-            fprintf(fd, "___prgm_init:\r\n");
+            fprintf(fd, "__program_description_end:\r\n");
         }
         else if (icon->format == ICON_FORMAT_ICE)
         {

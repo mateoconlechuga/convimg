@@ -51,6 +51,7 @@ typedef struct
 {
     color_t color;
     unsigned int index;
+    bool exact;
 } palette_entry_t;
 
 typedef struct palette

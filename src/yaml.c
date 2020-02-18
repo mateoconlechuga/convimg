@@ -212,6 +212,7 @@ static int yaml_parse_fixed_color(yaml_file_t *yamlfile, char *line, palette_ent
 
         *end = '\0';
         entry->color.rgb.a = 255;
+        entry->exact = true;
 
         while (next != NULL)
         {

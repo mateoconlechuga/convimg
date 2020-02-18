@@ -306,17 +306,21 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
 
     for (i = 0; i < palette->numFixedEntries; ++i)
     {
-        color_t *color = &palette->fixedEntries[i].color;
+        palette_entry_t *entry = &palette->fixedEntries[i];
 
-        color_convert(color, palette->mode);
+        if (!entry->exact)
+        {
+            color_convert(&entry->color, palette->mode);
+        }
 
-        liq_histogram_add_fixed_color(hist, color->rgb, 0);
+        liq_histogram_add_fixed_color(hist, entry->color.rgb, 0);
     }
 
     for (i = 0; i < palette->numImages; ++i)
     {
         image_t *image = &palette->images[i];
         liq_image *liqimage;
+        int numcolors = 0;
         int j;
 
         LL_INFO(" - Reading \'%s\'",
@@ -332,29 +336,58 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
 
         for (j = 0; j < image->width * image->height; ++j)
         {
+            bool addcolor = true;
             int o = j * 4;
+            int k;
+
             color_t color;
+
             color.rgb.r = image->data[o + 0];
             color.rgb.g = image->data[o + 1];
             color.rgb.b = image->data[o + 2];
             color.rgb.a = image->data[o + 3];
 
-            color_convert(&color, palette->mode);
+            for (k = 0; k < palette->numFixedEntries; ++k)
+            {
+                palette_entry_t *entry = &palette->fixedEntries[k];
 
-            image->data[o + 0] = color.rgb.r;
-            image->data[o + 1] = color.rgb.g;
-            image->data[o + 2] = color.rgb.b;
-            image->data[o + 3] = color.rgb.a;
+                if (entry->exact &&
+                    color.rgb.r == entry->color.rgb.r &&
+                    color.rgb.g == entry->color.rgb.g &&
+                    color.rgb.b == entry->color.rgb.b)
+                {
+                    addcolor = false;
+                    break;
+                }
+            }
+
+            if (addcolor)
+            {
+                int offset = numcolors * 4;
+
+                color_convert(&color, palette->mode);
+
+                image->data[offset + 0] = color.rgb.r;
+                image->data[offset + 1] = color.rgb.g;
+                image->data[offset + 2] = color.rgb.b;
+                image->data[offset + 3] = color.rgb.a;
+
+                numcolors++;
+            }
         }
 
-        liqimage = liq_image_create_rgba(attr,
-                                         image->data,
-                                         image->width,
-                                         image->height,
-                                         0);
+        if (numcolors > 0)
+        {
+            liqimage = liq_image_create_rgba(attr,
+                                             image->data,
+                                             numcolors,
+                                             1,
+                                             0);
 
-        liq_histogram_add_image(hist, attr, liqimage);
-        liq_image_destroy(liqimage);
+            liq_histogram_add_image(hist, attr, liqimage);
+            liq_image_destroy(liqimage);
+        }
+
         free(image->data);
     }
 
@@ -379,8 +412,6 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
         color.rgb.g = liqpalette->entries[i].g;
         color.rgb.b = liqpalette->entries[i].b;
 
-        color_convert(&color, palette->mode);
-
         palette->entries[i].color = color;
     }
 
@@ -392,9 +423,13 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
         {
             palette_entry_t *entry = &palette->entries[j];
 
-            if( fixedEntry->color.target == entry->color.target )
+            if( fixedEntry->color.rgb.r == entry->color.rgb.r &&
+                fixedEntry->color.rgb.g == entry->color.rgb.g &&
+                fixedEntry->color.rgb.b == entry->color.rgb.b )
             {
                 palette_entry_t tmpEntry;
+
+                LL_INFO("found at %d", j);
 
                 tmpEntry = palette->entries[j];
                 palette->entries[j] = palette->entries[fixedEntry->index];
@@ -403,6 +438,11 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
                 break;
             }
         }
+    }
+
+    for (i = 0; i < (int)liqpalette->count; ++i)
+    {
+        color_convert(&palette->entries[i].color, palette->mode);
     }
 
     liq_result_destroy(liqresult);

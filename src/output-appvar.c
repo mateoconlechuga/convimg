@@ -447,7 +447,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
         }
 
         fprintf(fds, "    return 1;\r\n");
-        fprintf(fds, "};\r\n\r\n");
+        fprintf(fds, "}\r\n\r\n");
     }
 }
 

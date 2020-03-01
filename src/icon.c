@@ -184,11 +184,13 @@ int icon_convert(icon_t *icon)
             fprintf(fd, "\r\n");
             if (icon->description != NULL && *icon->description)
             {
+                fprintf(fd, "\tpublic ___description\r\n");
                 fprintf(fd, "___description:\r\n");
                 fprintf(fd, "\tdb\t\"%s\", 0\r\n", icon->description);
             }
             else
             {
+                fprintf(fd, "\tpublic ___description\r\n");
                 fprintf(fd, "___description:\r\n");
                 fprintf(fd, "\tdb\t0\r\n");
             }

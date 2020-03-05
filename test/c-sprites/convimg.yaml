@@ -1,15 +1,19 @@
-output: c
-  include-file: gfx.h
-  palettes:
-    - mypalette
-  converts:
-    - myimages
+palettes:
+  - name: mypalette
+    images: automatic
 
-palette: mypalette
-  images: automatic
+converts:
+  - name: myimages
+    palette: mypalette
+    images:
+      - oiram.png
+      - thwomp.png
 
-convert: myimages
-  palette: mypalette
-  images:
-    - oiram.png
-    - thwomp.png
+outputs:
+  - type: c
+    include-file: gfx.txt
+    palettes:
+      - mypalette
+    converts:
+      - myimages
+

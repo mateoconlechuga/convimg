@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -209,11 +209,14 @@ int palette_generate_builtin(palette_t *palette,
  */
 int palette_automatic_build(palette_t *palette, convert_t **converts, int numConverts)
 {
-    int i, j, k;
     int ret = 0;
+    int i;
 
     for (i = 0; i < numConverts; ++i)
     {
+        tileset_group_t *tilesetGroup = converts[i]->tilesetGroup;
+        int j;
+
         if (strcmp(palette->name, converts[i]->paletteName))
         {
             continue;
@@ -224,26 +227,23 @@ int palette_automatic_build(palette_t *palette, convert_t **converts, int numCon
             ret = palette_add_image(palette, converts[i]->images[j].path);
             if (ret != 0)
             {
-                goto error;
+                return ret;
             }
         }
 
-        for (j = 0; j < converts[i]->numTilesetGroups; ++j)
+        if( tilesetGroup )
         {
-            tileset_group_t *tilesetGroup = converts[i]->tilesetGroups[j];
-
-            for (k = 0; k < tilesetGroup->numTilesets; ++k)
+            for (j = 0; j < tilesetGroup->numTilesets; ++j)
             {
-                ret = palette_add_image(palette, tilesetGroup->tilesets[k].image.path);
+                ret = palette_add_image(palette, tilesetGroup->tilesets[j].image.path);
                 if (ret != 0)
                 {
-                    goto error;
+                    return ret;
                 }
             }
         }
     }
 
-error:
     return ret;
 }
 
@@ -428,8 +428,6 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
                 fixedEntry->color.rgb.b == entry->color.rgb.b )
             {
                 palette_entry_t tmpEntry;
-
-                LL_INFO("found at %d", j);
 
                 tmpEntry = palette->entries[j];
                 palette->entries[j] = palette->entries[fixedEntry->index];

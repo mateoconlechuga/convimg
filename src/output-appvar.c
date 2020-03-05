@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -141,6 +141,7 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
     for (i = 0; i < output->numConverts; ++i)
     {
         convert_t *convert = output->converts[i];
+        tileset_group_t *tilesetGroup = convert->tilesetGroup;
 
         for (j = 0; j < convert->numImages; ++j)
         {
@@ -171,10 +172,8 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
             index++;
         }
 
-        for (j = 0; j < convert->numTilesetGroups; ++j)
+        if (tilesetGroup != NULL)
         {
-            tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
-
             for (k = 0; k < tilesetGroup->numTilesets; ++k)
             {
                 tileset_t *tileset = &tilesetGroup->tilesets[k];
@@ -297,6 +296,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
     for (i = 0; i < output->numConverts; ++i)
     {
         convert_t *convert = output->converts[i];
+        tileset_group_t *tilesetGroup = convert->tilesetGroup;
 
         for (j = 0; j < convert->numImages; ++j)
         {
@@ -306,10 +306,8 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
             offset += convert->images[j].size;
         }
 
-        for (j = 0; j < convert->numTilesetGroups; ++j)
+        if (tilesetGroup != NULL)
         {
-            tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
-
             for (k = 0; k < tilesetGroup->numTilesets; ++k)
             {
                 tileset_t *tileset = &tilesetGroup->tilesets[k];
@@ -334,11 +332,10 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
     for (i = 0; i < output->numConverts; ++i)
     {
         convert_t *convert = output->converts[i];
+        tileset_group_t *tilesetGroup = convert->tilesetGroup;
 
-        for (j = 0; j < convert->numTilesetGroups; ++j)
+        if (tilesetGroup != NULL)
         {
-            tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
-
             for (k = 0; k < tilesetGroup->numTilesets; ++k)
             {
                 tileset_t *tileset = &tilesetGroup->tilesets[k];
@@ -407,11 +404,10 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
         for (i = 0; i < output->numConverts; ++i)
         {
             convert_t *convert = output->converts[i];
+            tileset_group_t *tilesetGroup = convert->tilesetGroup;
 
-            for (j = 0; j < convert->numTilesetGroups; ++j)
+            if (tilesetGroup != NULL)
             {
-                tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
-
                 for (k = 0; k < tilesetGroup->numTilesets; ++k)
                 {
                     tileset_t *tileset = &tilesetGroup->tilesets[k];

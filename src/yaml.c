@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -153,6 +153,7 @@ int yaml_alloc_output(yaml_file_t *yamlfile)
         realloc(yamlfile->outputs, (yamlfile->numOutputs + 1) * sizeof(output_t *));
     if (yamlfile->outputs == NULL)
     {
+        LL_DEBUG("Memory error in %s", __func__);
         return 1;
     }
 
@@ -161,6 +162,7 @@ int yaml_alloc_output(yaml_file_t *yamlfile)
     tmpOutput = output_alloc();
     if (tmpOutput == NULL)
     {
+        LL_DEBUG("Memory error in %s", __func__);
         return 1;
     }
 
@@ -262,6 +264,10 @@ static int yaml_parse_fixed_color(yaml_file_t *yamlfile, char *line, palette_ent
             {
                 entry->color.rgb.b = strtol(value, NULL, 0);
             }
+            else if (!strcmp(key, "exact"))
+            {
+                entry->exact = strcmp(value, "true") == 0;
+            }
         }
     }
 
@@ -269,85 +275,6 @@ static int yaml_parse_fixed_color(yaml_file_t *yamlfile, char *line, palette_ent
 
 error:
     LL_ERROR("Invalid color format specifier (line %d).",
-        yamlfile->line);
-    return 1;
-}
-
-/*
- * Takes a line that has braces and converts to a tileset.
- */
-static int yaml_parse_tileset_group(yaml_file_t *yamlfile, char *line, tileset_group_t *tilesetGroup)
-{
-    char *args = strchr(line, '{');
-
-    if (args == NULL)
-    {
-        goto error;
-    }
-    else
-    {
-        char *next = ++args;
-        char *end;
-
-        end = strrchr(next, '}');
-        if (end == NULL)
-        {
-            goto error;
-        }
-
-        *end = '\0';
-
-        while (next != NULL)
-        {
-            char *current = next;
-            char *key;
-            char *value;
-
-            next = strchr(next, ',');
-            if (next != NULL)
-            {
-                *next = '\0';
-                next++;
-            }
-
-            key = strtok(current, ":");
-            if (key == NULL)
-            {
-                goto error;
-            }
-
-            value = strtok(NULL, ":");
-            if (value == NULL)
-            {
-                goto error;
-            }
-
-            value = strings_trim(value);
-            key = strings_trim(key);
-            if (key == NULL || value == NULL)
-            {
-                goto error;
-            }
-
-            if (!strcmp(key, "tile-width"))
-            {
-                tilesetGroup->tileWidth = strtol(value, NULL, 0);
-            }
-            else if (!strcmp(key, "tile-height"))
-            {
-                tilesetGroup->tileHeight = strtol(value, NULL, 0);
-            }
-            else if (!strcmp(key, "ptable"))
-            {
-                tilesetGroup->pTable = !strcmp(value, "true");
-            }
-        }
-    }
-
-    return 0;
-
-error:
-    LL_ERROR("Invalid tileset format specifier (line %d).",
         yamlfile->line);
     return 1;
 }
@@ -370,20 +297,19 @@ static int yaml_get_command(yaml_file_t *yamlfile, char *command, char *line)
         return 1;
     }
 
-    if (!strcmp(command, "palette"))
+    LL_DEBUG("command: %s line: %s", command, line);
+
+    if (!strcmp(command, "palettes"))
     {
         yamlfile->state = YAML_ST_PALETTE;
-        ret = yaml_alloc_palette(yamlfile);
     }
-    if (!strcmp(command, "convert"))
+    else if (!strcmp(command, "converts"))
     {
         yamlfile->state = YAML_ST_CONVERT;
-        ret = yaml_alloc_convert(yamlfile);
     }
-    if (!strcmp(command, "output"))
+    else if (!strcmp(command, "outputs"))
     {
         yamlfile->state = YAML_ST_OUTPUT;
-        ret = yaml_alloc_output(yamlfile);
     }
 
     return ret;
@@ -394,8 +320,9 @@ static int yaml_get_command(yaml_file_t *yamlfile, char *command, char *line)
  */
 static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line)
 {
-    palette_t *palette = yamlfile->curPalette;
+    palette_t *palette;
     palette_entry_t entry;
+    static bool adding_fixed;
     int ret = 0;
     char *args;
 
@@ -407,7 +334,57 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
     command = strings_trim(command);
     args = yaml_get_args(":");
 
+    if (!strcmp(command, "palettes"))
+    {
+        return 0;
+    }
+
+    if (command[0] == '-')
+    {
+        if (command[2] == 'n' &&
+            command[3] == 'a' &&
+            command[4] == 'm' &&
+            command[5] == 'e' && args)
+        {
+            ret = yaml_alloc_palette(yamlfile);
+            if (ret)
+            {
+                LL_ERROR("Failed allocating palette (line %d).",
+                    yamlfile->line);
+            }
+            else
+            {
+                palette = yamlfile->curPalette;
+                palette->name = strdup(args);
+            }
+            return ret;
+        }
+    }
+
     LL_DEBUG("Palette Command: %s:%s", command, args);
+
+    palette = yamlfile->curPalette;
+    if (palette == NULL)
+    {
+        LL_ERROR("Unknown palette name (line %d).", yamlfile->line);
+        ret = 1;
+    }
+
+    if (adding_fixed)
+    {
+        if (command[0] != '-')
+        {
+            adding_fixed = false;
+        }
+
+        if (adding_fixed)
+        {
+            ret = yaml_parse_fixed_color(yamlfile, line, &entry);
+            palette->fixedEntries[palette->numFixedEntries] = entry;
+            palette->numFixedEntries++;
+            return ret;
+        }
+    }
 
     if (command[0] == '-')
     {
@@ -420,19 +397,6 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
         else
         {
             ret = pallete_add_path(palette, strings_trim(&command[1]));
-        }
-    }
-    else if (!strcmp(command, "palette"))
-    {
-        if (args != NULL)
-        {
-            palette->name = strdup(args);
-        }
-        else
-        {
-            LL_ERROR("Missing name for generate-palette command (line %d).",
-                yamlfile->line);
-            ret = 1;
         }
     }
     else if (!strcmp(command, "max-entries"))
@@ -452,11 +416,9 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
             palette->quantizeSpeed = PALETTE_DEFAULT_QUANTIZE_SPEED;
         }
     }
-    else if (!strcmp(command, "fixed-color"))
+    else if (!strcmp(command, "fixed-colors"))
     {
-        ret = yaml_parse_fixed_color(yamlfile, line, &entry);
-        palette->fixedEntries[palette->numFixedEntries] = entry;
-        palette->numFixedEntries++;
+        adding_fixed = true;
     }
     else if (!strcmp(command, "images"))
     {
@@ -480,7 +442,7 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
 static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line)
 {
     static yaml_convert_mode_t mode = YAML_CONVERT_IMAGES;
-    convert_t *convert = yamlfile->curConvert;
+    convert_t *convert;
     char *args;
     int ret = 0;
 
@@ -491,6 +453,40 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
 
     command = strings_trim(command);
     args = yaml_get_args(":");
+
+    if (!strcmp(command, "converts"))
+    {
+        return 0;
+    }
+
+    if (command[0] == '-')
+    {
+	    if (command[2] == 'n' &&
+            command[3] == 'a' &&
+            command[4] == 'm' &&
+            command[5] == 'e' && args)
+        {
+            ret = yaml_alloc_convert(yamlfile);
+            if (ret)
+            {
+                LL_ERROR("Failed allocating convert (line %d).",
+                    yamlfile->line);
+            }
+            else
+            {
+                convert = yamlfile->curConvert;
+                convert->name = strdup(args);
+            }
+            return ret;
+        }
+    }
+
+    convert = yamlfile->curConvert;
+    if (convert == NULL)
+    {
+        LL_ERROR("Unknown convert name (line %d).", yamlfile->line);
+        ret = 1;
+    }
 
     LL_DEBUG("Convert Command: %s:%s", command, args);
 
@@ -505,19 +501,6 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
             case YAML_CONVERT_TILESETS:
                 ret = convert_add_tileset_path(convert, strings_trim(&command[1]));
                 break;
-        }
-    }
-    else if (!strcmp(command, "convert"))
-    {
-        if (args != NULL)
-        {
-            convert->name = strdup(args);
-        }
-        else
-        {
-            LL_ERROR("Missing name for convert command (line %d).",
-                yamlfile->line);
-            ret = 1;
         }
     }
     else if (!strcmp(command, "palette"))
@@ -584,16 +567,6 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
             ret = 1;
         }
     }
-    else if (!strcmp(command, "tilesets"))
-    {
-        mode = YAML_CONVERT_TILESETS;
-        ret = convert_alloc_tileset_group(convert);
-        if (ret == 0)
-        {
-            tileset_group_t *tilesetGroup = convert->tilesetGroups[convert->numTilesetGroups - 1];
-            ret = yaml_parse_tileset_group(yamlfile, line, tilesetGroup);
-        }
-    }
     else if (!strcmp(command, "width-and-height"))
     {
         convert->widthAndHeight = args != NULL && !strcmp(args, "true");
@@ -653,10 +626,36 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
             ret = convert_add_image_path(convert, "*");
         }
     }
+    else if (!strcmp(command, "tilesets"))
+    {
+        mode = YAML_CONVERT_TILESETS;
+        ret = convert_alloc_tileset_group(convert);
+    }
     else
     {
-        LL_WARNING("Ignoring invalid line %d.",
-            yamlfile->line);
+        if (mode == YAML_CONVERT_TILESETS)
+        {
+            if (!strcmp(command, "tile-width"))
+            {
+                convert->tilesetGroup->tileWidth = strtol(args, NULL, 0);
+            }
+            else if (!strcmp(command, "tile-height"))
+            {
+                convert->tilesetGroup->tileHeight = strtol(args, NULL, 0);
+            }
+            else if (!strcmp(command, "ptable"))
+            {
+                convert->tilesetGroup->pTable = !strcmp(args, "true");
+            }
+            else
+            {
+                LL_WARNING("Ignoring invalid line %d.", yamlfile->line);
+            }
+        }
+        else
+        {
+            LL_WARNING("Ignoring invalid line %d.", yamlfile->line);
+        }
     }
 
     return ret;
@@ -688,7 +687,7 @@ compress_t yaml_get_compress_mode(yaml_file_t *yamlfile, char *arg)
 static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
 {
     static yaml_output_mode_t outputMode = YAML_OUTPUT_CONVERTS;
-    output_t *output = yamlfile->curOutput;
+    output_t *output;
     char *args;
     int ret = 0;
 
@@ -699,6 +698,69 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
 
     command = strings_trim(command);
     args = yaml_get_args(":");
+
+    if (!strcmp(command, "outputs"))
+    {
+        return 0;
+    }
+
+    if (command[0] == '-')
+    {
+        if (command[2] == 't' &&
+            command[3] == 'y' &&
+            command[4] == 'p' &&
+            command[5] == 'e' && args)
+        {
+            ret = yaml_alloc_output(yamlfile);
+            if (ret)
+            {
+                LL_ERROR("Failed allocating output (line %d).",
+                    yamlfile->line);
+            }
+            else
+            {
+                output = yamlfile->curOutput;
+                output->name = strdup(args);
+                if (!strcmp(args, "c"))
+                {
+                    output->format = OUTPUT_FORMAT_C;
+                    output->includeFileName = strdup("gfx.h");
+                }
+                else if (!strcmp(args, "asm"))
+                {
+                    output->format = OUTPUT_FORMAT_ASM;
+                    output->includeFileName = strdup("gfx.inc");
+                }
+                else if (!strcmp(args, "ice"))
+                {
+                    output->format = OUTPUT_FORMAT_ICE;
+                    output->includeFileName = strdup("ice.txt");
+                }
+                else if (!strcmp(args, "appvar"))
+                {
+                    output->format = OUTPUT_FORMAT_APPVAR;
+                }
+                else if (!strcmp(args, "bin"))
+                {
+                    output->format = OUTPUT_FORMAT_BIN;
+                    output->includeFileName = strdup("gfx.txt");
+                }
+                else
+                {
+                    LL_ERROR("Unknown output type (line %d).", yamlfile->line);
+                    ret = 1;
+                }
+            }
+            return ret;
+        }
+    }
+
+    output = yamlfile->curOutput;
+    if (output == NULL)
+    {
+        LL_ERROR("Unknown output type (line %d).", yamlfile->line);
+        ret = 1;
+    }
 
     LL_DEBUG("Output Command: %s:%s", command, args);
 
@@ -712,45 +774,9 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
         {
             ret = output_add_convert(output, strings_trim(&command[1]));
         }
+        return ret;
     }
-    else if (!strcmp(command, "output"))
-    {
-        if (args != NULL)
-        {
-            output->name = strdup(args);
-            if (!strcmp(args, "c"))
-            {
-                output->format = OUTPUT_FORMAT_C;
-                output->includeFileName = strdup("gfx.h");
-            }
-            else if (!strcmp(args, "asm"))
-            {
-                output->format = OUTPUT_FORMAT_ASM;
-                output->includeFileName = strdup("gfx.inc");
-            }
-            else if (!strcmp(args, "ice"))
-            {
-                output->format = OUTPUT_FORMAT_ICE;
-                output->includeFileName = strdup("ice.txt");
-            }
-            else if (!strcmp(args, "appvar"))
-            {
-                output->format = OUTPUT_FORMAT_APPVAR;
-            }
-            else if (!strcmp(args, "bin"))
-            {
-                output->format = OUTPUT_FORMAT_BIN;
-                output->includeFileName = strdup("gfx.txt");
-            }
-        }
-        else
-        {
-            LL_ERROR("Missing output format (line %d).",
-                yamlfile->line);
-            ret = 1;
-        }
-    }
-    else if (output->format == OUTPUT_FORMAT_APPVAR)
+    if (output->format == OUTPUT_FORMAT_APPVAR)
     {
         if (!strcmp(command, "name"))
         {
@@ -944,6 +970,9 @@ int yaml_parse_file(yaml_file_t *yamlfile)
     }
 
     yamlfile->line = 1;
+    yamlfile->curPalette = NULL;
+    yamlfile->curConvert = NULL;
+    yamlfile->curOutput = NULL;
     yamlfile->palettes = NULL;
     yamlfile->converts = NULL;
     yamlfile->outputs = NULL;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -234,6 +234,7 @@ int output_asm_include_file(output_t *output)
     for (i = 0; i < output->numConverts; ++i)
     {
         convert_t *convert = output->converts[i];
+        tileset_group_t *tilesetGroup = convert->tilesetGroup;
 
         for (j = 0; j < convert->numImages; ++j)
         {
@@ -242,10 +243,8 @@ int output_asm_include_file(output_t *output)
             fprintf(fdi, "include \'%s.asm\'\r\n", image->name);
         }
 
-        for (j = 0; j < convert->numTilesetGroups; ++j)
+        if (tilesetGroup != NULL)
         {
-            tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
-
             for (k = 0; k < tilesetGroup->numTilesets; ++k)
             {
                 tileset_t *tileset = &tilesetGroup->tilesets[k];

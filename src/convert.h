@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -52,8 +52,7 @@ typedef struct convert
     char *paletteName;
     image_t *images;
     int numImages;
-    tileset_group_t **tilesetGroups;
-    int numTilesetGroups;
+    tileset_group_t *tilesetGroup;
     compress_t compress;
     palette_t *palette;
     convert_style_t style;

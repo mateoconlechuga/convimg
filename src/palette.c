@@ -231,7 +231,7 @@ int palette_automatic_build(palette_t *palette, convert_t **converts, int numCon
             }
         }
 
-        if( tilesetGroup )
+        if (tilesetGroup != NULL)
         {
             for (j = 0; j < tilesetGroup->numTilesets; ++j)
             {
@@ -293,8 +293,7 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
 
     if (palette->numImages == 0)
     {
-        LL_ERROR("No images to convert for palette \'%s\'", palette->name);
-        return 1;
+        LL_WARNING("Creating palette \'%s\' without images", palette->name);
     }
 
     attr = liq_attr_create();

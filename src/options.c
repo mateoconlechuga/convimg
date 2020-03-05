@@ -152,7 +152,7 @@ static void options_show(const char *prgm)
     LL_PRINT("----------------------------------------------------------------------------\n");
     LL_PRINT("\n");
     LL_PRINT("converts:\n");
-    LL_PRINT("    The YMAL converts section constists of a list of different \"groups\" of\n");
+    LL_PRINT("    The YAML converts section constists of a list of different \"groups\" of\n");
     LL_PRINT("    images to be converted that share similar properties, such as the palette\n");
     LL_PRINT("    used, or the compression mode. The available options are:\n");
     LL_PRINT("\n");

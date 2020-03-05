@@ -45,7 +45,7 @@
  * Read a line from an input file; strips whitespace.
  * Returns NULL if error.
  */
-static char *ymal_get_line(FILE *fdi)
+static char *yaml_get_line(FILE *fdi)
 {
     char *line = NULL;
     int i = 0;
@@ -992,7 +992,7 @@ int yaml_parse_file(yaml_file_t *yamlfile)
         char *command;
         char *fullLine;
 
-        line = ymal_get_line(fdi);
+        line = yaml_get_line(fdi);
         if (line == NULL)
         {
             break;

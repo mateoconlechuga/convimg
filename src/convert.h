@@ -40,6 +40,8 @@ extern "C" {
 #include "tileset.h"
 #include "compress.h"
 
+#define CONVERT_DEFAULT_QUANTIZE_SPEED 3
+
 typedef enum
 {
     CONVERT_STYLE_NORMAL,
@@ -60,6 +62,8 @@ typedef struct convert
     int numOmitIndices;
     int transparentIndex;
     bool widthAndHeight;
+    int quantizeSpeed;
+    float dither;
     bpp_t bpp;
 } convert_t;
 

@@ -51,6 +51,8 @@ typedef struct
 	int size;
 
     /* set by convert */
+    int quantizeSpeed;
+    float dither;
     bool compressed;
     bool rlet;
 

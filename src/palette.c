@@ -266,8 +266,8 @@ int palette_generate_with_images(palette_t *palette)
 
     exactEntries = 0;
 
-    // set the total number of palette entries that will be
-    // quantized against (exclude exact entries)
+    /* set the total number of palette entries that will be */
+    /* quantized against (exclude exact entries) */
     for (i = 0; i < palette->numFixedEntries; ++i)
     {
         palette_entry_t *entry = &palette->fixedEntries[i];
@@ -286,7 +286,7 @@ int palette_generate_with_images(palette_t *palette)
 
     hist = liq_histogram_create(attr);
 
-    // only add fixed colors that are not exact to the quantizer
+    /* only add fixed colors that are not exact to the quantizer */
     for (i = 0; i < palette->numFixedEntries; ++i)
     {
         palette_entry_t *entry = &palette->fixedEntries[i];
@@ -298,7 +298,7 @@ int palette_generate_with_images(palette_t *palette)
         }
     }
 
-    // quantize the images into a palette
+    /* quantize the images into a palette */
     for (i = 0; i < palette->numImages; ++i)
     {
         image_t *image = &palette->images[i];
@@ -317,8 +317,8 @@ int palette_generate_with_images(palette_t *palette)
             return 1;
         }
 
-        // only add colors of the image that aren't fixed colors
-        // exact matched pixels shouldn't even contribute to quantization
+        /* only add colors of the image that aren't fixed colors */
+        /* exact matched pixels shouldn't even contribute to quantization */
         for (j = 0; j < image->width * image->height; ++j)
         {
             bool addcolor = true;
@@ -388,7 +388,7 @@ int palette_generate_with_images(palette_t *palette)
 
     liqpalette = liq_get_palette(liqresult);
 
-    // store the quantized palette
+    /* store the quantized palette */
     for (i = 0; i < (int)liqpalette->count; ++i)
     {
         color_t color;

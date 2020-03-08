@@ -111,6 +111,8 @@ int yaml_alloc_palette(yaml_file_t *yamlfile)
     yamlfile->palettes[yamlfile->numPalettes] = tmpPalette;
     yamlfile->numPalettes++;
 
+    yamlfile->curPalette->quantizeSpeed = PALETTE_DEFAULT_QUANTIZE_SPEED;
+
     for (i = 0; i < PALETTE_MAX_ENTRIES; ++i)
     {
         palette_entry_t *entry = &yamlfile->curPalette->entries[i];
@@ -152,6 +154,9 @@ int yaml_alloc_convert(yaml_file_t *yamlfile)
     yamlfile->curConvert = tmpConvert;
     yamlfile->converts[yamlfile->numConverts] = tmpConvert;
     yamlfile->numConverts++;
+
+    yamlfile->curConvert->quantizeSpeed = CONVERT_DEFAULT_QUANTIZE_SPEED;
+    yamlfile->curConvert->dither = 0;
 
     return 0;
 }
@@ -428,7 +433,6 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
         {
             LL_WARNING("Ignoring invalid quantization speed (line %d).",
                 yamlfile->line);
-            palette->quantizeSpeed = PALETTE_DEFAULT_QUANTIZE_SPEED;
         }
     }
     else if (!strcmp(command, "fixed-colors"))
@@ -548,6 +552,28 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
     }
     else if (!strcmp(command, "dither"))
     {
+        if (args != NULL)
+        {
+            convert->dither = strtof(args, NULL);
+        }
+        if (args == NULL || convert->dither > 1 || convert->dither < 0)
+        {
+            LL_ERROR("Invalid dither parameter, must be [0, 1] inclusive (line %d).",
+                yamlfile->line);
+            ret = 1;
+        }
+    }
+    else if (!strcmp(command, "speed"))
+    {
+        if (args != NULL)
+        {
+            convert->quantizeSpeed = strtol(args, NULL, 0);
+        }
+        if (args == NULL || convert->quantizeSpeed < 1 || convert->quantizeSpeed > 10)
+        {
+            LL_WARNING("Ignoring invalid quantization speed (line %d).",
+                yamlfile->line);
+        }
     }
     else if (!strcmp(command, "transparent-color-index"))
     {

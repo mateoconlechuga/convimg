@@ -338,7 +338,7 @@ int image_quantize(image_t *image, palette_t *palette)
         return 1;
     }
 
-    liq_set_speed(liqattr, 10);
+    liq_set_speed(liqattr, image->quantizeSpeed);
     liq_set_max_colors(liqattr, palette->numEntries);
     liqimage = liq_image_create_rgba(liqattr,
                                      image->data,
@@ -365,6 +365,8 @@ int image_quantize(image_t *image, palette_t *palette)
         liq_attr_destroy(liqattr);
         return 1;
     }
+
+    liq_set_dithering_level(liqresult, image->dither);
 
     data = malloc(image->size);
     if (data == NULL)

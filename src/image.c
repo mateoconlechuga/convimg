@@ -45,11 +45,11 @@
 int image_load(image_t *image)
 {
     int channels;
-    image->data = (uint8_t *)stbi_load(image->path,
-                                       &image->width,
-                                       &image->height,
-                                       &channels,
-                                       STBI_rgb_alpha);
+    image->data = (uint8_t*)stbi_load(image->path,
+                                      &image->width,
+                                      &image->height,
+                                      &channels,
+                                      STBI_rgb_alpha);
 
     image->size = image->width * image->height;
     image->compressed = false;
@@ -325,11 +325,11 @@ int image_compress(image_t *image, compress_t compress)
  */
 int image_quantize(image_t *image, palette_t *palette)
 {
-    int j;
     liq_image *liqimage = NULL;
     liq_result *liqresult = NULL;
     liq_attr *liqattr = NULL;
     uint8_t *data = NULL;
+    int i;
 
     liqattr = liq_attr_create();
     if (liqattr == NULL)
@@ -352,9 +352,9 @@ int image_quantize(image_t *image, palette_t *palette)
         return 1;
     }
 
-    for (j = 0; j < palette->numEntries; j++)
+    for (i = 0; i < palette->numEntries; ++i)
     {
-        liq_image_add_fixed_color(liqimage, palette->entries[j].color.rgb);
+        liq_image_add_fixed_color(liqimage, palette->entries[i].color.rgb);
     }
 
     liqresult = liq_quantize_image(liqattr, liqimage);
@@ -377,7 +377,36 @@ int image_quantize(image_t *image, palette_t *palette)
     }
 
     liq_write_remapped_image(liqresult, liqimage, data, image->size);
-    free(image->data);
+
+    // loop through each input pixel and insert exact fixed colors
+    for (i = 0; i < image->size; ++i)
+    {
+        int offset = i * 4;
+        uint8_t r, g, b;
+        int j;
+
+        r = image->data[offset + 0];
+        g = image->data[offset + 1];
+        b = image->data[offset + 2];
+
+        for (j = 0; j < palette->numFixedEntries; ++j)
+        {
+            palette_entry_t *fixedEntry = &palette->fixedEntries[j];
+            if (!fixedEntry->exact)
+            {
+                continue;
+            }
+
+            if (r == fixedEntry->origcolor.rgb.r &&
+                g == fixedEntry->origcolor.rgb.g &&
+                b == fixedEntry->origcolor.rgb.b)
+            {
+                data[i] = fixedEntry->index;
+            }
+        }
+    }
+
+    stbi_image_free(image->data);
     image->data = data;
 
     liq_result_destroy(liqresult);

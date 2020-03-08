@@ -110,7 +110,7 @@ This program is used to convert images to other formats, specifically for the TI
     ----------------------------------------------------------------------------
 
     converts:
-        The YMAL converts section constists of a list of different "groups" of
+        The YAML converts section constists of a list of different "groups" of
         images to be converted that share similar properties, such as the palette
         used, or the compression mode. The available options are:
 

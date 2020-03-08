@@ -271,6 +271,8 @@ static int yaml_parse_fixed_color(yaml_file_t *yamlfile, char *line, palette_ent
         }
     }
 
+    entry->origcolor = entry->color;
+
     return 0;
 
 error:
@@ -532,6 +534,9 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
             LL_ERROR("Invalid style (line %d).", yamlfile->line);
             ret = 1;
         }
+    }
+    else if (!strcmp(command, "dither"))
+    {
     }
     else if (!strcmp(command, "transparent-color-index"))
     {

@@ -50,6 +50,7 @@ extern "C" {
 typedef struct
 {
     color_t color;
+    color_t origcolor;
     unsigned int index;
     bool exact;
 } palette_entry_t;

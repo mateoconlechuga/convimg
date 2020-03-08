@@ -90,6 +90,7 @@ static char *yaml_get_line(FILE *fdi)
 int yaml_alloc_palette(yaml_file_t *yamlfile)
 {
     palette_t *tmpPalette;
+    int i;
 
     yamlfile->palettes =
         realloc(yamlfile->palettes, (yamlfile->numPalettes + 1) * sizeof(palette_t *));
@@ -109,6 +110,19 @@ int yaml_alloc_palette(yaml_file_t *yamlfile)
     yamlfile->curPalette = tmpPalette;
     yamlfile->palettes[yamlfile->numPalettes] = tmpPalette;
     yamlfile->numPalettes++;
+
+    for (i = 0; i < PALETTE_MAX_ENTRIES; ++i)
+    {
+        palette_entry_t *entry = &yamlfile->curPalette->entries[i];
+
+        entry->valid = false;
+        entry->exact = false;
+        entry->color.rgb.r = 255;
+        entry->color.rgb.g = 255;
+        entry->color.rgb.b = 255;
+        entry->color.rgb.a = 255;
+        entry->origcolor = entry->color;
+    }
 
     return 0;
 }

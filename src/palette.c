@@ -388,11 +388,6 @@ int palette_generate_with_images(palette_t *palette)
 
     liqpalette = liq_get_palette(liqresult);
 
-    for (i = 0; i < PALETTE_MAX_ENTRIES; ++i)
-    {
-        palette->entries[i].valid = false;
-    }
-
     // store the quantized palette
     for (i = 0; i < (int)liqpalette->count; ++i)
     {

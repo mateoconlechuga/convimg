@@ -187,12 +187,12 @@ int palette_generate_builtin(palette_t *palette,
     {
         color_t *ec = &palette->entries[i].color;
         liq_color color =
-            {
-                .r = builtin[(i * 3) + 0],
-                .g = builtin[(i * 3) + 1],
-                .b = builtin[(i * 3) + 2],
-                .a = 255
-            };
+        {
+            .r = builtin[(i * 3) + 0],
+            .g = builtin[(i * 3) + 1],
+            .b = builtin[(i * 3) + 2],
+            .a = 255
+        };
 
         ec->rgb = color;
 
@@ -254,9 +254,10 @@ int palette_generate_with_images(palette_t *palette)
     liq_result *liqresult = NULL;
     const liq_palette *liqpalette = NULL;
     liq_error liqerr;
-    int totalEntries;
+    int maxIndex = -1;
     int exactEntries;
     int maxEntries;
+    int unused;
     int i, j;
 
     attr = liq_attr_create();
@@ -386,7 +387,11 @@ int palette_generate_with_images(palette_t *palette)
     }
 
     liqpalette = liq_get_palette(liqresult);
-    totalEntries = 0;
+
+    for (i = 0; i < PALETTE_MAX_ENTRIES; ++i)
+    {
+        palette->entries[i].valid = false;
+    }
 
     // store the quantized palette
     for (i = 0; i < (int)liqpalette->count; ++i)
@@ -397,11 +402,15 @@ int palette_generate_with_images(palette_t *palette)
         color.rgb.g = liqpalette->entries[i].g;
         color.rgb.b = liqpalette->entries[i].b;
 
-        color_convert(&palette->entries[i].color, palette->mode);
+        color_convert(&color, palette->mode);
 
         palette->entries[i].color = color;
+        palette->entries[i].valid = true;
 
-        totalEntries++;
+        if (i > maxIndex)
+        {
+            maxIndex = i;
+        }
     }
 
     // find the non-exact fixed colors in the quantized palette
@@ -427,8 +436,12 @@ int palette_generate_with_images(palette_t *palette)
                 tmpEntry = palette->entries[j];
                 palette->entries[j] = palette->entries[fixedEntry->index];
                 palette->entries[fixedEntry->index] = tmpEntry;
+                palette->entries[fixedEntry->index].valid = true;
 
-                totalEntries++;
+                if ((int)fixedEntry->index > maxIndex)
+                {
+                    maxIndex = fixedEntry->index;
+                }
 
                 break;
             }
@@ -439,21 +452,53 @@ int palette_generate_with_images(palette_t *palette)
     // they are just place holders (will be removed in the quantized image)
     for (i = 0; i < palette->numFixedEntries; ++i)
     {
-        palette_entry_t *fixedEntry = &palette->fixedEntries[j];
+        palette_entry_t *fixedEntry = &palette->fixedEntries[i];
         if (!fixedEntry->exact)
         {
             continue;
         }
 
-        color_convert(&palette->entries[i].color, palette->mode);
+        color_convert(&fixedEntry->color, palette->mode);
 
-        palette->entries[totalEntries] = palette->entries[fixedEntry->index];
+        // locate another valid place to store an entry
+        // if an entry already occupies this location
+        if (palette->entries[fixedEntry->index].valid)
+        {
+            int j;
+
+            for (j = 0; j < PALETTE_MAX_ENTRIES; ++j)
+            {
+                if (!palette->entries[j].valid)
+                {
+                    break;
+                }
+            }
+
+            palette->entries[j] = palette->entries[fixedEntry->index];
+        }
+
         palette->entries[fixedEntry->index] = *fixedEntry;
+        palette->entries[fixedEntry->index].valid = true;
 
-        totalEntries++;
+        if ((int)fixedEntry->index > maxIndex)
+        {
+            maxIndex = fixedEntry->index;
+        }
     }
 
-    palette->numEntries = totalEntries;
+    palette->numEntries = maxIndex + 1;
+
+    for (i = unused = 0; i < palette->numEntries; ++i)
+    {
+        if (!palette->entries[i].valid)
+        {
+            unused++;
+        }
+    }
+
+    LL_INFO("Generated palette \'%s\' with %d colors (%d unused)",
+            palette->name, palette->numEntries,
+            PALETTE_MAX_ENTRIES - palette->numEntries + unused);
 
     liq_result_destroy(liqresult);
     liq_histogram_destroy(hist);
@@ -474,22 +519,15 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
         return 1;
     }
 
-    if (!strcmp(palette->name, "xlibc") || !strcmp(palette->name, "xlibce"))
+    if (!strcmp(palette->name, "xlibc"))
     {
-        LL_INFO("Using built-in palette \'xlibc\'");
-
         return palette_generate_builtin(palette,
                                         palette_xlibc,
                                         PALETTE_MAX_ENTRIES,
                                         COLOR_MODE_1555_GBGR);
     }
-    if (!strcmp(palette->name, "xlibc"))
-    {
-    }
     else if (!strcmp(palette->name, "rgb332"))
     {
-        LL_INFO("Using built-in palette \'rgb332\'");
-
         return palette_generate_builtin(palette,
                                         palette_rgb332,
                                         PALETTE_MAX_ENTRIES,
@@ -525,6 +563,7 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
     }
     else
     {
+        int maxIndex = -1;
         int i;
 
         LL_WARNING("Creating palette \'%s\' without images", palette->name);
@@ -540,7 +579,17 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
         {
             palette_entry_t *fixedEntry = &palette->fixedEntries[i];
             palette->entries[fixedEntry->index] = *fixedEntry;
+            if ((int)fixedEntry->index > maxIndex)
+            {
+                maxIndex = fixedEntry->index;
+            }
         }
+
+        palette->numEntries = maxIndex + 1;
+
+        LL_INFO("Generated palette \'%s\' with %d colors (%d unused)",
+                palette->name, palette->numEntries,
+                PALETTE_MAX_ENTRIES - palette->numEntries + palette->numFixedEntries);
     }
 
     return 0;

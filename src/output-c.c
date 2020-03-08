@@ -374,14 +374,35 @@ int output_c_palette(palette_t *palette)
     for (i = 0; i < palette->numEntries; ++i)
     {
         color_t *color = &palette->entries[i].color;
+        color_t *origcolor = &palette->entries[i].origcolor;
 
-        fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) */\r\n",
-                color->target & 255,
-                (color->target >> 8) & 255,
-                i,
-                color->rgb.r,
-                color->rgb.g,
-                color->rgb.b);
+        if (palette->entries[i].exact)
+        {
+            fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) [exact original: rgb(%3d, %3d, %3d)] */\r\n",
+                    color->target & 255,
+                    (color->target >> 8) & 255,
+                    i,
+                    color->rgb.r,
+                    color->rgb.g,
+                    color->rgb.b,
+                    origcolor->rgb.r,
+                    origcolor->rgb.g,
+                    origcolor->rgb.b);
+        }
+        else if (!palette->entries[i].valid)
+        {
+            fprintf(fds, "    0x00, 0x00, /* %3d: (unused) */\r\n", i);
+        }
+        else
+        {
+            fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) */\r\n",
+                    color->target & 255,
+                    (color->target >> 8) & 255,
+                    i,
+                    color->rgb.r,
+                    color->rgb.g,
+                    color->rgb.b);
+        }
     }
     fprintf(fds, "};\r\n");
 

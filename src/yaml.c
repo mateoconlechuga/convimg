@@ -251,6 +251,10 @@ static int yaml_parse_fixed_color(yaml_file_t *yamlfile, char *line, palette_ent
             if (!strcmp(key, "index"))
             {
                 entry->index = strtol(value, NULL, 0);
+                if (entry->index > 255)
+                {
+                    goto error;
+                }
             }
             else if (!strcmp(key, "r"))
             {
@@ -276,8 +280,7 @@ static int yaml_parse_fixed_color(yaml_file_t *yamlfile, char *line, palette_ent
     return 0;
 
 error:
-    LL_ERROR("Invalid color format specifier (line %d).",
-        yamlfile->line);
+    LL_ERROR("Invalid fixed color format (line %d).", yamlfile->line);
     return 1;
 }
 
@@ -298,8 +301,6 @@ static int yaml_get_command(yaml_file_t *yamlfile, char *command, char *line)
     {
         return 1;
     }
-
-    LL_DEBUG("command: %s line: %s", command, line);
 
     if (!strcmp(command, "palettes"))
     {
@@ -362,8 +363,6 @@ static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line
             return ret;
         }
     }
-
-    LL_DEBUG("Palette Command: %s:%s", command, args);
 
     palette = yamlfile->curPalette;
     if (palette == NULL)
@@ -489,8 +488,6 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
         LL_ERROR("Unknown convert name (line %d).", yamlfile->line);
         ret = 1;
     }
-
-    LL_DEBUG("Convert Command: %s:%s", command, args);
 
     if (command[0] == '-')
     {
@@ -766,8 +763,6 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
         LL_ERROR("Unknown output type (line %d).", yamlfile->line);
         ret = 1;
     }
-
-    LL_DEBUG("Output Command: %s:%s", command, args);
 
     if (command[0] == '-')
     {

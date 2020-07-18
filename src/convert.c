@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -53,8 +53,7 @@ convert_t *convert_alloc(void)
     convert->numImages = 0;
     convert->compress = COMPRESS_NONE;
     convert->palette = NULL;
-    convert->tilesetGroups = NULL;
-    convert->numTilesetGroups = 0;
+    convert->tilesetGroup = NULL;
     convert->style = CONVERT_STYLE_NORMAL;
     convert->numOmitIndices = 0;
     convert->widthAndHeight = true;
@@ -107,23 +106,16 @@ int convert_alloc_tileset_group(convert_t *convert)
 {
     tileset_group_t *tmpTilesetGroup;
 
-    convert->tilesetGroups =
-        realloc(convert->tilesetGroups, (convert->numTilesetGroups + 1) * sizeof(tileset_group_t *));
-    if (convert->tilesetGroups == NULL)
-    {
-        return 1;
-    }
-
     LL_DEBUG("Allocating convert tileset group...");
 
     tmpTilesetGroup = tileset_group_alloc();
     if (tmpTilesetGroup == NULL)
     {
+        LL_DEBUG("Memory error in %s", __func__);
         return 1;
     }
 
-    convert->tilesetGroups[convert->numTilesetGroups] = tmpTilesetGroup;
-    convert->numTilesetGroups++;
+    convert->tilesetGroup = tmpTilesetGroup;
 
     return 0;
 }
@@ -143,7 +135,7 @@ static int convert_add_tileset(convert_t *convert, const char *path)
         return 1;
     }
 
-    tilesetGroup = convert->tilesetGroups[convert->numTilesetGroups - 1];
+    tilesetGroup = convert->tilesetGroup;
 
     tilesetGroup->tilesets =
         realloc(tilesetGroup->tilesets, (tilesetGroup->numTilesets + 1) * sizeof(tileset_t));
@@ -264,17 +256,11 @@ void convert_free(convert_t *convert)
         image_free(&convert->images[i]);
     }
 
-    for (i = 0; i < convert->numTilesetGroups; ++i)
-    {
-        tileset_group_free(convert->tilesetGroups[i]);
-        free(convert->tilesetGroups[i]);
-    }
+    tileset_group_free(convert->tilesetGroup);
+    convert->tilesetGroup = NULL;
 
     free(convert->images);
     convert->images = NULL;
-
-    free(convert->tilesetGroups);
-    convert->tilesetGroups = NULL;
 
     free(convert->name);
     convert->name = NULL;
@@ -485,6 +471,12 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
         LL_INFO(" - Reading image \'%s\'",
             image->path);
 
+        image->dither = convert->dither;
+        image->rotate = convert->rotate;
+        image->flipx = convert->flipx;
+        image->flipy = convert->flipy;
+        image->quantizeSpeed = convert->quantizeSpeed;
+
         ret = image_load(image);
         if (ret != 0)
         {
@@ -505,19 +497,11 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
         }
     }
 
-    if (convert->numTilesetGroups > 0)
+    if (ret == 0 && convert->tilesetGroup != NULL)
     {
+        tileset_group_t *tilesetGroup = convert->tilesetGroup;
+
         LL_INFO("Converting tilesets for \'%s\'", convert->name);
-    }
-
-    for (i = 0; i < convert->numTilesetGroups; ++i)
-    {
-        tileset_group_t *tilesetGroup = convert->tilesetGroups[i];
-
-        if (ret != 0)
-        {
-            break;
-        }
 
         for (j = 0; j < tilesetGroup->numTilesets; ++j)
         {
@@ -538,6 +522,9 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
                 LL_ERROR("Failed to load image \'%s\'", image->path);
                 break;
             }
+
+            image->dither = convert->dither;
+            image->quantizeSpeed = convert->quantizeSpeed;
 
             ret = image_quantize(image, convert->palette);
             if (ret != 0)

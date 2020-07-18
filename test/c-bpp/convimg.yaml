@@ -1,18 +1,21 @@
-output: c
-  include-file: gfx.h
-  palettes:
-    - mypalette
-  converts:
-    - myimages
+palettes:
+  - name: mypalette
+    max-entries: 2
+    images: automatic
 
-palette: mypalette
-  max-entries: 2
-  images: automatic
+converts:
+  - name: myimages
+    palette: mypalette
+    width-and-height: false
+    bpp: 1
+    images:
+      - bpp_test.png
 
-convert: myimages
-  palette: mypalette
-  width-and-height: false
-  bpp: 1
-  images:
-    - bpp_test.png
+outputs:
+  - type: c
+    include-file: gfx.h
+    palettes:
+      - mypalette
+    converts:
+      - myimages
 

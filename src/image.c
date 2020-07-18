@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,21 +40,149 @@
 #include <math.h>
 
 /*
+ * Swaps pixels.
+ */
+void swap_pixel(uint32_t *a, uint32_t *b)
+{
+    uint32_t temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+/*
+ * Flips and image horizontally.
+ */
+void image_flip_y(uint32_t *image, int width, int height)
+{
+    int r;
+
+    for (r = 0; r < height; ++r)
+    {
+        uint32_t *row = image + (r * width);
+        int c;
+
+        for (c = 0; c < width / 2; ++c)
+        {
+            swap_pixel(row + c,
+                       row + width - c - 1);
+        }
+    }
+}
+
+/*
+ * Flips and image vertically.
+ */
+void image_flip_x(uint32_t *image, int width, int height)
+{
+    int c;
+
+    for (c = 0; c < width; ++c)
+    {
+        int r;
+
+        for (r = 0; r < height / 2; ++r)
+        {
+            swap_pixel(image + (r * width) + c,
+                       image + (height - 1 - r) * width + c);
+        }
+    }
+}
+
+/*
+ * Rotates an image 90 degrees.
+ */
+void image_rotate_90(uint32_t *image, int width, int height)
+{
+    const size_t size = width * height;
+    uint32_t *newimage = malloc(size * sizeof(uint32_t));
+    int i, j;
+
+    for(i = 0; i < height; ++i)
+    {
+        int o = (height - 1 - i) * width;
+        for(j = 0; j < width; ++j)
+        {
+            newimage[i + j * height] = image[o + j];
+        }
+    }
+
+    memcpy(image, newimage, size * sizeof(uint32_t));
+    free(newimage);
+}
+
+/*
  * Loads an image to its data array.
  */
 int image_load(image_t *image)
 {
+    int width;
+    int height;
+    int size;
     int channels;
-    image->data = (uint8_t *)stbi_load(image->path,
-                                       &image->width,
-                                       &image->height,
-                                       &channels,
-                                       STBI_rgb_alpha);
+    uint32_t *data;
 
-    image->size = image->width * image->height;
+    data = (uint32_t*)stbi_load(image->path,
+                                &width,
+                                &height,
+                                &channels,
+                                STBI_rgb_alpha);
+    if (data == NULL)
+    {
+        return 1;
+    }
+
+    image->size = size = width * height;
     image->compressed = false;
 
-    return image->data == NULL ? 1 : 0;
+    if (image->flipx)
+    {
+        image_flip_x(data, width, height);
+    }
+
+    if (image->flipy)
+    {
+        image_flip_y(data, width, height);
+    }
+
+    switch (image->rotate)
+    {
+        default:
+            LL_WARNING("Invalid rotation; using 0 degrees.");
+            /* fall through */
+        case 0:
+            image->width = width;
+            image->height = height;
+            image->data = (uint8_t*)data;
+            break;
+
+        case 90:
+            image->width = height;
+            image->height = width;
+            image_rotate_90(data, width, height);
+            image->data = (uint8_t*)data;
+            stbi_image_free(data);
+            break;
+
+        case 180:
+            image->width = width;
+            image->height = height;
+            image_flip_y(data, width, height);
+            image_flip_x(data, width, height);
+            image->data = (uint8_t*)data;
+            break;
+
+        case 270:
+            image->width = height;
+            image->height = width;
+            image_rotate_90(data, width, height);
+            image_flip_y(data, width, height);
+            image_flip_x(data, width, height);
+            image->data = (uint8_t*)data;
+            stbi_image_free(data);
+            break;
+    }
+
+    return 0;
 }
 
 /*
@@ -325,11 +453,11 @@ int image_compress(image_t *image, compress_t compress)
  */
 int image_quantize(image_t *image, palette_t *palette)
 {
-    int j;
     liq_image *liqimage = NULL;
     liq_result *liqresult = NULL;
     liq_attr *liqattr = NULL;
     uint8_t *data = NULL;
+    int i;
 
     liqattr = liq_attr_create();
     if (liqattr == NULL)
@@ -338,7 +466,7 @@ int image_quantize(image_t *image, palette_t *palette)
         return 1;
     }
 
-    liq_set_speed(liqattr, 10);
+    liq_set_speed(liqattr, image->quantizeSpeed);
     liq_set_max_colors(liqattr, palette->numEntries);
     liqimage = liq_image_create_rgba(liqattr,
                                      image->data,
@@ -352,9 +480,9 @@ int image_quantize(image_t *image, palette_t *palette)
         return 1;
     }
 
-    for (j = 0; j < palette->numEntries; j++)
+    for (i = 0; i < palette->numEntries; ++i)
     {
-        liq_image_add_fixed_color(liqimage, palette->entries[j].color.rgb);
+        liq_image_add_fixed_color(liqimage, palette->entries[i].color.rgb);
     }
 
     liqresult = liq_quantize_image(liqattr, liqimage);
@@ -365,6 +493,8 @@ int image_quantize(image_t *image, palette_t *palette)
         liq_attr_destroy(liqattr);
         return 1;
     }
+
+    liq_set_dithering_level(liqresult, image->dither);
 
     data = malloc(image->size);
     if (data == NULL)
@@ -377,6 +507,35 @@ int image_quantize(image_t *image, palette_t *palette)
     }
 
     liq_write_remapped_image(liqresult, liqimage, data, image->size);
+
+    // loop through each input pixel and insert exact fixed colors
+    for (i = 0; i < image->size; ++i)
+    {
+        int offset = i * 4;
+        uint8_t r, g, b;
+        int j;
+
+        r = image->data[offset + 0];
+        g = image->data[offset + 1];
+        b = image->data[offset + 2];
+
+        for (j = 0; j < palette->numFixedEntries; ++j)
+        {
+            palette_entry_t *fixedEntry = &palette->fixedEntries[j];
+            if (!fixedEntry->exact)
+            {
+                continue;
+            }
+
+            if (r == fixedEntry->origcolor.rgb.r &&
+                g == fixedEntry->origcolor.rgb.g &&
+                b == fixedEntry->origcolor.rgb.b)
+            {
+                data[i] = fixedEntry->index;
+            }
+        }
+    }
+
     free(image->data);
     image->data = data;
 

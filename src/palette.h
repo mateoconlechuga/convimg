@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -50,8 +50,10 @@ extern "C" {
 typedef struct
 {
     color_t color;
+    color_t origcolor;
     unsigned int index;
     bool exact;
+    bool valid;
 } palette_entry_t;
 
 typedef struct palette
@@ -65,6 +67,7 @@ typedef struct palette
     int quantizeSpeed;
     palette_entry_t entries[PALETTE_MAX_ENTRIES];
     palette_entry_t fixedEntries[PALETTE_MAX_ENTRIES];
+    palette_entry_t keyedEntries[PALETTE_MAX_ENTRIES];
     color_mode_t mode;
     bpp_t bpp;
     bool automatic;

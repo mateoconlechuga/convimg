@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,6 +40,8 @@ extern "C" {
 #include "tileset.h"
 #include "compress.h"
 
+#define CONVERT_DEFAULT_QUANTIZE_SPEED 3
+
 typedef enum
 {
     CONVERT_STYLE_NORMAL,
@@ -52,8 +54,7 @@ typedef struct convert
     char *paletteName;
     image_t *images;
     int numImages;
-    tileset_group_t **tilesetGroups;
-    int numTilesetGroups;
+    tileset_group_t *tilesetGroup;
     compress_t compress;
     palette_t *palette;
     convert_style_t style;
@@ -61,6 +62,11 @@ typedef struct convert
     int numOmitIndices;
     int transparentIndex;
     bool widthAndHeight;
+    int quantizeSpeed;
+    float dither;
+    int rotate;
+    bool flipx;
+    bool flipy;
     bpp_t bpp;
 } convert_t;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -67,6 +67,8 @@ output_t *output_alloc(void)
     output->appvar.compress = COMPRESS_NONE;
     output->appvar.data = malloc(APPVAR_MAX_DATA_SIZE);
     output->appvar.size = 0;
+    output->appvar.header = NULL;
+    output->appvar.header_size = 0;
 
     return output;
 }
@@ -158,6 +160,9 @@ void output_free(output_t *output)
     free(output->appvar.name);
     output->appvar.name = NULL;
 
+    free(output->appvar.header);
+    output->appvar.name = NULL;
+
     free(output->appvar.data);
     output->appvar.data = NULL;
 
@@ -195,6 +200,11 @@ int output_init(output_t *output)
     if (output->format == OUTPUT_FORMAT_ICE)
     {
         remove(output->includeFileName);
+    }
+
+    if (output->format == OUTPUT_FORMAT_APPVAR)
+    {
+        output_appvar_header(&output->appvar);
     }
 
     if (output->appvar.name != NULL)
@@ -312,6 +322,7 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
     for (i = 0; i < output->numConverts; ++i)
     {
         convert_t *convert = output->converts[i];
+        tileset_group_t *tilesetGroup = convert->tilesetGroup;
         int j;
 
         if (ret != 0)
@@ -319,9 +330,18 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
             break;
         }
 
-        LL_INFO("Generating output \'%s\' for \'%s\'",
-                output->name,
-                convert->name);
+        if (output->format == OUTPUT_FORMAT_APPVAR)
+        {
+            LL_INFO("Generating \'%s\' for AppVar \'%s\'",
+                    convert->name,
+                    output->appvar.name);
+        }
+        else
+        {
+            LL_INFO("Generating output \'%s\' for \'%s\'",
+                    output->name,
+                    convert->name);
+        }
 
         for (j = 0; j < convert->numImages; ++j)
         {
@@ -364,21 +384,18 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
             free(image->directory);
         }
 
-        for (j = 0; j < convert->numTilesetGroups; ++j)
+        if (tilesetGroup != NULL)
         {
-            tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
-            int k;
-
-            if (ret != 0)
+            for (j = 0; j < tilesetGroup->numTilesets; ++j)
             {
-                break;
-            }
-
-            for (k = 0; k < tilesetGroup->numTilesets; ++k)
-            {
-                tileset_t *tileset = &tilesetGroup->tilesets[k];
+                tileset_t *tileset = &tilesetGroup->tilesets[j];
                 tileset->directory =
                     strdupcat(output->directory, tileset->image.name);
+
+                if (ret != 0)
+                {
+                    break;
+                }
 
                 switch (output->format)
                 {
@@ -440,9 +457,18 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
         palette->directory =
             strdupcat(output->directory, palette->name);
 
-        LL_INFO("Generating output \'%s\' for \'%s\'",
-                output->name,
-                palette->name);
+        if (output->format == OUTPUT_FORMAT_APPVAR)
+        {
+            LL_INFO("Generating \'%s\' for AppVar \'%s\'",
+                    palette->name,
+                    output->appvar.name);
+        }
+        else
+        {
+            LL_INFO("Generating output \'%s\' for \'%s\'",
+                    output->name,
+                    palette->name);
+        }
 
         if (ret != 0)
         {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -374,14 +374,35 @@ int output_c_palette(palette_t *palette)
     for (i = 0; i < palette->numEntries; ++i)
     {
         color_t *color = &palette->entries[i].color;
+        color_t *origcolor = &palette->entries[i].origcolor;
 
-        fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) */\r\n",
-                color->target & 255,
-                (color->target >> 8) & 255,
-                i,
-                color->rgb.r,
-                color->rgb.g,
-                color->rgb.b);
+        if (palette->entries[i].exact)
+        {
+            fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) [exact original: rgb(%3d, %3d, %3d)] */\r\n",
+                    color->target & 255,
+                    (color->target >> 8) & 255,
+                    i,
+                    color->rgb.r,
+                    color->rgb.g,
+                    color->rgb.b,
+                    origcolor->rgb.r,
+                    origcolor->rgb.g,
+                    origcolor->rgb.b);
+        }
+        else if (!palette->entries[i].valid)
+        {
+            fprintf(fds, "    0x00, 0x00, /* %3d: (unused) */\r\n", i);
+        }
+        else
+        {
+            fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) */\r\n",
+                    color->target & 255,
+                    (color->target >> 8) & 255,
+                    i,
+                    color->rgb.r,
+                    color->rgb.g,
+                    color->rgb.b);
+        }
     }
     fprintf(fds, "};\r\n");
 
@@ -440,6 +461,7 @@ int output_c_include_file(output_t *output)
     for (i = 0; i < output->numConverts; ++i)
     {
         convert_t *convert = output->converts[i];
+        tileset_group_t *tilesetGroup = convert->tilesetGroup;
 
         for (j = 0; j < convert->numImages; ++j)
         {
@@ -448,10 +470,8 @@ int output_c_include_file(output_t *output)
             fprintf(fdi, "#include \"%s.h\"\r\n", image->name);
         }
 
-        for (j = 0; j < convert->numTilesetGroups; ++j)
+        if (tilesetGroup != NULL)
         {
-            tileset_group_t *tilesetGroup = convert->tilesetGroups[j];
-
             for (k = 0; k < tilesetGroup->numTilesets; ++k)
             {
                 tileset_t *tileset = &tilesetGroup->tilesets[k];

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -51,8 +51,13 @@ typedef struct
 	int size;
 
     /* set by convert */
+    int quantizeSpeed;
+    float dither;
     bool compressed;
     bool rlet;
+    int rotate;
+    bool flipx;
+    bool flipy;
 
     /* set by output */
     char *directory;

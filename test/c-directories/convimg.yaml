@@ -1,15 +1,18 @@
-output: c
-  directory: outputs
-  palettes:
-    - mypalette
-  converts:
-    - myimages
+palettes:
+  - name: mypalette
+    images: automatic
 
-palette: mypalette
-  images: automatic
+converts:
+  - name: myimages
+    palette: mypalette
+    images:
+      - ./inputs/*
 
-convert: myimages
-  palette: mypalette
-  images:
-    - ./inputs/*
+outputs:
+  - type: c
+    directory: outputs
+    palettes:
+      - mypalette
+    converts:
+      - myimages
 

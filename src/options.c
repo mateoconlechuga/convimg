@@ -226,6 +226,14 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : height should be placed in the converted\n");
     LL_PRINT("                                  : image; the first two bytes respectively.\n");
     LL_PRINT("\n");
+    LL_PRINT("      flip-x: <bool>              : Flip input images vertically across the\n");
+    LL_PRINT("                                  : x-axis\n");
+    LL_PRINT("\n");
+    LL_PRINT("      flip-y: <bool>              : Flip input images horizontally across the\n");
+    LL_PRINT("                                  : y-axis\n");
+    LL_PRINT("\n");
+    LL_PRINT("      rotate: <degrees>           : Rotate input images 0,90,180,270 degrees\n");
+    LL_PRINT("\n");
     LL_PRINT("      bpp: <bits-per-pixel>       : Control how many bits per pixel are used\n");
     LL_PRINT("                                  : This also affects the size of the\n");
     LL_PRINT("                                  : generated palette; use with caution.\n");

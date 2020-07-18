@@ -40,21 +40,153 @@
 #include <math.h>
 
 /*
+ * Swaps pixels.
+ */
+void swap_pixel(uint32_t *a, uint32_t *b)
+{
+    uint32_t temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+/*
+ * Flips and image horizontally.
+ */
+void image_flip_y(uint32_t *image, int width, int height)
+{
+    int r;
+
+    for (r = 0; r < height; ++r)
+    {
+        uint32_t *row = image + (r * width);
+        int c;
+
+        for (c = 0; c < width / 2; ++c)
+        {
+            swap_pixel(row + c,
+                       row + width - c - 1);
+        }
+    }
+}
+
+/*
+ * Flips and image vertically.
+ */
+void image_flip_x(uint32_t *image, int width, int height)
+{
+    int c;
+
+    for (c = 0; c < width; ++c)
+    {
+        int r;
+
+        for (r = 0; r < height / 2; ++r)
+        {
+            swap_pixel(image + (r * width) + c,
+                       image + (height - 1 - r) * width + c);
+        }
+    }
+}
+
+/*
+ * Rotates an image 90 degrees.
+ */
+void image_rotate_90(uint32_t *image, int width, int height)
+{
+    const size_t size = width * height;
+    uint32_t *newimage = malloc(size * sizeof(uint32_t));
+    int i, j;
+
+    for(i = 0; i < height; ++i)
+    {
+        int o = (height - 1 - i) * width;
+        for(j = 0; j < width; ++j)
+        {
+            newimage[i + j * height] = image[o + j];
+        }
+    }
+
+    memcpy(image, newimage, size * sizeof(uint32_t));
+    free(newimage);
+}
+
+/*
  * Loads an image to its data array.
  */
 int image_load(image_t *image)
 {
+    int width;
+    int height;
+    int size;
     int channels;
-    image->data = (uint8_t*)stbi_load(image->path,
-                                      &image->width,
-                                      &image->height,
-                                      &channels,
-                                      STBI_rgb_alpha);
+    uint32_t *data;
 
-    image->size = image->width * image->height;
+    data = (uint32_t*)stbi_load(image->path,
+                                &width,
+                                &height,
+                                &channels,
+                                STBI_rgb_alpha);
+    if (data == NULL)
+    {
+        return 1;
+    }
+
+    image->size = size = width * height;
     image->compressed = false;
 
-    return image->data == NULL ? 1 : 0;
+    if (image->flipx)
+    {
+        image_flip_x(data, width, height);
+    }
+
+    if (image->flipy)
+    {
+        image_flip_y(data, width, height);
+    }
+
+    switch (image->rotate)
+    {
+        int i, j;
+        uint32_t *newdata;
+
+        default:
+            LL_WARNING("Invalid rotation; using 0 degrees.");
+            /* fall through */
+        case 0:
+            image->width = width;
+            image->height = height;
+            image->data = (uint8_t*)data;
+            break;
+
+        case 90:
+            newdata = malloc(size * sizeof(uint32_t));
+            image->width = height;
+            image->height = width;
+            image_rotate_90(data, width, height);
+            image->data = (uint8_t*)data;
+            stbi_image_free(data);
+            break;
+
+        case 180:
+            image->width = width;
+            image->height = height;
+            image_flip_y(data, width, height);
+            image_flip_x(data, width, height);
+            image->data = (uint8_t*)data;
+            break;
+
+        case 270:
+            image->width = height;
+            image->height = width;
+            image_rotate_90(data, width, height);
+            image_flip_y(data, width, height);
+            image_flip_x(data, width, height);
+            image->data = (uint8_t*)data;
+            stbi_image_free(data);
+            break;
+    }
+
+    return 0;
 }
 
 /*
@@ -408,7 +540,7 @@ int image_quantize(image_t *image, palette_t *palette)
         }
     }
 
-    stbi_image_free(image->data);
+    free(image->data);
     image->data = data;
 
     liq_result_destroy(liqresult);

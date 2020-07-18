@@ -471,15 +471,18 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
         LL_INFO(" - Reading image \'%s\'",
             image->path);
 
+        image->dither = convert->dither;
+        image->rotate = convert->rotate;
+        image->flipx = convert->flipx;
+        image->flipy = convert->flipy;
+        image->quantizeSpeed = convert->quantizeSpeed;
+
         ret = image_load(image);
         if (ret != 0)
         {
             LL_ERROR("Failed to load image \'%s\'", image->path);
             break;
         }
-
-        image->dither = convert->dither;
-        image->quantizeSpeed = convert->quantizeSpeed;
 
         ret = image_quantize(image, convert->palette);
         if (ret != 0)

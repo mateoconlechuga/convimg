@@ -55,6 +55,9 @@ typedef struct
     float dither;
     bool compressed;
     bool rlet;
+    int rotate;
+    bool flipx;
+    bool flipy;
 
     /* set by output */
     char *directory;

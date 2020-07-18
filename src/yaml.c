@@ -157,6 +157,9 @@ int yaml_alloc_convert(yaml_file_t *yamlfile)
 
     yamlfile->curConvert->quantizeSpeed = CONVERT_DEFAULT_QUANTIZE_SPEED;
     yamlfile->curConvert->dither = 0;
+    yamlfile->curConvert->rotate = 0;
+    yamlfile->curConvert->flipx = false;
+    yamlfile->curConvert->flipy = false;
 
     return 0;
 }
@@ -562,6 +565,34 @@ static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line
                 yamlfile->line);
             ret = 1;
         }
+    }
+    else if (!strcmp(command, "rotate"))
+    {
+        int rotate = 0;
+
+        if (args != NULL)
+        {
+            rotate = strtol(args, NULL, 0);
+        }
+        if (args == NULL ||
+            (rotate != 0 && rotate != 90 && rotate != 180 && rotate != 270))
+        {
+            LL_ERROR("Invalid rotate parameter, must be 0, 90, 180, or 270 (line %d).",
+                yamlfile->line);
+            ret = 1;
+        }
+        else
+        {
+            convert->rotate = rotate;
+        }
+    }
+    else if (!strcmp(command, "flip-x"))
+    {
+        convert->flipx = args != NULL && !strcmp(args, "true");
+    }
+    else if (!strcmp(command, "flip-y"))
+    {
+        convert->flipy = args != NULL && !strcmp(args, "true");
     }
     else if (!strcmp(command, "speed"))
     {

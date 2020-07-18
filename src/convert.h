@@ -64,6 +64,9 @@ typedef struct convert
     bool widthAndHeight;
     int quantizeSpeed;
     float dither;
+    int rotate;
+    bool flipx;
+    bool flipy;
     bpp_t bpp;
 } convert_t;
 

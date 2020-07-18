@@ -254,6 +254,7 @@ int palette_generate_with_images(palette_t *palette)
     liq_result *liqresult = NULL;
     const liq_palette *liqpalette = NULL;
     liq_error liqerr;
+    bool needquantize = false;
     int maxIndex = -1;
     int exactEntries;
     int maxEntries;
@@ -372,39 +373,43 @@ int palette_generate_with_images(palette_t *palette)
 
             liq_histogram_add_image(hist, attr, liqimage);
             liq_image_destroy(liqimage);
+            needquantize = true;
         }
 
         free(image->data);
     }
 
-    liqerr = liq_histogram_quantize(hist, attr, &liqresult);
-    if (liqerr != LIQ_OK)
+    if (needquantize == true)
     {
-        LL_ERROR("Failed to generate palette \'%s\'\n", palette->name);
-        liq_histogram_destroy(hist);
-        liq_attr_destroy(attr);
-        return 1;
-    }
-
-    liqpalette = liq_get_palette(liqresult);
-
-    /* store the quantized palette */
-    for (i = 0; i < (int)liqpalette->count; ++i)
-    {
-        color_t color;
-
-        color.rgb.r = liqpalette->entries[i].r;
-        color.rgb.g = liqpalette->entries[i].g;
-        color.rgb.b = liqpalette->entries[i].b;
-
-        color_convert(&color, palette->mode);
-
-        palette->entries[i].color = color;
-        palette->entries[i].valid = true;
-
-        if (i > maxIndex)
+        liqerr = liq_histogram_quantize(hist, attr, &liqresult);
+        if (liqerr != LIQ_OK)
         {
-            maxIndex = i;
+            LL_ERROR("Failed to generate palette \'%s\'\n", palette->name);
+            liq_histogram_destroy(hist);
+            liq_attr_destroy(attr);
+            return 1;
+        }
+
+        liqpalette = liq_get_palette(liqresult);
+
+        /* store the quantized palette */
+        for (i = 0; i < (int)liqpalette->count; ++i)
+        {
+            color_t color;
+
+            color.rgb.r = liqpalette->entries[i].r;
+            color.rgb.g = liqpalette->entries[i].g;
+            color.rgb.b = liqpalette->entries[i].b;
+
+            color_convert(&color, palette->mode);
+
+            palette->entries[i].color = color;
+            palette->entries[i].valid = true;
+
+            if (i > maxIndex)
+            {
+                maxIndex = i;
+            }
         }
     }
 

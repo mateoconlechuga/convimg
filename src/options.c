@@ -297,6 +297,9 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : to access image and palette data.\n");
     LL_PRINT("                                  : Optional parameter.\n");
     LL_PRINT("\n");
+    LL_PRINT("        header-string: <string>   : Prepends <string> to the start of the\n");
+    LL_PRINT("                                  : AppVar's data.\n");
+    LL_PRINT("\n");
     LL_PRINT("        archived: <bool>          : \'true\' makes the AppVar archived, while\n");
     LL_PRINT("                                  : \'false\' leaves it unarchived.\n");
     LL_PRINT("                                  : Optional parameter.\n");

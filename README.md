@@ -184,6 +184,14 @@ This program is used to convert images to other formats, specifically for the TI
                                       : height should be placed in the converted
                                       : image; the first two bytes respectively.
 
+          flip-x: <bool>              : Flip input images vertically across the
+                                      : x-axis
+
+          flip-y: <bool>              : Flip input images horizontally across the
+                                      : y-axis
+
+          rotate: <degrees>           : Rotate input images 0,90,180,270 degrees
+
           bpp: <bits-per-pixel>       : Control how many bits per pixel are used
                                       : This also affects the size of the
                                       : generated palette; use with caution.
@@ -246,6 +254,9 @@ This program is used to convert images to other formats, specifically for the TI
                                       : The AppVar then needs to be decompressed
                                       : to access image and palette data.
                                       : Optional parameter.
+
+            header-string: <string>   : Prepends <string> to the start of the
+                                      : AppVar's data.
 
             archived: <bool>          : 'true' makes the AppVar archived, while
                                       : 'false' leaves it unarchived.

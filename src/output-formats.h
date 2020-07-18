@@ -77,6 +77,7 @@ int output_ice_include_file(output_t *output, char *file);
 /*
  * Appvar Format.
  */
+int output_appvar_header(appvar_t *appvar);
 int output_appvar_image(image_t *image, appvar_t *appvar);
 int output_appvar_tileset(tileset_t *tileset, appvar_t *appvar);
 int output_appvar_palette(palette_t *palette, appvar_t *appvar);

@@ -67,6 +67,8 @@ output_t *output_alloc(void)
     output->appvar.compress = COMPRESS_NONE;
     output->appvar.data = malloc(APPVAR_MAX_DATA_SIZE);
     output->appvar.size = 0;
+    output->appvar.header = NULL;
+    output->appvar.header_size = 0;
 
     return output;
 }
@@ -158,6 +160,9 @@ void output_free(output_t *output)
     free(output->appvar.name);
     output->appvar.name = NULL;
 
+    free(output->appvar.header);
+    output->appvar.name = NULL;
+
     free(output->appvar.data);
     output->appvar.data = NULL;
 
@@ -195,6 +200,11 @@ int output_init(output_t *output)
     if (output->format == OUTPUT_FORMAT_ICE)
     {
         remove(output->includeFileName);
+    }
+
+    if (output->format == OUTPUT_FORMAT_APPVAR)
+    {
+        output_appvar_header(&output->appvar);
     }
 
     if (output->appvar.name != NULL)
@@ -320,9 +330,18 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
             break;
         }
 
-        LL_INFO("Generating output \'%s\' for \'%s\'",
-                output->name,
-                convert->name);
+        if (output->format == OUTPUT_FORMAT_APPVAR)
+        {
+            LL_INFO("Generating \'%s\' for AppVar \'%s\'",
+                    convert->name,
+                    output->appvar.name);
+        }
+        else
+        {
+            LL_INFO("Generating output \'%s\' for \'%s\'",
+                    output->name,
+                    convert->name);
+        }
 
         for (j = 0; j < convert->numImages; ++j)
         {
@@ -438,9 +457,18 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
         palette->directory =
             strdupcat(output->directory, palette->name);
 
-        LL_INFO("Generating output \'%s\' for \'%s\'",
-                output->name,
-                palette->name);
+        if (output->format == OUTPUT_FORMAT_APPVAR)
+        {
+            LL_INFO("Generating \'%s\' for AppVar \'%s\'",
+                    palette->name,
+                    output->appvar.name);
+        }
+        else
+        {
+            LL_INFO("Generating output \'%s\' for \'%s\'",
+                    output->name,
+                    palette->name);
+        }
 
         if (ret != 0)
         {

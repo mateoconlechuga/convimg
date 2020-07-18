@@ -81,6 +81,8 @@ typedef struct
     uint8_t *data;
     int size;
     int numEntries;
+    char *header;
+    int header_size;
 
     /* set by output */
     char *directory;

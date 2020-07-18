@@ -11,7 +11,7 @@ palettes:
 converts:
   - name: myimages
     palette: mypalette
-    rotate: 2701
+    rotate: 270
     images:
       - image.png
 

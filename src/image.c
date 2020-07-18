@@ -146,9 +146,6 @@ int image_load(image_t *image)
 
     switch (image->rotate)
     {
-        int i, j;
-        uint32_t *newdata;
-
         default:
             LL_WARNING("Invalid rotation; using 0 degrees.");
             /* fall through */
@@ -159,7 +156,6 @@ int image_load(image_t *image)
             break;
 
         case 90:
-            newdata = malloc(size * sizeof(uint32_t));
             image->width = height;
             image->height = width;
             image_rotate_90(data, width, height);

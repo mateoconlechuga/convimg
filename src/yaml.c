@@ -865,6 +865,19 @@ static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
         {
             output->appvar.init = !strcmp(args, "true");
         }
+        else if (!strcmp(command, "header-string"))
+        {
+            if (args == NULL)
+            {
+                LL_ERROR("Missing AppVar header (line %d).",
+                    yamlfile->line);
+            }
+            else
+            {
+                output->appvar.header = strdup(args);
+                output->appvar.header_size = strlen(output->appvar.header);
+            }
+        }
         else if (!strcmp(command, "source-format"))
         {
             if (!strcmp(args, "c"))

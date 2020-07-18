@@ -37,7 +37,25 @@
 #include <errno.h>
 
 /*
- * Outputs a converted image to Binary.
+ * Outputs an AppVar header.
+ */
+int output_appvar_header(appvar_t *appvar)
+{
+    if (appvar->size + appvar->header_size >= APPVAR_MAX_DATA_SIZE)
+    {
+        LL_ERROR("Too much data for AppVar \'%s\'.", appvar->name);
+        return 1;
+    }
+
+    memcpy(&appvar->data[appvar->size], appvar->header, appvar->header_size);
+    appvar->size += appvar->header_size;
+
+    return 0;
+}
+
+
+/*
+ * Outputs a converted AppVar image.
  */
 int output_appvar_image(image_t *image, appvar_t *appvar)
 {
@@ -78,7 +96,7 @@ int output_appvar_tileset(tileset_t *tileset, appvar_t *appvar)
 }
 
 /*
- * Outputs a converted Assembly tileset.
+ * Outputs a converted AppVar palette.
  */
 int output_appvar_palette(palette_t *palette, appvar_t *appvar)
 {
@@ -272,7 +290,7 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
 void output_appvar_c_source_file(output_t *output, FILE *fds)
 {
     appvar_t *appvar = &output->appvar;
-    int offset = 0;
+    int offset = appvar->header_size;
     int i, j, k, l;
 
     fprintf(fds, "#include \"%s\"\r\n", output->includeFileName);

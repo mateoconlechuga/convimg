@@ -296,6 +296,10 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
     fprintf(fds, "#include \"%s\"\r\n", output->includeFileName);
     fprintf(fds, "#include <fileioc.h>\r\n");
     fprintf(fds, "\r\n");
+    fprintf(fds, "#define %s_HEADER_SIZE %u\r\n",
+        appvar->name, appvar->header_size);
+    fprintf(fds, "\r\n");
+
     fprintf(fds, "unsigned char *%s_appvar[%d] =\r\n{\r\n",
         appvar->name,
         appvar->numEntries);
@@ -392,7 +396,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
             fprintf(fds, "unsigned char %s_init(void *addr)\r\n", appvar->name);
             fprintf(fds, "{\r\n");
             fprintf(fds, "    unsigned int data, i;\r\n\r\n");
-            fprintf(fds, "    data = (unsigned int)addr - (unsigned int)%s_appvar[0];\r\n", appvar->name);
+            fprintf(fds, "    data = (unsigned int)addr - (unsigned int)%s_appvar[0] + %s_HEADER_SIZE;\r\n", appvar->name, appvar->name);
             fprintf(fds, "    for (i = 0; i < %d; i++)\r\n", appvar->numEntries);
             fprintf(fds, "    {\r\n");
             fprintf(fds, "        %s_appvar[i] += data;\r\n", appvar->name);
@@ -410,7 +414,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
             fprintf(fds, "    {\r\n");
             fprintf(fds, "        return 0;\r\n");
             fprintf(fds, "    }\r\n\r\n");
-            fprintf(fds, "    data = (unsigned int)ti_GetDataPtr(appvar) - (unsigned int)%s_appvar[0];\n", appvar->name);
+            fprintf(fds, "    data = (unsigned int)ti_GetDataPtr(appvar) - (unsigned int)%s_appvar[0] + %s_HEADER_SIZE;\n", appvar->name, appvar->name);
             fprintf(fds, "    for (i = 0; i < %d; i++)\r\n", appvar->numEntries);
             fprintf(fds, "    {\r\n");
             fprintf(fds, "        %s_appvar[i] += data;\r\n", appvar->name);

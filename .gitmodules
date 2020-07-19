@@ -3,7 +3,7 @@
 	url = https://github.com/jacobly0/fasmg-ez80.git
 [submodule "src/deps/libimagequant"]
 	path = src/deps/libimagequant
-	url = https://github.com/ImageOptim/libimagequant.git
+	url = https://github.com/mateoconlechuga/libimagequant.git
 [submodule "src/deps/stb"]
 	path = src/deps/stb
 	url = https://github.com/nothings/stb.git

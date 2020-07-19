@@ -100,6 +100,10 @@ static int palette_add_image(palette_t *palette, const char *path)
     image->data = NULL;
     image->width = 0;
     image->height = 0;
+    image->rotate = 0;
+    image->flipx = false;
+    image->flipy = false;
+    image->rlet = false;
 
     palette->numImages++;
 

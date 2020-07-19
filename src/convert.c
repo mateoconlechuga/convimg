@@ -161,6 +161,9 @@ static int convert_add_tileset(convert_t *convert, const char *path)
     image->height = 0;
     image->compressed = false;
     image->rlet = false;
+    image->rotate = 0;
+    image->flipx = false;
+    image->flipy = false;
 
     tilesetGroup->numTilesets++;
 
@@ -450,7 +453,7 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
 
     if (convert->numImages > 0)
     {
-        LL_INFO("Converting images for \'%s\'", convert->name);
+        LL_INFO("Generating convert \'%s\'", convert->name);
     }
 
     ret = convert_find_palette(convert, palettes, numPalettes);

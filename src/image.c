@@ -160,7 +160,6 @@ int image_load(image_t *image)
             image->height = width;
             image_rotate_90(data, width, height);
             image->data = (uint8_t*)data;
-            stbi_image_free(data);
             break;
 
         case 180:
@@ -178,7 +177,6 @@ int image_load(image_t *image)
             image_flip_y(data, width, height);
             image_flip_x(data, width, height);
             image->data = (uint8_t*)data;
-            stbi_image_free(data);
             break;
     }
 

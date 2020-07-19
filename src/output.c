@@ -330,18 +330,8 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
             break;
         }
 
-        if (output->format == OUTPUT_FORMAT_APPVAR)
-        {
-            LL_INFO("Generating \'%s\' for AppVar \'%s\'",
-                    convert->name,
-                    output->appvar.name);
-        }
-        else
-        {
-            LL_INFO("Generating output \'%s\' for \'%s\'",
-                    output->name,
-                    convert->name);
-        }
+        LL_INFO("Generating output for convert \'%s\'",
+                convert->name);
 
         for (j = 0; j < convert->numImages; ++j)
         {
@@ -457,18 +447,8 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
         palette->directory =
             strdupcat(output->directory, palette->name);
 
-        if (output->format == OUTPUT_FORMAT_APPVAR)
-        {
-            LL_INFO("Generating \'%s\' for AppVar \'%s\'",
-                    palette->name,
-                    output->appvar.name);
-        }
-        else
-        {
-            LL_INFO("Generating output \'%s\' for \'%s\'",
-                    output->name,
-                    palette->name);
-        }
+        LL_INFO("Generating output for palette \'%s\'",
+                palette->name);
 
         if (ret != 0)
         {

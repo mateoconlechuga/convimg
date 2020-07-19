@@ -52,6 +52,10 @@ int icon_convert(icon_t *icon)
     uint8_t *data = NULL;
     FILE *fd = NULL;
 
+    image.flipx = false;
+    image.flipy = false;
+    image.rotate = 0;
+
     if (icon->imageFile == NULL || *icon->imageFile == 0)
     {
         image.path = NULL;

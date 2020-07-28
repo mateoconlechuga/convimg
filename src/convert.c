@@ -508,7 +508,7 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
 
         for (j = 0; j < tilesetGroup->numTilesets; ++j)
         {
-            tileset_t *tileset = &tilesetGroup->tilesets[i];
+            tileset_t *tileset = &tilesetGroup->tilesets[j];
             image_t *image = &tileset->image;
 
             if (ret != 0)

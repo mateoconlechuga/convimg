@@ -98,8 +98,9 @@ char *strings_basename(const char *path)
     tmp = strrchr(result, '/');
     if (tmp != NULL && *tmp && *(tmp + 1))
     {
-        memmove(result, tmp + 1, strlen(tmp + 1));
-        *tmp = '\0';
+        size_t len = strlen(tmp + 1);
+        memmove(result, tmp + 1, len);
+        result[len] = '\0';
     }
 
     tmp = strchr(result, '.');

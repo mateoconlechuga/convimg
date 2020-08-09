@@ -67,6 +67,7 @@ extern "C" {
 
 typedef enum
 {
+    APPVAR_SOURCE_NONE,
     APPVAR_SOURCE_C,
     APPVAR_SOURCE_ICE,
 } appvar_source_t;

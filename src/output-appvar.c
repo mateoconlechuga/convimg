@@ -531,6 +531,9 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
 
         case APPVAR_SOURCE_ICE:
             break;
+
+        case APPVAR_SOURCE_NONE:
+            break;
     }
 
     LL_INFO(" - Writing \'%s\'", varName);

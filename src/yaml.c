@@ -1044,13 +1044,13 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
                         {
                             output->appvar.source = APPVAR_SOURCE_ICE;
                         }
-                        else if (parse_str_cmp("raw", value))
+                        else if (parse_str_cmp("none", value))
                         {
-                            output->appvar.source = APPVAR_SOURCE_ICE;
+                            output->appvar.source = APPVAR_SOURCE_NONE;
                         }
                         else
                         {
-                            LL_ERROR("Unknown AppVar source format.");
+                            LL_ERROR("Unknown AppVar source format: %s", value);
                             parser_show_mark_error(keyn->start_mark);
                             return 1;
                         }

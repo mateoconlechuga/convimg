@@ -244,7 +244,7 @@ This program is used to convert images to other formats, specifically for the TI
 
             source-format: <format>   : Source files to create to access
                                       : image and palette data. format can be
-                                      : 'c' or 'ice'.
+                                      : 'c', 'ice', or 'none'.
                                       : Required parameter.
 
             source-init: <bool>       : Whether to output AppVar initialization

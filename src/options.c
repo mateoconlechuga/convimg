@@ -283,7 +283,7 @@ static void options_show(const char *prgm)
     LL_PRINT("\n");
     LL_PRINT("        source-format: <format>   : Source files to create to access\n");
     LL_PRINT("                                  : image and palette data. format can be\n");
-    LL_PRINT("                                  : \'c\' or \'ice\'.\n");
+    LL_PRINT("                                  : \'c\', \'ice\', or \'none\'.\n");
     LL_PRINT("                                  : Required parameter.\n");
     LL_PRINT("\n");
     LL_PRINT("        source-init: <bool>       : Whether to output AppVar initialization\n");

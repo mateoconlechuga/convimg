@@ -485,6 +485,11 @@ int palette_generate_with_images(palette_t *palette)
             }
 
             palette->entries[j] = palette->entries[fixedEntry->index];
+
+            if (j > maxIndex)
+            {
+                maxIndex = j;
+            }
         }
 
         palette->entries[fixedEntry->index] = *fixedEntry;

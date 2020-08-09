@@ -115,10 +115,10 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : in the palette. Default is 256,\n");
     LL_PRINT("                                  : range is 1-256.\n");
     LL_PRINT("\n");
-    LL_PRINT("        fixed-colors:             : Adds a fixed color and index to the\n");
+    LL_PRINT("        fixed-entries:            : Adds fixed color entries to the\n");
     LL_PRINT("                                  : palette. The format is:\n");
     LL_PRINT("                                  :\n");
-    LL_PRINT("                                  : fixed-colors:\n");
+    LL_PRINT("                                  : fixed-entries:\n");
     LL_PRINT("                                  :  - color: {index:0, r:0, g:0, b:0}\n");
     LL_PRINT("                                  :  - color: {index:1, r:255, g:255, b:255}\n");
     LL_PRINT("                                  :\n");
@@ -130,7 +130,7 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : \'exact\' is used to match colors exactly\n");
     LL_PRINT("                                  : to the input color before quantization.\n");
     LL_PRINT("                                  : It is an optional parameter, defaults to\n");
-    LL_PRINT("                                  : \'true\' but can be \'false\'\n");
+    LL_PRINT("                                  : \'false\' but can be \'true\'\n");
     LL_PRINT("\n");
     LL_PRINT("       speed: <speed>             : Speed controls (somewhat, not really)\n");
     LL_PRINT("                                  : the quality of the palette generated.\n");
@@ -191,8 +191,8 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : of 16 pixels. Tile numbers are determined\n");
     LL_PRINT("                                  : starting from the top left, moving right\n");
     LL_PRINT("                                  : to the bottom-right.\n");
-    LL_PRINT("                                  : Another optional boolean field is \'ptable\'\n");
-    LL_PRINT("                                  : which controls the output of a table of.\n");
+    LL_PRINT("                                  : Another optional boolean field is\n");
+    LL_PRINT("                                  : \'pointer-table\', which will output\n");
     LL_PRINT("                                  : pointers to each tile.\n");
     LL_PRINT("                                  : The default is \'true\'.\n");
     LL_PRINT("\n");
@@ -240,11 +240,10 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : Available options are 1,2,4,8.\n");
     LL_PRINT("                                  : The default is 8.\n");
     LL_PRINT("\n");
-    LL_PRINT("      omit-palette-index: <index> : Omits the specified palette index\n");
+    LL_PRINT("      omit-indices: [<list>]      : Omits the specified palette indices\n");
     LL_PRINT("                                  : from the converted image. May be useful\n");
-    LL_PRINT("                                  : by a custom drawing routine. This option\n");
-    LL_PRINT("                                  : can be specified multiple times for\n");
-    LL_PRINT("                                  : multiple excluded indices.\n");
+    LL_PRINT("                                  : by a custom drawing routine. A comma.\n");
+    LL_PRINT("                                  : separated list in [] should be provided.\n");
     LL_PRINT("\n");
     LL_PRINT("\n");
     LL_PRINT("outputs:\n");

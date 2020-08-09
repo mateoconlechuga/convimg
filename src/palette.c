@@ -306,8 +306,10 @@ int palette_generate_with_images(palette_t *palette)
         }
     }
 
+    i = 0;
+
     /* quantize the images into a palette */
-    for (i = 0; i < palette->numImages; ++i)
+    while (i < palette->numImages && maxEntries > 1)
     {
         image_t *image = &palette->images[i];
         liq_image *liqimage;
@@ -384,6 +386,7 @@ int palette_generate_with_images(palette_t *palette)
         }
 
         free(image->data);
+        ++i;
     }
 
     if (needquantize == true)

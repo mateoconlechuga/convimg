@@ -303,7 +303,8 @@ int convert_find_palette(convert_t *convert, palette_t **palettes, int numPalett
         }
     }
 
-    LL_ERROR("No matching palette name found to convert \'%s\'",
+    LL_ERROR("No palette \'%s\' found for convert \'%s\'",
+        convert->paletteName,
         convert->name);
     return 1;
 }

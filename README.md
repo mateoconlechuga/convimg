@@ -4,6 +4,9 @@ This program is used to convert images to other formats, specifically for the TI
 
 ## Command Line Help
 
+    This program is used to convert images to other formats,
+    specifically for the TI84+CE and related calculators.
+
     Usage:
         convimg [options] -i <yaml file>
 
@@ -73,10 +76,10 @@ This program is used to convert images to other formats, specifically for the TI
                                       : in the palette. Default is 256,
                                       : range is 1-256.
 
-            fixed-colors:             : Adds a fixed color and index to the
+            fixed-entries:            : Adds fixed color entries to the
                                       : palette. The format is:
                                       :
-                                      : fixed-colors:
+                                      : fixed-entries:
                                       :  - color: {index:0, r:0, g:0, b:0}
                                       :  - color: {index:1, r:255, g:255, b:255}
                                       :
@@ -88,7 +91,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : 'exact' is used to match colors exactly
                                       : to the input color before quantization.
                                       : It is an optional parameter, defaults to
-                                      : 'true' but can be 'false'
+                                      : 'false' but can be 'true'
 
            speed: <speed>             : Speed controls (somewhat, not really)
                                       : the quality of the palette generated.
@@ -149,8 +152,8 @@ This program is used to convert images to other formats, specifically for the TI
                                       : of 16 pixels. Tile numbers are determined
                                       : starting from the top left, moving right
                                       : to the bottom-right.
-                                      : Another optional boolean field is 'ptable'
-                                      : which controls the output of a table of.
+                                      : Another optional boolean field is
+                                      : 'pointer-table', which will output
                                       : pointers to each tile.
                                       : The default is 'true'.
 
@@ -198,11 +201,10 @@ This program is used to convert images to other formats, specifically for the TI
                                       : Available options are 1,2,4,8.
                                       : The default is 8.
 
-          omit-palette-index: <index> : Omits the specified palette index
+          omit-indices: [<list>]      : Omits the specified palette indices
                                       : from the converted image. May be useful
-                                      : by a custom drawing routine. This option
-                                      : can be specified multiple times for
-                                      : multiple excluded indices.
+                                      : by a custom drawing routine. A comma.
+                                      : separated list in [] should be provided.
 
 
     outputs:
@@ -223,11 +225,11 @@ This program is used to convert images to other formats, specifically for the TI
                                       : Binary, and ICE formats respectively.
 
             palettes:                 : A list of generated palettes, separated
-                                      ; by a newline and indented with the '-'
+                                      : by a newline and indented with the '-'
                                       : character.
 
             converts:                 : A list of convert sections, separated
-                                      ; by a newline and indented with the '-'
+                                      : by a newline and indented with the '-'
                                       : character.
 
             directory: <directory>    : Supply the name of the output directory.

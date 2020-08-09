@@ -44,7 +44,7 @@
 static void options_show(const char *prgm)
 {
     LL_PRINT("This program is used to convert images to other formats,\n");
-    LL_PRINT("specifically for the TI84+CE and related calculators.\n");
+    LL_PRINT("specifically for the TI-84+CE and related calculators.\n");
     LL_PRINT("\n");
     LL_PRINT("Usage:\n");
     LL_PRINT("    %s [options] -i <yaml file>\n", prgm);
@@ -264,11 +264,11 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : Binary, and ICE formats respectively.\n");
     LL_PRINT("\n");
     LL_PRINT("        palettes:                 : A list of generated palettes, separated\n");
-    LL_PRINT("                                  ; by a newline and indented with the \'-\'\n");
+    LL_PRINT("                                  : by a newline and indented with the \'-\'\n");
     LL_PRINT("                                  : character.\n");
     LL_PRINT("\n");
     LL_PRINT("        converts:                 : A list of convert sections, separated\n");
-    LL_PRINT("                                  ; by a newline and indented with the \'-\'\n");
+    LL_PRINT("                                  : by a newline and indented with the \'-\'\n");
     LL_PRINT("                                  : character.\n");
     LL_PRINT("\n");
     LL_PRINT("        directory: <directory>    : Supply the name of the output directory.\n");

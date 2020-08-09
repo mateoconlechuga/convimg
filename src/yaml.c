@@ -253,15 +253,15 @@ static int parse_palette_entry(palette_entry_t *entry, yaml_document_t *doc, yam
     entry->exact = false;
 
     pair = root->data.mapping.pairs.start;
-	for (; pair < root->data.mapping.pairs.top; ++pair)
+    for (; pair < root->data.mapping.pairs.top; ++pair)
     {
-		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
-		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+        yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
         char *key = (char*)keyn->data.scalar.value;
         char *value = (char*)valuen->data.scalar.value;
         int tmpint;
 
-		if (keyn != NULL)
+        if (keyn != NULL)
         {
             tmpint = strtol(value, NULL, 0);
             if (tmpint > 255 || tmpint < 0)
@@ -294,15 +294,15 @@ static int parse_palette_entry(palette_entry_t *entry, yaml_document_t *doc, yam
             {
                 LL_ERROR("Unknown fixed color option.");
                 parser_show_mark_error(keyn->start_mark);
-			    return 1;
+                return 1;
             }
-		}
+        }
         else
         {
             LL_ERROR("No node.");
-			return 1;
-		}
-	}
+            return 1;
+        }
+    }
 
     LL_DEBUG("Adding fixed color: i: %d r: %d g: %d b: %d exact: %s",
         entry->index,
@@ -325,13 +325,13 @@ static int parse_palette_fixed_entry(palette_t *palette, yaml_document_t *doc, y
     palette_entry_t entry;
 
     pair = root->data.mapping.pairs.start;
-	for (; pair < root->data.mapping.pairs.top; ++pair)
+    for (; pair < root->data.mapping.pairs.top; ++pair)
     {
-		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
-		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+        yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
         char *key = (char*)keyn->data.scalar.value;
 
-		if (keyn != NULL)
+        if (keyn != NULL)
         {
             if (parse_str_cmp("color", key))
             {
@@ -346,15 +346,15 @@ static int parse_palette_fixed_entry(palette_t *palette, yaml_document_t *doc, y
             {
                 LL_ERROR("Unknown fixed entry option.");
                 parser_show_mark_error(keyn->start_mark);
-			    return 1;
+                return 1;
             }
-		}
+        }
         else
         {
             LL_ERROR("No node.");
-			return 1;
-		}
-	}
+            return 1;
+        }
+    }
 
     return 0;
 }
@@ -364,11 +364,11 @@ static int parse_palette_fixed_entry(palette_t *palette, yaml_document_t *doc, y
  */
 static int parse_palette_fixed_entries(palette_t *palette, yaml_document_t *doc, yaml_node_t *root)
 {
-	yaml_node_item_t *item = root->data.sequence.items.start;
-	for (; item < root->data.sequence.items.top; ++item)
+    yaml_node_item_t *item = root->data.sequence.items.start;
+    for (; item < root->data.sequence.items.top; ++item)
     {
-		yaml_node_t *node = yaml_document_get_node(doc, *item);
-		if (node != NULL)
+        yaml_node_t *node = yaml_document_get_node(doc, *item);
+        if (node != NULL)
         {
             int ret = parse_palette_fixed_entry(palette, doc, node);
             if (ret != 0)
@@ -376,7 +376,7 @@ static int parse_palette_fixed_entries(palette_t *palette, yaml_document_t *doc,
                 return ret;
             }
         }
-	}
+    }
 
     return 0;
 }
@@ -438,14 +438,14 @@ static int parse_palette(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
     yaml_node_pair_t *pair;
 
     pair = root->data.mapping.pairs.start;
-	for (; pair < root->data.mapping.pairs.top; ++pair)
+    for (; pair < root->data.mapping.pairs.top; ++pair)
     {
-		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
-		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+        yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
         char *key = (char*)keyn->data.scalar.value;
         char *value = (char*)valuen->data.scalar.value;
 
-		if (keyn != NULL)
+        if (keyn != NULL)
         {
             if (parse_str_cmp("name", key))
             {
@@ -499,16 +499,16 @@ static int parse_palette(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
                 {
                     LL_ERROR("Unknown palette option: %s", key);
                     parser_show_mark_error(keyn->start_mark);
-			        return 1;
+                    return 1;
                 }
             }
-		}
+        }
         else
         {
             LL_ERROR("No node.");
-			return 1;
-		}
-	}
+            return 1;
+        }
+    }
 
     return 0;
 }
@@ -518,17 +518,17 @@ static int parse_palette(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
  */
 static int parse_convert_omits(convert_t *convert, yaml_document_t *doc, yaml_node_t *root)
 {
-	yaml_node_item_t *item = root->data.sequence.items.start;
-	for (; item < root->data.sequence.items.top; ++item)
+    yaml_node_item_t *item = root->data.sequence.items.start;
+    for (; item < root->data.sequence.items.top; ++item)
     {
-		yaml_node_t *node = yaml_document_get_node(doc, *item);
-		if (node != NULL)
+        yaml_node_t *node = yaml_document_get_node(doc, *item);
+        if (node != NULL)
         {
             int index = strtol((char*)node->data.scalar.value, NULL, 0);
             convert->omitIndices[convert->numOmitIndices] = index;
             convert->numOmitIndices++;
         }
-	}
+    }
 
     return 0;
 }
@@ -661,14 +661,14 @@ static int parse_convert_tilesets(convert_t *convert, yaml_document_t *doc, yaml
     }
 
     pair = root->data.mapping.pairs.start;
-	for (; pair < root->data.mapping.pairs.top; ++pair)
+    for (; pair < root->data.mapping.pairs.top; ++pair)
     {
-		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
-		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+        yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
         char *key = (char*)keyn->data.scalar.value;
         char *value = (char*)valuen->data.scalar.value;
 
-		if (keyn != NULL)
+        if (keyn != NULL)
         {
             if (parse_str_cmp("tile-width", key))
             {
@@ -700,22 +700,22 @@ static int parse_convert_tilesets(convert_t *convert, yaml_document_t *doc, yaml
             {
                 if (parse_convert_tilesets_images(convert, doc, valuen))
                 {
-		            return 1;
+                    return 1;
                 }
             }
             else
             {
                 LL_ERROR("Unknown tilesets option: %s", key);
                 parser_show_mark_error(keyn->start_mark);
-		        return 1;
+                return 1;
             }
-		}
+        }
         else
         {
             LL_ERROR("No node.");
-			return 1;
-		}
-	}
+            return 1;
+        }
+    }
 
 
     return 0;
@@ -730,14 +730,14 @@ static int parse_convert(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
     yaml_node_pair_t *pair;
 
     pair = root->data.mapping.pairs.start;
-	for (; pair < root->data.mapping.pairs.top; ++pair)
+    for (; pair < root->data.mapping.pairs.top; ++pair)
     {
-		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
-		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+        yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
         char *key = (char*)keyn->data.scalar.value;
         char *value = (char*)valuen->data.scalar.value;
 
-		if (keyn != NULL)
+        if (keyn != NULL)
         {
             if (parse_str_cmp("name", key))
             {
@@ -864,30 +864,30 @@ static int parse_convert(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
                 {
                     if (parse_convert_images(convert, doc, valuen))
                     {
-			            return 1;
+                        return 1;
                     }
                 }
                 else if (parse_str_cmp("tilesets", key))
                 {
                     if (parse_convert_tilesets(convert, doc, valuen))
                     {
-			            return 1;
+                        return 1;
                     }
                 }
                 else
                 {
                     LL_ERROR("Unknown convert option: %s", key);
                     parser_show_mark_error(keyn->start_mark);
-			        return 1;
+                    return 1;
                 }
             }
-		}
+        }
         else
         {
             LL_ERROR("No node.");
-			return 1;
-		}
-	}
+            return 1;
+        }
+    }
 
     return 0;
 }
@@ -897,11 +897,11 @@ static int parse_convert(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
  */
 static int parse_output_palettes(output_t *output, yaml_document_t *doc, yaml_node_t *root)
 {
-	yaml_node_item_t *item = root->data.sequence.items.start;
-	for (; item < root->data.sequence.items.top; ++item)
+    yaml_node_item_t *item = root->data.sequence.items.start;
+    for (; item < root->data.sequence.items.top; ++item)
     {
-		yaml_node_t *node = yaml_document_get_node(doc, *item);
-		if (node != NULL)
+        yaml_node_t *node = yaml_document_get_node(doc, *item);
+        if (node != NULL)
         {
             char *name = (char*)node->data.scalar.value;
             if (output_add_palette(output, strings_trim(name)))
@@ -909,7 +909,7 @@ static int parse_output_palettes(output_t *output, yaml_document_t *doc, yaml_no
                 return 1;
             }
         }
-	}
+    }
 
     return 0;
 }
@@ -919,11 +919,11 @@ static int parse_output_palettes(output_t *output, yaml_document_t *doc, yaml_no
  */
 static int parse_output_converts(output_t *output, yaml_document_t *doc, yaml_node_t *root)
 {
-	yaml_node_item_t *item = root->data.sequence.items.start;
-	for (; item < root->data.sequence.items.top; ++item)
+    yaml_node_item_t *item = root->data.sequence.items.start;
+    for (; item < root->data.sequence.items.top; ++item)
     {
-		yaml_node_t *node = yaml_document_get_node(doc, *item);
-		if (node != NULL)
+        yaml_node_t *node = yaml_document_get_node(doc, *item);
+        if (node != NULL)
         {
             char *name = (char*)node->data.scalar.value;
             if (output_add_convert(output, strings_trim(name)))
@@ -931,7 +931,7 @@ static int parse_output_converts(output_t *output, yaml_document_t *doc, yaml_no
                 return 1;
             }
         }
-	}
+    }
 
     return 0;
 }
@@ -945,14 +945,14 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
     yaml_node_pair_t *pair;
 
     pair = root->data.mapping.pairs.start;
-	for (; pair < root->data.mapping.pairs.top; ++pair)
+    for (; pair < root->data.mapping.pairs.top; ++pair)
     {
-		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
-		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+        yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
         char *key = (char*)keyn->data.scalar.value;
         char *value = (char*)valuen->data.scalar.value;
 
-		if (keyn != NULL)
+        if (keyn != NULL)
         {
             if (parse_str_cmp("type", key))
             {
@@ -1015,7 +1015,7 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
                     {
                         LL_ERROR("Unknown output option: %s", key);
                         parser_show_mark_error(keyn->start_mark);
-			            return 1;
+                        return 1;
                     }
 
                     if (parse_str_cmp("name", key))
@@ -1077,17 +1077,17 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
                     {
                         LL_ERROR("Unknown appvar output option: %s", key);
                         parser_show_mark_error(keyn->start_mark);
-			            return 1;
+                        return 1;
                     }
                 }
             }
-		}
+        }
         else
         {
             LL_ERROR("No node.");
-			return 1;
-		}
-	}
+            return 1;
+        }
+    }
 
     return 0;
 }
@@ -1097,18 +1097,18 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
  */
 static int parse_palettes(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *root)
 {
-	yaml_node_item_t *item = root->data.sequence.items.start;
-	for (; item < root->data.sequence.items.top; ++item)
+    yaml_node_item_t *item = root->data.sequence.items.start;
+    for (; item < root->data.sequence.items.top; ++item)
     {
-		yaml_node_t *node = yaml_document_get_node(doc, *item);
-		if (node != NULL)
+        yaml_node_t *node = yaml_document_get_node(doc, *item);
+        if (node != NULL)
         {
             if (parse_palette(data, doc, node))
             {
                 return 1;
             }
         }
-	}
+    }
 
     return 0;
 }
@@ -1118,18 +1118,18 @@ static int parse_palettes(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *
  */
 static int parse_converts(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *root)
 {
-	yaml_node_item_t *item = root->data.sequence.items.start;
-	for (; item < root->data.sequence.items.top; ++item)
+    yaml_node_item_t *item = root->data.sequence.items.start;
+    for (; item < root->data.sequence.items.top; ++item)
     {
-		yaml_node_t *node = yaml_document_get_node(doc, *item);
-		if (node != NULL)
+        yaml_node_t *node = yaml_document_get_node(doc, *item);
+        if (node != NULL)
         {
             if (parse_convert(data, doc, node))
             {
                 return 1;
             }
         }
-	}
+    }
 
     return 0;
 }
@@ -1139,18 +1139,18 @@ static int parse_converts(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *
  */
 static int parse_outputs(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *root)
 {
-	yaml_node_item_t *item = root->data.sequence.items.start;
-	for (; item < root->data.sequence.items.top; ++item)
+    yaml_node_item_t *item = root->data.sequence.items.start;
+    for (; item < root->data.sequence.items.top; ++item)
     {
-		yaml_node_t *node = yaml_document_get_node(doc, *item);
-		if (node != NULL)
+        yaml_node_t *node = yaml_document_get_node(doc, *item);
+        if (node != NULL)
         {
             if (parse_output(data, doc, node))
             {
                 return 1;
             }
         }
-	}
+    }
 
     return 0;
 }
@@ -1172,11 +1172,11 @@ static int parse_yaml(yaml_file_t *data, yaml_document_t *doc)
     }
 
     pair = root->data.mapping.pairs.start;
-	for (; pair < root->data.mapping.pairs.top; ++pair)
+    for (; pair < root->data.mapping.pairs.top; ++pair)
     {
-		yaml_node_t *key = yaml_document_get_node(doc, pair->key);
-		yaml_node_t *value = yaml_document_get_node(doc, pair->value);
-		if (key != NULL)
+        yaml_node_t *key = yaml_document_get_node(doc, pair->key);
+        yaml_node_t *value = yaml_document_get_node(doc, pair->value);
+        if (key != NULL)
         {
             if (parse_str_cmp("palettes", key->data.scalar.value))
             {
@@ -1190,17 +1190,17 @@ static int parse_yaml(yaml_file_t *data, yaml_document_t *doc)
             {
                 ret = parse_outputs(data, doc, value);
             }
-		}
+        }
         else
         {
             LL_ERROR("No node.");
-			return 1;
-		}
+            return 1;
+        }
         if (ret != 0)
         {
             return ret;
         }
-	}
+    }
 
     return 0;
 }
@@ -1243,20 +1243,20 @@ int yaml_parse_file(yaml_file_t *data)
     }
 
     yaml_parser_set_input_file(&yaml, fdi);
-	if (!yaml_parser_load(&yaml, &document))
+    if (!yaml_parser_load(&yaml, &document))
     {
         parser_show_error(yaml.problem, yaml.mark);
-	    yaml_parser_delete(&yaml);
-    	fclose(fdi);
-		return 1;
-	}
+        yaml_parser_delete(&yaml);
+        fclose(fdi);
+        return 1;
+    }
 
-	ret = parse_yaml(data, &document);
+    ret = parse_yaml(data, &document);
 
-	yaml_document_delete(&document);
-	yaml_parser_delete(&yaml);
+    yaml_document_delete(&document);
+    yaml_parser_delete(&yaml);
 
-	fclose(fdi);
+    fclose(fdi);
 
     return ret;
 }

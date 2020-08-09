@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef YAML_H
-#define YAML_H
+#ifndef PARSER_H
+#define PARSER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,26 +40,6 @@ extern "C" {
 #include "output.h"
 
 #include <stdint.h>
-
-typedef enum
-{
-    YAML_OUTPUT_CONVERTS,
-    YAML_OUTPUT_PALETTES,
-} yaml_output_mode_t;
-
-typedef enum
-{
-    YAML_CONVERT_IMAGES,
-    YAML_CONVERT_TILESETS,
-} yaml_convert_mode_t;
-
-typedef enum
-{
-    YAML_ST_INIT,
-    YAML_ST_PALETTE,
-    YAML_ST_CONVERT,
-    YAML_ST_OUTPUT,
-} yaml_state_t;
 
 typedef struct
 {
@@ -73,8 +53,6 @@ typedef struct
     int numPalettes;
     int numConverts;
     int numOutputs;
-    yaml_state_t state;
-    int line;
 } yaml_file_t;
 
 int yaml_parse_file(yaml_file_t *yamlfile);

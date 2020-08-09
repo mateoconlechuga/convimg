@@ -67,7 +67,6 @@ typedef struct palette
     int quantizeSpeed;
     palette_entry_t entries[PALETTE_MAX_ENTRIES];
     palette_entry_t fixedEntries[PALETTE_MAX_ENTRIES];
-    palette_entry_t keyedEntries[PALETTE_MAX_ENTRIES];
     color_mode_t mode;
     bpp_t bpp;
     bool automatic;

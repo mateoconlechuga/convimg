@@ -32,90 +32,81 @@
 #include "strings.h"
 #include "log.h"
 
+#include "deps/libyaml/include/yaml.h"
+
 #include <getopt.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
-
-#define REALLOC_BYTES 128
-#define MAX_LINE_SIZE 1048576
+#include <inttypes.h>
 
 /*
- * Read a line from an input file; strips whitespace.
- * Returns NULL if error.
+ * Compares constant-length string to user string.
  */
-static char *yaml_get_line(FILE *fdi)
+static bool parse_str_cmp(const char *str, void *src)
 {
-    char *line = NULL;
-    int i = 0;
-    int c;
-
-    do
+    if (str == NULL || src == NULL)
     {
-        c = fgetc(fdi);
+        return false;
+    }
 
-        if (c < ' ')
-        {
-            c = 0;
-        }
+    return strncmp(str, src, strlen(str)) == 0;
+}
 
-        if (i % REALLOC_BYTES == 0)
-        {
-            line = realloc(line, ((i / REALLOC_BYTES) + 1) * REALLOC_BYTES);
-            if (line == NULL)
-            {
-                LL_ERROR("%s", strerror(errno));
-                return NULL;
-            }
-        }
+/*
+ * Computes boolean representation of string.
+ */
+static bool parse_str_bool(void *src)
+{
+    return parse_str_cmp("true", src);
+}
 
-        line[i] = (char)c;
-        i++;
+/*
+ * Prints mark error information for the user.
+ */
+static void parser_show_mark_error(yaml_mark_t mark)
+{
+    LL_ERROR("Problem is probably around line %" PRIuPTR ".", mark.line + 1);
+}
 
-        if (i >= MAX_LINE_SIZE)
-        {
-            LL_ERROR("Input line too large.");
-            free(line);
-            return NULL;
-        }
-    } while (c);
-
-    return line;
+/*
+ * Prints error information for the user.
+ */
+static void parser_show_error(const char *problem, yaml_mark_t mark)
+{
+    LL_ERROR("Problem description: %s", problem);
+    parser_show_mark_error(mark);
 }
 
 /*
  * Allocates a palette structure.
  */
-int yaml_alloc_palette(yaml_file_t *yamlfile)
+static palette_t *parser_alloc_palette(yaml_file_t *data, void *name)
 {
     palette_t *tmpPalette;
     int i;
 
-    yamlfile->palettes =
-        realloc(yamlfile->palettes, (yamlfile->numPalettes + 1) * sizeof(palette_t *));
-    if (yamlfile->palettes == NULL)
+    data->palettes =
+        realloc(data->palettes, (data->numPalettes + 1) * sizeof(palette_t *));
+    if (data->palettes == NULL)
     {
-        return 1;
+        return NULL;
     }
 
-    LL_DEBUG("Allocating palette...");
+    LL_DEBUG("Allocating palette: %s", (char*)name);
 
     tmpPalette = palette_alloc();
     if (tmpPalette == NULL)
     {
-        return 1;
+        return NULL;
     }
 
-    yamlfile->curPalette = tmpPalette;
-    yamlfile->palettes[yamlfile->numPalettes] = tmpPalette;
-    yamlfile->numPalettes++;
-
-    yamlfile->curPalette->quantizeSpeed = PALETTE_DEFAULT_QUANTIZE_SPEED;
+    tmpPalette->name = strdup(name);
 
     for (i = 0; i < PALETTE_MAX_ENTRIES; ++i)
     {
-        palette_entry_t *entry = &yamlfile->curPalette->entries[i];
+        palette_entry_t *entry = &tmpPalette->entries[i];
 
         entry->valid = false;
         entry->exact = false;
@@ -126,1005 +117,1146 @@ int yaml_alloc_palette(yaml_file_t *yamlfile)
         entry->origcolor = entry->color;
     }
 
-    return 0;
+    data->palettes[data->numPalettes] = tmpPalette;
+    data->numPalettes++;
+
+    return tmpPalette;
 }
 
 /*
  * Allocates convert structure.
  */
-int yaml_alloc_convert(yaml_file_t *yamlfile)
+static convert_t *parser_alloc_convert(yaml_file_t *data, void *name)
 {
     convert_t *tmpConvert;
 
-    yamlfile->converts =
-        realloc(yamlfile->converts, (yamlfile->numConverts + 1) * sizeof(convert_t *));
-    if (yamlfile->converts == NULL)
+    data->converts =
+        realloc(data->converts, (data->numConverts + 1) * sizeof(convert_t *));
+    if (data->converts == NULL)
     {
-        return 1;
+        return NULL;
     }
 
-    LL_DEBUG("Allocating convert...");
+    LL_DEBUG("Allocating convert: %s", (char*)name);
 
     tmpConvert = convert_alloc();
     if (tmpConvert == NULL)
     {
-        return 1;
+        return NULL;
     }
 
-    yamlfile->curConvert = tmpConvert;
-    yamlfile->converts[yamlfile->numConverts] = tmpConvert;
-    yamlfile->numConverts++;
+    tmpConvert->name = strdup(name);
 
-    yamlfile->curConvert->quantizeSpeed = CONVERT_DEFAULT_QUANTIZE_SPEED;
-    yamlfile->curConvert->dither = 0;
-    yamlfile->curConvert->rotate = 0;
-    yamlfile->curConvert->flipx = false;
-    yamlfile->curConvert->flipy = false;
+    data->converts[data->numConverts] = tmpConvert;
+    data->numConverts++;
 
-    return 0;
+    return tmpConvert;
 }
 
 /*
  * Allocates output structure.
  */
-int yaml_alloc_output(yaml_file_t *yamlfile)
+static output_t *parser_alloc_output(yaml_file_t *data, void *type)
 {
     output_t *tmpOutput;
 
-    yamlfile->outputs =
-        realloc(yamlfile->outputs, (yamlfile->numOutputs + 1) * sizeof(output_t *));
-    if (yamlfile->outputs == NULL)
+    data->outputs =
+        realloc(data->outputs, (data->numOutputs + 1) * sizeof(output_t *));
+    if (data->outputs == NULL)
     {
         LL_DEBUG("Memory error in %s", __func__);
-        return 1;
+        return NULL;
     }
 
-    LL_DEBUG("Allocating output...");
+    LL_DEBUG("Allocating output: %s", (char*)type);
 
     tmpOutput = output_alloc();
     if (tmpOutput == NULL)
     {
         LL_DEBUG("Memory error in %s", __func__);
-        return 1;
+        return NULL;
     }
 
-    yamlfile->curOutput = tmpOutput;
-    yamlfile->outputs[yamlfile->numOutputs] = tmpOutput;
-    yamlfile->numOutputs++;
-
-    return 0;
-}
-
-/*
- * Finds values from key.
- */
-static char *yaml_get_args(const char *delim)
-{
-    char *args = strtok(NULL, delim);
-
-    if (args != NULL)
+    if (parse_str_cmp("c", type))
     {
-        args = strings_trim(args);
+        tmpOutput->format = OUTPUT_FORMAT_C;
+        tmpOutput->includeFileName = strdup("gfx.h");
     }
-
-    return args;
-}
-
-/*
- * Takes a line that has braces and converts to a color.
- */
-static int yaml_parse_fixed_color(yaml_file_t *yamlfile, char *line, palette_entry_t *entry)
-{
-    char *args = strchr(line, '{');
-
-    memset(entry, 0, sizeof(palette_entry_t));
-
-    if (args == NULL)
+    else if (parse_str_cmp("asm", type))
     {
-        goto error;
+        tmpOutput->format = OUTPUT_FORMAT_ASM;
+        tmpOutput->includeFileName = strdup("gfx.inc");
+    }
+    else if (parse_str_cmp("ice", type))
+    {
+        tmpOutput->format = OUTPUT_FORMAT_ICE;
+        tmpOutput->includeFileName = strdup("ice.txt");
+    }
+    else if (parse_str_cmp("appvar", type))
+    {
+        tmpOutput->format = OUTPUT_FORMAT_APPVAR;
+    }
+    else if (parse_str_cmp("bin", type))
+    {
+        tmpOutput->format = OUTPUT_FORMAT_BIN;
+        tmpOutput->includeFileName = strdup("gfx.txt");
     }
     else
     {
-        char *next = ++args;
-        char *end;
-
-        end = strrchr(next, '}');
-        if (end == NULL)
-        {
-            goto error;
-        }
-
-        *end = '\0';
-        entry->color.rgb.a = 255;
-        entry->exact = true;
-
-        while (next != NULL)
-        {
-            char *current = next;
-            char *key;
-            char *value;
-
-            next = strchr(next, ',');
-            if (next != NULL)
-            {
-                *next = '\0';
-                next++;
-            }
-
-            key = strtok(current, ":");
-            if (key == NULL)
-            {
-                goto error;
-            }
-
-            value = strtok(NULL, ":");
-            if (value == NULL)
-            {
-                goto error;
-            }
-
-            value = strings_trim(value);
-            key = strings_trim(key);
-            if (key == NULL || value == NULL)
-            {
-                goto error;
-            }
-
-            if (!strcmp(key, "index"))
-            {
-                entry->index = strtol(value, NULL, 0);
-                if (entry->index > 255)
-                {
-                    goto error;
-                }
-            }
-            else if (!strcmp(key, "r"))
-            {
-                entry->color.rgb.r = strtol(value, NULL, 0);
-            }
-            else if (!strcmp(key, "g"))
-            {
-                entry->color.rgb.g = strtol(value, NULL, 0);
-            }
-            else if (!strcmp(key, "b"))
-            {
-                entry->color.rgb.b = strtol(value, NULL, 0);
-            }
-            else if (!strcmp(key, "exact"))
-            {
-                entry->exact = strcmp(value, "true") == 0;
-            }
-        }
+        LL_ERROR("Unknown output type.");
+        return NULL;
     }
 
-    entry->origcolor = entry->color;
+    data->outputs[data->numOutputs] = tmpOutput;
+    data->numOutputs++;
 
-    return 0;
-
-error:
-    LL_ERROR("Invalid fixed color format (line %d).", yamlfile->line);
-    return 1;
-}
-
-/*
- * Checks if there is a new command and switches state.
- */
-static int yaml_get_command(yaml_file_t *yamlfile, char *command, char *line)
-{
-    int ret = 0;
-
-    if (command == NULL || line == NULL)
-    {
-        return 0;
-    }
-
-    command = strings_trim(command);
-    if (command == NULL)
-    {
-        return 1;
-    }
-
-    if (!strcmp(command, "palettes"))
-    {
-        yamlfile->state = YAML_ST_PALETTE;
-    }
-    else if (!strcmp(command, "converts"))
-    {
-        yamlfile->state = YAML_ST_CONVERT;
-    }
-    else if (!strcmp(command, "outputs"))
-    {
-        yamlfile->state = YAML_ST_OUTPUT;
-    }
-
-    return ret;
-}
-
-/*
- * Parses available pallete commands.
- */
-static int yaml_palette_command(yaml_file_t *yamlfile, char *command, char *line)
-{
-    palette_t *palette;
-    palette_entry_t entry;
-    static bool adding_fixed;
-    int ret = 0;
-    char *args;
-
-    if (command == NULL || line == NULL)
-    {
-        return 0;
-    }
-
-    command = strings_trim(command);
-    args = yaml_get_args(":");
-
-    if (!strcmp(command, "palettes"))
-    {
-        return 0;
-    }
-
-    if (command[0] == '-')
-    {
-        if (command[2] == 'n' &&
-            command[3] == 'a' &&
-            command[4] == 'm' &&
-            command[5] == 'e' && args)
-        {
-            ret = yaml_alloc_palette(yamlfile);
-            if (ret)
-            {
-                LL_ERROR("Failed allocating palette (line %d).",
-                    yamlfile->line);
-            }
-            else
-            {
-                palette = yamlfile->curPalette;
-                palette->name = strdup(args);
-            }
-            return ret;
-        }
-    }
-
-    palette = yamlfile->curPalette;
-    if (palette == NULL)
-    {
-        LL_ERROR("Unknown palette name (line %d).", yamlfile->line);
-        ret = 1;
-    }
-
-    if (adding_fixed)
-    {
-        if (command[0] != '-')
-        {
-            adding_fixed = false;
-        }
-
-        if (adding_fixed)
-        {
-            ret = yaml_parse_fixed_color(yamlfile, line, &entry);
-            palette->fixedEntries[palette->numFixedEntries] = entry;
-            palette->numFixedEntries++;
-            return ret;
-        }
-    }
-
-    if (command[0] == '-')
-    {
-        if (palette->automatic)
-        {
-            LL_ERROR("Cannot specify image sources in automatic mode (line %d).",
-                 yamlfile->line);
-            ret = 1;
-        }
-        else
-        {
-            ret = pallete_add_path(palette, strings_trim(&command[1]));
-        }
-    }
-    else if (!strcmp(command, "max-entries"))
-    {
-        palette->maxEntries = strtol(args, NULL, 0);
-    }
-    else if (!strcmp(command, "speed"))
-    {
-        if (args != NULL)
-        {
-            palette->quantizeSpeed = strtol(args, NULL, 0);
-        }
-        if (args == NULL || palette->quantizeSpeed < 1 || palette->quantizeSpeed > 10)
-        {
-            LL_WARNING("Ignoring invalid quantization speed (line %d).",
-                yamlfile->line);
-        }
-    }
-    else if (!strcmp(command, "fixed-colors"))
-    {
-        adding_fixed = true;
-    }
-    else if (!strcmp(command, "images"))
-    {
-        if (args != NULL && !strcmp(args, "automatic"))
-        {
-            palette->automatic = true;
-        }
-    }
-    else
-    {
-        LL_WARNING("Ignoring invalid line %d.",
-            yamlfile->line);
-    }
-
-    return ret;
-}
-
-/*
- * Parses available conversion commands.
- */
-static int yaml_convert_command(yaml_file_t *yamlfile, char *command, char *line)
-{
-    static yaml_convert_mode_t mode = YAML_CONVERT_IMAGES;
-    convert_t *convert;
-    char *args;
-    int ret = 0;
-
-    if (command == NULL || line == NULL)
-    {
-        return 0;
-    }
-
-    command = strings_trim(command);
-    args = yaml_get_args(":");
-
-    if (!strcmp(command, "converts"))
-    {
-        return 0;
-    }
-
-    if (command[0] == '-')
-    {
-	    if (command[2] == 'n' &&
-            command[3] == 'a' &&
-            command[4] == 'm' &&
-            command[5] == 'e' && args)
-        {
-            ret = yaml_alloc_convert(yamlfile);
-            if (ret)
-            {
-                LL_ERROR("Failed allocating convert (line %d).",
-                    yamlfile->line);
-            }
-            else
-            {
-                convert = yamlfile->curConvert;
-                convert->name = strdup(args);
-            }
-            return ret;
-        }
-    }
-
-    convert = yamlfile->curConvert;
-    if (convert == NULL)
-    {
-        LL_ERROR("Unknown convert name (line %d).", yamlfile->line);
-        ret = 1;
-    }
-
-    if (command[0] == '-')
-    {
-        switch (mode)
-        {
-            case YAML_CONVERT_IMAGES:
-                ret = convert_add_image_path(convert, strings_trim(&command[1]));
-                break;
-
-            case YAML_CONVERT_TILESETS:
-                ret = convert_add_tileset_path(convert, strings_trim(&command[1]));
-                break;
-        }
-    }
-    else if (!strcmp(command, "palette"))
-    {
-        if (args != NULL)
-        {
-            if (convert->paletteName != NULL)
-            {
-                free(convert->paletteName);
-                convert->paletteName = NULL;
-            }
-            convert->paletteName = strdup(args);
-        }
-        else
-        {
-            LL_ERROR("Missing palette name (line %d).",
-                yamlfile->line);
-            ret = 1;
-        }
-    }
-    else if (!strcmp(command, "style"))
-    {
-        if (args != NULL && !strcmp(args, "rlet"))
-        {
-            convert->style = CONVERT_STYLE_RLET;
-        }
-        else
-        {
-            LL_ERROR("Invalid style (line %d).", yamlfile->line);
-            ret = 1;
-        }
-    }
-    else if (!strcmp(command, "dither"))
-    {
-        if (args != NULL)
-        {
-            convert->dither = strtof(args, NULL);
-        }
-        if (args == NULL || convert->dither > 1 || convert->dither < 0)
-        {
-            LL_ERROR("Invalid dither parameter, must be [0, 1] inclusive (line %d).",
-                yamlfile->line);
-            ret = 1;
-        }
-    }
-    else if (!strcmp(command, "rotate"))
-    {
-        int rotate = 0;
-
-        if (args != NULL)
-        {
-            rotate = strtol(args, NULL, 0);
-        }
-        if (args == NULL ||
-            (rotate != 0 && rotate != 90 && rotate != 180 && rotate != 270))
-        {
-            LL_ERROR("Invalid rotate parameter, must be 0, 90, 180, or 270 (line %d).",
-                yamlfile->line);
-            ret = 1;
-        }
-        else
-        {
-            convert->rotate = rotate;
-        }
-    }
-    else if (!strcmp(command, "flip-x"))
-    {
-        convert->flipx = args != NULL && !strcmp(args, "true");
-    }
-    else if (!strcmp(command, "flip-y"))
-    {
-        convert->flipy = args != NULL && !strcmp(args, "true");
-    }
-    else if (!strcmp(command, "speed"))
-    {
-        if (args != NULL)
-        {
-            convert->quantizeSpeed = strtol(args, NULL, 0);
-        }
-        if (args == NULL || convert->quantizeSpeed < 1 || convert->quantizeSpeed > 10)
-        {
-            LL_WARNING("Ignoring invalid quantization speed (line %d).",
-                yamlfile->line);
-        }
-    }
-    else if (!strcmp(command, "transparent-color-index"))
-    {
-        if (args == NULL)
-        {
-            LL_ERROR("Invalid color index for transparency (line %d).",
-                yamlfile->line);
-            ret = 1;
-        }
-        else
-        {
-            convert->transparentIndex = strtol(args, NULL, 0);
-            if (convert->transparentIndex >= PALETTE_MAX_ENTRIES ||
-                convert->transparentIndex < 0)
-            {
-                LL_ERROR("Invalid color index for transparency (line %d).",
-                    yamlfile->line);
-                ret = 1;
-            }
-        }
-    }
-    else if (!strcmp(command, "compress"))
-    {
-        if (args != NULL && !strcmp(args, "zx7"))
-        {
-            convert->compress = COMPRESS_ZX7;
-        }
-        else
-        {
-            LL_ERROR("Invalid compression argument for palette \'%s\' (line %d).",
-                convert->name,
-                yamlfile->line);
-            ret = 1;
-        }
-    }
-    else if (!strcmp(command, "width-and-height"))
-    {
-        convert->widthAndHeight = args != NULL && !strcmp(args, "true");
-    }
-    else if (!strcmp(command, "omit-palette-index"))
-    {
-        if (args == NULL)
-        {
-            LL_ERROR("Invalid color index for omission (line %d).",
-                yamlfile->line);
-            ret = 1;
-        }
-        else
-        {
-            convert->omitIndices[convert->numOmitIndices] = strtol(args, NULL, 0);
-            convert->numOmitIndices++;
-        }
-    }
-    else if (!strcmp(command, "bpp"))
-    {
-        if (args == NULL)
-        {
-            LL_ERROR("Invalid bpp argument for palette \'%s\' (line %d).",
-                convert->name,
-                yamlfile->line);
-            ret = 1;
-        }
-        else if (!strcmp(args, "8"))
-        {
-            convert->bpp = BPP_8;
-        }
-        else if (!strcmp(args, "4"))
-        {
-            convert->bpp = BPP_4;
-        }
-        else if (!strcmp(args, "2"))
-        {
-            convert->bpp = BPP_2;
-        }
-        else if (!strcmp(args, "1"))
-        {
-            convert->bpp = BPP_1;
-        }
-        else
-        {
-            LL_ERROR("Invalid bpp argument for palette \'%s\' (line %d).",
-                convert->name,
-                yamlfile->line);
-            ret = 1;
-        }
-    }
-    else if (!strcmp(command, "images"))
-    {
-        mode = YAML_CONVERT_IMAGES;
-        if (args != NULL && !strcmp(args, "automatic"))
-        {
-            ret = convert_add_image_path(convert, "*");
-        }
-    }
-    else if (!strcmp(command, "tilesets"))
-    {
-        mode = YAML_CONVERT_TILESETS;
-        ret = convert_alloc_tileset_group(convert);
-    }
-    else
-    {
-        if (mode == YAML_CONVERT_TILESETS)
-        {
-            if (!strcmp(command, "tile-width"))
-            {
-                convert->tilesetGroup->tileWidth = strtol(args, NULL, 0);
-            }
-            else if (!strcmp(command, "tile-height"))
-            {
-                convert->tilesetGroup->tileHeight = strtol(args, NULL, 0);
-            }
-            else if (!strcmp(command, "ptable"))
-            {
-                convert->tilesetGroup->pTable = !strcmp(args, "true");
-            }
-            else
-            {
-                LL_WARNING("Ignoring invalid line %d.", yamlfile->line);
-            }
-        }
-        else
-        {
-            LL_WARNING("Ignoring invalid line %d.", yamlfile->line);
-        }
-    }
-
-    return ret;
-}
-
-/*
- * Gets compression mode from string.
- */
-compress_t yaml_get_compress_mode(yaml_file_t *yamlfile, char *arg)
-{
-    compress_t compress = COMPRESS_INVALID;
-
-    if (!strcmp(arg, "zx7"))
-    {
-        compress = COMPRESS_ZX7;
-    }
-    else
-    {
-        LL_WARNING("Unknown compression mode (line %d).",
-            yamlfile->line);
-    }
-
-    return compress;
-}
-
-/*
- * Parses available conversion commands.
- */
-static int yaml_output_command(yaml_file_t *yamlfile, char *command, char *line)
-{
-    static yaml_output_mode_t outputMode = YAML_OUTPUT_CONVERTS;
-    output_t *output;
-    char *args;
-    int ret = 0;
-
-    if (command == NULL || line == NULL)
-    {
-        return 0;
-    }
-
-    command = strings_trim(command);
-    args = yaml_get_args(":");
-
-    if (!strcmp(command, "outputs"))
-    {
-        return 0;
-    }
-
-    if (command[0] == '-')
-    {
-        if (command[2] == 't' &&
-            command[3] == 'y' &&
-            command[4] == 'p' &&
-            command[5] == 'e' && args)
-        {
-            ret = yaml_alloc_output(yamlfile);
-            if (ret)
-            {
-                LL_ERROR("Failed allocating output (line %d).",
-                    yamlfile->line);
-            }
-            else
-            {
-                output = yamlfile->curOutput;
-                output->name = strdup(args);
-                if (!strcmp(args, "c"))
-                {
-                    output->format = OUTPUT_FORMAT_C;
-                    output->includeFileName = strdup("gfx.h");
-                }
-                else if (!strcmp(args, "asm"))
-                {
-                    output->format = OUTPUT_FORMAT_ASM;
-                    output->includeFileName = strdup("gfx.inc");
-                }
-                else if (!strcmp(args, "ice"))
-                {
-                    output->format = OUTPUT_FORMAT_ICE;
-                    output->includeFileName = strdup("ice.txt");
-                }
-                else if (!strcmp(args, "appvar"))
-                {
-                    output->format = OUTPUT_FORMAT_APPVAR;
-                }
-                else if (!strcmp(args, "bin"))
-                {
-                    output->format = OUTPUT_FORMAT_BIN;
-                    output->includeFileName = strdup("gfx.txt");
-                }
-                else
-                {
-                    LL_ERROR("Unknown output type (line %d).", yamlfile->line);
-                    ret = 1;
-                }
-            }
-            return ret;
-        }
-    }
-
-    output = yamlfile->curOutput;
-    if (output == NULL)
-    {
-        LL_ERROR("Unknown output type (line %d).", yamlfile->line);
-        ret = 1;
-    }
-
-    if (command[0] == '-')
-    {
-        if (outputMode == YAML_OUTPUT_PALETTES)
-        {
-            ret = output_add_palette(output, strings_trim(&command[1]));
-        }
-        else
-        {
-            ret = output_add_convert(output, strings_trim(&command[1]));
-        }
-        return ret;
-    }
-    if (output->format == OUTPUT_FORMAT_APPVAR)
-    {
-        if (!strcmp(command, "name"))
-        {
-            if (output->appvar.name != NULL)
-            {
-                free(output->appvar.name);
-            }
-            output->appvar.name = strdup(args);
-        }
-        else if (!strcmp(command, "archived"))
-        {
-            output->appvar.archived = !strcmp(args, "true");
-        }
-        else if (!strcmp(command, "source-init"))
-        {
-            output->appvar.init = !strcmp(args, "true");
-        }
-        else if (!strcmp(command, "header-string"))
-        {
-            if (args == NULL)
-            {
-                LL_ERROR("Missing AppVar header (line %d).",
-                    yamlfile->line);
-            }
-            else
-            {
-                output->appvar.header = strdup(args);
-                output->appvar.header_size = strlen(output->appvar.header);
-            }
-        }
-        else if (!strcmp(command, "source-format"))
-        {
-            if (!strcmp(args, "c"))
-            {
-                output->appvar.source = APPVAR_SOURCE_C;
-            }
-            else if (!strcmp(args, "ice"))
-            {
-                output->appvar.source = APPVAR_SOURCE_ICE;
-            }
-            else
-            {
-                LL_ERROR("Unknown AppVar source format (line %d).",
-                    yamlfile->line);
-                ret = 1;
-            }
-        }
-        else if (!strcmp(command, "include-file"))
-        {
-            if (args != NULL)
-            {
-                if (output->includeFileName != NULL)
-                {
-                    free(output->includeFileName);
-                }
-                output->includeFileName = strdup(args);
-            }
-            else
-            {
-                LL_ERROR("Missing include file name on line %d.",
-                    yamlfile->line);
-                ret = 1;
-            }
-        }
-        else if (!strcmp(command, "compress"))
-        {
-            output->appvar.compress = yaml_get_compress_mode(yamlfile, args);
-        }
-        else if (!strcmp(command, "converts"))
-        {
-            outputMode = YAML_OUTPUT_CONVERTS;
-        }
-        else if (!strcmp(command, "palettes"))
-        {
-            outputMode = YAML_OUTPUT_PALETTES;
-        }
-        else if (!strcmp(command, "directory"))
-        {
-            if (args != NULL)
-            {
-                char *tmp = strdup(args);
-                if (tmp == NULL)
-                {
-                    LL_DEBUG("Memory error in %s", __func__);
-                }
-                if (*tmp && tmp[strlen(tmp) - 1] != '/')
-                {
-                    output->directory = strdupcat(tmp, "/");
-                    free(tmp);
-                }
-                else
-                {
-                    output->directory = tmp;
-                }
-            }
-        }
-        else
-        {
-            LL_WARNING("Ignoring invalid line %d.",
-                yamlfile->line);
-        }
-    }
-    else if (!strcmp(command, "include-file"))
-    {
-        if (args != NULL)
-        {
-            if (output->includeFileName != NULL)
-            {
-                free(output->includeFileName);
-            }
-            output->includeFileName = strdup(args);
-        }
-        else
-        {
-            LL_ERROR("Missing include file name on line %d.",
-                yamlfile->line);
-            ret = 1;
-        }
-    }
-    else if (!strcmp(command, "palettes"))
-    {
-        outputMode = YAML_OUTPUT_PALETTES;
-    }
-    else if (!strcmp(command, "converts"))
-    {
-        outputMode = YAML_OUTPUT_CONVERTS;
-    }
-    else if (!strcmp(command, "directory"))
-    {
-        if (args != NULL)
-        {
-            char *tmp = strdup(args);
-            if (tmp == NULL)
-            {
-                LL_DEBUG("Memory error in %s", __func__);
-            }
-            if (*tmp && tmp[strlen(tmp) - 1] != '/')
-            {
-                output->directory = strdupcat(tmp, "/");
-                free(tmp);
-            }
-            else
-            {
-                output->directory = tmp;
-            }
-        }
-    }
-    else
-    {
-        LL_WARNING("Ignoring invalid line %d.",
-            yamlfile->line);
-    }
-
-    return ret;
+    return tmpOutput;
 }
 
 /*
  * Allocate any builtings that exist when converting.
  */
-int yaml_alloc_builtins(yaml_file_t *yamlfile)
+static int parser_init(yaml_file_t *data)
 {
+    data->curPalette = NULL;
+    data->curConvert = NULL;
+    data->curOutput = NULL;
+    data->palettes = NULL;
+    data->converts = NULL;
+    data->outputs = NULL;
+    data->numPalettes = 0;
+    data->numConverts = 0;
+    data->numOutputs = 0;
+
+    if (parser_alloc_palette(data, "xlibc") == NULL)
+    {
+        return 1;
+    }
+    if (parser_alloc_palette(data, "rgb332") == NULL)
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+/*
+ * Parses a fixed palette color entry.
+ */
+static int parse_palette_entry(palette_entry_t *entry, yaml_document_t *doc, yaml_node_t *root)
+{
+    yaml_node_pair_t *pair;
+
+    memset(entry, 0, sizeof(palette_entry_t));
+
+    entry->color.rgb.a = 255;
+    entry->exact = false;
+
+    pair = root->data.mapping.pairs.start;
+	for (; pair < root->data.mapping.pairs.top; ++pair)
+    {
+		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        char *key = (char*)keyn->data.scalar.value;
+        char *value = (char*)valuen->data.scalar.value;
+        int tmpint;
+
+		if (keyn != NULL)
+        {
+            tmpint = strtol(value, NULL, 0);
+            if (tmpint > 255 || tmpint < 0)
+            {
+                LL_ERROR("Invalid fixed color option.");
+                return 1;
+            }
+
+            if (parse_str_cmp("i", key) || parse_str_cmp("index", key))
+            {
+                entry->index = tmpint;
+            }
+            else if (parse_str_cmp("r", key) || parse_str_cmp("red", key))
+            {
+                entry->color.rgb.r = tmpint;
+            }
+            else if (parse_str_cmp("g", key) || parse_str_cmp("green", key))
+            {
+                entry->color.rgb.g = tmpint;
+            }
+            else if (parse_str_cmp("b", key) || parse_str_cmp("blue", key))
+            {
+                entry->color.rgb.b = tmpint;
+            }
+            else if (parse_str_cmp("exact", key))
+            {
+                entry->exact = parse_str_bool(value);
+            }
+            else
+            {
+                LL_ERROR("Unknown fixed color option.");
+                parser_show_mark_error(keyn->start_mark);
+			    return 1;
+            }
+		}
+        else
+        {
+            LL_ERROR("No node.");
+			return 1;
+		}
+	}
+
+    LL_DEBUG("Adding fixed color: i: %d r: %d g: %d b: %d exact: %s",
+        entry->index,
+        entry->color.rgb.r,
+        entry->color.rgb.g,
+        entry->color.rgb.b,
+        entry->exact ? "true" : "false");
+
+    entry->origcolor = entry->color;
+
+    return 0;
+}
+
+/*
+ * Parses the fixed entry list.
+ */
+static int parse_palette_fixed_entry(palette_t *palette, yaml_document_t *doc, yaml_node_t *root)
+{
+    yaml_node_pair_t *pair;
+    palette_entry_t entry;
+
+    pair = root->data.mapping.pairs.start;
+	for (; pair < root->data.mapping.pairs.top; ++pair)
+    {
+		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        char *key = (char*)keyn->data.scalar.value;
+
+		if (keyn != NULL)
+        {
+            if (parse_str_cmp("color", key))
+            {
+                if (parse_palette_entry(&entry, doc, valuen))
+                {
+                    return 1;
+                }
+                palette->fixedEntries[palette->numFixedEntries] = entry;
+                palette->numFixedEntries++;
+            }
+            else
+            {
+                LL_ERROR("Unknown fixed entry option.");
+                parser_show_mark_error(keyn->start_mark);
+			    return 1;
+            }
+		}
+        else
+        {
+            LL_ERROR("No node.");
+			return 1;
+		}
+	}
+
+    return 0;
+}
+
+/*
+ * Gets each item in the fixed entry list for parsing.
+ */
+static int parse_palette_fixed_entries(palette_t *palette, yaml_document_t *doc, yaml_node_t *root)
+{
+	yaml_node_item_t *item = root->data.sequence.items.start;
+	for (; item < root->data.sequence.items.top; ++item)
+    {
+		yaml_node_t *node = yaml_document_get_node(doc, *item);
+		if (node != NULL)
+        {
+            int ret = parse_palette_fixed_entry(palette, doc, node);
+            if (ret != 0)
+            {
+                return ret;
+            }
+        }
+	}
+
+    return 0;
+}
+
+/*
+ * Adds images to the palette from paths.
+ */
+static int parse_palette_images(palette_t *palette, yaml_document_t *doc, yaml_node_t *root)
+{
+    yaml_node_item_t *item;
+
+    switch (root->type)
+    {
+        case YAML_SEQUENCE_NODE:
+            item = root->data.sequence.items.start;
+            for (; item < root->data.sequence.items.top; ++item)
+            {
+                yaml_node_t *node = yaml_document_get_node(doc, *item);
+                if (node != NULL)
+                {
+                    char *path = (char*)node->data.scalar.value;
+                    if (pallete_add_path(palette, strings_trim(path)))
+                    {
+                        parser_show_mark_error(node->start_mark);
+                        return 1;
+                    }
+                }
+            }
+            break;
+
+        case YAML_SCALAR_NODE:
+            if (parse_str_cmp("automatic", root->data.scalar.value))
+            {
+                LL_DEBUG("Using automatic palette generation.");
+                palette->automatic = true;
+            }
+            else
+            {
+                LL_ERROR("Unknown palette images option.");
+                parser_show_mark_error(root->start_mark);
+                return 1;
+            }
+            break;
+
+        default:
+            LL_ERROR("Unknown palette images.");
+            return 1;
+    }
+
+    return 0;
+}
+
+/*
+ * Parses a palette.
+ */
+static int parse_palette(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *root)
+{
+    palette_t *palette = NULL;
+    yaml_node_pair_t *pair;
+
+    pair = root->data.mapping.pairs.start;
+	for (; pair < root->data.mapping.pairs.top; ++pair)
+    {
+		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        char *key = (char*)keyn->data.scalar.value;
+        char *value = (char*)valuen->data.scalar.value;
+
+		if (keyn != NULL)
+        {
+            if (parse_str_cmp("name", key))
+            {
+                palette = parser_alloc_palette(data, value);
+            }
+            else
+            {
+                int tmpi;
+
+                if (palette == NULL)
+                {
+                    return 1;
+                }
+                if (parse_str_cmp("max-entries", key))
+                {
+                    tmpi = strtol(value, NULL, 0);
+                    if (tmpi > 255 || tmpi < 2)
+                    {
+                        LL_ERROR("Invalid maxium entries.");
+                        parser_show_mark_error(keyn->start_mark);
+                        return 1;
+                    }
+                    palette->maxEntries = tmpi;
+                }
+                else if (parse_str_cmp("speed", key))
+                {
+                    tmpi = strtol(value, NULL, 0);
+                    if (tmpi > 10 || tmpi < 1)
+                    {
+                        LL_ERROR("Invalid quantization speed.");
+                        parser_show_mark_error(keyn->start_mark);
+                        return 1;
+                    }
+                    palette->quantizeSpeed = tmpi;
+                }
+                else if (parse_str_cmp("fixed-entries", key))
+                {
+                    if (parse_palette_fixed_entries(palette, doc, valuen))
+                    {
+                        return 1;
+                    }
+                }
+                else if (parse_str_cmp("images", key))
+                {
+                    if (parse_palette_images(palette, doc, valuen))
+                    {
+                        return 1;
+                    }
+                }
+                else
+                {
+                    LL_ERROR("Unknown palette option: %s", key);
+                    parser_show_mark_error(keyn->start_mark);
+			        return 1;
+                }
+            }
+		}
+        else
+        {
+            LL_ERROR("No node.");
+			return 1;
+		}
+	}
+
+    return 0;
+}
+
+/*
+ * Gets indicies used for ommision in the convert.
+ */
+static int parse_convert_omits(convert_t *convert, yaml_document_t *doc, yaml_node_t *root)
+{
+	yaml_node_item_t *item = root->data.sequence.items.start;
+	for (; item < root->data.sequence.items.top; ++item)
+    {
+		yaml_node_t *node = yaml_document_get_node(doc, *item);
+		if (node != NULL)
+        {
+            int index = strtol((char*)node->data.scalar.value, NULL, 0);
+            convert->omitIndices[convert->numOmitIndices] = index;
+            convert->numOmitIndices++;
+        }
+	}
+
+    return 0;
+}
+
+/*
+ * Gets images used by the convert.
+ */
+static int parse_convert_images(convert_t *convert, yaml_document_t *doc, yaml_node_t *root)
+{
+    yaml_node_item_t *item;
+
+    switch (root->type)
+    {
+        case YAML_SEQUENCE_NODE:
+            item = root->data.sequence.items.start;
+            for (; item < root->data.sequence.items.top; ++item)
+            {
+                yaml_node_t *node = yaml_document_get_node(doc, *item);
+                if (node != NULL)
+                {
+                    char *path = (char*)node->data.scalar.value;
+                    if (convert_add_image_path(convert, strings_trim(path)))
+                    {
+                        parser_show_mark_error(node->start_mark);
+                        return 1;
+                    }
+                }
+            }
+            break;
+
+        case YAML_SCALAR_NODE:
+            if (parse_str_cmp("automatic", root->data.scalar.value))
+            {
+                LL_DEBUG("Using automatic convert generation.");
+                if (convert_add_image_path(convert, "*"))
+                {
+                    parser_show_mark_error(root->start_mark);
+                    return 1;
+                }
+            }
+            else
+            {
+                LL_ERROR("Unknown convert images option.");
+                parser_show_mark_error(root->start_mark);
+                return 1;
+            }
+            break;
+
+        default:
+            LL_ERROR("Unknown convert images.");
+            parser_show_mark_error(root->start_mark);
+            return 1;
+    }
+
+    return 0;
+}
+
+/*
+ * Gets tileset images used by the convert.
+ */
+static int parse_convert_tilesets_images(convert_t *convert, yaml_document_t *doc, yaml_node_t *root)
+{
+    yaml_node_item_t *item;
+
+    switch (root->type)
+    {
+        case YAML_SEQUENCE_NODE:
+            item = root->data.sequence.items.start;
+            for (; item < root->data.sequence.items.top; ++item)
+            {
+                yaml_node_t *node = yaml_document_get_node(doc, *item);
+                if (node != NULL)
+                {
+                    char *path = (char*)node->data.scalar.value;
+                    if (convert_add_tileset_path(convert, strings_trim(path)))
+                    {
+                        parser_show_mark_error(node->start_mark);
+                        return 1;
+                    }
+                }
+            }
+            break;
+
+        case YAML_SCALAR_NODE:
+            if (parse_str_cmp("automatic", root->data.scalar.value))
+            {
+                LL_DEBUG("Using automatic tilesets generation.");
+                if (convert_add_tileset_path(convert, "*"))
+                {
+                    parser_show_mark_error(root->start_mark);
+                    return 1;
+                }
+            }
+            else
+            {
+                LL_ERROR("Unknown tilesets images option.");
+                parser_show_mark_error(root->start_mark);
+                return 1;
+            }
+            break;
+
+        default:
+            LL_ERROR("Unknown tilesets images.");
+            parser_show_mark_error(root->start_mark);
+            return 1;
+    }
+
+    return 0;
+}
+
+/*
+ * Parses a convert tileset.
+ */
+static int parse_convert_tilesets(convert_t *convert, yaml_document_t *doc, yaml_node_t *root)
+{
+    tileset_group_t *group = NULL;
+    yaml_node_pair_t *pair;
+
+    if (root->type != YAML_MAPPING_NODE)
+    {
+        LL_ERROR("Unknown tileset options.");
+        parser_show_mark_error(root->start_mark);
+        return 1;
+    }
+
+    group = convert_alloc_tileset_group(convert);
+    if (group == NULL)
+    {
+        return 1;
+    }
+
+    pair = root->data.mapping.pairs.start;
+	for (; pair < root->data.mapping.pairs.top; ++pair)
+    {
+		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        char *key = (char*)keyn->data.scalar.value;
+        char *value = (char*)valuen->data.scalar.value;
+
+		if (keyn != NULL)
+        {
+            if (parse_str_cmp("tile-width", key))
+            {
+                int tmpi = strtol(value, NULL, 0);
+                if (tmpi > 255 || tmpi < 0)
+                {
+                    LL_ERROR("Invalid tileset tile width.");
+                    parser_show_mark_error(keyn->start_mark);
+                    return 1;
+                }
+                group->tileWidth = tmpi;
+            }
+            else if (parse_str_cmp("tile-height", key))
+            {
+                int tmpi = strtol(value, NULL, 0);
+                if (tmpi > 255 || tmpi < 0)
+                {
+                    LL_ERROR("Invalid tileset tile height.");
+                    parser_show_mark_error(keyn->start_mark);
+                    return 1;
+                }
+                group->tileHeight = tmpi;
+            }
+            else if (parse_str_cmp("pointer-table", key))
+            {
+                group->pTable = parse_str_bool(value);
+            }
+            else if (parse_str_cmp("images", key))
+            {
+                if (parse_convert_tilesets_images(convert, doc, valuen))
+                {
+		            return 1;
+                }
+            }
+            else
+            {
+                LL_ERROR("Unknown tilesets option: %s", key);
+                parser_show_mark_error(keyn->start_mark);
+		        return 1;
+            }
+		}
+        else
+        {
+            LL_ERROR("No node.");
+			return 1;
+		}
+	}
+
+
+    return 0;
+}
+
+/*
+ * Parses a convert.
+ */
+static int parse_convert(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *root)
+{
+    convert_t *convert = NULL;
+    yaml_node_pair_t *pair;
+
+    pair = root->data.mapping.pairs.start;
+	for (; pair < root->data.mapping.pairs.top; ++pair)
+    {
+		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        char *key = (char*)keyn->data.scalar.value;
+        char *value = (char*)valuen->data.scalar.value;
+
+		if (keyn != NULL)
+        {
+            if (parse_str_cmp("name", key))
+            {
+                convert = parser_alloc_convert(data, value);
+            }
+            else
+            {
+                int tmpf;
+                int tmpi;
+
+                if (convert == NULL)
+                {
+                    return 1;
+                }
+                if (parse_str_cmp("palette", key))
+                {
+                    if (convert->paletteName != NULL)
+                    {
+                        free(convert->paletteName);
+                    }
+                    convert->paletteName = strdup(value);
+                }
+                else if (parse_str_cmp("style", key))
+                {
+                    if (parse_str_cmp("rlet", value))
+                    {
+                        convert->style = CONVERT_STYLE_RLET;
+                    }
+                    else
+                    {
+                        LL_ERROR("Invalid convert style.");
+                        parser_show_mark_error(keyn->start_mark);
+                        return 1;
+                    }
+                }
+                else if (parse_str_cmp("compress", key))
+                {
+                    if (parse_str_cmp("zx7", value))
+                    {
+                        convert->style = COMPRESS_ZX7;
+                    }
+                    else
+                    {
+                        LL_ERROR("Invalid compression mode.");
+                        parser_show_mark_error(keyn->start_mark);
+                        return 1;
+                    }
+                }
+                else if (parse_str_cmp("dither", key))
+                {
+                    tmpf = strtof(value, NULL);
+                    if (tmpf > 1 || tmpf < 0)
+                    {
+                        LL_ERROR("Invalid dither value.");
+                        parser_show_mark_error(keyn->start_mark);
+                        return 1;
+                    }
+                    convert->dither = tmpf;
+                }
+                else if (parse_str_cmp("rotate", key))
+                {
+                    tmpi = strtof(value, NULL);
+                    if (tmpi != 0 && tmpi != 90 && tmpi != 180 && tmpi != 270)
+                    {
+                        LL_ERROR("Invalid rotate parameter, must be 0, 90, 180, or 270.");
+                        parser_show_mark_error(keyn->start_mark);
+                        return 1;
+                    }
+                    convert->rotate = tmpi;
+                }
+                else if (parse_str_cmp("speed", key))
+                {
+                    tmpi = strtol(value, NULL, 0);
+                    if (tmpi > 10 || tmpi < 1)
+                    {
+                        LL_ERROR("Invalid quantization speed.");
+                        parser_show_mark_error(keyn->start_mark);
+                        return 1;
+                    }
+                    convert->quantizeSpeed = tmpi;
+                }
+                else if (parse_str_cmp("transparent-color-index", key))
+                {
+                    tmpi = strtol(value, NULL, 0);
+                    if (tmpi >= PALETTE_MAX_ENTRIES || tmpi < 0)
+                    {
+                        LL_ERROR("Invalid transparent color index.");
+                        parser_show_mark_error(keyn->start_mark);
+                        return 1;
+                    }
+                    convert->transparentIndex = tmpi;
+                }
+                else if (parse_str_cmp("bpp", key))
+                {
+                    switch (strtol(value, NULL, 0))
+                    {
+                        case 8: convert->bpp = BPP_8; break;
+                        case 4: convert->bpp = BPP_4; break;
+                        case 2: convert->bpp = BPP_2; break;
+                        case 1: convert->bpp = BPP_1; break;
+                        default:
+                            LL_ERROR("Invalid bpp option.");
+                            parser_show_mark_error(keyn->start_mark);
+                            return 1;
+                    }
+                }
+                else if (parse_str_cmp("flip-x", key))
+                {
+                    convert->flipx = parse_str_bool(value);
+                }
+                else if (parse_str_cmp("flip-y", key))
+                {
+                    convert->flipy = parse_str_bool(value);
+                }
+                else if (parse_str_cmp("width-and-height", key))
+                {
+                    convert->widthAndHeight = parse_str_bool(value);
+                }
+                else if (parse_str_cmp("omit-indices", key))
+                {
+                    parse_convert_omits(convert, doc, valuen);
+                }
+                else if (parse_str_cmp("images", key))
+                {
+                    if (parse_convert_images(convert, doc, valuen))
+                    {
+			            return 1;
+                    }
+                }
+                else if (parse_str_cmp("tilesets", key))
+                {
+                    if (parse_convert_tilesets(convert, doc, valuen))
+                    {
+			            return 1;
+                    }
+                }
+                else
+                {
+                    LL_ERROR("Unknown convert option: %s", key);
+                    parser_show_mark_error(keyn->start_mark);
+			        return 1;
+                }
+            }
+		}
+        else
+        {
+            LL_ERROR("No node.");
+			return 1;
+		}
+	}
+
+    return 0;
+}
+
+/*
+ * Gets palettes to output.
+ */
+static int parse_output_palettes(output_t *output, yaml_document_t *doc, yaml_node_t *root)
+{
+	yaml_node_item_t *item = root->data.sequence.items.start;
+	for (; item < root->data.sequence.items.top; ++item)
+    {
+		yaml_node_t *node = yaml_document_get_node(doc, *item);
+		if (node != NULL)
+        {
+            char *name = (char*)node->data.scalar.value;
+            if (output_add_palette(output, strings_trim(name)))
+            {
+                return 1;
+            }
+        }
+	}
+
+    return 0;
+}
+
+/*
+ * Gets converts to output.
+ */
+static int parse_output_converts(output_t *output, yaml_document_t *doc, yaml_node_t *root)
+{
+	yaml_node_item_t *item = root->data.sequence.items.start;
+	for (; item < root->data.sequence.items.top; ++item)
+    {
+		yaml_node_t *node = yaml_document_get_node(doc, *item);
+		if (node != NULL)
+        {
+            char *name = (char*)node->data.scalar.value;
+            if (output_add_convert(output, strings_trim(name)))
+            {
+                return 1;
+            }
+        }
+	}
+
+    return 0;
+}
+
+/*
+ * Parses an output.
+ */
+static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *root)
+{
+    output_t *output = NULL;
+    yaml_node_pair_t *pair;
+
+    pair = root->data.mapping.pairs.start;
+	for (; pair < root->data.mapping.pairs.top; ++pair)
+    {
+		yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
+		yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
+        char *key = (char*)keyn->data.scalar.value;
+        char *value = (char*)valuen->data.scalar.value;
+
+		if (keyn != NULL)
+        {
+            if (parse_str_cmp("type", key))
+            {
+                output = parser_alloc_output(data, value);
+                if (output == NULL)
+                {
+                    return 1;
+                }
+            }
+            else
+            {
+                if (parse_str_cmp("include-file", key))
+                {
+                    if (output->includeFileName != NULL)
+                    {
+                        free(output->includeFileName);
+                    }
+                    output->includeFileName = strdup(value);
+                }
+                else if (parse_str_cmp("directory", key))
+                {
+                    if (output->directory != NULL)
+                    {
+                        free(output->directory);
+                        output->directory = NULL;
+                    }
+                    char *tmp = strdup(value);
+                    if (tmp == NULL)
+                    {
+                        LL_DEBUG("Memory error in %s", __func__);
+                        return 1;
+                    }
+                    if (*tmp && tmp[strlen(tmp) - 1] != '/')
+                    {
+                        output->directory = strdupcat(tmp, "/");
+                        free(tmp);
+                    }
+                    else
+                    {
+                        output->directory = tmp;
+                    }
+                }
+                else if (parse_str_cmp("palettes", key))
+                {
+                    if (parse_output_palettes(output, doc, valuen))
+                    {
+                        return 1;
+                    }
+                }
+                else if (parse_str_cmp("converts", key))
+                {
+                    if (parse_output_converts(output, doc, valuen))
+                    {
+                        return 1;
+                    }
+                }
+                else
+                {
+                    if (output->format != OUTPUT_FORMAT_APPVAR)
+                    {
+                        LL_ERROR("Unknown output option: %s", key);
+                        parser_show_mark_error(keyn->start_mark);
+			            return 1;
+                    }
+
+                    if (parse_str_cmp("name", key))
+                    {
+                        if (output->appvar.name != NULL)
+                        {
+                            free(output->appvar.name);
+                        }
+                        output->appvar.name = strdup(value);
+                    }
+                    else if (parse_str_cmp("archived", key))
+                    {
+                        output->appvar.archived = parse_str_bool(value);
+                    }
+                    else if (parse_str_cmp("source-init", key))
+                    {
+                        output->appvar.init = parse_str_bool(value);
+                    }
+                    else if (parse_str_cmp("source-format", key))
+                    {
+                        if (parse_str_cmp("c", value))
+                        {
+                            output->appvar.source = APPVAR_SOURCE_C;
+                        }
+                        else if (parse_str_cmp("ice", value))
+                        {
+                            output->appvar.source = APPVAR_SOURCE_ICE;
+                        }
+                        else if (parse_str_cmp("raw", value))
+                        {
+                            output->appvar.source = APPVAR_SOURCE_ICE;
+                        }
+                        else
+                        {
+                            LL_ERROR("Unknown AppVar source format.");
+                            parser_show_mark_error(keyn->start_mark);
+                            return 1;
+                        }
+                    }
+                    else if (parse_str_cmp("compress", key))
+                    {
+                        if (parse_str_cmp("zx7", value))
+                        {
+                            output->appvar.compress = COMPRESS_ZX7;
+                        }
+                        else
+                        {
+                            LL_ERROR("Invalid compression mode.");
+                            parser_show_mark_error(keyn->start_mark);
+                            return 1;
+                        }
+                    }
+                    else if (parse_str_cmp("header-string", key))
+                    {
+                        output->appvar.header = strdup(value);
+                        output->appvar.header_size = strlen(output->appvar.header);
+                    }
+                    else
+                    {
+                        LL_ERROR("Unknown appvar output option: %s", key);
+                        parser_show_mark_error(keyn->start_mark);
+			            return 1;
+                    }
+                }
+            }
+		}
+        else
+        {
+            LL_ERROR("No node.");
+			return 1;
+		}
+	}
+
+    return 0;
+}
+
+/*
+ * Parses all palettes.
+ */
+static int parse_palettes(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *root)
+{
+	yaml_node_item_t *item = root->data.sequence.items.start;
+	for (; item < root->data.sequence.items.top; ++item)
+    {
+		yaml_node_t *node = yaml_document_get_node(doc, *item);
+		if (node != NULL)
+        {
+            if (parse_palette(data, doc, node))
+            {
+                return 1;
+            }
+        }
+	}
+
+    return 0;
+}
+
+/*
+ * Parses all converts.
+ */
+static int parse_converts(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *root)
+{
+	yaml_node_item_t *item = root->data.sequence.items.start;
+	for (; item < root->data.sequence.items.top; ++item)
+    {
+		yaml_node_t *node = yaml_document_get_node(doc, *item);
+		if (node != NULL)
+        {
+            if (parse_convert(data, doc, node))
+            {
+                return 1;
+            }
+        }
+	}
+
+    return 0;
+}
+
+/*
+ * Parses all outputs.
+ */
+static int parse_outputs(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *root)
+{
+	yaml_node_item_t *item = root->data.sequence.items.start;
+	for (; item < root->data.sequence.items.top; ++item)
+    {
+		yaml_node_t *node = yaml_document_get_node(doc, *item);
+		if (node != NULL)
+        {
+            if (parse_output(data, doc, node))
+            {
+                return 1;
+            }
+        }
+	}
+
+    return 0;
+}
+
+/*
+ * Parses the whole YAML file.
+ */
+static int parse_yaml(yaml_file_t *data, yaml_document_t *doc)
+{
+    yaml_node_t *root = yaml_document_get_root_node(doc);
+    yaml_node_pair_t *pair;
     int ret = 0;
 
-    ret = yaml_alloc_palette(yamlfile);
-    if (ret != 0 )
+    if (root == NULL || root->type != YAML_MAPPING_NODE)
     {
-        return ret;
+        LL_ERROR("No root node detected.");
+        parser_show_mark_error(root->start_mark);
+        return 1;
     }
-    yamlfile->curPalette->name = strdup("xlibc");
 
-    ret = yaml_alloc_palette(yamlfile);
-    if (ret != 0 )
+    pair = root->data.mapping.pairs.start;
+	for (; pair < root->data.mapping.pairs.top; ++pair)
     {
-        return ret;
-    }
-    yamlfile->curPalette->name = strdup("rgb332");
+		yaml_node_t *key = yaml_document_get_node(doc, pair->key);
+		yaml_node_t *value = yaml_document_get_node(doc, pair->value);
+		if (key != NULL)
+        {
+            if (parse_str_cmp("palettes", key->data.scalar.value))
+            {
+                ret = parse_palettes(data, doc, value);
+            }
+            if (parse_str_cmp("converts", key->data.scalar.value))
+            {
+                ret = parse_converts(data, doc, value);
+            }
+            if (parse_str_cmp("outputs", key->data.scalar.value))
+            {
+                ret = parse_outputs(data, doc, value);
+            }
+		}
+        else
+        {
+            LL_ERROR("No node.");
+			return 1;
+		}
+        if (ret != 0)
+        {
+            return ret;
+        }
+	}
 
-    return ret;
+    return 0;
 }
 
 /*
  * Parses a YAML file and stores the results to a structure.
  */
-int yaml_parse_file(yaml_file_t *yamlfile)
+int yaml_parse_file(yaml_file_t *data)
 {
-    char *line;
+    yaml_parser_t yaml;
+    yaml_document_t document;
     FILE *fdi;
     int ret = 0;
 
-    if (yamlfile == NULL)
+    if (data == NULL)
     {
         LL_DEBUG("Invalid param in %s", __func__);
         return 1;
     }
 
-    LL_INFO("Reading file \'%s\'", yamlfile->name);
+    if (parser_init(data))
+    {
+        return 1;
+    }
 
-    fdi = fopen(yamlfile->name, "rb");
-    if( fdi == NULL )
+    LL_INFO("Reading file \'%s\'", data->name);
+
+    fdi = fopen(data->name, "rb");
+    if (fdi == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
         LL_ERROR("Use --help option if needed.");
         return 1;
     }
 
-    yamlfile->line = 1;
-    yamlfile->curPalette = NULL;
-    yamlfile->curConvert = NULL;
-    yamlfile->curOutput = NULL;
-    yamlfile->palettes = NULL;
-    yamlfile->converts = NULL;
-    yamlfile->outputs = NULL;
-    yamlfile->numPalettes = 0;
-    yamlfile->numConverts = 0;
-    yamlfile->numOutputs = 0;
-    yamlfile->state = YAML_ST_INIT;
-
-    ret = yaml_alloc_builtins(yamlfile);
-    if (ret != 0 )
+    if (!yaml_parser_initialize(&yaml))
     {
-        return ret;
+        LL_ERROR("Could not initialize YAML parser.");
+        return 1;
     }
 
-    do
+    yaml_parser_set_input_file(&yaml, fdi);
+	if (!yaml_parser_load(&yaml, &document))
     {
-        char *command;
-        char *fullLine;
+        parser_show_error(yaml.problem, yaml.mark);
+	    yaml_parser_delete(&yaml);
+    	fclose(fdi);
+		return 1;
+	}
 
-        line = yaml_get_line(fdi);
-        if (line == NULL)
-        {
-            break;
-        }
+	ret = parse_yaml(data, &document);
 
-        if (line[0] == '#')
-        {
-            free(line);
-            continue;
-        }
+	yaml_document_delete(&document);
+	yaml_parser_delete(&yaml);
 
-        fullLine = strdup(line);
-        command = strtok(line, ":");
-
-        if (isspace(line[0]) == 0)
-        {
-            ret = yaml_get_command(yamlfile, command, fullLine);
-            if (ret == 1)
-            {
-                break;
-            }
-        }
-
-        switch (yamlfile->state)
-        {
-            case YAML_ST_PALETTE:
-                ret = yaml_palette_command(yamlfile, command, fullLine);
-                break;
-
-            case YAML_ST_CONVERT:
-                ret = yaml_convert_command(yamlfile, command, fullLine);
-                break;
-
-            case YAML_ST_OUTPUT:
-                ret = yaml_output_command(yamlfile, command, fullLine);
-                break;
-
-            default:
-                break;
-        }
-
-        yamlfile->line++;
-
-        free(fullLine);
-        free(line);
-    } while (ret == 0 && !feof(fdi));
-
-    fclose(fdi);
+	fclose(fdi);
 
     return ret;
 }

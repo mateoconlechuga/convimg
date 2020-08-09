@@ -97,6 +97,8 @@ int output_add_convert(output_t *output, const char *convertName)
     output->convertNames[output->numConverts] = strdup(convertName);
     output->numConverts++;
 
+    LL_DEBUG("Added convert: %s", convertName);
+
     return 0;
 }
 
@@ -123,6 +125,8 @@ int output_add_palette(output_t *output, const char *paletteName)
 
     output->paletteNames[output->numPalettes] = strdup(paletteName);
     output->numPalettes++;
+
+    LL_DEBUG("Added palette: %s", paletteName);
 
     return 0;
 }

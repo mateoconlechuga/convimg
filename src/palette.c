@@ -70,6 +70,7 @@ palette_t *palette_alloc(void)
     palette->mode = COLOR_MODE_1555_GBGR;
     palette->quantizeSpeed = PALETTE_DEFAULT_QUANTIZE_SPEED;
     palette->automatic = false;
+    palette->name = NULL;
 
     return palette;
 }
@@ -106,6 +107,8 @@ static int palette_add_image(palette_t *palette, const char *path)
     image->rlet = false;
 
     palette->numImages++;
+
+    LL_DEBUG("Adding image: %s [%s]", image->path, image->name);
 
     return 0;
 }

@@ -1,12 +1,12 @@
 palettes:
   - name: mypalette
     images: automatic
-    fixed-colors:
-      - color: {index:0, r:0, g:0, b:0}
-      - color: {index:1, r:255, g:255, b:255}
-      - color: {index:2, r:255, g:0, b:0}
-      - color: {index:3, r:0, g:0, b:255}
-      - color: {index:4, r:0, g:255, b:0}
+    fixed-entries:
+      - color: {index: 0, r: 0,   g: 0,   b: 0  }
+      - color: {index: 1, r: 255, g: 255, b: 255}
+      - color: {index: 2, r: 255, g: 0,   b: 0  }
+      - color: {index: 3, r: 0,   g: 0,   b: 255}
+      - color: {index: 4, r: 0,   g: 255, b: 0  }
 
 converts:
   - name: myimages

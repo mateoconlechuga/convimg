@@ -72,7 +72,7 @@ typedef struct convert
 
 convert_t *convert_alloc(void);
 void convert_free(convert_t *convert);
-int convert_alloc_tileset_group(convert_t *convert);
+tileset_group_t *convert_alloc_tileset_group(convert_t *convert);
 int convert_add_image_path(convert_t *convert, const char *path);
 int convert_add_tileset_path(convert_t *convert, const char *path);
 int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes);

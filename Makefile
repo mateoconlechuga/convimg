@@ -1,13 +1,14 @@
 CC := gcc
-CFLAGS = -Wall -Wno-unused-but-set-variable -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3 -flto
+CFLAGS = -Wall -Wno-unused-but-set-variable -g3 -DNDEBUG -DLOG_BUILD_LEVEL=3
 CFLAGS_LIQ = -Wall -std=c99 -O3 -DNDEBUG -DUSE_SSE=1 -fno-math-errno -funroll-loops -fomit-frame-pointer -msse -mfpmath=sse -Wno-unknown-pragmas -Wno-attributes -flto
-LDFLAGS = -flto
+CFLAGS_LIBYAML = -Wall -std=gnu99 -O3 -flto -DYAML_VERSION_MAJOR=1 -DYAML_VERSION_MINOR=0 -DYAML_VERSION_PATCH=0 -DYAML_VERSION_STRING="\"1.0.0\""
+LDFLAGS =
 
 BINDIR := ./bin
 OBJDIR := ./obj
 SRCDIR := ./src
 DEPDIR := ./src/deps
-INCLUDEDIRS =
+INCLUDEDIRS = $(DEPDIR)/libyaml/include
 SOURCES = $(SRCDIR)/appvar.c \
           $(SRCDIR)/color.c \
           $(SRCDIR)/compress.c \
@@ -35,7 +36,13 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(DEPDIR)/libimagequant/nearest.c \
           $(DEPDIR)/libimagequant/pam.c \
           $(DEPDIR)/zx7/compress.c \
-          $(DEPDIR)/zx7/optimize.c
+          $(DEPDIR)/zx7/optimize.c \
+          $(DEPDIR)/libyaml/src/api.c \
+          $(DEPDIR)/libyaml/src/dumper.c \
+          $(DEPDIR)/libyaml/src/loader.c \
+          $(DEPDIR)/libyaml/src/parser.c \
+          $(DEPDIR)/libyaml/src/reader.c \
+          $(DEPDIR)/libyaml/src/scanner.c
 
 ifeq ($(OS),Windows_NT)
   TARGET ?= convimg.exe
@@ -53,6 +60,7 @@ ifeq ($(OS),Windows_NT)
   CFLAGS_GLOB += -static
   CFLAGS += -static
   CFLAGS_LIQ += -static
+  CFLAGS_LIBYAML += -static
   LDFLAGS += -static
 else
   TARGET ?= convimg
@@ -85,6 +93,10 @@ $(OBJDIR)/deps/glob/%.o: $(SRCDIR)/deps/glob/%.c
 $(OBJDIR)/deps/libimagequant/%.o: $(SRCDIR)/deps/libimagequant/%.c
 	@$(call MKDIR,$(call NATIVEPATH,$(@D)))
 	$(CC) -c $(call NATIVEPATH,$<) $(CFLAGS_LIQ) $(addprefix -I, $(INCLUDEDIRS)) -o $(call NATIVEPATH,$@)
+
+$(OBJDIR)/deps/libyaml/%.o: $(SRCDIR)/deps/libyaml/%.c
+	@$(call MKDIR,$(call NATIVEPATH,$(@D)))
+	$(CC) -c $(call NATIVEPATH,$<) $(CFLAGS_LIBYAML) $(addprefix -I, $(INCLUDEDIRS)) -o $(call NATIVEPATH,$@)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@$(call MKDIR,$(call NATIVEPATH,$(@D)))

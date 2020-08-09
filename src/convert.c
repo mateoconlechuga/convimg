@@ -61,6 +61,11 @@ convert_t *convert_alloc(void)
     convert->bpp = BPP_8;
     convert->name = NULL;
     convert->paletteName = strdup("xlibc");
+    convert->quantizeSpeed = CONVERT_DEFAULT_QUANTIZE_SPEED;
+    convert->dither = 0;
+    convert->rotate = 0;
+    convert->flipx = false;
+    convert->flipy = false;
 
     return convert;
 }
@@ -96,13 +101,15 @@ static int convert_add_image(convert_t *convert, const char *path)
 
     convert->numImages++;
 
+    LL_DEBUG("Adding image: %s [%s]", image->path, image->name);
+
     return 0;
 }
 
 /*
  * Allocates output structure.
  */
-int convert_alloc_tileset_group(convert_t *convert)
+tileset_group_t *convert_alloc_tileset_group(convert_t *convert)
 {
     tileset_group_t *tmpTilesetGroup;
 
@@ -112,12 +119,12 @@ int convert_alloc_tileset_group(convert_t *convert)
     if (tmpTilesetGroup == NULL)
     {
         LL_DEBUG("Memory error in %s", __func__);
-        return 1;
+        return NULL;
     }
 
     convert->tilesetGroup = tmpTilesetGroup;
 
-    return 0;
+    return tmpTilesetGroup;
 }
 
 /*
@@ -260,6 +267,7 @@ void convert_free(convert_t *convert)
     }
 
     tileset_group_free(convert->tilesetGroup);
+    free(convert->tilesetGroup);
     convert->tilesetGroup = NULL;
 
     free(convert->images);

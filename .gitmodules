@@ -7,3 +7,6 @@
 [submodule "src/deps/stb"]
 	path = src/deps/stb
 	url = https://github.com/nothings/stb.git
+[submodule "src/deps/libyaml"]
+	path = src/deps/libyaml
+	url = https://github.com/yaml/libyaml.git

@@ -263,6 +263,13 @@ static int parse_palette_entry(palette_entry_t *entry, yaml_document_t *doc, yam
 
         if (keyn != NULL)
         {
+            if (value == NULL || value[0] == '\0')
+            {
+                LL_ERROR("Invalid fixed entry color format. Missing spaces?");
+                parser_show_mark_error(keyn->start_mark);
+                return 1;
+            }
+
             tmpint = strtol(value, NULL, 0);
             if (tmpint > 255 || tmpint < 0)
             {

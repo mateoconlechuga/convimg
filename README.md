@@ -5,7 +5,7 @@ This program is used to convert images to other formats, specifically for the TI
 ## Command Line Help
 
     This program is used to convert images to other formats,
-    specifically for the TI84+CE and related calculators.
+    specifically for the TI-84+CE and related calculators.
 
     Usage:
         convimg [options] -i <yaml file>
@@ -80,10 +80,11 @@ This program is used to convert images to other formats, specifically for the TI
                                       : palette. The format is:
                                       :
                                       : fixed-entries:
-                                      :  - color: {index:0, r:0, g:0, b:0}
-                                      :  - color: {index:1, r:255, g:255, b:255}
+                                      :  - color: {index: 0, r: 9, g: 10, b: 0}
+                                      :  - color: {index: 1, r: 2, g: 83, b: 5}
                                       :
-                                      : Where index represents the palette entry
+                                      : Note the spaces between key/value pairs.
+                                      : 'index' represents the palette entry
                                       : used for the color, r is the red amount,
                                       : g is the green amound, and b is the blue
                                       : amount of the color. This is often
@@ -91,7 +92,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : 'exact' is used to match colors exactly
                                       : to the input color before quantization.
                                       : It is an optional parameter, defaults to
-                                      : 'false' but can be 'true'
+                                      : 'false' but can be 'true'.
 
            speed: <speed>             : Speed controls (somewhat, not really)
                                       : the quality of the palette generated.

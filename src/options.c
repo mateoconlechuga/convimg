@@ -119,10 +119,11 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : palette. The format is:\n");
     LL_PRINT("                                  :\n");
     LL_PRINT("                                  : fixed-entries:\n");
-    LL_PRINT("                                  :  - color: {index:0, r:0, g:0, b:0}\n");
-    LL_PRINT("                                  :  - color: {index:1, r:255, g:255, b:255}\n");
+    LL_PRINT("                                  :  - color: {index: 0, r: 9, g: 10, b: 0}\n");
+    LL_PRINT("                                  :  - color: {index: 1, r: 2, g: 83, b: 5}\n");
     LL_PRINT("                                  :\n");
-    LL_PRINT("                                  : Where index represents the palette entry\n");
+    LL_PRINT("                                  : Note the spaces between key/value pairs.\n");
+    LL_PRINT("                                  : \'index\' represents the palette entry\n");
     LL_PRINT("                                  : used for the color, r is the red amount,\n");
     LL_PRINT("                                  : g is the green amound, and b is the blue\n");
     LL_PRINT("                                  : amount of the color. This is often\n");
@@ -130,7 +131,7 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : \'exact\' is used to match colors exactly\n");
     LL_PRINT("                                  : to the input color before quantization.\n");
     LL_PRINT("                                  : It is an optional parameter, defaults to\n");
-    LL_PRINT("                                  : \'false\' but can be \'true\'\n");
+    LL_PRINT("                                  : \'false\' but can be \'true\'.\n");
     LL_PRINT("\n");
     LL_PRINT("       speed: <speed>             : Speed controls (somewhat, not really)\n");
     LL_PRINT("                                  : the quality of the palette generated.\n");

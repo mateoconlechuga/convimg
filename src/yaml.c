@@ -777,7 +777,7 @@ static int parse_convert(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
                 {
                     if (parse_str_cmp("zx7", value))
                     {
-                        convert->style = COMPRESS_ZX7;
+                        convert->compress = COMPRESS_ZX7;
                     }
                     else
                     {

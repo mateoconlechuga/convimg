@@ -60,7 +60,7 @@ int output_bin_image(image_t *image)
 
     LL_INFO(" - Writing \'%s\'", source);
 
-    fds = fopen(source, "w");
+    fds = fopen(source, "wb");
     if (fds == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
@@ -91,7 +91,7 @@ int output_bin_tileset(tileset_t *tileset)
 
     LL_INFO(" - Writing \'%s\'", source);
 
-    fds = fopen(source, "w");
+    fds = fopen(source, "wb");
     if (fds == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
@@ -145,7 +145,7 @@ int output_bin_palette(palette_t *palette)
 
     LL_INFO(" - Writing \'%s\'", source);
 
-    fds = fopen(source, "w");
+    fds = fopen(source, "wb");
     if (fds == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));

@@ -538,7 +538,7 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
 
     LL_INFO(" - Writing \'%s\'", varName);
 
-    fdv = fopen(varName, "w");
+    fdv = fopen(varName, "wb");
     if (fdv == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));

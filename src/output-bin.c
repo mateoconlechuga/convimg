@@ -152,6 +152,12 @@ int output_bin_palette(palette_t *palette)
         goto error;
     }
 
+    if (palette->includeSize)
+    {
+        uint16_t size = palette->numEntries * 2;
+        fwrite(&size, sizeof(uint16_t), 1, fds);
+    }
+
     for (i = 0; i < palette->numEntries; ++i)
     {
         color_t *color = &palette->entries[i].color;

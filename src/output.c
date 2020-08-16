@@ -58,6 +58,8 @@ output_t *output_alloc(void)
     output->paletteNames = NULL;
     output->palettes = NULL;
     output->numPalettes = 0;
+    output->paletteSizes = false;
+    output->order = OUTPUT_PALETTES_FIRST;
     output->format = OUTPUT_FORMAT_INVALID;
     output->appvar.name = NULL;
     output->appvar.directory = NULL;
@@ -153,6 +155,11 @@ void output_free(output_t *output)
     {
         free(output->paletteNames[i]);
         output->paletteNames[i] = NULL;
+    }
+
+    if (output->appvar.name != NULL)
+    {
+        free(output->appvar.directory);
     }
 
     free(output->convertNames);
@@ -450,6 +457,7 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
         palette_t *palette = output->palettes[i];
         palette->directory =
             strdupcat(output->directory, palette->name);
+        palette->includeSize = output->paletteSizes;
 
         LL_INFO("Generating output for palette \'%s\'",
                 palette->name);
@@ -528,11 +536,6 @@ int output_include_header(output_t *output)
         default:
             ret = 1;
             break;
-    }
-
-    if (output->appvar.name != NULL)
-    {
-        free(output->appvar.directory);
     }
 
     return ret;

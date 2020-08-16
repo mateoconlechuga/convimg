@@ -42,7 +42,7 @@ extern "C" {
 #include <stdio.h>
 
 #define APPVAR_MAX_FILE_SIZE (64 * 1024 + 300)
-#define APPVAR_MAX_DATA_SIZE (64 * 1024 - 300)
+#define APPVAR_MAX_DATA_SIZE (65505)
 
 #define APPVAR_TYPE_FLAG 21
 #define APPVAR_ARCHIVE_FLAG 128

@@ -1016,6 +1016,15 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
                         return 1;
                     }
                 }
+                else if (parse_str_cmp("output-first", key))
+                {
+                    output->order = parse_str_cmp("palettes", value) ?
+                        OUTPUT_PALETTES_FIRST : OUTPUT_CONVERTS_FIRST;
+                }
+                else if (parse_str_cmp("prepend-palette-sizes", key))
+                {
+                    output->paletteSizes = parse_str_bool(value);
+                }
                 else
                 {
                     if (output->format != OUTPUT_FORMAT_APPVAR)

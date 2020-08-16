@@ -71,6 +71,8 @@ palette_t *palette_alloc(void)
     palette->quantizeSpeed = PALETTE_DEFAULT_QUANTIZE_SPEED;
     palette->automatic = false;
     palette->name = NULL;
+    palette->includeSize = false;
+    palette->directory = NULL;
 
     return palette;
 }

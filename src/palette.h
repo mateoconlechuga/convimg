@@ -73,6 +73,7 @@ typedef struct palette
 
     /* set by output */
     char *directory;
+    bool includeSize;
 } palette_t;
 
 /* I despise forward declartions, but meh */

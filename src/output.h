@@ -52,6 +52,12 @@ typedef enum
     OUTPUT_FORMAT_BIN
 } output_format_t;
 
+typedef enum
+{
+    OUTPUT_PALETTES_FIRST,
+    OUTPUT_CONVERTS_FIRST,
+} output_order_t;
+
 typedef struct
 {
     char *name;
@@ -66,6 +72,8 @@ typedef struct
     output_format_t format;
     compress_t compress;
     appvar_t appvar;
+    bool paletteSizes;
+    output_order_t order;
 } output_t;
 
 output_t *output_alloc(void);

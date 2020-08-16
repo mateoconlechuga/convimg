@@ -37,13 +37,26 @@
 #include <errno.h>
 
 /*
+ * Validates the added size fits.
+ */
+static int validate_data_size(appvar_t *appvar, int adding)
+{
+    if (appvar->size + adding >= APPVAR_MAX_DATA_SIZE)
+    {
+        LL_ERROR("Too much data for AppVar \'%s\'.", appvar->name);
+        return 1;
+    }
+
+    return 0;
+}
+
+/*
  * Outputs an AppVar header.
  */
 int output_appvar_header(appvar_t *appvar)
 {
-    if (appvar->size + appvar->header_size >= APPVAR_MAX_DATA_SIZE)
+    if (validate_data_size(appvar, appvar->header_size) != 0)
     {
-        LL_ERROR("Too much data for AppVar \'%s\'.", appvar->name);
         return 1;
     }
 
@@ -59,9 +72,8 @@ int output_appvar_header(appvar_t *appvar)
  */
 int output_appvar_image(image_t *image, appvar_t *appvar)
 {
-    if (appvar->size + image->size >= APPVAR_MAX_DATA_SIZE)
+    if (validate_data_size(appvar, image->size) != 0)
     {
-        LL_ERROR("Too much data for AppVar \'%s\'.", appvar->name);
         return 1;
     }
 
@@ -82,9 +94,8 @@ int output_appvar_tileset(tileset_t *tileset, appvar_t *appvar)
     {
         tileset_tile_t *tile = &tileset->tiles[i];
 
-        if (appvar->size + tile->size >= APPVAR_MAX_DATA_SIZE)
+        if (validate_data_size(appvar, tile->size) != 0)
         {
-            LL_ERROR("Too much data for AppVar \'%s\'.", appvar->name);
             return 1;
         }
 
@@ -100,23 +111,38 @@ int output_appvar_tileset(tileset_t *tileset, appvar_t *appvar)
  */
 int output_appvar_palette(palette_t *palette, appvar_t *appvar)
 {
+    uint8_t tmp[2];
     int i;
 
-    for (i = 0; i < palette->numEntries; ++i)
+    if (palette->includeSize)
     {
-        uint8_t colorBytes[2];
-        color_t *color = &palette->entries[i].color;
+        uint16_t size = palette->numEntries * 2;
 
-        if (appvar->size + sizeof colorBytes >= APPVAR_MAX_DATA_SIZE)
+        if (validate_data_size(appvar, sizeof(uint16_t)) != 0)
         {
-            LL_ERROR("Too much data for AppVar \'%s\'.", appvar->name);
             return 1;
         }
 
-        colorBytes[0] = color->target & 255;
-        colorBytes[1] = (color->target >> 8) & 255;
+        tmp[0] = size & 255;
+        tmp[1] = (size >> 8) & 255;
 
-        memcpy(&appvar->data[appvar->size], colorBytes, sizeof colorBytes);
+        memcpy(&appvar->data[appvar->size], tmp, sizeof(uint16_t));
+        appvar->size += 2;
+    }
+
+    for (i = 0; i < palette->numEntries; ++i)
+    {
+        color_t *color = &palette->entries[i].color;
+
+        if (validate_data_size(appvar, sizeof(uint16_t)) != 0)
+        {
+            return 1;
+        }
+
+        tmp[0] = color->target & 255;
+        tmp[1] = (color->target >> 8) & 255;
+
+        memcpy(&appvar->data[appvar->size], tmp, sizeof(uint16_t));
         appvar->size += 2;
     }
 

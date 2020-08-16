@@ -163,6 +163,7 @@ int output_asm_palette(palette_t *palette)
 {
     char *source = strdupcat(palette->directory, ".asm");
     FILE *fds;
+    int size;
     int i;
 
     LL_INFO(" - Writing \'%s\'", source);
@@ -174,7 +175,15 @@ int output_asm_palette(palette_t *palette)
         goto error;
     }
 
-    fprintf(fds, "sizeof_%s := %d\r\n", palette->name, palette->numEntries * 2);
+    size = palette->numEntries * 2;
+
+    fprintf(fds, "sizeof_%s := %d\r\n", palette->name, size);
+
+    if (palette->includeSize)
+    {
+        fprintf(fds, "\tdw\t%d\r\n", size);
+    }
+
     fprintf(fds, "%s:\r\n", palette->name);
 
     for (i = 0; i < palette->numEntries; ++i)

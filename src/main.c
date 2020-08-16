@@ -104,29 +104,52 @@ int main(int argc, char **argv)
         {
             for (i = 0; i < yamlfile->numOutputs; ++i)
             {
-                ret = output_init(yamlfile->outputs[i]);
+                output_t *output = yamlfile->outputs[i];
+
+                ret = output_init(output);
                 if (ret != 0)
                 {
                     break;
                 }
 
-                ret = output_palettes(yamlfile->outputs[i],
-                                      yamlfile->palettes,
-                                      yamlfile->numPalettes);
-                if (ret != 0)
+                if (output->order == OUTPUT_PALETTES_FIRST)
                 {
-                    break;
-                }
+                    ret = output_palettes(output,
+                                          yamlfile->palettes,
+                                          yamlfile->numPalettes);
+                    if (ret != 0)
+                    {
+                        break;
+                    }
 
-                ret = output_converts(yamlfile->outputs[i],
+                    ret = output_converts(output,
+                                          yamlfile->converts,
+                                          yamlfile->numConverts);
+                    if (ret != 0)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    ret = output_converts(output,
                                       yamlfile->converts,
                                       yamlfile->numConverts);
-                if (ret != 0)
-                {
-                    break;
+                    if (ret != 0)
+                    {
+                        break;
+                    }
+
+                    ret = output_palettes(output,
+                                          yamlfile->palettes,
+                                          yamlfile->numPalettes);
+                    if (ret != 0)
+                    {
+                        break;
+                    }
                 }
 
-                ret = output_include_header(yamlfile->outputs[i]);
+                ret = output_include_header(output);
                 if (ret != 0)
                 {
                     break;

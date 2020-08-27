@@ -53,15 +53,85 @@ static int validate_data_size(appvar_t *appvar, int adding)
 /*
  * Outputs an AppVar header.
  */
-int output_appvar_header(appvar_t *appvar)
+int output_appvar_header(output_t *output, appvar_t *appvar)
 {
-    if (validate_data_size(appvar, appvar->header_size) != 0)
+    uint8_t tmp[3];
+    int i;
+
+    appvar->dataOffset = 0;
+
+    if (appvar->headerSize > 0)
+    {
+        if (validate_data_size(appvar, appvar->headerSize) != 0)
+        {
+            return 1;
+        }
+  
+        memcpy(&appvar->data[appvar->size], appvar->header, appvar->headerSize);
+        appvar->size += appvar->headerSize;
+    }
+
+    if (appvar->lut == false)
+    {
+        appvar->dataOffset = appvar->headerSize;
+        return 0;
+    }
+
+    /* for size bytes */
+    appvar->dataOffset += appvar->entrySize;
+
+    /* determine number of palettes */
+    for (i = 0; i < output->numPalettes; ++i)
+    {
+        appvar->dataOffset += appvar->entrySize;
+    }
+
+    /* determine number of images + tilesets */
+    for (i = 0; i < output->numConverts; ++i)
+    {
+        convert_t *convert = output->converts[i];
+        tileset_group_t *tilesetGroup = convert->tilesetGroup;
+
+        for (j = 0; j < convert->numImages; ++j)
+        {
+            appvar->dataOffset += appvar->entrySize;
+        }
+
+        if (tilesetGroup != NULL)
+        {
+            for (k = 0; k < tilesetGroup->numTilesets; ++k)
+            {
+                appvar->dataOffset += appvar->entrySize;
+            }
+        }
+    }
+
+    /* determine number of tileset images */
+    for (i = 0; i < output->numConverts; ++i)
+    {
+        convert_t *convert = output->converts[i];
+        tileset_group_t *tilesetGroup = convert->tilesetGroup;
+
+        if (tilesetGroup != NULL)
+        {
+            for (k = 0; k < tilesetGroup->numTilesets; ++k)
+            {
+                tileset_t *tileset = &tilesetGroup->tilesets[k];
+
+                for (l = 0; l < tileset->numTiles; l++)
+                {
+                    appvar->dataOffset += appvar->entrySize;
+                }
+            }
+        }
+    }
+
+    if (validate_data_size(appvar, appvar->dataOffset) != 0)
     {
         return 1;
     }
 
-    memcpy(&appvar->data[appvar->size], appvar->header, appvar->header_size);
-    appvar->size += appvar->header_size;
+    appvar->dataOffset += appvar->headerSize;
 
     return 0;
 }
@@ -149,22 +219,9 @@ int output_appvar_palette(palette_t *palette, appvar_t *appvar)
     return 0;
 }
 
-/*
- * Outputs a C style header.
- */
-void output_appvar_c_include_file(output_t *output, FILE *fdh)
+static void output_appvar_c_include_file_palettes(output_t *output, FILE *fdh, int *index)
 {
-    appvar_t *appvar = &output->appvar;
-    int index = 0;
-    int i, j, k, l;
-
-    fprintf(fdh, "#ifndef %s_appvar_include_file\r\n", appvar->name);
-    fprintf(fdh, "#define %s_appvar_include_file\r\n", appvar->name);
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#ifdef __cplusplus\r\n");
-    fprintf(fdh, "extern \"C\" {\r\n");
-    fprintf(fdh, "#endif\r\n");
-    fprintf(fdh, "\r\n");
+    int i;
 
     for (i = 0; i < output->numPalettes; ++i)
     {
@@ -177,10 +234,15 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
         fprintf(fdh, "#define %s (%s_appvar[%d])\r\n",
             palette->name,
             appvar->name,
-            index);
+            *index);
 
-        index++;
+        *index = *index + 1;
     }
+}
+
+static void output_appvar_c_include_file_converts(output_t *output, FILE *fdh, int *index)
+{
+    int i;
 
     for (i = 0; i < output->numConverts; ++i)
     {
@@ -203,17 +265,17 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
                 fprintf(fdh, "#define %s_compressed %s_appvar[%d]\n",
                     image->name,
                     appvar->name,
-                    index);
+                    *index);
             }
             else
             {
                 fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_appvar[%d])\n",
                     image->name,
                     appvar->name,
-                    index);
+                    *index);
             }
 
-            index++;
+            *index = *index + 1;
         }
 
         if (tilesetGroup != NULL)
@@ -222,7 +284,7 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
             {
                 tileset_t *tileset = &tilesetGroup->tilesets[k];
 
-                tileset->appvarIndex = index;
+                tileset->appvarIndex = *index;
 
                 fprintf(fdh, "#define %s_tile_width %d\n",
                     tileset->image.name,
@@ -236,7 +298,7 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
                     fprintf(fdh, "#define %s_compressed %s_appvar[%d]\n",
                         tileset->image.name,
                         appvar->name,
-                        index);
+                        *index);
                     fprintf(fdh, "#define %s_tiles_num %d\n",
                         tileset->image.name,
                         tileset->numTiles);
@@ -257,7 +319,7 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
                     fprintf(fdh, "#define %s %s_appvar[%d]\n",
                         tileset->image.name,
                         appvar->name,
-                        index);
+                        *index);
                     fprintf(fdh, "#define %s_tiles_num %d\n",
                         tileset->image.name,
                         tileset->numTiles);
@@ -277,9 +339,38 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
                     }
                 }
 
-                index++;
+                *index = *index + 1;
             }
         }
+    }
+}
+
+/*
+ * Outputs a C style header.
+ */
+void output_appvar_c_include_file(output_t *output, FILE *fdh)
+{
+    appvar_t *appvar = &output->appvar;
+    int i, j, k, l;
+    int index = 0;
+
+    fprintf(fdh, "#ifndef %s_appvar_include_file\r\n", appvar->name);
+    fprintf(fdh, "#define %s_appvar_include_file\r\n", appvar->name);
+    fprintf(fdh, "\r\n");
+    fprintf(fdh, "#ifdef __cplusplus\r\n");
+    fprintf(fdh, "extern \"C\" {\r\n");
+    fprintf(fdh, "#endif\r\n");
+    fprintf(fdh, "\r\n");
+
+    if (output->order == OUTPUT_PALETTES_FIRST)
+    {
+        output_appvar_c_include_file_palettes(output, fdh, &index);
+        output_appvar_c_include_file_converts(output, fdh, &index);
+    }
+    else
+    {
+        output_appvar_c_include_file_converts(output, fdh, &index);
+        output_appvar_c_include_file_palettes(output, fdh, &index);
     }
 
     appvar->numEntries = index;
@@ -316,14 +407,14 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
 void output_appvar_c_source_file(output_t *output, FILE *fds)
 {
     appvar_t *appvar = &output->appvar;
-    int offset = appvar->header_size;
+    int offset = appvar->dataOffset;
     int i, j, k, l;
 
     fprintf(fds, "#include \"%s\"\r\n", output->includeFileName);
     fprintf(fds, "#include <fileioc.h>\r\n");
     fprintf(fds, "\r\n");
     fprintf(fds, "#define %s_HEADER_SIZE %u\r\n",
-        appvar->name, appvar->header_size);
+        appvar->name, appvar->headerSize);
     fprintf(fds, "\r\n");
 
     fprintf(fds, "unsigned char *%s_appvar[%d] =\r\n{\r\n",

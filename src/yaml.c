@@ -1050,6 +1050,21 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
                     {
                         output->appvar.init = parse_str_bool(value);
                     }
+                    else if (parse_str_cmp("lut-entries", key))
+                    {
+                        output->appvar.lut = parse_str_bool(value);
+                    }
+                    else if (parse_str_cmp("lut-entry-size", key))
+                    {
+                        tmpi = strtol(value, NULL, 0);
+                        if (tmpi != 2 && tmpi != 3)
+                        {
+                            LL_ERROR("Invalid LUT entry size.");
+                            parser_show_mark_error(keyn->start_mark);
+                            return 1;
+                        }
+                        output->appvar.entrySize = tmpi;
+                    }
                     else if (parse_str_cmp("source-format", key))
                     {
                         if (parse_str_cmp("c", value))

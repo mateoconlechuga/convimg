@@ -69,8 +69,10 @@ output_t *output_alloc(void)
     output->appvar.compress = COMPRESS_NONE;
     output->appvar.data = malloc(APPVAR_MAX_DATA_SIZE);
     output->appvar.size = 0;
+    output->appvar.lut = false;
     output->appvar.header = NULL;
     output->appvar.header_size = 0;
+    output->appvar.entrySize = 3;
 
     return output;
 }
@@ -215,7 +217,7 @@ int output_init(output_t *output)
 
     if (output->format == OUTPUT_FORMAT_APPVAR)
     {
-        output_appvar_header(&output->appvar);
+        output_appvar_header(output, &output->appvar);
     }
 
     if (output->appvar.name != NULL)

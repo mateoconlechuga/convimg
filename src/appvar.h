@@ -78,12 +78,15 @@ typedef struct
     bool archived;
     appvar_source_t source;
     bool init;
+    bool lut;
+    int entrySize;
     compress_t compress;
     uint8_t *data;
     int size;
     int numEntries;
     char *header;
-    int header_size;
+    int headerSize;
+    int dataOffset;
 
     /* set by output */
     char *directory;

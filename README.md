@@ -72,11 +72,11 @@ This program is used to convert images to other formats, specifically for the TI
                                       : used in the output code files.
                                       : Required parameter.
 
-            max-entries: <num>        : Number of maximum colors available
+           max-entries: <num>         : Number of maximum colors available
                                       : in the palette. Default is 256,
                                       : range is 1-256.
 
-            fixed-entries:            : Adds fixed color entries to the
+           fixed-entries:             : Adds fixed color entries to the
                                       : palette. The format is:
                                       :
                                       : fixed-entries:
@@ -169,7 +169,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : where <index> is the index/entry in the
                                       : palette.
 
-          style: <mode>               : Style controls the converted format of
+           style: <mode>              : Style controls the converted format of
                                       : images. In 'normal' mode, converted
                                       : images map 1-1 where each pixel byte
                                       : represents a palette index.
@@ -179,32 +179,32 @@ This program is used to convert images to other formats, specifically for the TI
                                       : the output size if there are many
                                       : transparent pixels.
 
-          compress: zx7               : After quantization, images can then
+           compress: zx7              : After quantization, images can then
                                       : optionally be compressed in zx7 format.
                                       : The images will then be required to be
                                       : decompressed before use.
 
-          width-and-height: <bool>    : Optionally control if the width and
+           width-and-height: <bool>   : Optionally control if the width and
                                       : height should be placed in the converted
                                       : image; the first two bytes respectively.
 
-          flip-x: <bool>              : Flip input images vertically across the
+           flip-x: <bool>             : Flip input images vertically across the
                                       : x-axis
 
-          flip-y: <bool>              : Flip input images horizontally across the
+           flip-y: <bool>             : Flip input images horizontally across the
                                       : y-axis
 
-          rotate: <degrees>           : Rotate input images 0,90,180,270 degrees
+           rotate: <degrees>          : Rotate input images 0,90,180,270 degrees
 
-          bpp: <bits-per-pixel>       : Control how many bits per pixel are used
+           bpp: <bits-per-pixel>      : Control how many bits per pixel are used
                                       : This also affects the size of the
                                       : generated palette; use with caution.
                                       : Available options are 1,2,4,8.
                                       : The default is 8.
 
-          omit-indices: [<list>]      : Omits the specified palette indices
+           omit-indices: [<list>]     : Omits the specified palette indices
                                       : from the converted image. May be useful
-                                      : by a custom drawing routine. A comma.
+                                      : by a custom drawing routine. A comma
                                       : separated list in [] should be provided.
 
 
@@ -212,56 +212,78 @@ This program is used to convert images to other formats, specifically for the TI
         The YAML file outputs section is a list of different "groups" of outputs,
         differing in types or images. The currently available formats are:
 
-          - type: c                   : C source and header files
-          - type: asm                 : Assembly and include files
-          - type: bin                 : Binary and listing files
-          - type: ice                 : Single ICE compiler formatted file
-          - type: appvar              : TI archived AppVar format
+         - type: c                    : C source and header files
+         - type: asm                  : Assembly and include files
+         - type: bin                  : Binary and listing files
+         - type: ice                  : Single ICE compiler formatted file
+         - type: appvar               : TI archived AppVar format
 
         The different options available for outputs are:
 
-            include-file: <file>      : Output file containing all the graphics
+           include-file: <file>       : Output file containing all the graphics
                                       : Defaults to "gfx.h", "gfx.inc",
                                       : "bin.txt", and "ice.txt" for C, Asm,
                                       : Binary, and ICE formats respectively.
 
-            palettes:                 : A list of generated palettes, separated
+           palettes:                  : A list of generated palettes, separated
                                       : by a newline and indented with the '-'
                                       : character.
 
-            converts:                 : A list of convert sections, separated
+           converts:                  : A list of convert sections, separated
                                       : by a newline and indented with the '-'
                                       : character.
 
-            directory: <directory>    : Supply the name of the output directory.
+           directory: <directory>     : Supply the name of the output directory.
                                       : Defaults to the current directory.
+
+           prepend-palette-sizes:     : Prepend the palette with a 2-byte
+               <bool>                 : entry containing the total size in
+                                      : bytes of the palette.
+                                      : Default is 'false'.
+                                      : Optional parameter.
 
        AppVars are a special type of output and require a few more options.
        The below options are only available for AppVars, however the above
        options can also be used.
 
-            name: <appvar name>       : Name of AppVar, maximum 8 characters.
+           name: <appvar name>        : Name of AppVar, maximum 8 characters.
                                       : Required parameter.
 
-            source-format: <format>   : Source files to create to access
+           source-format: <format>    : Source files to create to access
                                       : image and palette data. format can be
                                       : 'c', 'ice', or 'none'.
-                                      : Required parameter.
+                                      : Default is 'none'.
+                                      : Optional parameter.
 
-            source-init: <bool>       : Whether to output AppVar initialization
+           source-init: <bool>        : Whether to output AppVar initialization
                                       : code for loading and setting up image
                                       : and palette pointers. Default is 'true'
                                       : Optional parameter.
 
-            compress: zx7             : Compress AppVar data using zx7.
+           lut-entries: <bool>        : Embeddeds a lookup table (LUT) for
+                                      : determining the image offsets in the
+                                      : appvar. Format consists of an entry containing
+                                      : the table size, followed by the LUT entries.
+                                      : Entry sizes are controlled via the parameter
+                                      : 'lut-entry-size'. Default is 'false'.
+                                      : Optional parameter.
+
+           lut-entry-size: <int>      : Controls the size of LUT entries. Can be
+                                      : '2' for 2-byte or '3' for 3-byte
+                                      : entries. Default is '3'.
+                                      : Optional parameter.
+
+           compress: <mode>           : Compress AppVar data.
+                                      : Current 'mode' parameters are 'zx7'.
                                       : The AppVar then needs to be decompressed
                                       : to access image and palette data.
                                       : Optional parameter.
 
-            header-string: <string>   : Prepends <string> to the start of the
+           header-string: <string>    : Prepends <string> to the start of the
                                       : AppVar's data.
+                                      : Can be in quoted to ensure proper parsing.
 
-            archived: <bool>          : 'true' makes the AppVar archived, while
+           archived: <bool>           : 'true' makes the AppVar archived, while
                                       : 'false' leaves it unarchived.
                                       : Optional parameter.
 
@@ -270,8 +292,10 @@ This program is used to convert images to other formats, specifically for the TI
     Credits:
         (c) 2017-2020 by Matt "MateoConLechuga" Waltz.
 
-        This program utilizes the following neat libraries:
+        This program utilizes the following libraries:
             libimagequant: (c) 2009-2020 by Kornel Lesiński.
+            libyaml: (c) 2006-2020 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx7: (c) 2012-2013 by Einar Saukas.
+
 

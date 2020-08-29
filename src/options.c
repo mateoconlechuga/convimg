@@ -436,7 +436,7 @@ static int options_verify(options_t *options)
 error:
     LL_ERROR("Missing input file.");
     LL_INFO("Run %s --help for usage guidlines.", options->prgm);
-    LL_INFO("Run %s --create to create a default \'convimg.yaml\' file.", options->prgm);
+    LL_INFO("Run %s --new to create a template \'convimg.yaml\' file.", options->prgm);
 
     return OPTIONS_FAILED;
 }

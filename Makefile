@@ -1,8 +1,8 @@
 CC := gcc
-CFLAGS = -Wall -Wno-unused-but-set-variable -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3 -flto
+CFLAGS = -Wall -Wno-unused-but-set-variable -g3 -DNDEBUG -DLOG_BUILD_LEVEL=5
 CFLAGS_LIQ = -Wall -std=c99 -O3 -DNDEBUG -DUSE_SSE=1 -fno-math-errno -funroll-loops -fomit-frame-pointer -msse -mfpmath=sse -Wno-unknown-pragmas -Wno-attributes -flto
 CFLAGS_LIBYAML = -Wall -std=gnu99 -O3 -DYAML_VERSION_MAJOR=1 -DYAML_VERSION_MINOR=0 -DYAML_VERSION_PATCH=0 -DYAML_VERSION_STRING="\"1.0.0\"" -flto
-LDFLAGS = -flto
+LDFLAGS =
 
 BINDIR := ./bin
 OBJDIR := ./obj

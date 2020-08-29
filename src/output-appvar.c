@@ -58,7 +58,7 @@ int appvar_insert_entry(appvar_t *appvar, int index, int data)
     uint8_t *entryTable = &appvar->data[appvar->headerSize];
     uint8_t *entry;
 
-    if (index > appvar->numEntries - 1)
+    if (index > appvar->totalEntries - 1)
     {
         LL_ERROR("Invalid index for LUT entry.");
         return 1;
@@ -97,8 +97,6 @@ int output_appvar_header(output_t *output, appvar_t *appvar)
     int offset;
     int index;
 
-    appvar->dataOffset = appvar->headerSize;
-
     if (appvar->headerSize > 0)
     {
         if (validate_data_size(appvar, appvar->headerSize) != 0)
@@ -112,6 +110,7 @@ int output_appvar_header(output_t *output, appvar_t *appvar)
 
     if (appvar->lut == false)
     {
+        appvar->dataOffset = appvar->headerSize;
         return 0;
     }
 
@@ -153,7 +152,10 @@ int output_appvar_header(output_t *output, appvar_t *appvar)
     /* + 1 for lut size */
     numEntries += 1;
     appvar->dataOffset = numEntries * appvar->entrySize;
-    appvar->numEntries = numEntries;
+    appvar->totalEntries = numEntries;
+
+    /* temp, just used to validate */
+    appvar->numEntries = appvar->totalEntries;
 
     if (validate_data_size(appvar, appvar->dataOffset) != 0)
     {
@@ -161,7 +163,6 @@ int output_appvar_header(output_t *output, appvar_t *appvar)
     }
 
     appvar->size += appvar->dataOffset;
-    appvar->dataOffset += appvar->headerSize;
     
     /* first entry is number of entries */
     appvar_insert_entry(appvar, 0, numEntries - 1);
@@ -207,16 +208,35 @@ int output_appvar_header(output_t *output, appvar_t *appvar)
 
                     for (l = 0; l < tileset->numTiles; l++)
                     {
+                        tilesetOffset += tileset->tiles[l].size;
+                    }
+
+                    offset += tilesetOffset;
+
+                    index++;
+                }
+            }
+        }
+        for (i = 0; i < output->numConverts; ++i)
+        {
+            convert_t *convert = output->converts[i];
+            tileset_group_t *tilesetGroup = convert->tilesetGroup;
+
+            if (tilesetGroup != NULL)
+            {
+                for (k = 0; k < tilesetGroup->numTilesets; ++k)
+                {
+                    tileset_t *tileset = &tilesetGroup->tilesets[k];
+                    int tilesetOffset = 0;
+
+                    for (l = 0; l < tileset->numTiles; l++)
+                    {
                         appvar_insert_entry(appvar, index, tilesetOffset);
 
                         tilesetOffset += tileset->tiles[l].size;
 
                         index++;
                     }
-
-                    offset += tilesetOffset;
-
-                    index++;
                 }
             }
         }
@@ -249,16 +269,35 @@ int output_appvar_header(output_t *output, appvar_t *appvar)
 
                     for (l = 0; l < tileset->numTiles; l++)
                     {
+                        tilesetOffset += tileset->tiles[l].size;
+                    }
+
+                    offset += tilesetOffset;
+
+                    index++;
+                }
+            }
+        }
+        for (i = 0; i < output->numConverts; ++i)
+        {
+            convert_t *convert = output->converts[i];
+            tileset_group_t *tilesetGroup = convert->tilesetGroup;
+
+            if (tilesetGroup != NULL)
+            {
+                for (k = 0; k < tilesetGroup->numTilesets; ++k)
+                {
+                    tileset_t *tileset = &tilesetGroup->tilesets[k];
+                    int tilesetOffset = 0;
+
+                    for (l = 0; l < tileset->numTiles; l++)
+                    {
                         appvar_insert_entry(appvar, index, tilesetOffset);
 
                         tilesetOffset += tileset->tiles[l].size;
 
                         index++;
                     }
-
-                    offset += tilesetOffset;
-
-                    index++;
                 }
             }
         }
@@ -273,6 +312,8 @@ int output_appvar_header(output_t *output, appvar_t *appvar)
             index++;
         }
     }
+
+    appvar->dataOffset += appvar->headerSize;
 
     return 0;
 }
@@ -683,6 +724,17 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
 
     if (appvar->init)
     {
+        bool hasTilesets = false;
+
+        for (i = 0; i < output->numConverts; ++i)
+        {
+            if (output->converts[i]->tilesetGroup != NULL)
+            {
+                hasTilesets = true;
+                break;
+            }
+        }
+
         if (appvar->lut == false)
         {
             if (appvar->compress != COMPRESS_NONE)
@@ -775,10 +827,21 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                 {
                     fprintf(fds, "    unsigned short *table;\r\n");
                 }
+                if (hasTilesets == true)
+                {
+                    fprintf(fds, "    unsigned int tileset;\r\n");
+                }
                 fprintf(fds, "    void *base;\r\n");
-                fprintf(fds, "    unsigned int i;\r\n\r\n");
+                if (appvar->totalEntries < 256)
+                {
+                    fprintf(fds, "    unsigned char i;\r\n\r\n");
+                }
+                else
+                {
+                    fprintf(fds, "    unsigned int i;\r\n\r\n");
+                }
                 fprintf(fds, "    table = base = (unsigned char*)addr + %s_HEADER_SIZE;\r\n", appvar->name);
-                fprintf(fds, "    if (*table != %d)\r\n", appvar->numEntries);
+                fprintf(fds, "    if (*table != %d)\r\n", appvar->totalEntries - 1);
                 fprintf(fds, "    {\r\n");
                 fprintf(fds, "        return 0;\r\n");
                 fprintf(fds, "    }\r\n\r\n");
@@ -801,7 +864,18 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                     fprintf(fds, "    unsigned short *table;\r\n");
                 }
                 fprintf(fds, "    void *base;\r\n");
-                fprintf(fds, "    unsigned int i;\r\n\r\n");
+                if (hasTilesets == true)
+                {
+                    fprintf(fds, "    unsigned int tileset;\r\n");
+                }
+                if (appvar->totalEntries < 256)
+                {
+                    fprintf(fds, "    unsigned char i;\r\n\r\n");
+                }
+                else
+                {
+                    fprintf(fds, "    unsigned int i;\r\n\r\n");
+                }
                 fprintf(fds, "    ti_CloseAll();\r\n\r\n");
                 fprintf(fds, "    appvar = ti_Open(\"%s\", \"r\");\r\n", appvar->name);
                 fprintf(fds, "    if (appvar == 0)\r\n");
@@ -809,7 +883,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                 fprintf(fds, "        return 0;\r\n");
                 fprintf(fds, "    }\r\n\r\n");
                 fprintf(fds, "    table = base = (char*)ti_GetDataPtr(appvar) + %s_HEADER_SIZE;\r\n", appvar->name);
-                fprintf(fds, "    if (*table != %d)\r\n", appvar->numEntries);
+                fprintf(fds, "    if (*table != %d)\r\n", appvar->totalEntries - 1);
                 fprintf(fds, "    {\r\n");
                 fprintf(fds, "        return 0;\r\n");
                 fprintf(fds, "    }\r\n\r\n");
@@ -818,6 +892,41 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                 fprintf(fds, "        %s_appvar[i] = (void*)(*++table + (unsigned int)base);\r\n", appvar->name);
                 fprintf(fds, "    }\r\n\r\n");
                 fprintf(fds, "    ti_CloseAll();\r\n\r\n");
+            }
+
+            /* output tilemap init */
+            for (i = 0; i < output->numConverts; ++i)
+            {
+                convert_t *convert = output->converts[i];
+                tileset_group_t *tilesetGroup = convert->tilesetGroup;
+
+                if (tilesetGroup != NULL)
+                {
+                    for (k = 0; k < tilesetGroup->numTilesets; ++k)
+                    {
+                        tileset_t *tileset = &tilesetGroup->tilesets[k];
+
+                        fprintf(fds, "    tileset = (unsigned int)%s_appvar[%u];\r\n",
+                            appvar->name,
+                            tileset->appvarIndex);
+                        fprintf(fds, "    for (i = 0; i < %s_tiles_num; i++)\r\n",
+                            tileset->image.name);
+                        fprintf(fds, "    {\r\n");
+
+                        if (tileset->compressed)
+                        {
+                            fprintf(fds, "        %s_tiles_compressed[i] = (void*)(*++table + tileset);\r\n",
+                                tileset->image.name);
+                        }
+                        else
+                        {
+                            fprintf(fds, "        %s_tiles_data[i] = (void*)(*++table + tileset);\r\n",
+                                tileset->image.name);
+                        }
+
+                        fprintf(fds, "    }\r\n\r\n");
+                    }
+                }
             }
 
             fprintf(fds, "    return 1;\r\n");

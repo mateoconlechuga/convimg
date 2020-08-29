@@ -84,6 +84,7 @@ typedef struct
     uint8_t *data;
     int size;
     int numEntries;
+    int totalEntries;
     char *header;
     int headerSize;
     int dataOffset;

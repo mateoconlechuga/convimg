@@ -71,7 +71,7 @@ output_t *output_alloc(void)
     output->appvar.size = 0;
     output->appvar.lut = false;
     output->appvar.header = NULL;
-    output->appvar.header_size = 0;
+    output->appvar.headerSize = 0;
     output->appvar.entrySize = 3;
 
     return output;
@@ -232,7 +232,7 @@ int output_init(output_t *output)
 /*
  * Find the convert containing the data to output.
  */
-static int output_find_converts(output_t *output, convert_t **converts, int numConverts)
+int output_find_converts(output_t *output, convert_t **converts, int numConverts)
 {
     int i, j;
 
@@ -274,7 +274,7 @@ nextconvert:
 /*
  * Find the palettes containing the data to output.
  */
-static int output_find_palettes(output_t *output, palette_t **palettes, int numPalettes)
+int output_find_palettes(output_t *output, palette_t **palettes, int numPalettes)
 {
     int i, j;
 
@@ -324,12 +324,6 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
     if (numConverts == 0)
     {
         return 0;
-    }
-
-    ret = output_find_converts(output, converts, numConverts);
-    if (ret != 0)
-    {
-        return ret;
     }
 
     for (i = 0; i < output->numConverts; ++i)
@@ -446,12 +440,6 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
     if (numPalettes == 0)
     {
         return 0;
-    }
-
-    ret = output_find_palettes(output, palettes, numPalettes);
-    if (ret != 0)
-    {
-        return ret;
     }
 
     for (i = 0; i < output->numPalettes; ++i)

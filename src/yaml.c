@@ -259,7 +259,7 @@ static int parse_palette_entry(palette_entry_t *entry, yaml_document_t *doc, yam
         yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
         char *key = (char*)keyn->data.scalar.value;
         char *value = (char*)valuen->data.scalar.value;
-        int tmpint;
+        int tmpi;
 
         if (keyn != NULL)
         {
@@ -270,8 +270,8 @@ static int parse_palette_entry(palette_entry_t *entry, yaml_document_t *doc, yam
                 return 1;
             }
 
-            tmpint = strtol(value, NULL, 0);
-            if (tmpint > 255 || tmpint < 0)
+            tmpi = strtol(value, NULL, 0);
+            if (tmpi > 255 || tmpi < 0)
             {
                 LL_ERROR("Invalid fixed color option.");
                 return 1;
@@ -279,19 +279,19 @@ static int parse_palette_entry(palette_entry_t *entry, yaml_document_t *doc, yam
 
             if (parse_str_cmp("i", key) || parse_str_cmp("index", key))
             {
-                entry->index = tmpint;
+                entry->index = tmpi;
             }
             else if (parse_str_cmp("r", key) || parse_str_cmp("red", key))
             {
-                entry->color.rgb.r = tmpint;
+                entry->color.rgb.r = tmpi;
             }
             else if (parse_str_cmp("g", key) || parse_str_cmp("green", key))
             {
-                entry->color.rgb.g = tmpint;
+                entry->color.rgb.g = tmpi;
             }
             else if (parse_str_cmp("b", key) || parse_str_cmp("blue", key))
             {
-                entry->color.rgb.b = tmpint;
+                entry->color.rgb.b = tmpi;
             }
             else if (parse_str_cmp("exact", key))
             {
@@ -971,6 +971,8 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
             }
             else
             {
+                int tmpi;
+
                 if (parse_str_cmp("include-file", key))
                 {
                     if (output->includeFileName != NULL)
@@ -1102,7 +1104,7 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
                     else if (parse_str_cmp("header-string", key))
                     {
                         output->appvar.header = strdup(value);
-                        output->appvar.header_size = strlen(output->appvar.header);
+                        output->appvar.headerSize = strlen(output->appvar.header);
                     }
                     else
                     {

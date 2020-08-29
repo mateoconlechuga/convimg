@@ -106,6 +106,22 @@ int main(int argc, char **argv)
             {
                 output_t *output = yamlfile->outputs[i];
 
+                ret = output_find_palettes(output,
+                                           yamlfile->palettes,
+                                           yamlfile->numPalettes);
+                if (ret != 0)
+                {
+                    break;
+                }
+
+                ret = output_find_converts(output,
+                                           yamlfile->converts,
+                                           yamlfile->numConverts);
+                if (ret != 0)
+                {
+                    break;
+                }
+
                 ret = output_init(output);
                 if (ret != 0)
                 {

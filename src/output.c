@@ -65,7 +65,7 @@ output_t *output_alloc(void)
     output->appvar.directory = NULL;
     output->appvar.archived = true;
     output->appvar.init = true;
-    output->appvar.source = APPVAR_SOURCE_C;
+    output->appvar.source = APPVAR_SOURCE_NONE;
     output->appvar.compress = COMPRESS_NONE;
     output->appvar.data = malloc(APPVAR_MAX_DATA_SIZE);
     output->appvar.size = 0;
@@ -174,7 +174,7 @@ void output_free(output_t *output)
     output->appvar.name = NULL;
 
     free(output->appvar.header);
-    output->appvar.name = NULL;
+    output->appvar.header = NULL;
 
     free(output->appvar.data);
     output->appvar.data = NULL;

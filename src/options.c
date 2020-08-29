@@ -320,7 +320,8 @@ static void options_show(const char *prgm)
     LL_PRINT("\n");
     LL_PRINT("       header-string: <string>    : Prepends <string> to the start of the\n");
     LL_PRINT("                                  : AppVar's data.\n");
-    LL_PRINT("                                  : Can be in quoted to ensure proper parsing.\n");
+    LL_PRINT("                                  : Use double quotes to properly interpret\n");
+    LL_PRINT("                                  : escape sequences.\n");
     LL_PRINT("\n");
     LL_PRINT("       archived: <bool>           : \'true\' makes the AppVar archived, while\n");
     LL_PRINT("                                  : \'false\' leaves it unarchived.\n");

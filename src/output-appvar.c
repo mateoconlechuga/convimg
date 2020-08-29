@@ -103,7 +103,7 @@ int output_appvar_header(output_t *output, appvar_t *appvar)
         {
             return 1;
         }
-  
+
         memcpy(&appvar->data[appvar->size], appvar->header, appvar->headerSize);
         appvar->size += appvar->headerSize;
     }
@@ -950,13 +950,13 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
     if (appvar == NULL)
     {
         LL_DEBUG("Invalid param in %s", __func__);
-        return 1;
+        goto error;
     }
 
     if (appvar->name == NULL)
     {
         LL_ERROR("Missing \"name\" parameter for AppVar.");
-        return 1;
+        goto error;
     }
 
     if (varName == NULL || varCName == NULL)
@@ -968,6 +968,12 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
     switch (appvar->source)
     {
         case APPVAR_SOURCE_C:
+            if (output->includeFileName == NULL)
+            {
+                LL_ERROR("Missing \"include-file\" parameter for AppVar.");
+                goto error;
+            }
+
             LL_INFO(" - Writing \'%s\'", output->includeFileName);
 
             fdh = fopen(output->includeFileName, "w");

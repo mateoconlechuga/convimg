@@ -4,9 +4,6 @@ This program is used to convert images to other formats, specifically for the TI
 
 ## Command Line Help
 
-    This program is used to convert images to other formats,
-    specifically for the TI-84+CE and related calculators.
-
     Usage:
         convimg [options] -i <yaml file>
 
@@ -281,7 +278,8 @@ This program is used to convert images to other formats, specifically for the TI
 
            header-string: <string>    : Prepends <string> to the start of the
                                       : AppVar's data.
-                                      : Can be in quoted to ensure proper parsing.
+                                      : Use double quotes to properly interpret
+                                      : escape sequences.
 
            archived: <bool>           : 'true' makes the AppVar archived, while
                                       : 'false' leaves it unarchived.
@@ -297,5 +295,4 @@ This program is used to convert images to other formats, specifically for the TI
             libyaml: (c) 2006-2020 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx7: (c) 2012-2013 by Einar Saukas.
-
 

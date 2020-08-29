@@ -135,3 +135,55 @@ glob_t *strings_find_images(const char *fullPath)
 
     return globbuf;
 }
+
+int strings_utf8_to_iso8859_1(const char *in, int inlen, char *out, int maxlen)
+{
+    unsigned int codepoint;
+    int len;
+
+    if (in == NULL || out == NULL || inlen == 0)
+    {
+        return 0;
+    }
+
+    len = 0;
+    while (maxlen && inlen)
+    {
+        unsigned char ch = *in;
+        inlen--;
+
+        if (ch <= 0x7f)
+        {
+            codepoint = ch;
+        }
+        else if (ch <= 0xbf)
+        {
+            codepoint = (codepoint << 6) | (ch & 0x3f);
+        }
+        else if (ch <= 0xdf)
+        {
+            codepoint = ch & 0x1f;
+        }
+        else if (ch <= 0xef)
+        {
+            codepoint = ch & 0x0f;
+        }
+        else
+        {
+            codepoint = ch & 0x07;
+        }
+
+        in++;
+        if ((*in & 0xc0) != 0x80 && codepoint <= 0x10ffff)
+        {
+            *out = codepoint <= 255 ? codepoint & 0xff : '?';
+            maxlen--;
+            out++;
+            len++;
+        }
+    }
+
+    return len;
+}
+
+

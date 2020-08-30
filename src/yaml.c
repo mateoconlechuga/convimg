@@ -757,6 +757,8 @@ static int parse_convert(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
 
                 if (convert == NULL)
                 {
+                    LL_ERROR("Invalid convert formatting.");
+                    parser_show_mark_error(keyn->start_mark);
                     return 1;
                 }
                 if (parse_str_cmp("palette", key))

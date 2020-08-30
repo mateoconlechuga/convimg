@@ -210,6 +210,11 @@ int output_init(output_t *output)
         strdupcat(output->directory, output->includeFileName);
     free(tmp);
 
+    if (output->numConverts == 0 && output->numPalettes == 0)
+    {
+        LL_WARNING("No palettes or converts are specified for output!");
+    }
+
     if (output->format == OUTPUT_FORMAT_ICE)
     {
         remove(output->includeFileName);

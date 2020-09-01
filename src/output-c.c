@@ -95,10 +95,11 @@ int output_c_image(image_t *image)
     fprintf(fdh, "\r\n");
     fprintf(fdh, "#define %s_width %d\r\n", image->name, image->width);
     fprintf(fdh, "#define %s_height %d\r\n", image->name, image->height);
-    fprintf(fdh, "#define %s_size %d\r\n", image->name, image->size);
+    fprintf(fdh, "#define %s_size %d\r\n", image->name, image->height * image->width + 2);
 
     if (image->compressed)
     {
+        fprintf(fdh, "#define %s_compressed_size %d\r\n", image->name, image->size);
         fprintf(fdh, "extern unsigned char %s_compressed[%d];\r\n", image->name, image->size);
     }
     else

@@ -67,7 +67,7 @@ output_t *output_alloc(void)
     output->appvar.init = true;
     output->appvar.source = APPVAR_SOURCE_NONE;
     output->appvar.compress = COMPRESS_NONE;
-    output->appvar.data = malloc(APPVAR_MAX_DATA_SIZE);
+    output->appvar.data = malloc(APPVAR_MAX_BEFORE_COMPRESSION_SIZE);
     output->appvar.size = 0;
     output->appvar.lut = false;
     output->appvar.header = NULL;

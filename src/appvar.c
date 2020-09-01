@@ -74,6 +74,8 @@ int appvar_write(appvar_t *a, FILE *fdv)
 
     if (a->compress != COMPRESS_NONE)
     {
+        LL_INFO("    - Size before compression: %u bytes", (unsigned int)a->size);
+
         ret = compress_array(&a->data, &size, a->compress);
         if (ret != 0)
         {
@@ -81,6 +83,8 @@ int appvar_write(appvar_t *a, FILE *fdv)
             return ret;
         }
         a->size = size;
+
+        LL_INFO("    - Size after compression: %u bytes", (unsigned int)a->size);
     }
 
     if (a->size > APPVAR_MAX_DATA_SIZE)

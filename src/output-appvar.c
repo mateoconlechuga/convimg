@@ -41,7 +41,7 @@
  */
 static int validate_data_size(appvar_t *appvar, int adding)
 {
-    if (appvar->size + adding >= APPVAR_MAX_DATA_SIZE)
+    if (appvar->size + adding >= APPVAR_MAX_BEFORE_COMPRESSION_SIZE)
     {
         LL_ERROR("Too much data for AppVar \'%s\'.", appvar->name);
         return 1;
@@ -560,6 +560,10 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
     }
 
     appvar->numEntries = index;
+
+    fprintf(fdh, "#define %s_entries_num %d\n",
+        appvar->name,
+        appvar->numEntries);
 
     fprintf(fdh, "extern unsigned char *%s_appvar[%d];\r\n",
         appvar->name,

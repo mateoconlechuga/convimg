@@ -1106,17 +1106,26 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
                     }
                     else if (parse_str_cmp("header-string", key))
                     {
+                        char *header;
+                        int headerSize;
+
                         if (output->appvar.header != NULL)
                         {
                             LL_ERROR("AppVar header already defined.");
                             return 1;
                         }
 
-                        char *header = malloc(valuelen);
-                        int headerSize = strings_utf8_to_iso8859_1(value,
-                                                                   valuelen,
-                                                                   header,
-                                                                   valuelen);
+                        header = malloc(valuelen);
+                        if (header == NULL)
+                        {
+                            LL_DEBUG("Memory error in %s", __func__);
+                            return 1;
+                        }
+
+                        headerSize = strings_utf8_to_iso8859_1(value,
+                                                               valuelen,
+                                                               header,
+                                                               valuelen);
                         output->appvar.header = header;
                         output->appvar.headerSize = headerSize;
                     }

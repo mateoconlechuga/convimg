@@ -464,8 +464,11 @@ static int parse_palette(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
 
                 if (palette == NULL)
                 {
+                    LL_ERROR("Invalid palette formatting. Be sure to use the \'name\' parameter for the palettes list.");
+                    parser_show_mark_error(keyn->start_mark);
                     return 1;
                 }
+
                 if (parse_str_cmp("max-entries", key))
                 {
                     tmpi = strtol(value, NULL, 0);
@@ -757,10 +760,11 @@ static int parse_convert(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
 
                 if (convert == NULL)
                 {
-                    LL_ERROR("Invalid convert formatting.");
+                    LL_ERROR("Invalid convert formatting. Be sure to use the \'name\' parameter for the converts list.");
                     parser_show_mark_error(keyn->start_mark);
                     return 1;
                 }
+
                 if (parse_str_cmp("palette", key))
                 {
                     if (convert->paletteName != NULL)
@@ -975,6 +979,13 @@ static int parse_output(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *ro
             else
             {
                 int tmpi;
+
+                if (output == NULL)
+                {
+                    LL_ERROR("Invalid output formatting. Be sure to use the \'type\' parameter for the outputs list.");
+                    parser_show_mark_error(keyn->start_mark);
+                    return 1;
+                }
 
                 if (parse_str_cmp("include-file", key))
                 {

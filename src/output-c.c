@@ -95,7 +95,7 @@ int output_c_image(image_t *image)
     fprintf(fdh, "\n");
     fprintf(fdh, "#define %s_width %d\n", image->name, image->width);
     fprintf(fdh, "#define %s_height %d\n", image->name, image->height);
-    fprintf(fdh, "#define %s_size %d\n", image->name, image->height * image->width + 2);
+    fprintf(fdh, "#define %s_size %d\n", image->name, image->origSize);
 
     if (image->compressed)
     {

@@ -354,6 +354,8 @@ static int convert_image(convert_t *convert, image_t *image)
         }
     }
 
+    image->origSize = image->size;
+
     if (convert->compress != COMPRESS_NONE)
     {
         ret = image_compress(image, convert->compress);

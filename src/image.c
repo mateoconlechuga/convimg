@@ -131,7 +131,7 @@ int image_load(image_t *image)
         return 1;
     }
 
-    image->size = size = width * height;
+    image->origSize = image->size = size = width * height;
     image->compressed = false;
 
     if (image->flipx)

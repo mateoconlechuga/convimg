@@ -58,6 +58,7 @@ typedef struct
     int rotate;
     bool flipx;
     bool flipy;
+    int origSize;
 
     /* set by output */
     char *directory;

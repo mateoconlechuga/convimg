@@ -410,10 +410,10 @@ static void output_appvar_c_include_file_palettes(output_t *output, FILE *fdh, i
         palette_t *palette = output->palettes[i];
         int size = palette->numEntries * 2;
 
-        fprintf(fdh, "#define sizeof_%s %d\r\n",
+        fprintf(fdh, "#define sizeof_%s %d\n",
             palette->name,
             size);
-        fprintf(fdh, "#define %s (%s_appvar[%d])\r\n",
+        fprintf(fdh, "#define %s (%s_appvar[%d])\n",
             palette->name,
             output->appvar.name,
             *index);
@@ -540,13 +540,13 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
     appvar_t *appvar = &output->appvar;
     int index = 0;
 
-    fprintf(fdh, "#ifndef %s_appvar_include_file\r\n", appvar->name);
-    fprintf(fdh, "#define %s_appvar_include_file\r\n", appvar->name);
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#ifdef __cplusplus\r\n");
-    fprintf(fdh, "extern \"C\" {\r\n");
-    fprintf(fdh, "#endif\r\n");
-    fprintf(fdh, "\r\n");
+    fprintf(fdh, "#ifndef %s_appvar_include_file\n", appvar->name);
+    fprintf(fdh, "#define %s_appvar_include_file\n", appvar->name);
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#ifdef __cplusplus\n");
+    fprintf(fdh, "extern \"C\" {\n");
+    fprintf(fdh, "#endif\n");
+    fprintf(fdh, "\n");
 
     if (output->order == OUTPUT_PALETTES_FIRST)
     {
@@ -565,7 +565,7 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
         appvar->name,
         appvar->numEntries);
 
-    fprintf(fdh, "extern unsigned char *%s_appvar[%d];\r\n",
+    fprintf(fdh, "extern unsigned char *%s_appvar[%d];\n",
         appvar->name,
         appvar->numEntries);
 
@@ -573,22 +573,22 @@ void output_appvar_c_include_file(output_t *output, FILE *fdh)
     {
         if (appvar->compress != COMPRESS_NONE)
         {
-            fprintf(fdh, "unsigned char %s_init(void *addr);\r\n",
+            fprintf(fdh, "unsigned char %s_init(void *addr);\n",
                 appvar->name);
         }
         else
         {
-            fprintf(fdh, "unsigned char %s_init(void);\r\n",
+            fprintf(fdh, "unsigned char %s_init(void);\n",
                 appvar->name);
         }
     }
 
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#ifdef __cplusplus\r\n");
-    fprintf(fdh, "}\r\n");
-    fprintf(fdh, "#endif\r\n");
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#endif\r\n");
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#ifdef __cplusplus\n");
+    fprintf(fdh, "}\n");
+    fprintf(fdh, "#endif\n");
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#endif\n");
 }
 
 /*
@@ -600,19 +600,19 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
     int offset = appvar->dataOffset;
     int i, j, k, l;
 
-    fprintf(fds, "#include \"%s\"\r\n", output->includeFileName);
+    fprintf(fds, "#include \"%s\"\n", output->includeFileName);
     if (appvar->compress == COMPRESS_NONE)
     {
-        fprintf(fds, "#include <fileioc.h>\r\n");
+        fprintf(fds, "#include <fileioc.h>\n");
     }
-    fprintf(fds, "\r\n");
-    fprintf(fds, "#define %s_HEADER_SIZE %u\r\n",
+    fprintf(fds, "\n");
+    fprintf(fds, "#define %s_HEADER_SIZE %u\n",
         appvar->name, appvar->headerSize);
-    fprintf(fds, "\r\n");
+    fprintf(fds, "\n");
 
     if (appvar->lut == false)
     {
-        fprintf(fds, "unsigned char *%s_appvar[%d] =\r\n{\r\n",
+        fprintf(fds, "unsigned char *%s_appvar[%d] =\n{\n",
             appvar->name,
             appvar->numEntries);
 
@@ -621,7 +621,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
         {
             palette_t *palette = output->palettes[i];
 
-            fprintf(fds, "    (unsigned char*)%d,\r\n",
+            fprintf(fds, "    (unsigned char*)%d,\n",
                 offset);
 
             offset += palette->numEntries * 2;
@@ -634,7 +634,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
 
             for (j = 0; j < convert->numImages; ++j)
             {
-                fprintf(fds, "    (unsigned char*)%d,\r\n",
+                fprintf(fds, "    (unsigned char*)%d,\n",
                     offset);
 
                 offset += convert->images[j].size;
@@ -652,7 +652,7 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                         tilesetOffset += tileset->tiles[l].size;
                     }
 
-                    fprintf(fds, "    (unsigned char*)%d,\r\n",
+                    fprintf(fds, "    (unsigned char*)%d,\n",
                         offset);
 
                     offset += tilesetOffset;
@@ -660,11 +660,11 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
             }
         }
 
-        fprintf(fds, "};\r\n\r\n");
+        fprintf(fds, "};\n\n");
     }
     else
     {
-        fprintf(fds, "unsigned char *%s_appvar[%d];\r\n",
+        fprintf(fds, "unsigned char *%s_appvar[%d];\n",
             appvar->name,
             appvar->numEntries);
     }
@@ -686,38 +686,38 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                 {
                     if (tileset->compressed)
                     {
-                        fprintf(fds, "unsigned char *%s_tiles_compressed[%d] =\r\n{\r\n",
+                        fprintf(fds, "unsigned char *%s_tiles_compressed[%d] =\n{\n",
                             tileset->image.name,
                             tileset->numTiles);
                     }
                     else
                     {
-                        fprintf(fds, "unsigned char *%s_tiles_data[%d] =\r\n{\r\n",
+                        fprintf(fds, "unsigned char *%s_tiles_data[%d] =\n{\n",
                             tileset->image.name,
                             tileset->numTiles);
                     }
 
                     for (l = 0; l < tileset->numTiles; l++)
                     {
-                        fprintf(fds, "    (unsigned char*)%d,\r\n",
+                        fprintf(fds, "    (unsigned char*)%d,\n",
                             tilesetOffset);
 
                         tilesetOffset += tileset->tiles[l].size;
                     }
 
-                    fprintf(fds, "};\r\n\r\n");
+                    fprintf(fds, "};\n\n");
                 }
                 else
                 {
                     if (tileset->compressed)
                     {
-                        fprintf(fds, "unsigned char *%s_tiles_compressed[%d];\r\n",
+                        fprintf(fds, "unsigned char *%s_tiles_compressed[%d];\n",
                             tileset->image.name,
                             tileset->numTiles);
                     }
                     else
                     {
-                        fprintf(fds, "unsigned char *%s_tiles_data[%d];\r\n",
+                        fprintf(fds, "unsigned char *%s_tiles_data[%d];\n",
                             tileset->image.name,
                             tileset->numTiles);
                     }
@@ -743,33 +743,33 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
         {
             if (appvar->compress != COMPRESS_NONE)
             {
-                fprintf(fds, "unsigned char %s_init(void *addr)\r\n", appvar->name);
-                fprintf(fds, "{\r\n");
-                fprintf(fds, "    unsigned int data, i;\r\n\r\n");
-                fprintf(fds, "    data = (unsigned int)addr - (unsigned int)%s_appvar[0] + %s_HEADER_SIZE;\r\n", appvar->name, appvar->name);
-                fprintf(fds, "    for (i = 0; i < %d; i++)\r\n", appvar->numEntries);
-                fprintf(fds, "    {\r\n");
-                fprintf(fds, "        %s_appvar[i] += data;\r\n", appvar->name);
-                fprintf(fds, "    }\r\n\r\n");
+                fprintf(fds, "unsigned char %s_init(void *addr)\n", appvar->name);
+                fprintf(fds, "{\n");
+                fprintf(fds, "    unsigned int data, i;\n\n");
+                fprintf(fds, "    data = (unsigned int)addr - (unsigned int)%s_appvar[0] + %s_HEADER_SIZE;\n", appvar->name, appvar->name);
+                fprintf(fds, "    for (i = 0; i < %d; i++)\n", appvar->numEntries);
+                fprintf(fds, "    {\n");
+                fprintf(fds, "        %s_appvar[i] += data;\n", appvar->name);
+                fprintf(fds, "    }\n\n");
             }
             else
             {
-                fprintf(fds, "unsigned char %s_init(void)\r\n", appvar->name);
-                fprintf(fds, "{\r\n");
-                fprintf(fds, "    unsigned int data, i;\r\n");
-                fprintf(fds, "    ti_var_t appvar;\r\n\r\n");
-                fprintf(fds, "    ti_CloseAll();\r\n\r\n");
-                fprintf(fds, "    appvar = ti_Open(\"%s\", \"r\");\r\n", appvar->name);
-                fprintf(fds, "    if (appvar == 0)\r\n");
-                fprintf(fds, "    {\r\n");
-                fprintf(fds, "        return 0;\r\n");
-                fprintf(fds, "    }\r\n\r\n");
-                fprintf(fds, "    data = (unsigned int)ti_GetDataPtr(appvar) - (unsigned int)%s_appvar[0] + %s_HEADER_SIZE;\r\n", appvar->name, appvar->name);
-                fprintf(fds, "    for (i = 0; i < %d; i++)\r\n", appvar->numEntries);
-                fprintf(fds, "    {\r\n");
-                fprintf(fds, "        %s_appvar[i] += data;\r\n", appvar->name);
-                fprintf(fds, "    }\r\n\r\n");
-                fprintf(fds, "    ti_CloseAll();\r\n\r\n");
+                fprintf(fds, "unsigned char %s_init(void)\n", appvar->name);
+                fprintf(fds, "{\n");
+                fprintf(fds, "    unsigned int data, i;\n");
+                fprintf(fds, "    ti_var_t appvar;\n\n");
+                fprintf(fds, "    ti_CloseAll();\n\n");
+                fprintf(fds, "    appvar = ti_Open(\"%s\", \"r\");\n", appvar->name);
+                fprintf(fds, "    if (appvar == 0)\n");
+                fprintf(fds, "    {\n");
+                fprintf(fds, "        return 0;\n");
+                fprintf(fds, "    }\n\n");
+                fprintf(fds, "    data = (unsigned int)ti_GetDataPtr(appvar) - (unsigned int)%s_appvar[0] + %s_HEADER_SIZE;\n", appvar->name, appvar->name);
+                fprintf(fds, "    for (i = 0; i < %d; i++)\n", appvar->numEntries);
+                fprintf(fds, "    {\n");
+                fprintf(fds, "        %s_appvar[i] += data;\n", appvar->name);
+                fprintf(fds, "    }\n\n");
+                fprintf(fds, "    ti_CloseAll();\n\n");
             }
 
             /* output tilemap init */
@@ -786,16 +786,16 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
 
                         if (tileset->compressed)
                         {
-                            fprintf(fds, "    data = (unsigned int)%s_appvar[%u] - (unsigned int)%s_tiles_compressed[0];\r\n",
+                            fprintf(fds, "    data = (unsigned int)%s_appvar[%u] - (unsigned int)%s_tiles_compressed[0];\n",
                                 appvar->name,
                                 tileset->appvarIndex,
                                 tileset->image.name);
-                            fprintf(fds, "    for (i = 0; i < %s_tiles_num; i++)\r\n",
+                            fprintf(fds, "    for (i = 0; i < %s_tiles_num; i++)\n",
                                 tileset->image.name);
-                            fprintf(fds, "    {\r\n");
-                            fprintf(fds, "        %s_tiles_compressed[i] += data;\r\n",
+                            fprintf(fds, "    {\n");
+                            fprintf(fds, "        %s_tiles_compressed[i] += data;\n",
                                 tileset->image.name);
-                            fprintf(fds, "    }\r\n\r\n");
+                            fprintf(fds, "    }\n\n");
                         }
                         else
                         {
@@ -803,99 +803,99 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                                 appvar->name,
                                 tileset->appvarIndex,
                                 tileset->image.name);
-                            fprintf(fds, "    for (i = 0; i < %s_tiles_num; i++)\r\n",
+                            fprintf(fds, "    for (i = 0; i < %s_tiles_num; i++)\n",
                                 tileset->image.name);
-                            fprintf(fds, "    {\r\n");
-                            fprintf(fds, "        %s_tiles_data[i] += data;\r\n",
+                            fprintf(fds, "    {\n");
+                            fprintf(fds, "        %s_tiles_data[i] += data;\n",
                                 tileset->image.name);
-                            fprintf(fds, "    }\r\n\r\n");
+                            fprintf(fds, "    }\n\n");
                         }
                     }
                 }
             }
 
-            fprintf(fds, "    return 1;\r\n");
-            fprintf(fds, "}\r\n\r\n");
+            fprintf(fds, "    return 1;\n");
+            fprintf(fds, "}\n\n");
         }
         else
         {
             if (appvar->compress != COMPRESS_NONE)
             {
-                fprintf(fds, "\r\nunsigned char %s_init(void *addr)\r\n", appvar->name);
-                fprintf(fds, "{\r\n");
+                fprintf(fds, "\nunsigned char %s_init(void *addr)\n", appvar->name);
+                fprintf(fds, "{\n");
                 if (appvar->entrySize == 3)
                 {
-                    fprintf(fds, "    unsigned int *table;\r\n");
+                    fprintf(fds, "    unsigned int *table;\n");
                 }
                 else
                 {
-                    fprintf(fds, "    unsigned short *table;\r\n");
+                    fprintf(fds, "    unsigned short *table;\n");
                 }
                 if (hasTilesets == true)
                 {
-                    fprintf(fds, "    unsigned int tileset;\r\n");
+                    fprintf(fds, "    unsigned int tileset;\n");
                 }
-                fprintf(fds, "    void *base;\r\n");
+                fprintf(fds, "    void *base;\n");
                 if (appvar->totalEntries < 256)
                 {
-                    fprintf(fds, "    unsigned char i;\r\n\r\n");
+                    fprintf(fds, "    unsigned char i;\n\n");
                 }
                 else
                 {
-                    fprintf(fds, "    unsigned int i;\r\n\r\n");
+                    fprintf(fds, "    unsigned int i;\n\n");
                 }
-                fprintf(fds, "    table = base = (unsigned char*)addr + %s_HEADER_SIZE;\r\n", appvar->name);
-                fprintf(fds, "    if (*table != %d)\r\n", appvar->totalEntries - 1);
-                fprintf(fds, "    {\r\n");
-                fprintf(fds, "        return 0;\r\n");
-                fprintf(fds, "    }\r\n\r\n");
-                fprintf(fds, "    for (i = 0; i < %d; i++)\r\n", appvar->numEntries);
-                fprintf(fds, "    {\r\n");
-                fprintf(fds, "        %s_appvar[i] = (void*)(*++table + (unsigned int)base);\r\n", appvar->name);
-                fprintf(fds, "    }\r\n\r\n");
+                fprintf(fds, "    table = base = (unsigned char*)addr + %s_HEADER_SIZE;\n", appvar->name);
+                fprintf(fds, "    if (*table != %d)\n", appvar->totalEntries - 1);
+                fprintf(fds, "    {\n");
+                fprintf(fds, "        return 0;\n");
+                fprintf(fds, "    }\n\n");
+                fprintf(fds, "    for (i = 0; i < %d; i++)\n", appvar->numEntries);
+                fprintf(fds, "    {\n");
+                fprintf(fds, "        %s_appvar[i] = (void*)(*++table + (unsigned int)base);\n", appvar->name);
+                fprintf(fds, "    }\n\n");
             }
             else
             {
-                fprintf(fds, "\r\nunsigned char %s_init(void)\r\n", appvar->name);
-                fprintf(fds, "{\r\n");
-                fprintf(fds, "    ti_var_t appvar;\r\n");
+                fprintf(fds, "\nunsigned char %s_init(void)\n", appvar->name);
+                fprintf(fds, "{\n");
+                fprintf(fds, "    ti_var_t appvar;\n");
                 if (appvar->entrySize == 3)
                 {
-                    fprintf(fds, "    unsigned int *table;\r\n");
+                    fprintf(fds, "    unsigned int *table;\n");
                 }
                 else
                 {
-                    fprintf(fds, "    unsigned short *table;\r\n");
+                    fprintf(fds, "    unsigned short *table;\n");
                 }
-                fprintf(fds, "    void *base;\r\n");
+                fprintf(fds, "    void *base;\n");
                 if (hasTilesets == true)
                 {
-                    fprintf(fds, "    unsigned int tileset;\r\n");
+                    fprintf(fds, "    unsigned int tileset;\n");
                 }
                 if (appvar->totalEntries < 256)
                 {
-                    fprintf(fds, "    unsigned char i;\r\n\r\n");
+                    fprintf(fds, "    unsigned char i;\n\n");
                 }
                 else
                 {
-                    fprintf(fds, "    unsigned int i;\r\n\r\n");
+                    fprintf(fds, "    unsigned int i;\n\n");
                 }
-                fprintf(fds, "    ti_CloseAll();\r\n\r\n");
-                fprintf(fds, "    appvar = ti_Open(\"%s\", \"r\");\r\n", appvar->name);
-                fprintf(fds, "    if (appvar == 0)\r\n");
-                fprintf(fds, "    {\r\n");
-                fprintf(fds, "        return 0;\r\n");
-                fprintf(fds, "    }\r\n\r\n");
-                fprintf(fds, "    table = base = (char*)ti_GetDataPtr(appvar) + %s_HEADER_SIZE;\r\n", appvar->name);
-                fprintf(fds, "    if (*table != %d)\r\n", appvar->totalEntries - 1);
-                fprintf(fds, "    {\r\n");
-                fprintf(fds, "        return 0;\r\n");
-                fprintf(fds, "    }\r\n\r\n");
-                fprintf(fds, "    for (i = 0; i < %d; i++)\r\n", appvar->numEntries);
-                fprintf(fds, "    {\r\n");
-                fprintf(fds, "        %s_appvar[i] = (void*)(*++table + (unsigned int)base);\r\n", appvar->name);
-                fprintf(fds, "    }\r\n\r\n");
-                fprintf(fds, "    ti_CloseAll();\r\n\r\n");
+                fprintf(fds, "    ti_CloseAll();\n\n");
+                fprintf(fds, "    appvar = ti_Open(\"%s\", \"r\");\n", appvar->name);
+                fprintf(fds, "    if (appvar == 0)\n");
+                fprintf(fds, "    {\n");
+                fprintf(fds, "        return 0;\n");
+                fprintf(fds, "    }\n\n");
+                fprintf(fds, "    table = base = (char*)ti_GetDataPtr(appvar) + %s_HEADER_SIZE;\n", appvar->name);
+                fprintf(fds, "    if (*table != %d)\n", appvar->totalEntries - 1);
+                fprintf(fds, "    {\n");
+                fprintf(fds, "        return 0;\n");
+                fprintf(fds, "    }\n\n");
+                fprintf(fds, "    for (i = 0; i < %d; i++)\n", appvar->numEntries);
+                fprintf(fds, "    {\n");
+                fprintf(fds, "        %s_appvar[i] = (void*)(*++table + (unsigned int)base);\n", appvar->name);
+                fprintf(fds, "    }\n\n");
+                fprintf(fds, "    ti_CloseAll();\n\n");
             }
 
             /* output tilemap init */
@@ -910,31 +910,31 @@ void output_appvar_c_source_file(output_t *output, FILE *fds)
                     {
                         tileset_t *tileset = &tilesetGroup->tilesets[k];
 
-                        fprintf(fds, "    tileset = (unsigned int)%s_appvar[%u];\r\n",
+                        fprintf(fds, "    tileset = (unsigned int)%s_appvar[%u];\n",
                             appvar->name,
                             tileset->appvarIndex);
-                        fprintf(fds, "    for (i = 0; i < %s_tiles_num; i++)\r\n",
+                        fprintf(fds, "    for (i = 0; i < %s_tiles_num; i++)\n",
                             tileset->image.name);
-                        fprintf(fds, "    {\r\n");
+                        fprintf(fds, "    {\n");
 
                         if (tileset->compressed)
                         {
-                            fprintf(fds, "        %s_tiles_compressed[i] = (void*)(*++table + tileset);\r\n",
+                            fprintf(fds, "        %s_tiles_compressed[i] = (void*)(*++table + tileset);\n",
                                 tileset->image.name);
                         }
                         else
                         {
-                            fprintf(fds, "        %s_tiles_data[i] = (void*)(*++table + tileset);\r\n",
+                            fprintf(fds, "        %s_tiles_data[i] = (void*)(*++table + tileset);\n",
                                 tileset->image.name);
                         }
 
-                        fprintf(fds, "    }\r\n\r\n");
+                        fprintf(fds, "    }\n\n");
                     }
                 }
             }
 
-            fprintf(fds, "    return 1;\r\n");
-            fprintf(fds, "}\r\n\r\n");
+            fprintf(fds, "    return 1;\n");
+            fprintf(fds, "}\n\n");
         }
     }
 }
@@ -980,7 +980,7 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
 
             LL_INFO(" - Writing \'%s\'", output->includeFileName);
 
-            fdh = fopen(output->includeFileName, "w");
+            fdh = fopen(output->includeFileName, "wt");
             if (fdh == NULL)
             {
                 LL_ERROR("Could not open file: %s", strerror(errno));
@@ -991,7 +991,7 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
 
             LL_INFO(" - Writing \'%s\'", varCName);
 
-            fds = fopen(varCName, "w");
+            fds = fopen(varCName, "wt");
             if (fds == NULL)
             {
                 fclose(fdh);

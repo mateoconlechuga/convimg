@@ -53,7 +53,7 @@ static int output_ice(unsigned char *data, size_t size, FILE *fd)
         fprintf(fd, "%02X", data[i]);
     }
 
-    fprintf(fd, "\"\r\n\r\n");
+    fprintf(fd, "\"\n\n");
 
     return 0;
 }
@@ -65,14 +65,14 @@ int output_ice_image(image_t *image, char *file)
 {
     FILE *fd;
 
-    fd = fopen(file, "a");
+    fd = fopen(file, "at");
     if (fd == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
         return 1;
     }
 
-    fprintf(fd, "%s | %d bytes\r\n", image->name, image->size);
+    fprintf(fd, "%s | %d bytes\n", image->name, image->size);
     output_ice(image->data, image->size, fd);
 
     fclose(fd);
@@ -102,14 +102,14 @@ int output_ice_palette(palette_t *palette, char *file)
     FILE *fd;
     int i;
 
-    fd = fopen(file, "a");
+    fd = fopen(file, "at");
     if (fd == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
         return 1;
     }
 
-    fprintf(fd, "%s | %d bytes\r\n\"", palette->name, size);
+    fprintf(fd, "%s | %d bytes\n\"", palette->name, size);
 
     for (i = 0; i < palette->numEntries; ++i)
     {
@@ -119,7 +119,7 @@ int output_ice_palette(palette_t *palette, char *file)
                 color->target & 255,
                 (color->target >> 8) & 255);
     }
-    fprintf(fd, "\"\r\n\r\n");
+    fprintf(fd, "\"\n\n");
 
     fclose(fd);
 

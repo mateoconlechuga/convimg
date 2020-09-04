@@ -348,14 +348,14 @@ static int options_write_new(void)
     FILE *fd;
     static const char *name = "convimg.yaml";
 
-    fd = fopen(name, "r");
+    fd = fopen(name, "rt");
     if (fd != NULL)
     {
         LL_ERROR("\'%s\' already exists.", name);
         return 1;
     }
 
-    fd = fopen(name, "w");
+    fd = fopen(name, "wt");
     if (fd == NULL)
     {
         LL_ERROR("Could not write \'%s\': %s", name, strerror(errno));
@@ -382,25 +382,25 @@ static int options_write_new(void)
     LL_PRINT("            converts:                 : Converted sections, based on name\n");
     LL_PRINT("              - myimages              : Name of each convert section\n");
 
-    fprintf(fd, "palettes: c\r\n");
-    fprintf(fd, "  - name: mypalette\r\n");
-    fprintf(fd, "    images: automatic:\r\n");
-    fprintf(fd, "\r\n");
-    fprintf(fd, "converts:\r\n");
-    fprintf(fd, "  - name: myimages\r\n");
-    fprintf(fd, "    palette: mypalette\r\n");
-    fprintf(fd, "    images:\r\n");
-    fprintf(fd, "      - image1.png\r\n");
-    fprintf(fd, "      - image2.png\r\n");
-    fprintf(fd, "      - image3.png\r\n");
-    fprintf(fd, "\r\n");
-    fprintf(fd, "outputs:\r\n");
-    fprintf(fd, "  - type: c\r\n");
-    fprintf(fd, "    include-file: gfx.h\r\n");
-    fprintf(fd, "    palettes:\r\n");
-    fprintf(fd, "      - mypalette\r\n");
-    fprintf(fd, "    converts:\r\n");
-    fprintf(fd, "      - myimages\r\n");
+    fprintf(fd, "palettes: c\n");
+    fprintf(fd, "  - name: mypalette\n");
+    fprintf(fd, "    images: automatic:\n");
+    fprintf(fd, "\n");
+    fprintf(fd, "converts:\n");
+    fprintf(fd, "  - name: myimages\n");
+    fprintf(fd, "    palette: mypalette\n");
+    fprintf(fd, "    images:\n");
+    fprintf(fd, "      - image1.png\n");
+    fprintf(fd, "      - image2.png\n");
+    fprintf(fd, "      - image3.png\n");
+    fprintf(fd, "\n");
+    fprintf(fd, "outputs:\n");
+    fprintf(fd, "  - type: c\n");
+    fprintf(fd, "    include-file: gfx.h\n");
+    fprintf(fd, "    palettes:\n");
+    fprintf(fd, "      - mypalette\n");
+    fprintf(fd, "    converts:\n");
+    fprintf(fd, "      - myimages\n");
 
     fclose(fd);
 
@@ -422,7 +422,7 @@ static int options_verify(options_t *options)
         return OPTIONS_SUCCESS;
     }
 
-    fd = fopen(options->yamlfile.name, "r");
+    fd = fopen(options->yamlfile.name, "rt");
     if (fd == NULL)
     {
         goto error;

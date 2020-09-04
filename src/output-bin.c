@@ -200,7 +200,7 @@ int output_bin_include_file(output_t *output)
 
     LL_INFO(" - Writing \'%s\'", includeFile);
 
-    fdi = fopen(includeFile, "w");
+    fdi = fopen(includeFile, "wt");
     if (fdi == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
@@ -209,7 +209,7 @@ int output_bin_include_file(output_t *output)
 
     for (i = 0; i < output->numPalettes; ++i)
     {
-        fprintf(fdi, "%s.bin\r\n", output->palettes[i]->name);
+        fprintf(fdi, "%s.bin\n", output->palettes[i]->name);
     }
 
     for (i = 0; i < output->numConverts; ++i)
@@ -221,7 +221,7 @@ int output_bin_include_file(output_t *output)
         {
             image_t *image = &convert->images[j];
 
-            fprintf(fdi, "%s.bin\r\n", image->name);
+            fprintf(fdi, "%s.bin\n", image->name);
         }
 
         if (tilesetGroup != NULL)
@@ -230,7 +230,7 @@ int output_bin_include_file(output_t *output)
             {
                 tileset_t *tileset = &tilesetGroup->tilesets[k];
 
-                fprintf(fdi, "%s.bin\r\n", tileset->image.name);
+                fprintf(fdi, "%s.bin\n", tileset->image.name);
             }
         }
     }

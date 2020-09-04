@@ -55,7 +55,7 @@ static int output_asm(unsigned char *arr, size_t size, FILE *fdo)
             fprintf(fdo, "$%02x", arr[i]);
             if (!last)
             {
-                fputs("\r\n\tdb\t", fdo);
+                fputs("\n\tdb\t", fdo);
             }
         }
         else
@@ -63,7 +63,7 @@ static int output_asm(unsigned char *arr, size_t size, FILE *fdo)
              fprintf(fdo, "$%02x,", arr[i]);
         }
     }
-    fputs("\r\n", fdo);
+    fputs("\n", fdo);
 
     return 0;
 }
@@ -78,17 +78,17 @@ int output_asm_image(image_t *image)
 
     LL_INFO(" - Writing \'%s\'", source);
 
-    fds = fopen(source, "w");
+    fds = fopen(source, "wt");
     if (fds == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 
-    fprintf(fds, "%s_width := %d\r\n", image->name, image->width);
-    fprintf(fds, "%s_height := %d\r\n", image->name, image->height);
-    fprintf(fds, "%s_size := %d\r\n", image->name, image->size);
-    fprintf(fds, "%s:\r\n\tdb\t", image->name);
+    fprintf(fds, "%s_width := %d\n", image->name, image->width);
+    fprintf(fds, "%s_height := %d\n", image->name, image->height);
+    fprintf(fds, "%s_size := %d\n", image->name, image->size);
+    fprintf(fds, "%s:\n\tdb\t", image->name);
 
     output_asm(image->data, image->size, fds);
 
@@ -114,14 +114,14 @@ int output_asm_tileset(tileset_t *tileset)
 
     LL_INFO(" - Writing \'%s\'", source);
 
-    fds = fopen(source, "w");
+    fds = fopen(source, "wt");
     if (fds == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 
-    fprintf(fds, "%s_num_tiles := %d\r\n",
+    fprintf(fds, "%s_num_tiles := %d\n",
         tileset->image.name,
         tileset->numTiles);
 
@@ -129,19 +129,19 @@ int output_asm_tileset(tileset_t *tileset)
     {
         tileset_tile_t *tile = &tileset->tiles[i];
 
-        fprintf(fds, "%s_tile_%d:\r\n\tdb\t", tileset->image.name, i);
+        fprintf(fds, "%s_tile_%d:\n\tdb\t", tileset->image.name, i);
 
         output_asm(tile->data, tile->size, fds);
     }
 
     if (tileset->pTable == true)
     {
-        fprintf(fds, "%s_tiles:\r\n",
+        fprintf(fds, "%s_tiles:\n",
             tileset->image.name);
 
         for (i = 0; i < tileset->numTiles; ++i)
         {
-            fprintf(fds, "\tdl\t%s_tile_%d\r\n",
+            fprintf(fds, "\tdl\t%s_tile_%d\n",
                 tileset->image.name,
                 i);
         }
@@ -168,7 +168,7 @@ int output_asm_palette(palette_t *palette)
 
     LL_INFO(" - Writing \'%s\'", source);
 
-    fds = fopen(source, "w");
+    fds = fopen(source, "wt");
     if (fds == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
@@ -177,20 +177,20 @@ int output_asm_palette(palette_t *palette)
 
     size = palette->numEntries * 2;
 
-    fprintf(fds, "sizeof_%s := %d\r\n", palette->name, size);
+    fprintf(fds, "sizeof_%s := %d\n", palette->name, size);
 
     if (palette->includeSize)
     {
-        fprintf(fds, "\tdw\t%d\r\n", size);
+        fprintf(fds, "\tdw\t%d\n", size);
     }
 
-    fprintf(fds, "%s:\r\n", palette->name);
+    fprintf(fds, "%s:\n", palette->name);
 
     for (i = 0; i < palette->numEntries; ++i)
     {
         color_t *color = &palette->entries[i].color;
 
-        fprintf(fds, "\tdw\t$%04x ; %3d: rgb(%3d, %3d, %3d)\r\n",
+        fprintf(fds, "\tdw\t$%04x ; %3d: rgb(%3d, %3d, %3d)\n",
                 color->target,
                 i,
                 color->rgb.r,
@@ -228,7 +228,7 @@ int output_asm_include_file(output_t *output)
 
     LL_INFO(" - Writing \'%s\'", includeFile);
 
-    fdi = fopen(includeFile, "w");
+    fdi = fopen(includeFile, "wt");
     if (fdi == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
@@ -237,7 +237,7 @@ int output_asm_include_file(output_t *output)
 
     for (i = 0; i < output->numPalettes; ++i)
     {
-        fprintf(fdi, "include \'%s.asm\'\r\n", output->palettes[i]->name);
+        fprintf(fdi, "include \'%s.asm\'\n", output->palettes[i]->name);
     }
 
     for (i = 0; i < output->numConverts; ++i)
@@ -249,7 +249,7 @@ int output_asm_include_file(output_t *output)
         {
             image_t *image = &convert->images[j];
 
-            fprintf(fdi, "include \'%s.asm\'\r\n", image->name);
+            fprintf(fdi, "include \'%s.asm\'\n", image->name);
         }
 
         if (tilesetGroup != NULL)
@@ -258,7 +258,7 @@ int output_asm_include_file(output_t *output)
             {
                 tileset_t *tileset = &tilesetGroup->tilesets[k];
 
-                fprintf(fdi, "include \'%s.asm\'\r\n", tileset->image.name);
+                fprintf(fdi, "include \'%s.asm\'\n", tileset->image.name);
             }
         }
     }

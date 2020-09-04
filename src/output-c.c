@@ -50,7 +50,7 @@ static int output_c(unsigned char *arr, size_t size, FILE *fdo)
     {
         if (i % 32 == 0)
         {
-            fputs("\r\n    ", fdo);
+            fputs("\n    ", fdo);
         }
 
         if (i + 1 == size)
@@ -62,7 +62,7 @@ static int output_c(unsigned char *arr, size_t size, FILE *fdo)
             fprintf(fdo, "0x%02x,", arr[i]);
         }
     }
-    fprintf(fdo, "\r\n};\r\n");
+    fprintf(fdo, "\n};\n");
 
     return 0;
 }
@@ -79,54 +79,54 @@ int output_c_image(image_t *image)
 
     LL_INFO(" - Writing \'%s\'", header);
 
-    fdh = fopen(header, "w");
+    fdh = fopen(header, "wt");
     if (fdh == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 
-    fprintf(fdh, "#ifndef %s_include_file\r\n", image->name);
-    fprintf(fdh, "#define %s_include_file\r\n", image->name);
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#ifdef __cplusplus\r\n");
-    fprintf(fdh, "extern \"C\" {\r\n");
-    fprintf(fdh, "#endif\r\n");
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#define %s_width %d\r\n", image->name, image->width);
-    fprintf(fdh, "#define %s_height %d\r\n", image->name, image->height);
-    fprintf(fdh, "#define %s_size %d\r\n", image->name, image->height * image->width + 2);
+    fprintf(fdh, "#ifndef %s_include_file\n", image->name);
+    fprintf(fdh, "#define %s_include_file\n", image->name);
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#ifdef __cplusplus\n");
+    fprintf(fdh, "extern \"C\" {\n");
+    fprintf(fdh, "#endif\n");
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#define %s_width %d\n", image->name, image->width);
+    fprintf(fdh, "#define %s_height %d\n", image->name, image->height);
+    fprintf(fdh, "#define %s_size %d\n", image->name, image->height * image->width + 2);
 
     if (image->compressed)
     {
-        fprintf(fdh, "#define %s_compressed_size %d\r\n", image->name, image->size);
-        fprintf(fdh, "extern unsigned char %s_compressed[%d];\r\n", image->name, image->size);
+        fprintf(fdh, "#define %s_compressed_size %d\n", image->name, image->size);
+        fprintf(fdh, "extern unsigned char %s_compressed[%d];\n", image->name, image->size);
     }
     else
     {
         if (image->rlet)
         {
-            fprintf(fdh, "#define %s ((gfx_rletsprite_t*)%s_data)\r\n", image->name, image->name);
+            fprintf(fdh, "#define %s ((gfx_rletsprite_t*)%s_data)\n", image->name, image->name);
         }
         else
         {
-            fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_data)\r\n", image->name, image->name);
+            fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_data)\n", image->name, image->name);
         }
-        fprintf(fdh, "extern unsigned char %s_data[%d];\r\n", image->name, image->size);
+        fprintf(fdh, "extern unsigned char %s_data[%d];\n", image->name, image->size);
     }
 
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#ifdef __cplusplus\r\n");
-    fprintf(fdh, "}\r\n");
-    fprintf(fdh, "#endif\r\n");
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#endif\r\n");
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#ifdef __cplusplus\n");
+    fprintf(fdh, "}\n");
+    fprintf(fdh, "#endif\n");
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#endif\n");
 
     fclose(fdh);
 
     LL_INFO(" - Writing \'%s\'", source);
 
-    fds = fopen(source, "w");
+    fds = fopen(source, "wt");
     if (fds == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
@@ -135,11 +135,11 @@ int output_c_image(image_t *image)
 
     if (image->compressed)
     {
-        fprintf(fds, "unsigned char %s_compressed[%d] =\r\n{", image->name, image->size);
+        fprintf(fds, "unsigned char %s_compressed[%d] =\n{", image->name, image->size);
     }
     else
     {
-        fprintf(fds, "unsigned char %s_data[%d] =\r\n{", image->name, image->size);
+        fprintf(fds, "unsigned char %s_data[%d] =\n{", image->name, image->size);
     }
 
     output_c(image->data, image->size, fds);
@@ -171,20 +171,20 @@ int output_c_tileset(tileset_t *tileset)
 
     LL_INFO(" - Writing \'%s\'", header);
 
-    fdh = fopen(header, "w");
+    fdh = fopen(header, "wt");
     if (fdh == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 
-    fprintf(fdh, "#ifndef %s_include_file\r\n", tileset->image.name);
-    fprintf(fdh, "#define %s_include_file\r\n", tileset->image.name);
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#ifdef __cplusplus\r\n");
-    fprintf(fdh, "extern \"C\" {\r\n");
-    fprintf(fdh, "#endif\r\n");
-    fprintf(fdh, "\r\n");
+    fprintf(fdh, "#ifndef %s_include_file\n", tileset->image.name);
+    fprintf(fdh, "#define %s_include_file\n", tileset->image.name);
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#ifdef __cplusplus\n");
+    fprintf(fdh, "extern \"C\" {\n");
+    fprintf(fdh, "#endif\n");
+    fprintf(fdh, "\n");
 
     for (i = 0; i < tileset->numTiles; ++i)
     {
@@ -192,18 +192,18 @@ int output_c_tileset(tileset_t *tileset)
 
         if (tileset->compressed)
         {
-            fprintf(fdh, "extern unsigned char %s_tile_%d_compressed[%d];\r\n",
+            fprintf(fdh, "extern unsigned char %s_tile_%d_compressed[%d];\n",
                 tileset->image.name,
                 i,
                 tile->size);
         }
         else
         {
-            fprintf(fdh, "extern unsigned char %s_tile_%d_data[%d];\r\n",
+            fprintf(fdh, "extern unsigned char %s_tile_%d_data[%d];\n",
                 tileset->image.name,
                 i,
                 tile->size);
-            fprintf(fdh, "#define %s_tile_%d ((gfx_sprite_t*)%s_tile_%d_data)\r\n",
+            fprintf(fdh, "#define %s_tile_%d ((gfx_sprite_t*)%s_tile_%d_data)\n",
                 tileset->image.name,
                 i,
                 tileset->image.name,
@@ -211,7 +211,7 @@ int output_c_tileset(tileset_t *tileset)
         }
     }
 
-    fprintf(fdh, "#define %s_num_tiles %d\r\n",
+    fprintf(fdh, "#define %s_num_tiles %d\n",
         tileset->image.name,
         tileset->numTiles);
 
@@ -219,34 +219,34 @@ int output_c_tileset(tileset_t *tileset)
     {
         if (tileset->compressed)
         {
-            fprintf(fdh, "extern unsigned char *%s_tiles_compressed[%d];\r\n",
+            fprintf(fdh, "extern unsigned char *%s_tiles_compressed[%d];\n",
                 tileset->image.name,
                 tileset->numTiles);
         }
         else
         {
-            fprintf(fdh, "extern unsigned char *%s_tiles_data[%d];\r\n",
+            fprintf(fdh, "extern unsigned char *%s_tiles_data[%d];\n",
                 tileset->image.name,
                 tileset->numTiles);
 
-            fprintf(fdh, "#define %s_tiles ((gfx_sprite_t**)%s_tiles_data)\r\n",
+            fprintf(fdh, "#define %s_tiles ((gfx_sprite_t**)%s_tiles_data)\n",
                 tileset->image.name,
                 tileset->image.name);
         }
     }
 
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#ifdef __cplusplus\r\n");
-    fprintf(fdh, "}\r\n");
-    fprintf(fdh, "#endif\r\n");
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#endif\r\n");
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#ifdef __cplusplus\n");
+    fprintf(fdh, "}\n");
+    fprintf(fdh, "#endif\n");
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#endif\n");
 
     fclose(fdh);
 
     LL_INFO(" - Writing \'%s\'", source);
 
-    fds = fopen(source, "w");
+    fds = fopen(source, "wt");
     if (fds == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
@@ -259,14 +259,14 @@ int output_c_tileset(tileset_t *tileset)
 
         if (tileset->compressed)
         {
-            fprintf(fds, "unsigned char %s_tile_%d_compressed[%d] =\r\n{",
+            fprintf(fds, "unsigned char %s_tile_%d_compressed[%d] =\n{",
                 tileset->image.name,
                 i,
                 tile->size);
         }
         else
         {
-            fprintf(fds, "unsigned char %s_tile_%d_data[%d] =\r\n{",
+            fprintf(fds, "unsigned char %s_tile_%d_data[%d] =\n{",
                 tileset->image.name,
                 i,
                 tile->size);
@@ -279,13 +279,13 @@ int output_c_tileset(tileset_t *tileset)
     {
         if (tileset->compressed)
         {
-            fprintf(fds, "unsigned char *%s_tiles_compressed[%d] =\r\n{\r\n",
+            fprintf(fds, "unsigned char *%s_tiles_compressed[%d] =\n{\n",
                 tileset->image.name,
                 tileset->numTiles);
         }
         else
         {
-            fprintf(fds, "unsigned char *%s_tiles_data[%d] =\r\n{\r\n",
+            fprintf(fds, "unsigned char *%s_tiles_data[%d] =\n{\n",
                 tileset->image.name,
                 tileset->numTiles);
         }
@@ -294,19 +294,19 @@ int output_c_tileset(tileset_t *tileset)
         {
             if (tileset->compressed)
             {
-                fprintf(fds, "    %s_tile_%d_compressed,\r\n",
+                fprintf(fds, "    %s_tile_%d_compressed,\n",
                     tileset->image.name,
                     i);
             }
             else
             {
-                fprintf(fds, "    %s_tile_%d_data,\r\n",
+                fprintf(fds, "    %s_tile_%d_data,\n",
                     tileset->image.name,
                     i);
             }
         }
 
-        fprintf(fds, "};\r\n");
+        fprintf(fds, "};\n");
     }
 
     fclose(fds);
@@ -336,41 +336,41 @@ int output_c_palette(palette_t *palette)
 
     LL_INFO(" - Writing \'%s\'", header);
 
-    fdh = fopen(header, "w");
+    fdh = fopen(header, "wt");
     if (fdh == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 
-    fprintf(fdh, "#ifndef %s_include_file\r\n", palette->name);
-    fprintf(fdh, "#define %s_include_file\r\n", palette->name);
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#ifdef __cplusplus\r\n");
-    fprintf(fdh, "extern \"C\" {\r\n");
-    fprintf(fdh, "#endif\r\n");
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#define sizeof_%s %d\r\n", palette->name, size);
-    fprintf(fdh, "extern unsigned char %s[%d];\r\n", palette->name, size);
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#ifdef __cplusplus\r\n");
-    fprintf(fdh, "}\r\n");
-    fprintf(fdh, "#endif\r\n");
-    fprintf(fdh, "\r\n");
-    fprintf(fdh, "#endif\r\n");
+    fprintf(fdh, "#ifndef %s_include_file\n", palette->name);
+    fprintf(fdh, "#define %s_include_file\n", palette->name);
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#ifdef __cplusplus\n");
+    fprintf(fdh, "extern \"C\" {\n");
+    fprintf(fdh, "#endif\n");
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#define sizeof_%s %d\n", palette->name, size);
+    fprintf(fdh, "extern unsigned char %s[%d];\n", palette->name, size);
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#ifdef __cplusplus\n");
+    fprintf(fdh, "}\n");
+    fprintf(fdh, "#endif\n");
+    fprintf(fdh, "\n");
+    fprintf(fdh, "#endif\n");
 
     fclose(fdh);
 
     LL_INFO(" - Writing \'%s\'", source);
 
-    fds = fopen(source, "w");
+    fds = fopen(source, "wt");
     if (fds == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 
-    fprintf(fds, "unsigned char %s[%d] =\r\n{\r\n", palette->name, size);
+    fprintf(fds, "unsigned char %s[%d] =\n{\n", palette->name, size);
 
     for (i = 0; i < palette->numEntries; ++i)
     {
@@ -379,7 +379,7 @@ int output_c_palette(palette_t *palette)
 
         if (palette->entries[i].exact)
         {
-            fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) [exact original: rgb(%3d, %3d, %3d)] */\r\n",
+            fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) [exact original: rgb(%3d, %3d, %3d)] */\n",
                     color->target & 255,
                     (color->target >> 8) & 255,
                     i,
@@ -392,11 +392,11 @@ int output_c_palette(palette_t *palette)
         }
         else if (!palette->entries[i].valid)
         {
-            fprintf(fds, "    0x00, 0x00, /* %3d: (unused) */\r\n", i);
+            fprintf(fds, "    0x00, 0x00, /* %3d: (unused) */\n", i);
         }
         else
         {
-            fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) */\r\n",
+            fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) */\n",
                     color->target & 255,
                     (color->target >> 8) & 255,
                     i,
@@ -405,7 +405,7 @@ int output_c_palette(palette_t *palette)
                     color->rgb.b);
         }
     }
-    fprintf(fds, "};\r\n");
+    fprintf(fds, "};\n");
 
     fclose(fds);
 
@@ -439,24 +439,24 @@ int output_c_include_file(output_t *output)
 
     LL_INFO(" - Writing \'%s\'", includeFile);
 
-    fdi = fopen(includeFile, "w");
+    fdi = fopen(includeFile, "wt");
     if (fdi == NULL)
     {
         LL_ERROR("Could not open file: %s", strerror(errno));
         goto error;
     }
 
-    fprintf(fdi, "#ifndef %s_include_file\r\n", includeName);
-    fprintf(fdi, "#define %s_include_file\r\n", includeName);
-    fprintf(fdi, "\r\n");
-    fprintf(fdi, "#ifdef __cplusplus\r\n");
-    fprintf(fdi, "extern \"C\" {\r\n");
-    fprintf(fdi, "#endif\r\n");
-    fprintf(fdi, "\r\n");
+    fprintf(fdi, "#ifndef %s_include_file\n", includeName);
+    fprintf(fdi, "#define %s_include_file\n", includeName);
+    fprintf(fdi, "\n");
+    fprintf(fdi, "#ifdef __cplusplus\n");
+    fprintf(fdi, "extern \"C\" {\n");
+    fprintf(fdi, "#endif\n");
+    fprintf(fdi, "\n");
 
     for (i = 0; i < output->numPalettes; ++i)
     {
-        fprintf(fdi, "#include \"%s.h\"\r\n", output->palettes[i]->name);
+        fprintf(fdi, "#include \"%s.h\"\n", output->palettes[i]->name);
     }
 
     for (i = 0; i < output->numConverts; ++i)
@@ -468,7 +468,7 @@ int output_c_include_file(output_t *output)
         {
             image_t *image = &convert->images[j];
 
-            fprintf(fdi, "#include \"%s.h\"\r\n", image->name);
+            fprintf(fdi, "#include \"%s.h\"\n", image->name);
         }
 
         if (tilesetGroup != NULL)
@@ -477,17 +477,17 @@ int output_c_include_file(output_t *output)
             {
                 tileset_t *tileset = &tilesetGroup->tilesets[k];
 
-                fprintf(fdi, "#include \"%s.h\"\r\n", tileset->image.name);
+                fprintf(fdi, "#include \"%s.h\"\n", tileset->image.name);
             }
         }
     }
 
-    fprintf(fdi, "\r\n");
-    fprintf(fdi, "#ifdef __cplusplus\r\n");
-    fprintf(fdi, "}\r\n");
-    fprintf(fdi, "#endif\r\n");
-    fprintf(fdi, "\r\n");
-    fprintf(fdi, "#endif\r\n");
+    fprintf(fdi, "\n");
+    fprintf(fdi, "#ifdef __cplusplus\n");
+    fprintf(fdi, "}\n");
+    fprintf(fdi, "#endif\n");
+    fprintf(fdi, "\n");
+    fprintf(fdi, "#endif\n");
 
     fclose(fdi);
 

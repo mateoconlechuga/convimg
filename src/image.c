@@ -128,6 +128,7 @@ int image_load(image_t *image)
                                 STBI_rgb_alpha);
     if (data == NULL)
     {
+        LL_ERROR("Could not load image \'%s\'", image->path);
         return 1;
     }
 

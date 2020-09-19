@@ -324,6 +324,88 @@ static int parse_palette_entry(palette_entry_t *entry, yaml_document_t *doc, yam
 }
 
 /*
+ * Parses a fixed palette image.
+ */
+static int parse_palette_image(palette_t *palette, const char *file)
+{
+    image_t image;
+    int i;
+
+    image.flipx = false;
+    image.flipy = false;
+    image.rotate = 0;
+    image.name = NULL;
+    image.path = strdup(file);
+
+    if (image_load(&image))
+    {
+        return 1;
+    }
+
+    if (image.height != 1 || image.width > 256)
+    {
+        LL_ERROR("Invalid palette image format for \'%s\'.", file);
+        goto fail;
+    }
+
+    for (i = 0; i < image.width; ++i)
+    {
+        palette_entry_t entry;
+        int o = i * 4;
+        int j;
+
+        memset(&entry, 0, sizeof entry);
+
+        entry.color.rgb.a = 255;
+        entry.exact = false;
+
+        entry.index = i;
+        entry.color.rgb.r = image.data[o + 0];
+        entry.color.rgb.g = image.data[o + 1];
+        entry.color.rgb.b = image.data[o + 2];
+
+        if (palette->numFixedEntries >= 255)
+        {
+            LL_ERROR("Too many fixed colors for palette \'%s\'.", palette->name);
+            goto fail;
+        }
+
+        for (j = 0; j < palette->numFixedEntries; ++j)
+        {
+            if (palette->fixedEntries[j].index == i)
+            {
+                LL_WARNING("Overriding palette index %d with (%d,%d,%d).",
+                    entry.index,
+                    entry.color.rgb.r,
+                    entry.color.rgb.g,
+                    entry.color.rgb.b);
+            }
+        }
+
+        entry.origcolor = entry.color;
+
+        LL_DEBUG("Adding fixed color: i: %d r: %d g: %d b: %d exact: %s",
+            entry.index,
+            entry.color.rgb.r,
+            entry.color.rgb.g,
+            entry.color.rgb.b,
+            entry.exact ? "true" : "false");
+
+        palette->fixedEntries[palette->numFixedEntries] = entry;
+        palette->numFixedEntries++;
+    }
+
+    image_free(&image);
+
+    return 0;
+
+fail:
+    image_free(&image);
+
+    return 1;
+}
+
+/*
  * Parses the fixed entry list.
  */
 static int parse_palette_fixed_entry(palette_t *palette, yaml_document_t *doc, yaml_node_t *root)
@@ -342,12 +424,37 @@ static int parse_palette_fixed_entry(palette_t *palette, yaml_document_t *doc, y
         {
             if (parse_str_cmp("color", key))
             {
+                int j;
+
+                if (palette->numFixedEntries >= 255)
+                {
+                    LL_ERROR("Too many fixed colors for palette \'%s\'.", palette->name);
+                    return 1;
+                }
                 if (parse_palette_entry(&entry, doc, valuen))
                 {
                     return 1;
                 }
+                for (j = 0; j < palette->numFixedEntries; ++j)
+                {
+                    if (palette->fixedEntries[j].index == entry.index)
+                    {
+                        LL_WARNING("Overriding palette index %d with (%d,%d,%d).",
+                            entry.index,
+                            entry.color.rgb.r,
+                            entry.color.rgb.g,
+                            entry.color.rgb.b);
+                    }
+                }
                 palette->fixedEntries[palette->numFixedEntries] = entry;
                 palette->numFixedEntries++;
+            }
+            else if (parse_str_cmp("image", key))
+            {
+                if (parse_palette_image(palette, (const char*)valuen->data.scalar.value))
+                {
+                    return 1;
+                }
             }
             else
             {

@@ -118,9 +118,9 @@ static void options_show(const char *prgm)
     LL_PRINT("       fixed-entries:             : Adds fixed color entries to the\n");
     LL_PRINT("                                  : palette. The format is:\n");
     LL_PRINT("                                  :\n");
-    LL_PRINT("                                  : fixed-entries:\n");
-    LL_PRINT("                                  :  - color: {index: 0, r: 9, g: 10, b: 0}\n");
-    LL_PRINT("                                  :  - color: {index: 1, r: 2, g: 83, b: 5}\n");
+    LL_PRINT("                                  :  fixed-entries:\n");
+    LL_PRINT("                                  :    - color: {index: 0, r: 9, g: 10, b: 0}\n");
+    LL_PRINT("                                  :    - color: {index: 1, r: 2, g: 83, b: 5}\n");
     LL_PRINT("                                  :\n");
     LL_PRINT("                                  : Note the spaces between key/value pairs.\n");
     LL_PRINT("                                  : \'index\' represents the palette entry\n");
@@ -132,6 +132,16 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : to the input color before quantization.\n");
     LL_PRINT("                                  : It is an optional parameter, defaults to\n");
     LL_PRINT("                                  : \'false\' but can be \'true\'.\n");
+    LL_PRINT("                                  : Fixed entries can also be supplied via\n");
+    LL_PRINT("                                  : an image, 1 pixel in height where each\n");
+    LL_PRINT("                                  : pixel represents an entry:\n");
+    LL_PRINT("                                  :\n");
+    LL_PRINT("                                  :   fixed-entries:\n");
+    LL_PRINT("                                  :     - image: palette.png\n");
+    LL_PRINT("                                  :\n");
+    LL_PRINT("                                  : There can be up to 256 fixed entries.\n");
+    LL_PRINT("                                  : With the image method, the starting \n");
+    LL_PRINT("                                  : index is 0 and increments by 1.\n");
     LL_PRINT("\n");
     LL_PRINT("       speed: <speed>             : Speed controls (somewhat, not really)\n");
     LL_PRINT("                                  : the quality of the palette generated.\n");
@@ -537,6 +547,7 @@ int options_get(int argc, char *argv[], options_t *options)
                 break;
 
             case 'i':
+                free(options->yamlfile.name);
                 options->yamlfile.name = strdup(optarg);
                 break;
 
@@ -553,6 +564,8 @@ int options_get(int argc, char *argv[], options_t *options)
                 break;
 
             case 'h':
+                free(options->yamlfile.name);
+                options->yamlfile.name = NULL;
                 options_show(options->prgm);
                 return OPTIONS_IGNORE;
 

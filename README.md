@@ -76,9 +76,9 @@ This program is used to convert images to other formats, specifically for the TI
            fixed-entries:             : Adds fixed color entries to the
                                       : palette. The format is:
                                       :
-                                      : fixed-entries:
-                                      :  - color: {index: 0, r: 9, g: 10, b: 0}
-                                      :  - color: {index: 1, r: 2, g: 83, b: 5}
+                                      :  fixed-entries:
+                                      :    - color: {index: 0, r: 9, g: 10, b: 0}
+                                      :    - color: {index: 1, r: 2, g: 83, b: 5}
                                       :
                                       : Note the spaces between key/value pairs.
                                       : 'index' represents the palette entry
@@ -90,6 +90,16 @@ This program is used to convert images to other formats, specifically for the TI
                                       : to the input color before quantization.
                                       : It is an optional parameter, defaults to
                                       : 'false' but can be 'true'.
+                                      : Fixed entries can also be supplied via
+                                      : an image, 1 pixel in height where each
+                                      : pixel represents an entry:
+                                      :
+                                      :   fixed-entries:
+                                      :     - image: palette.png
+                                      :
+                                      : There can be up to 256 fixed entries.
+                                      : With the image method, the starting 
+                                      : index is 0 and increments by 1.
 
            speed: <speed>             : Speed controls (somewhat, not really)
                                       : the quality of the palette generated.

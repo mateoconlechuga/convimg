@@ -177,6 +177,10 @@ static void options_show(const char *prgm)
     LL_PRINT("                                  : block. Built-in palettes also exist,\n");
     LL_PRINT("                                  : namely \'xlibc\' and \'rgb332\'.\n");
     LL_PRINT("\n");
+    LL_PRINT("       palette-offset: <index>    : Converts assuming a palette has\n");
+    LL_PRINT("                                  : a different base index.\n");
+    LL_PRINT("                                  : Defaults to \'0\'.\n");
+    LL_PRINT("\n");
     LL_PRINT("       images:                    : A list of images separated by a newline\n");
     LL_PRINT("                                  : and indented with a leading \'-\'\n");
     LL_PRINT("                                  : character. These images are quantized\n");

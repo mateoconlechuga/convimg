@@ -135,6 +135,10 @@ This program is used to convert images to other formats, specifically for the TI
                                       : block. Built-in palettes also exist,
                                       : namely 'xlibc' and 'rgb332'.
 
+           palette-offset: <index>    : Converts assuming a palette has
+                                      : a different base index.
+                                      : Defaults to '0'.
+
            images:                    : A list of images separated by a newline
                                       : and indented with a leading '-'
                                       : character. These images are quantized

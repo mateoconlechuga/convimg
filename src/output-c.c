@@ -464,6 +464,9 @@ int output_c_include_file(output_t *output)
         convert_t *convert = output->converts[i];
         tileset_group_t *tilesetGroup = convert->tilesetGroup;
 
+        fprintf(fdi, "#define %s_palette_offset %d\n",
+            convert->name, convert->paletteOffset);
+
         for (j = 0; j < convert->numImages; ++j)
         {
             image_t *image = &convert->images[j];

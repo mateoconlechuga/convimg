@@ -52,6 +52,7 @@ typedef struct convert
 {
     char *name;
     char *paletteName;
+    int paletteOffset;
     image_t *images;
     int numImages;
     tileset_group_t *tilesetGroup;

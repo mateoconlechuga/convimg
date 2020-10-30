@@ -53,6 +53,7 @@ convert_t *convert_alloc(void)
     convert->numImages = 0;
     convert->compress = COMPRESS_NONE;
     convert->palette = NULL;
+    convert->paletteOffset = 0;
     convert->tilesetGroup = NULL;
     convert->style = CONVERT_STYLE_NORMAL;
     convert->numOmitIndices = 0;
@@ -315,6 +316,22 @@ int convert_find_palette(convert_t *convert, palette_t **palettes, int numPalett
 static int convert_image(convert_t *convert, image_t *image)
 {
     int ret;
+
+    if (convert->paletteOffset != 0)
+    {
+        if (convert->paletteOffset + convert->palette->numEntries >=
+            PALETTE_MAX_ENTRIES)
+        {
+            LL_ERROR("Palette offset places indices out of range for convert \'%s\'",
+                convert->name);
+            return 1;
+        }
+        ret = image_add_offset(image, convert->paletteOffset);
+        if (ret != 0)
+        {
+            return ret;
+        }
+    }
 
     if (convert->style == CONVERT_STYLE_RLET)
     {

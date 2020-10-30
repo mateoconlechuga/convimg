@@ -72,6 +72,7 @@ typedef struct palette palette_t;
 int image_load(image_t *image);
 int image_rlet(image_t *image, int tIndex);
 int image_add_width_and_height(image_t *image);
+int image_add_offset(image_t *image, int offset);
 int image_compress(image_t *image, compress_t compress);
 int image_remove_omits(image_t *image, int *omitIndices, int numOmitIndices);
 int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries);

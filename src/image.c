@@ -376,6 +376,21 @@ int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries)
 }
 
 /*
+ * Adds a fixed offset to every pixel.
+ */
+int image_add_offset(image_t *image, int offset)
+{
+    int i;
+
+    for (i = 0; i < image->height * image->width; ++i)
+    {
+        image->data[i] += offset;
+    }
+
+    return 0;
+}
+
+/*
  * Removes omited indicies from the converted data.
  * Reallocs array as needed.
  */

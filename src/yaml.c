@@ -51,7 +51,12 @@ static bool parse_str_cmp(const char *str, void *src)
         return false;
     }
 
-    return strncmp(str, src, strlen(str)) == 0;
+    if (strncmp(str, src, strlen(str)) == 0)
+    {
+        return strlen(str) == strlen(src);
+    }
+
+    return false;
 }
 
 /*
@@ -949,6 +954,17 @@ static int parse_convert(yaml_file_t *data, yaml_document_t *doc, yaml_node_t *r
                         return 1;
                     }
                     convert->transparentIndex = tmpi;
+                }
+                else if (parse_str_cmp("palette-offset", key))
+                {
+                    tmpi = strtol(value, NULL, 0);
+                    if (tmpi >= PALETTE_MAX_ENTRIES || tmpi < 0)
+                    {
+                        LL_ERROR("Invalid palette offset.");
+                        parser_show_mark_error(keyn->start_mark);
+                        return 1;
+                    }
+                    convert->paletteOffset = tmpi;
                 }
                 else if (parse_str_cmp("bpp", key))
                 {

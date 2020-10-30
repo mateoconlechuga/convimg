@@ -946,6 +946,7 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
 {
     char *varName = strdupcat(appvar->directory, ".8xv");
     char *varCName = strdupcat(appvar->directory, ".c");
+    char *tmp;
     FILE *fdh;
     FILE *fds;
     FILE *fdv;
@@ -978,9 +979,11 @@ int output_appvar_include_file(output_t *output, appvar_t *appvar)
                 goto error;
             }
 
-            LL_INFO(" - Writing \'%s\'", output->includeFileName);
+            tmp = strdupcat(output->directory, output->includeFileName);
 
-            fdh = fopen(output->includeFileName, "wt");
+            LL_INFO(" - Writing \'%s\'", tmp);
+
+            fdh = fopen(tmp, "wt");
             if (fdh == NULL)
             {
                 LL_ERROR("Could not open file: %s", strerror(errno));

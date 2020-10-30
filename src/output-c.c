@@ -425,7 +425,7 @@ error:
  */
 int output_c_include_file(output_t *output)
 {
-    char *includeFile = output->includeFileName;
+    char *includeFile = strdupcat(output->directory, output->includeFileName);
     char *includeName = strdup(output->includeFileName);
     char *tmp;
     FILE *fdi;
@@ -492,10 +492,12 @@ int output_c_include_file(output_t *output)
     fclose(fdi);
 
     free(includeName);
+    free(includeFile);
 
     return 0;
 
 error:
     free(includeName);
+    free(includeFile);
     return 1;
 }

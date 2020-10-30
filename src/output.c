@@ -203,13 +203,6 @@ void output_free(output_t *output)
  */
 int output_init(output_t *output)
 {
-    char *tmp;
-
-    tmp = output->includeFileName;
-    output->includeFileName =
-        strdupcat(output->directory, output->includeFileName);
-    free(tmp);
-
     if (output->numConverts == 0 && output->numPalettes == 0)
     {
         LL_WARNING("No palettes or converts are specified for output!");
@@ -217,7 +210,12 @@ int output_init(output_t *output)
 
     if (output->format == OUTPUT_FORMAT_ICE)
     {
-        remove(output->includeFileName);
+        char *tmp = strdupcat(output->directory, output->includeFileName);
+        if (tmp != NULL)
+        {
+            remove(tmp);
+            free(tmp);
+        }
     }
 
     if (output->format == OUTPUT_FORMAT_APPVAR)

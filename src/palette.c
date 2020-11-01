@@ -594,11 +594,13 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
 
         for (i = 0; i < palette->numFixedEntries; ++i)
         {
-            palette_entry_t *fixedEntry = &palette->fixedEntries[i];
-            palette->entries[fixedEntry->index] = *fixedEntry;
-            if ((int)fixedEntry->index > maxIndex)
+            palette_entry_t *entry = &palette->fixedEntries[i];
+            color_convert(&entry->color, palette->mode);
+            palette->entries[entry->index] = *entry;
+            palette->entries[entry->index].valid = true;
+            if ((int)entry->index > maxIndex)
             {
-                maxIndex = fixedEntry->index;
+                maxIndex = entry->index;
             }
         }
 

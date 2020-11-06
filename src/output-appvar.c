@@ -449,6 +449,12 @@ static void output_appvar_c_include_file_converts(output_t *output, FILE *fdh, i
 
             if (image->compressed)
             {
+                fprintf(fdh, "#define %s_%s_%s_compressed_index %d\n",
+                    output->appvar.name,
+                    convert->name,
+                    image->name,
+                    *index);
+
                 fprintf(fdh, "#define %s_compressed %s_appvar[%d]\n",
                     image->name,
                     output->appvar.name,
@@ -456,6 +462,12 @@ static void output_appvar_c_include_file_converts(output_t *output, FILE *fdh, i
             }
             else
             {
+                fprintf(fdh, "#define %s_%s_%s_index %d\n",
+                    output->appvar.name,
+                    convert->name,
+                    image->name,
+                    *index);
+
                 fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_appvar[%d])\n",
                     image->name,
                     output->appvar.name,

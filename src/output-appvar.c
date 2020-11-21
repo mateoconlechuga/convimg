@@ -468,10 +468,20 @@ static void output_appvar_c_include_file_converts(output_t *output, FILE *fdh, i
                     image->name,
                     *index);
 
-                fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_appvar[%d])\n",
-                    image->name,
-                    output->appvar.name,
-                    *index);
+                if (image->rlet)
+                {
+                    fprintf(fdh, "#define %s ((gfx_rletsprite_t*)%s_appvar[%d])\n",
+                        image->name,
+                        output->appvar.name,
+                        *index);
+                }
+                else
+                {
+                    fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_appvar[%d])\n",
+                        image->name,
+                        output->appvar.name,
+                        *index);
+                }
             }
 
             *index = *index + 1;

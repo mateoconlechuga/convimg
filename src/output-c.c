@@ -104,14 +104,10 @@ int output_c_image(image_t *image)
     }
     else
     {
-        if (image->rlet)
-        {
-            fprintf(fdh, "#define %s ((gfx_rletsprite_t*)%s_data)\n", image->name, image->name);
-        }
-        else
-        {
-            fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_data)\n", image->name, image->name);
-        }
+        fprintf(fdh, "#define %s ((%s*)%s_data)\n",
+            image->name,
+            image->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
+            image->name);
         fprintf(fdh, "extern unsigned char %s_data[%d];\n", image->name, image->size);
     }
 
@@ -203,9 +199,10 @@ int output_c_tileset(tileset_t *tileset)
                 tileset->image.name,
                 i,
                 tile->size);
-            fprintf(fdh, "#define %s_tile_%d ((gfx_sprite_t*)%s_tile_%d_data)\n",
+            fprintf(fdh, "#define %s_tile_%d ((%s*)%s_tile_%d_data)\n",
                 tileset->image.name,
                 i,
+                tileset->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
                 tileset->image.name,
                 i);
         }
@@ -229,8 +226,9 @@ int output_c_tileset(tileset_t *tileset)
                 tileset->image.name,
                 tileset->numTiles);
 
-            fprintf(fdh, "#define %s_tiles ((gfx_sprite_t**)%s_tiles_data)\n",
+            fprintf(fdh, "#define %s_tiles ((%s**)%s_tiles_data)\n",
                 tileset->image.name,
+                tileset->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
                 tileset->image.name);
         }
     }

@@ -59,6 +59,7 @@ typedef struct
 
     /* set by convert */
     bool compressed;
+    bool rlet;
 
     /* set by output */
     int appvarIndex;

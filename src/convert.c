@@ -412,6 +412,7 @@ int convert_tileset(convert_t *convert, tileset_t *tileset)
     }
 
     tileset->compressed = convert->compress != COMPRESS_NONE;
+    tileset->rlet = convert->style == CONVERT_STYLE_RLET;
 
     tileset_alloc_tiles(tileset);
 

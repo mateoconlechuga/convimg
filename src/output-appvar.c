@@ -163,7 +163,7 @@ int output_appvar_header(output_t *output, appvar_t *appvar)
     }
 
     appvar->size += appvar->dataOffset;
-    
+
     /* first entry is number of entries */
     appvar_insert_entry(appvar, 0, numEntries - 1);
 
@@ -468,20 +468,11 @@ static void output_appvar_c_include_file_converts(output_t *output, FILE *fdh, i
                     image->name,
                     *index);
 
-                if (image->rlet)
-                {
-                    fprintf(fdh, "#define %s ((gfx_rletsprite_t*)%s_appvar[%d])\n",
-                        image->name,
-                        output->appvar.name,
-                        *index);
-                }
-                else
-                {
-                    fprintf(fdh, "#define %s ((gfx_sprite_t*)%s_appvar[%d])\n",
-                        image->name,
-                        output->appvar.name,
-                        *index);
-                }
+                fprintf(fdh, "#define %s ((%s*)%s_appvar[%d])\n",
+                    image->name,
+                    image->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
+                    output->appvar.name,
+                    *index);
             }
 
             *index = *index + 1;
@@ -538,14 +529,16 @@ static void output_appvar_c_include_file_converts(output_t *output, FILE *fdh, i
                     fprintf(fdh, "extern unsigned char *%s_tiles_data[%d];\n",
                         tileset->image.name,
                         tileset->numTiles);
-                    fprintf(fdh, "#define %s_tiles ((gfx_sprite_t**)%s_tiles_data)\n",
+                    fprintf(fdh, "#define %s_tiles ((%s**)%s_tiles_data)\n",
                         tileset->image.name,
+                        tileset->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
                         tileset->image.name);
                     for (l = 0; l < tileset->numTiles; l++)
                     {
-                        fprintf(fdh, "#define %s_tile_%d ((gfx_sprite_t*)%s_tiles_data[%d])\n",
+                        fprintf(fdh, "#define %s_tile_%d ((%s*)%s_tiles_data[%d])\n",
                         tileset->image.name,
                         l,
+                        tileset->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
                         tileset->image.name,
                         l);
                     }

@@ -1357,7 +1357,10 @@ static int parse_yaml(yaml_file_t *data, yaml_document_t *doc)
     if (root == NULL || root->type != YAML_MAPPING_NODE)
     {
         LL_ERROR("No root node detected.");
-        parser_show_mark_error(root->start_mark);
+        if (root != NULL)
+        {
+            parser_show_mark_error(root->start_mark);
+        }
         return 1;
     }
 

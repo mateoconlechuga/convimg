@@ -91,15 +91,17 @@ This program is used to convert images to other formats, specifically for the TI
                                       : It is an optional parameter, defaults to
                                       : 'false' but can be 'true'.
                                       : Fixed entries can also be supplied via
-                                      : an image, 1 pixel in height where each
-                                      : pixel represents an entry:
+                                      : an image, 1 pixel in height (and a
+                                      : width <= 256) where each pixel in the
+                                      : image represents an entry:
                                       :
                                       :   fixed-entries:
                                       :     - image: palette.png
                                       :
                                       : There can be up to 256 fixed entries.
                                       : With the image method, the starting 
-                                      : index is 0 and increments by 1.
+                                      : index is 0 and increments by 1 moving
+                                      : from left to right.
 
            speed: <speed>             : Speed controls (somewhat, not really)
                                       : the quality of the palette generated.

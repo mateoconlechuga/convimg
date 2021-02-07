@@ -369,8 +369,7 @@ int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries)
     free(image->data);
     image->data = newData;
 
-    image->width /= inc;
-    image->size = image->width * image->height;
+    image->size = (int)ceilf((float)image->width / (float)inc) * image->height;
 
     return 0;
 }

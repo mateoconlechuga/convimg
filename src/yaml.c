@@ -369,7 +369,7 @@ static int parse_palette_image(palette_t *palette, const char *file)
         entry.color.rgb.g = image.data[o + 1];
         entry.color.rgb.b = image.data[o + 2];
 
-        if (palette->numFixedEntries >= 255)
+        if (palette->numFixedEntries > 255)
         {
             LL_ERROR("Too many fixed colors for palette \'%s\'.", palette->name);
             goto fail;

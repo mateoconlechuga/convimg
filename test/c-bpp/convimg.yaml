@@ -6,7 +6,7 @@ palettes:
 converts:
   - name: myimages
     palette: mypalette
-    width-and-height: false
+    width-and-height: true
     bpp: 1
     images:
       - bpp_test.png
@@ -18,4 +18,3 @@ outputs:
       - mypalette
     converts:
       - myimages
-

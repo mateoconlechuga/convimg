@@ -2,19 +2,9 @@ palettes:
   - name: palette
     fixed-entries:
       - image: palette.png
-    images: automatic
-
-converts:
-  - name: images
-    palette: palette
-    images:
-      - kong
 
 outputs:
   - type: c
     include-file: gfx.h
     palettes:
       - palette
-    converts:
-      - images
-

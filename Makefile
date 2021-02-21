@@ -48,8 +48,8 @@ ifeq ($(OS),Windows_NT)
   TARGET ?= convimg.exe
   SHELL = cmd.exe
   NATIVEPATH = $(subst /,\,$1)
-  RMDIR = ( rmdir /s /q $1 2>nul || call ) 
-  MKDIR = ( mkdir $1 2>nul || call ) 
+  RMDIR = ( rmdir /s /q $1 2>nul || call )
+  MKDIR = ( mkdir $1 2>nul || call )
   STRIP = strip --strip-all "$1"
   CFLAGS_GLOB = -Wall -Wextra -Wno-sign-compare -O3 -DNDEBUG -DWINDOWS32 -DHAVE_CONFIG_H
   SOURCES += $(DEPDIR)/glob/glob.c \

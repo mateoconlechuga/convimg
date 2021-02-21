@@ -7,13 +7,11 @@ converts:
     palette: mypalette
     images:
       - oiram.png
-      - thwomp.png
 
 outputs:
-  - type: asm
-    include-file: gfx.inc
+  - type: ice
+    include-file: ice.txt
     palettes:
       - mypalette
     converts:
       - myimages
-

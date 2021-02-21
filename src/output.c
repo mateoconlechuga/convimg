@@ -239,11 +239,14 @@ int output_find_converts(output_t *output, convert_t **converts, int numConverts
 {
     int i, j;
 
-    if (output == NULL || converts == NULL)
+    if (output == NULL)
     {
         LL_DEBUG("Invalid param in %s.", __func__);
         return 1;
     }
+
+    if (converts == NULL)
+        return 0;
 
     output->converts = malloc(output->numConverts * sizeof(convert_t *));
     if (output->converts == NULL)

@@ -8,6 +8,8 @@ palettes:
 converts:
   - name: tileset
     palette: global_palette
+    style: rlet
+    transparent-color-index: 0
     tilesets:
       tile-width: 16
       tile-height: 16
@@ -15,13 +17,9 @@ converts:
         - tileset.png
 
 outputs:
-  - type: appvar
-    name: vargfx
-    header-string: THIS_IS_A_TEST
-    source-format: c
+  - type: bin
     include-file: vargfx.h
     palettes:
       - global_palette
     converts:
       - tileset
-

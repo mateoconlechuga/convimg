@@ -149,8 +149,8 @@ int main(int argc, char **argv)
                 else
                 {
                     ret = output_converts(output,
-                                      yamlfile->converts,
-                                      yamlfile->numConverts);
+                                          yamlfile->converts,
+                                          yamlfile->numConverts);
                     if (ret != 0)
                     {
                         break;

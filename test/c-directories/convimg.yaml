@@ -6,7 +6,7 @@ converts:
   - name: myimages
     palette: mypalette
     images:
-      - ./inputs/*
+      - inputs/*
 
 outputs:
   - type: c

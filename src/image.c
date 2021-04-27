@@ -298,6 +298,7 @@ int image_rlet(image_t *image, int tIndex)
 int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries)
 {
     int shift;
+    int shiftMult;
     int inc;
     int j, k;
     int newSize;
@@ -345,6 +346,7 @@ int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries)
     }
 
     inc = pow(2, shift);
+    shiftMult = 4 - shift;
 
     for (j = 0; j < image->height; ++j)
     {
@@ -358,7 +360,7 @@ int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries)
 
             for (col = 0; col < inc; col++)
             {
-                byte |= image->data[k + line + col] << --currInc;
+                byte |= image->data[k + line + col] << (--currInc * shiftMult);
             }
 
             newData[newSize] = byte;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2021 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -185,5 +185,3 @@ int strings_utf8_to_iso8859_1(const char *in, int inlen, char *out, int maxlen)
 
     return len;
 }
-
-

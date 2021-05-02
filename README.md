@@ -99,7 +99,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       :     - image: palette.png
                                       :
                                       : There can be up to 256 fixed entries.
-                                      : With the image method, the starting 
+                                      : With the image method, the starting
                                       : index is 0 and increments by 1 moving
                                       : from left to right.
 
@@ -304,11 +304,10 @@ This program is used to convert images to other formats, specifically for the TI
     ----------------------------------------------------------------------------
 
     Credits:
-        (c) 2017-2020 by Matt "MateoConLechuga" Waltz.
+        (c) 2017-2021 by Matt "MateoConLechuga" Waltz.
 
         This program utilizes the following libraries:
-            libimagequant: (c) 2009-2020 by Kornel Lesiński.
-            libyaml: (c) 2006-2020 by Ingy döt Net & Kirill Simonov.
+            libimagequant: (c) 2009-2021 by Kornel Lesiński.
+            libyaml: (c) 2006-2021 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx7: (c) 2012-2013 by Einar Saukas.
-

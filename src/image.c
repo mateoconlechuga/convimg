@@ -313,6 +313,7 @@ int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries)
                 return 1;
             }
             shift = 3;
+            shiftMult = 1;
             break;
         case BPP_2:
             if (paletteNumEntries > 4)
@@ -321,6 +322,7 @@ int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries)
                 return 1;
             }
             shift = 2;
+            shiftMult = 2;
             break;
         case BPP_4:
             if (paletteNumEntries > 16)
@@ -329,6 +331,7 @@ int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries)
                 return 1;
             }
             shift = 1;
+            shiftMult = 4;
             break;
         case BPP_8:
             return 0;
@@ -346,8 +349,7 @@ int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries)
     }
 
     inc = pow(2, shift);
-    shiftMult = 4 - shift;
-
+    
     for (j = 0; j < image->height; ++j)
     {
         int line = j * image->width;

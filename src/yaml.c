@@ -795,9 +795,9 @@ static int parse_convert_tilesets(convert_t *convert, yaml_document_t *doc, yaml
             if (parse_str_cmp("tile-width", key))
             {
                 int tmpi = strtol(value, NULL, 0);
-                if (tmpi > 255 || tmpi < 0)
+                if (tmpi < 1)
                 {
-                    LL_ERROR("Invalid tileset tile width.");
+                    LL_ERROR("Invalid tileset tile width: %d", tmpi);
                     parser_show_mark_error(keyn->start_mark);
                     return 1;
                 }
@@ -806,9 +806,9 @@ static int parse_convert_tilesets(convert_t *convert, yaml_document_t *doc, yaml
             else if (parse_str_cmp("tile-height", key))
             {
                 int tmpi = strtol(value, NULL, 0);
-                if (tmpi > 255 || tmpi < 0)
+                if (tmpi < 1)
                 {
-                    LL_ERROR("Invalid tileset tile height.");
+                    LL_ERROR("Invalid tileset tile height: %d", tmpi);
                     parser_show_mark_error(keyn->start_mark);
                     return 1;
                 }

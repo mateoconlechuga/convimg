@@ -1,0 +1,79 @@
+name: Windows/Linux/MacOS
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu, macos, windows]
+        config: [Release]
+        include:
+          - nul: /dev/null
+          - runs-on: macos
+            os-name: macos
+          - runs-on: windows
+            os-name: windows
+            exe: .exe
+          - runs-on: ubuntu
+            os-name: linux
+
+    runs-on: ${{matrix.runs-on}}-latest
+    steps:
+    - name: Checkout project
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+        fetch-depth: 1
+
+    - name: Build project
+      run: make release
+
+    - name: Test project
+      run: make test
+      continue-on-error: true
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: linux-convimg
+        path: bin/convimg${{matrix.exe}}
+
+  coverity-scan:
+    runs-on: ubuntu-latest
+    if: "contains(github.event.head_commit.message, 'coverity')"
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v1
+        with:
+          submodules: true
+          fetch-depth: 1
+
+      - name: Download Coverity Build Tool
+        run: |
+          wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=mateoconlechuga%2Fconvimg" -O cov-analysis-linux64.tar.gz
+          mkdir cov-analysis-linux64
+          tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+
+      - name: Build project with cov-build
+        run: |
+          export PATH=`pwd`/cov-analysis-linux64/bin:$PATH
+          cov-build --dir cov-int make release
+
+      - name: Submit project build to Coverity Scan
+        run: |
+          tar czvf convimg.tgz cov-int
+          curl \
+            --form token=$TOKEN \
+            --form email="matthewwaltzis@gmail.com" \
+            --form file=@convimg.tgz \
+            --form version="Major Release" \
+            --form description="`./bin/convimg -v`" \
+            https://scan.coverity.com/builds?project=mateoconlechuga%2Fconvimg
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}

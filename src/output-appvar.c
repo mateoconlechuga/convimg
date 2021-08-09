@@ -1012,9 +1012,9 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
     {
         fclose(fdv);
         if (remove(var_name) != 0)
-	{
+        {
             LOG_ERROR("Could not remove file: %s\n", strerror(errno));
-	}
+        }
         goto error;
     }
 

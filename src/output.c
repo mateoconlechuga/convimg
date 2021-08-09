@@ -198,7 +198,7 @@ int output_init(struct output *output)
         if (tmp != NULL)
         {
             if (remove(tmp) != 0)
-	    {
+            {
                 LOG_ERROR("Could not remove output file: %s\n", strerror(errno));
             }
             free(tmp);

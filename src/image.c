@@ -81,7 +81,7 @@ static void image_flip_x(uint32_t *image, int width, int height)
 
 static void image_rotate_90(uint32_t *image, int width, int height)
 {
-    const size_t size = width * height;
+    const size_t size = (size_t)width * (size_t)height;
     uint32_t *newimage = malloc(size * sizeof(uint32_t));
     int i, j;
 
@@ -209,6 +209,7 @@ int image_add_width_and_height(struct image *image)
 int image_rlet(struct image *image, int transparent_index)
 {
     uint8_t *new_data;
+    size_t size;
     int new_size = 0;
     int i;
 
@@ -218,7 +219,8 @@ int image_rlet(struct image *image, int transparent_index)
         return -1;
     }
 
-    new_data = malloc(image->width * image->height * 2);
+    size = (size_t)image->width * (size_t)image->height * (size_t)2;
+    new_data = malloc(size);
     if (new_data == NULL)
     {
         LOG_ERROR("Memory error in \'%s\'.\n", __func__);

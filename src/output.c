@@ -79,7 +79,7 @@ int output_add_convert(struct output *output, const char *name)
         name == NULL ||
         output->format == OUTPUT_FORMAT_INVALID)
     {
-        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
     }
 
@@ -105,7 +105,7 @@ int output_add_palette(struct output *output, const char *name)
         name == NULL ||
         output->format == OUTPUT_FORMAT_INVALID)
     {
-        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
     }
 
@@ -222,7 +222,7 @@ int output_find_converts(struct output *output, struct convert **converts, int n
 
     if (output == NULL)
     {
-        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
     }
 
@@ -262,10 +262,15 @@ int output_find_palettes(struct output *output, struct palette **palettes, int n
 {
     int i, j;
 
-    if (output == NULL || palettes == NULL || nr_palettes < 0)
+    if (output == NULL || nr_palettes < 0)
     {
-        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
+    }
+
+    if (palettes == NULL || nr_palettes == 0)
+    {
+        goto nopalette;
     }
 
     output->palettes = malloc(output->nr_palettes * sizeof(struct palette *));
@@ -286,8 +291,9 @@ int output_find_palettes(struct output *output, struct palette **palettes, int n
             }
         }
 
+nopalette:
         LOG_ERROR("No matching convert name \'%s\' found for output.\n",
-                 output->palette_names[i]);
+            output->palette_names[i]);
         return -1;
 
 nextpalette:
@@ -304,7 +310,7 @@ int output_converts(struct output *output, struct convert **converts, int nr_con
 
     if (output == NULL || nr_converts < 0)
     {
-        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
     }
 
@@ -416,13 +422,13 @@ int output_palettes(struct output *output, struct palette **palettes, int nr_pal
     int ret;
     int i;
 
-    if (output == NULL || palettes == NULL || nr_palettes < 0)
+    if (output == NULL || nr_palettes < 0)
     {
-        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
     }
 
-    if (nr_palettes == 0)
+    if (palettes == NULL || nr_palettes == 0)
     {
         return 0;
     }

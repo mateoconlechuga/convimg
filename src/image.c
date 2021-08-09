@@ -185,7 +185,7 @@ int image_add_width_and_height(struct image *image)
 {
     if (image == NULL)
     {
-        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
     }
 
@@ -413,7 +413,7 @@ int image_compress(struct image *image, compress_t compress)
 
     if (image == NULL)
     {
-        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
     }
 

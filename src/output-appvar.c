@@ -934,7 +934,7 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
 
     if (appvar == NULL)
     {
-        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         goto error;
     }
 

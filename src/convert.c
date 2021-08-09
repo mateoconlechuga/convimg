@@ -128,7 +128,7 @@ static int convert_add_tileset(struct convert *convert, const char *path)
 
     if (convert == NULL || path == NULL)
     {
-        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
     }
 

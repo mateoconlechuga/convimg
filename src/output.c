@@ -36,29 +36,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * Allocates an output structure.
- */
-output_t *output_alloc(void)
+struct output *output_alloc(void)
 {
-    output_t *output = NULL;
-
-    output = malloc(sizeof(output_t));
+    struct output *output = malloc(sizeof(struct output));
     if (output == NULL)
     {
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
     output->name = NULL;
-    output->includeFileName = NULL;
+    output->include_file = NULL;
     output->directory = strdup("");
-    output->convertNames = NULL;
-    output->numConverts = 0;
+    output->convert_names = NULL;
+    output->nr_converts = 0;
     output->converts = NULL;
-    output->paletteNames = NULL;
+    output->palette_names = NULL;
     output->palettes = NULL;
-    output->numPalettes = 0;
-    output->paletteSizes = false;
+    output->nr_palettes = 0;
+    output->palette_sizes = false;
     output->order = OUTPUT_PALETTES_FIRST;
     output->format = OUTPUT_FORMAT_INVALID;
     output->appvar.name = NULL;
@@ -71,74 +67,65 @@ output_t *output_alloc(void)
     output->appvar.size = 0;
     output->appvar.lut = false;
     output->appvar.header = NULL;
-    output->appvar.headerSize = 0;
-    output->appvar.entrySize = 3;
+    output->appvar.header_size = 0;
+    output->appvar.entry_size = 3;
 
     return output;
 }
 
-/*
- * Adds a new convert to the output structure.
- */
-int output_add_convert(output_t *output, const char *convertName)
+int output_add_convert(struct output *output, const char *name)
 {
     if (output == NULL ||
-        convertName == NULL ||
+        name == NULL ||
         output->format == OUTPUT_FORMAT_INVALID)
     {
-        LL_DEBUG("Invalid param in %s'.", __func__);
-        return 1;
+        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    output->convertNames =
-        realloc(output->convertNames, (output->numConverts + 1) * sizeof(char *));
-    if (output->convertNames == NULL)
+    output->convert_names =
+        realloc(output->convert_names, (output->nr_converts + 1) * sizeof(char *));
+    if (output->convert_names == NULL)
     {
-        LL_ERROR("Memory error in %s'.", __func__);
-        return 1;
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    output->convertNames[output->numConverts] = strdup(convertName);
-    output->numConverts++;
+    output->convert_names[output->nr_converts] = strdup(name);
+    output->nr_converts++;
 
-    LL_DEBUG("Added convert: %s", convertName);
+    LOG_DEBUG("Added output convert: %s\n", name);
 
     return 0;
 }
 
-/*
- * Adds a new palette to the output structure.
- */
-int output_add_palette(output_t *output, const char *paletteName)
+int output_add_palette(struct output *output, const char *name)
 {
     if (output == NULL ||
-        paletteName == NULL ||
+        name == NULL ||
         output->format == OUTPUT_FORMAT_INVALID)
     {
-        LL_DEBUG("Invalid param in %s'.", __func__);
-        return 1;
+        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    output->paletteNames =
-        realloc(output->paletteNames, (output->numPalettes + 1) * sizeof(char *));
-    if (output->paletteNames == NULL)
+    output->palette_names =
+        realloc(output->palette_names, (output->nr_palettes + 1) * sizeof(char *));
+    if (output->palette_names == NULL)
     {
-        LL_ERROR("Memory error in %s'.", __func__);
-        return 1;
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    output->paletteNames[output->numPalettes] = strdup(paletteName);
-    output->numPalettes++;
+    output->palette_names[output->nr_palettes] = strdup(name);
+    output->nr_palettes++;
 
-    LL_DEBUG("Added palette: %s", paletteName);
+    LOG_DEBUG("Added output palette: %s\n", name);
 
     return 0;
 }
 
-/*
- * Frees an allocated output structure.
- */
-void output_free(output_t *output)
+void output_free(struct output *output)
 {
     int i;
 
@@ -147,16 +134,16 @@ void output_free(output_t *output)
         return;
     }
 
-    for (i = 0; i < output->numConverts; ++i)
+    for (i = 0; i < output->nr_converts; ++i)
     {
-        free(output->convertNames[i]);
-        output->convertNames[i] = NULL;
+        free(output->convert_names[i]);
+        output->convert_names[i] = NULL;
     }
 
-    for (i = 0; i < output->numPalettes; ++i)
+    for (i = 0; i < output->nr_palettes; ++i)
     {
-        free(output->paletteNames[i]);
-        output->paletteNames[i] = NULL;
+        free(output->palette_names[i]);
+        output->palette_names[i] = NULL;
     }
 
     if (output->appvar.name != NULL)
@@ -164,11 +151,11 @@ void output_free(output_t *output)
         free(output->appvar.directory);
     }
 
-    free(output->convertNames);
-    output->convertNames = NULL;
+    free(output->convert_names);
+    output->convert_names = NULL;
 
-    free(output->paletteNames);
-    output->paletteNames = NULL;
+    free(output->palette_names);
+    output->palette_names = NULL;
 
     free(output->appvar.name);
     output->appvar.name = NULL;
@@ -185,8 +172,8 @@ void output_free(output_t *output)
     free(output->palettes);
     output->palettes = NULL;
 
-    free(output->includeFileName);
-    output->includeFileName = NULL;
+    free(output->include_file);
+    output->include_file = NULL;
 
     free(output->name);
     output->name = NULL;
@@ -194,23 +181,20 @@ void output_free(output_t *output)
     free(output->directory);
     output->directory = NULL;
 
-    output->numConverts = 0;
-    output->numPalettes = 0;
+    output->nr_converts = 0;
+    output->nr_palettes = 0;
 }
 
-/*
- * Sets up paths for output.
- */
-int output_init(output_t *output)
+int output_init(struct output *output)
 {
-    if (output->numConverts == 0 && output->numPalettes == 0)
+    if (output->nr_converts == 0 && output->nr_palettes == 0)
     {
-        LL_WARNING("No palettes or converts are specified for output!");
+        LOG_WARNING("No palettes or converts will be output!\n");
     }
 
     if (output->format == OUTPUT_FORMAT_ICE)
     {
-        char *tmp = strdupcat(output->directory, output->includeFileName);
+        char *tmp = strdupcat(output->directory, output->include_file);
         if (tmp != NULL)
         {
             remove(tmp);
@@ -232,43 +216,40 @@ int output_init(output_t *output)
     return 0;
 }
 
-/*
- * Find the convert containing the data to output.
- */
-int output_find_converts(output_t *output, convert_t **converts, int numConverts)
+int output_find_converts(struct output *output, struct convert **converts, int nr_converts)
 {
     int i, j;
 
     if (output == NULL)
     {
-        LL_DEBUG("Invalid param in %s.", __func__);
-        return 1;
+        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        return -1;
     }
 
     if (converts == NULL)
         return 0;
 
-    output->converts = malloc(output->numConverts * sizeof(convert_t *));
+    output->converts = malloc(output->nr_converts * sizeof(struct convert *));
     if (output->converts == NULL)
     {
-        LL_DEBUG("Memory error in %s.", __func__);
-        return 1;
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    for (i = 0; i < output->numConverts; ++i)
+    for (i = 0; i < output->nr_converts; ++i)
     {
-        for (j = 0; j < numConverts; ++j)
+        for (j = 0; j < nr_converts; ++j)
         {
-            if (!strcmp(output->convertNames[i], converts[j]->name))
+            if (strcmp(output->convert_names[i], converts[j]->name) == 0)
             {
                 output->converts[i] = converts[j];
                 goto nextconvert;
             }
         }
 
-        LL_ERROR("No matching convert name \'%s\' found for output.",
-                 output->convertNames[i]);
-        return 1;
+        LOG_ERROR("No matching convert name \'%s\' found for output.\n",
+                 output->convert_names[i]);
+        return -1;
 
 nextconvert:
         continue;
@@ -277,40 +258,37 @@ nextconvert:
     return 0;
 }
 
-/*
- * Find the palettes containing the data to output.
- */
-int output_find_palettes(output_t *output, palette_t **palettes, int numPalettes)
+int output_find_palettes(struct output *output, struct palette **palettes, int nr_palettes)
 {
     int i, j;
 
-    if (output == NULL || palettes == NULL)
+    if (output == NULL || palettes == NULL || nr_palettes < 0)
     {
-        LL_DEBUG("Invalid param in %s.", __func__);
-        return 1;
+        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    output->palettes = malloc(output->numPalettes * sizeof(palette_t *));
+    output->palettes = malloc(output->nr_palettes * sizeof(struct palette *));
     if (output->palettes == NULL)
     {
-        LL_DEBUG("Memory error in %s.", __func__);
-        return 1;
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    for (i = 0; i < output->numPalettes; ++i)
+    for (i = 0; i < output->nr_palettes; ++i)
     {
-        for (j = 0; j < numPalettes; ++j)
+        for (j = 0; j < nr_palettes; ++j)
         {
-            if (!strcmp(output->paletteNames[i], palettes[j]->name))
+            if (strcmp(output->palette_names[i], palettes[j]->name) == 0)
             {
                 output->palettes[i] = palettes[j];
                 goto nextpalette;
             }
         }
 
-        LL_ERROR("No matching convert name \'%s\' found for output.",
-                 output->paletteNames[i]);
-        return 1;
+        LOG_ERROR("No matching convert name \'%s\' found for output.\n",
+                 output->palette_names[i]);
+        return -1;
 
 nextpalette:
         continue;
@@ -319,43 +297,36 @@ nextpalette:
     return 0;
 }
 
-/*
- * Output converted images into the desired format.
- */
-int output_converts(output_t *output, convert_t **converts, int numConverts)
+int output_converts(struct output *output, struct convert **converts, int nr_converts)
 {
-    int ret = 0;
+    int ret;
     int i;
 
-    if (numConverts == 0)
+    if (output == NULL || nr_converts < 0)
+    {
+        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        return -1;
+    }
+
+    if (converts == NULL || nr_converts == 0)
     {
         return 0;
     }
 
-    for (i = 0; i < output->numConverts; ++i)
+    for (i = 0; i < output->nr_converts; ++i)
     {
-        convert_t *convert = output->converts[i];
-        tileset_group_t *tilesetGroup = convert->tilesetGroup;
+        struct convert *convert = output->converts[i];
+        struct tileset_group *group = convert->tileset_group;
         int j;
 
-        if (ret != 0)
-        {
-            break;
-        }
+        LOG_INFO("Generating output for convert \'%s\'\n",
+            convert->name);
 
-        LL_INFO("Generating output for convert \'%s\'",
-                convert->name);
-
-        for (j = 0; j < convert->numImages; ++j)
+        for (j = 0; j < convert->nr_images; ++j)
         {
-            image_t *image = &convert->images[j];
+            struct image *image = &convert->images[j];
             image->directory =
                 strdupcat(output->directory, image->name);
-
-            if (ret != 0)
-            {
-                break;
-            }
 
             switch (output->format)
             {
@@ -368,7 +339,7 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                     break;
 
                 case OUTPUT_FORMAT_ICE:
-                    ret = output_ice_image(image, output->includeFileName);
+                    ret = output_ice_image(image, output->include_file);
                     break;
 
                 case OUTPUT_FORMAT_APPVAR:
@@ -380,25 +351,25 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                     break;
 
                 default:
-                    ret = 1;
+                    ret = -1;
                     break;
             }
 
             free(image->directory);
+
+            if (ret != 0)
+            {
+                return ret;
+            }
         }
 
-        if (tilesetGroup != NULL)
+        if (group != NULL)
         {
-            for (j = 0; j < tilesetGroup->numTilesets; ++j)
+            for (j = 0; j < group->nr_tilesets; ++j)
             {
-                tileset_t *tileset = &tilesetGroup->tilesets[j];
+                struct tileset *tileset = &group->tilesets[j];
                 tileset->directory =
                     strdupcat(output->directory, tileset->image.name);
-
-                if (ret != 0)
-                {
-                    break;
-                }
 
                 switch (output->format)
                 {
@@ -415,7 +386,7 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                         break;
 
                     case OUTPUT_FORMAT_ICE:
-                        ret = output_ice_tileset(tileset, output->includeFileName);
+                        ret = output_ice_tileset(tileset, output->include_file);
                         break;
 
                     case OUTPUT_FORMAT_APPVAR:
@@ -423,45 +394,48 @@ int output_converts(output_t *output, convert_t **converts, int numConverts)
                         break;
 
                     default:
-                        ret = 1;
+                        ret = -1;
                         break;
                 }
 
                 free(tileset->directory);
+
+                if (ret != 0)
+                {
+                    return ret;
+                }
             }
         }
     }
 
-    return ret;
+    return 0;
 }
 
-/*
- * Output converted palettes into the desired format.
- */
-int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
+int output_palettes(struct output *output, struct palette **palettes, int nr_palettes)
 {
-    int ret = 0;
+    int ret;
     int i;
 
-    if (numPalettes == 0)
+    if (output == NULL || palettes == NULL || nr_palettes < 0)
+    {
+        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        return -1;
+    }
+
+    if (nr_palettes == 0)
     {
         return 0;
     }
 
-    for (i = 0; i < output->numPalettes; ++i)
+    for (i = 0; i < output->nr_palettes; ++i)
     {
-        palette_t *palette = output->palettes[i];
+        struct palette *palette = output->palettes[i];
         palette->directory =
             strdupcat(output->directory, palette->name);
-        palette->includeSize = output->paletteSizes;
+        palette->include_size = output->palette_sizes;
 
-        LL_INFO("Generating output for palette \'%s\'",
-                palette->name);
-
-        if (ret != 0)
-        {
-            break;
-        }
+        LOG_INFO("Generating output for palette \'%s\'\n",
+            palette->name);
 
         switch (output->format)
         {
@@ -478,7 +452,7 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
                 break;
 
             case OUTPUT_FORMAT_ICE:
-                ret = output_ice_palette(palette, output->includeFileName);
+                ret = output_ice_palette(palette, output->include_file);
                 break;
 
             case OUTPUT_FORMAT_APPVAR:
@@ -486,23 +460,26 @@ int output_palettes(output_t *output, palette_t **palettes, int numPalettes)
                 break;
 
             default:
-                ret = 1;
+                ret = -1;
                 break;
         }
 
         free(palette->directory);
+
+        if (ret != 0)
+        {
+            return ret;
+        }
     }
-    return ret;
+
+    return 0;
 }
 
-/*
- * Output a header for using with everything.
- */
-int output_include_header(output_t *output)
+int output_include_header(struct output *output)
 {
     int ret = 0;
 
-    if (output->numPalettes == 0 && output->numConverts == 0)
+    if (output->nr_palettes == 0 && output->nr_converts == 0)
     {
         return 0;
     }
@@ -522,7 +499,7 @@ int output_include_header(output_t *output)
             break;
 
         case OUTPUT_FORMAT_ICE:
-            ret = output_ice_include_file(output, output->includeFileName);
+            ret = output_ice_include_file(output, output->include_file);
             break;
 
         case OUTPUT_FORMAT_APPVAR:
@@ -530,7 +507,7 @@ int output_include_header(output_t *output)
             break;
 
         default:
-            ret = 1;
+            ret = -1;
             break;
     }
 

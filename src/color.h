@@ -45,13 +45,13 @@ typedef enum
     COLOR_MODE_1555_GBGR,
 } color_mode_t;
 
-typedef struct
+struct color
 {
     liq_color rgb;
     uint16_t target;
-} color_t;
+};
 
-void color_convert(color_t *color, color_mode_t mode);
+void color_convert(struct color *c, color_mode_t mode);
 
 #ifdef __cplusplus
 }

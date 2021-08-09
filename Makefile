@@ -55,7 +55,7 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(SRCDIR)/palette.c \
           $(SRCDIR)/strings.c \
           $(SRCDIR)/tileset.c \
-          $(SRCDIR)/yaml.c \
+          $(SRCDIR)/parser.c \
           $(DEPDIR)/libimagequant/blur.c \
           $(DEPDIR)/libimagequant/kmeans.c \
           $(DEPDIR)/libimagequant/libimagequant.c \

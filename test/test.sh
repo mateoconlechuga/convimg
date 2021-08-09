@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2017-2019 Matt "MateoConLechuga" Waltz
+# Copyright 2017-2021 Matt "MateoConLechuga" Waltz
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -29,5 +29,5 @@
 
 for d in ./*/
 do
-    ( cd "$d" && ../../bin/convimg -i convimg.yaml ) || { exit 1; }
+    ( cd "$d" && echo "[test] `pwd`" ; ../../bin/convimg -i convimg.yaml ) || { exit 1; }
 done

@@ -31,12 +31,12 @@
 #ifndef ICON_H
 #define ICON_H
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdint.h>
-#include <stdbool.h>
 
 typedef enum
 {
@@ -44,15 +44,15 @@ typedef enum
     ICON_FORMAT_ICE
 } icon_format_t;
 
-typedef struct
+struct icon
 {
     icon_format_t format;
-    char *imageFile;
-    char *outputFile;
+    char *image_file;
+    char *output_file;
     char *description;
-} icon_t;
+};
 
-int icon_convert(icon_t *icon);
+int icon_convert(struct icon *icon);
 
 #ifdef __cplusplus
 }

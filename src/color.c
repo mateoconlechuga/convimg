@@ -33,9 +33,6 @@
 
 #include <stdbool.h>
 
-/*
- * Color conversion functions
- */
 static void color_888_to_1555(liq_color *in, uint16_t *out)
 {
     uint8_t r5 = round((int)in->r * 31.0 / 255.0);
@@ -52,28 +49,24 @@ static void color_1555_to_888(uint16_t *in, liq_color *out)
     uint8_t b5 = *in & 31;
 
     liq_color color =
-        {
-            .r = round((int)r5 * 255.0 / 31.0),
-            .g = round((int)g6 * 255.0 / 63.0),
-            .b = round((int)b5 * 255.0 / 31.0),
-            .a = 255,
-        };
+    {
+        .r = round((int)r5 * 255.0 / 31.0),
+        .g = round((int)g6 * 255.0 / 63.0),
+        .b = round((int)b5 * 255.0 / 31.0),
+        .a = 255,
+    };
 
     *out = color;
 }
 
-/*
- * Converts an RGB color to the nearest target color, and back.
- * Used for color quanization to avoid duplicate entries.
- */
-void color_convert(color_t *color, color_mode_t mode)
+void color_convert(struct color *c, color_mode_t mode)
 {
     switch (mode)
     {
         case COLOR_MODE_1555_GRGB:
         case COLOR_MODE_1555_GBGR:
-            color_888_to_1555(&color->rgb, &color->target);
-            color_1555_to_888(&color->target, &color->rgb);
+            color_888_to_1555(&c->rgb, &c->target);
+            color_1555_to_888(&c->target, &c->rgb);
             break;
     }
 }

@@ -35,13 +35,10 @@
 #include <string.h>
 #include <stdio.h>
 
-/*
- * Computes checksum of TI AppVar format files.
- */
-static unsigned int appvar_checksum(unsigned char *arr, size_t size)
+static unsigned int appvar_checksum(uint8_t *arr, size_t size)
 {
     unsigned int checksum = 0;
-	size_t i;
+    size_t i;
 
     for (i = 0; i < size; ++i)
     {
@@ -49,19 +46,16 @@ static unsigned int appvar_checksum(unsigned char *arr, size_t size)
         checksum &= 0xffff;
     }
 
-	return checksum;
+    return checksum;
 }
 
-/*
- * Exports data to TI AppVar format.
- */
-int appvar_write(appvar_t *a, FILE *fdv)
+int appvar_write(struct appvar *a, FILE *fdv)
 {
     unsigned int checksum;
-    uint8_t *output;
     static const uint8_t file_header[11] =
-    	{ 0x2A,0x2A,0x54,0x49,0x38,0x33,0x46,0x2A,0x1A,0x0A,0x00 };
+        { 0x2A,0x2A,0x54,0x49,0x38,0x33,0x46,0x2A,0x1A,0x0A,0x00 };
 
+    static uint8_t output[APPVAR_MAX_FILE_SIZE];
     size_t name_size;
     size_t file_size;
     size_t data_size;
@@ -74,30 +68,23 @@ int appvar_write(appvar_t *a, FILE *fdv)
 
     if (a->compress != COMPRESS_NONE)
     {
-        LL_INFO("    - Size before compression: %u bytes", (unsigned int)a->size);
+        LOG_INFO("    - Size before compression: %u bytes\n", (unsigned int)a->size);
 
-        ret = compress_array(&a->data, &size, a->compress);
+        ret = compress_array(a->data, &size, a->compress);
         if (ret != 0)
         {
-            LL_ERROR("Failed to compress data for AppVar \'%s\'.", a->name);
+            LOG_ERROR("Failed to compress data for AppVar \'%s\'.\n", a->name);
             return ret;
         }
         a->size = size;
 
-        LL_INFO("    - Size after compression: %u bytes", (unsigned int)a->size);
+        LOG_INFO("    - Size after compression: %u bytes\n", (unsigned int)a->size);
     }
 
     if (a->size > APPVAR_MAX_DATA_SIZE)
     {
-        LL_ERROR("Too much data for AppVar \'%s\'.", a->name);
-        return 1;
-    }
-
-    output = calloc(APPVAR_MAX_FILE_SIZE, sizeof(uint8_t));
-    if (output == NULL)
-    {
-        LL_DEBUG("Memory error in %s", __func__);
-        return 1;
+        LOG_ERROR("Too much data for AppVar \'%s\'.\n", a->name);
+        return -1;
     }
 
     file_size = a->size + APPVAR_DATA_POS + APPVAR_CHECKSUM_LEN;
@@ -131,9 +118,5 @@ int appvar_write(appvar_t *a, FILE *fdv)
     output[APPVAR_DATA_POS + varb_size + 0] = (checksum >> 0) & 0xff;
     output[APPVAR_DATA_POS + varb_size + 1] = (checksum >> 8) & 0xff;
 
-    ret = fwrite(output, file_size, 1, fdv) == 1 ? 0 : 1;
-
-    free(output);
-
-    return ret;
+    return fwrite(output, file_size, 1, fdv) == 1 ? 0 : -1;
 }

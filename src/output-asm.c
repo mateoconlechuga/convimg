@@ -34,14 +34,9 @@
 #include "image.h"
 #include "log.h"
 
-#include <stdio.h>
-#include <stdint.h>
 #include <errno.h>
 #include <string.h>
 
-/*
- * Outputs to Assembly format.
- */
 static int output_asm(unsigned char *arr, size_t size, FILE *fdo)
 {
     size_t i;
@@ -68,20 +63,17 @@ static int output_asm(unsigned char *arr, size_t size, FILE *fdo)
     return 0;
 }
 
-/*
- * Outputs a converted Assembly image.
- */
-int output_asm_image(image_t *image)
+int output_asm_image(struct image *image)
 {
     char *source = strdupcat(image->directory, ".asm");
     FILE *fds;
 
-    LL_INFO(" - Writing \'%s\'", source);
+    LOG_INFO(" - Writing \'%s\'\n", source);
 
     fds = fopen(source, "wt");
     if (fds == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
@@ -100,46 +92,43 @@ int output_asm_image(image_t *image)
 
 error:
     free(source);
-    return 1;
+    return -1;
 }
 
-/*
- * Outputs a converted Assembly tileset.
- */
-int output_asm_tileset(tileset_t *tileset)
+int output_asm_tileset(struct tileset *tileset)
 {
     char *source = strdupcat(tileset->directory, ".asm");
     FILE *fds;
     int i;
 
-    LL_INFO(" - Writing \'%s\'", source);
+    LOG_INFO(" - Writing \'%s\'\n", source);
 
     fds = fopen(source, "wt");
     if (fds == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
     fprintf(fds, "%s_num_tiles := %d\n",
         tileset->image.name,
-        tileset->numTiles);
+        tileset->nr_tiles);
 
-    for (i = 0; i < tileset->numTiles; ++i)
+    for (i = 0; i < tileset->nr_tiles; ++i)
     {
-        tileset_tile_t *tile = &tileset->tiles[i];
+        struct tileset_tile *tile = &tileset->tiles[i];
 
         fprintf(fds, "%s_tile_%d:\n\tdb\t", tileset->image.name, i);
 
         output_asm(tile->data, tile->size, fds);
     }
 
-    if (tileset->pTable == true)
+    if (tileset->p_table == true)
     {
         fprintf(fds, "%s_tiles:\n",
             tileset->image.name);
 
-        for (i = 0; i < tileset->numTiles; ++i)
+        for (i = 0; i < tileset->nr_tiles; ++i)
         {
             fprintf(fds, "\tdl\t%s_tile_%d\n",
                 tileset->image.name,
@@ -153,42 +142,39 @@ int output_asm_tileset(tileset_t *tileset)
 
 error:
     free(source);
-    return 1;
+    return -1;
 }
 
-/*
- * Outputs a converted Assembly tileset.
- */
-int output_asm_palette(palette_t *palette)
+int output_asm_palette(struct palette *palette)
 {
     char *source = strdupcat(palette->directory, ".asm");
     FILE *fds;
     int size;
     int i;
 
-    LL_INFO(" - Writing \'%s\'", source);
+    LOG_INFO(" - Writing \'%s\'\n", source);
 
     fds = fopen(source, "wt");
     if (fds == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
-    size = palette->numEntries * 2;
+    size = palette->nr_entries * 2;
 
     fprintf(fds, "sizeof_%s := %d\n", palette->name, size);
 
-    if (palette->includeSize)
+    if (palette->include_size)
     {
         fprintf(fds, "\tdw\t%d\n", size);
     }
 
     fprintf(fds, "%s:\n", palette->name);
 
-    for (i = 0; i < palette->numEntries; ++i)
+    for (i = 0; i < palette->nr_entries; ++i)
     {
-        color_t *color = &palette->entries[i].color;
+        struct color *color = &palette->entries[i].color;
 
         fprintf(fds, "\tdw\t$%04x ; %3d: rgb(%3d, %3d, %3d)\n",
                 color->target,
@@ -206,57 +192,54 @@ int output_asm_palette(palette_t *palette)
 
 error:
     free(source);
-    return 1;
+    return -1;
 }
 
-/*
- * Outputs an include file for the output structure
- */
-int output_asm_include_file(output_t *output)
+int output_asm_include_file(struct output *output)
 {
-    char *includeFile = output->includeFileName;
-    char *includeName = strdup(output->includeFileName);
+    char *include_file = output->include_file;
+    char *include_name = strdup(output->include_file);
     char *tmp;
     FILE *fdi;
     int i, j, k;
 
-    tmp = strchr(includeName, '.');
+    tmp = strchr(include_name, '.');
     if (tmp != NULL)
     {
         *tmp = '\0';
     }
 
-    LL_INFO(" - Writing \'%s\'", includeFile);
+    LOG_INFO(" - Writing \'%s\'\n", include_file);
 
-    fdi = fopen(includeFile, "wt");
+    fdi = fopen(include_file, "wt");
     if (fdi == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
-    for (i = 0; i < output->numPalettes; ++i)
+    for (i = 0; i < output->nr_palettes; ++i)
     {
         fprintf(fdi, "include \'%s.asm\'\n", output->palettes[i]->name);
     }
 
-    for (i = 0; i < output->numConverts; ++i)
+    for (i = 0; i < output->nr_converts; ++i)
     {
-        convert_t *convert = output->converts[i];
-        tileset_group_t *tilesetGroup = convert->tilesetGroup;
+        struct convert *convert = output->converts[i];
+        struct tileset_group *tileset_group = convert->tileset_group;
 
-        for (j = 0; j < convert->numImages; ++j)
+        for (j = 0; j < convert->nr_images; ++j)
         {
-            image_t *image = &convert->images[j];
+            struct image *image = &convert->images[j];
 
             fprintf(fdi, "include \'%s.asm\'\n", image->name);
         }
 
-        if (tilesetGroup != NULL)
+        if (tileset_group != NULL)
         {
-            for (k = 0; k < tilesetGroup->numTilesets; ++k)
+            for (k = 0; k < tileset_group->nr_tilesets; ++k)
             {
-                tileset_t *tileset = &tilesetGroup->tilesets[k];
+                struct tileset *tileset = &tileset_group->tilesets[k];
 
                 fprintf(fdi, "include \'%s.asm\'\n", tileset->image.name);
             }
@@ -265,11 +248,11 @@ int output_asm_include_file(output_t *output)
 
     fclose(fdi);
 
-    free(includeName);
+    free(include_name);
 
     return 0;
 
 error:
-    free(includeName);
-    return 1;
+    free(include_name);
+    return -1;
 }

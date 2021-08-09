@@ -30,15 +30,15 @@
 #ifndef CONVERT_H
 #define CONVERT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "bpp.h"
 #include "image.h"
 #include "palette.h"
 #include "tileset.h"
 #include "compress.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define CONVERT_DEFAULT_QUANTIZE_SPEED 3
 
@@ -48,35 +48,40 @@ typedef enum
     CONVERT_STYLE_RLET,
 } convert_style_t;
 
-typedef struct convert
+struct convert
 {
     char *name;
-    char *paletteName;
-    int paletteOffset;
-    image_t *images;
-    int numImages;
-    tileset_group_t *tilesetGroup;
+    char *palette_name;
+    struct palette *palette;
+    int palette_offset;
+    int omit_indices[PALETTE_MAX_ENTRIES];
+    int nr_omit_indices;
+    int transparent_index;
+    struct image *images;
+    int nr_images;
+    struct tileset_group *tileset_group;
     compress_t compress;
-    palette_t *palette;
     convert_style_t style;
-    int omitIndices[PALETTE_MAX_ENTRIES];
-    int numOmitIndices;
-    int transparentIndex;
-    bool widthAndHeight;
-    int quantizeSpeed;
+    int quantize_speed;
     float dither;
     int rotate;
-    bool flipx;
-    bool flipy;
+    bool add_width_height;
+    bool flip_x;
+    bool flip_y;
     bpp_t bpp;
-} convert_t;
+};
 
-convert_t *convert_alloc(void);
-void convert_free(convert_t *convert);
-tileset_group_t *convert_alloc_tileset_group(convert_t *convert);
-int convert_add_image_path(convert_t *convert, const char *path);
-int convert_add_tileset_path(convert_t *convert, const char *path);
-int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes);
+struct convert *convert_alloc(void);
+
+void convert_free(struct convert *convert);
+
+struct tileset_group *convert_alloc_tileset_group(struct convert *convert);
+
+int convert_add_image_path(struct convert *convert, const char *path);
+
+int convert_add_tileset_path(struct convert *convert, const char *path);
+
+int convert_convert(struct convert *convert, struct palette **palettes, int nr_palettes);
 
 #ifdef __cplusplus
 }

@@ -31,57 +31,38 @@
 #ifndef OUTPUT_FORMATS_H
 #define OUTPUT_FORMATS_H
 
+#include "output.h"
+#include "appvar.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "output.h"
-#include "appvar.h"
+int output_c_image(struct image *image);
+int output_c_tileset(struct tileset *tileset);
+int output_c_palette(struct palette *palette);
+int output_c_include_file(struct output *output);
 
-/*
- * Output is CRLF to please the Windows losers.
- */
+int output_asm_image(struct image *image);
+int output_asm_tileset(struct tileset *tileset);
+int output_asm_palette(struct palette *palette);
+int output_asm_include_file(struct output *output);
 
-/*
- * C Format.
- */
-int output_c_image(image_t *image);
-int output_c_tileset(tileset_t *tileset);
-int output_c_palette(palette_t *palette);
-int output_c_include_file(output_t *output);
+int output_bin_image(struct image *image);
+int output_bin_tileset(struct tileset *tileset);
+int output_bin_palette(struct palette *palette);
+int output_bin_include_file(struct output *output);
 
-/*
- * Assembly Format.
- */
-int output_asm_image(image_t *image);
-int output_asm_tileset(tileset_t *tileset);
-int output_asm_palette(palette_t *palette);
-int output_asm_include_file(output_t *output);
+int output_ice_image(struct image *image, char *file);
+int output_ice_tileset(struct tileset *tileset, char *file);
+int output_ice_palette(struct palette *palette, char *file);
+int output_ice_include_file(struct output *output, char *file);
 
-/*
- * Binary Format.
- */
-int output_bin_image(image_t *image);
-int output_bin_tileset(tileset_t *tileset);
-int output_bin_palette(palette_t *palette);
-int output_bin_include_file(output_t *output);
-
-/*
- * ICE Format.
- */
-int output_ice_image(image_t *image, char *file);
-int output_ice_tileset(tileset_t *tileset, char *file);
-int output_ice_palette(palette_t *palette, char *file);
-int output_ice_include_file(output_t *output, char *file);
-
-/*
- * Appvar Format.
- */
-int output_appvar_header(output_t *output, appvar_t *appvar);
-int output_appvar_image(image_t *image, appvar_t *appvar);
-int output_appvar_tileset(tileset_t *tileset, appvar_t *appvar);
-int output_appvar_palette(palette_t *palette, appvar_t *appvar);
-int output_appvar_include_file(output_t *output, appvar_t *appvar);
+int output_appvar_header(struct output *output, struct appvar *appvar);
+int output_appvar_image(struct image *image, struct appvar *appvar);
+int output_appvar_tileset(struct tileset *tileset, struct appvar *appvar);
+int output_appvar_palette(struct palette *palette, struct appvar *appvar);
+int output_appvar_include_file(struct output *output, struct appvar *appvar);
 
 #ifdef __cplusplus
 }

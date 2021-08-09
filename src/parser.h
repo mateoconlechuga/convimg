@@ -31,32 +31,33 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "palette.h"
 #include "convert.h"
 #include "output.h"
 
 #include <stdint.h>
 
-typedef struct
-{
-    char *name;
-    palette_t **palettes;
-    convert_t **converts;
-    output_t **outputs;
-    palette_t *curPalette;
-    convert_t *curConvert;
-    output_t *curOutput;
-    int numPalettes;
-    int numConverts;
-    int numOutputs;
-} yaml_file_t;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-int yaml_parse_file(yaml_file_t *yamlfile);
-void yaml_release_file(yaml_file_t *yamlfile);
+struct yaml
+{
+    char *path;
+    struct palette **palettes;
+    struct convert **converts;
+    struct output **outputs;
+    struct palette *cur_palette;
+    struct convert *cur_convert;
+    struct output *cur_output;
+    int nr_palettes;
+    int nr_converts;
+    int nr_outputs;
+};
+
+int parser_open(struct yaml *yaml);
+
+void parser_close(struct yaml *yaml);
 
 #ifdef __cplusplus
 }

@@ -31,53 +31,60 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "compress.h"
 #include "bpp.h"
+#include "compress.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct palette;
+
+struct image
 {
     char *name;
     char *path;
     uint8_t *data;
     int width;
     int height;
-	int size;
+    int size;
 
-    /* set by convert */
-    int quantizeSpeed;
+    // set by convert
+    int quantize_speed;
     float dither;
     bool compressed;
     bool rlet;
     int rotate;
-    bool flipx;
-    bool flipy;
-    int origSize;
+    bool flip_x;
+    bool flip_y;
+    int orig_size;
 
-    /* set by output */
+    // set by output
     char *directory;
-} image_t;
+};
 
 #define WIDTH_HEIGHT_SIZE 2
 
-/* I despise forward declartions, but meh */
-typedef struct palette palette_t;
+int image_load(struct image *image);
 
-int image_load(image_t *image);
-int image_rlet(image_t *image, int tIndex);
-int image_add_width_and_height(image_t *image);
-int image_add_offset(image_t *image, int offset);
-int image_compress(image_t *image, compress_t compress);
-int image_remove_omits(image_t *image, int *omitIndices, int numOmitIndices);
-int image_set_bpp(image_t *image, bpp_t bpp, int paletteNumEntries);
-int image_quantize(image_t *image, palette_t *palette);
-void image_free(image_t *image);
+int image_rlet(struct image *image, int transparent_index);
+
+int image_add_width_and_height(struct image *image);
+
+int image_add_offset(struct image *image, int offset);
+
+int image_compress(struct image *image, compress_t compress);
+
+int image_remove_omits(struct image *image, int *omit_indices, int nr_omit_indices);
+
+int image_set_bpp(struct image *image, bpp_t bpp, int palette_nr_entries);
+
+int image_quantize(struct image *image, struct palette *palette);
+
+void image_free(struct image *image);
 
 #ifdef __cplusplus
 }

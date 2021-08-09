@@ -31,16 +31,16 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "appvar.h"
 #include "convert.h"
 #include "palette.h"
 #include "compress.h"
 
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum
 {
@@ -58,34 +58,53 @@ typedef enum
     OUTPUT_CONVERTS_FIRST,
 } output_order_t;
 
-typedef struct
+struct output
 {
     char *name;
-    char *includeFileName;
+    char *include_file;
     char *directory;
-    char **convertNames;
-    convert_t **converts;
-    int numConverts;
-    char **paletteNames;
-    palette_t **palettes;
-    int numPalettes;
+    char **convert_names;
+    struct convert **converts;
+    int nr_converts;
+    char **palette_names;
+    struct palette **palettes;
+    int nr_palettes;
     output_format_t format;
     compress_t compress;
-    appvar_t appvar;
-    bool paletteSizes;
+    struct appvar appvar;
+    bool palette_sizes;
     output_order_t order;
-} output_t;
+};
 
-output_t *output_alloc(void);
-void output_free(output_t *output);
-int output_find_palettes(output_t *output, palette_t **palettes, int numPalettes);
-int output_find_converts(output_t *output, convert_t **converts, int numConverts);
-int output_add_convert(output_t *output, const char *convertName);
-int output_add_palette(output_t *output, const char *paletteName);
-int output_converts(output_t *output, convert_t **converts, int numConverts);
-int output_palettes(output_t *output, palette_t **palettes, int numPalettes);
-int output_include_header(output_t *output);
-int output_init(output_t *output);
+struct output *output_alloc(void);
+
+void output_free(struct output *output);
+
+int output_find_palettes(struct output *output,
+    struct palette **palettes,
+    int nr_palettes);
+
+int output_find_converts(struct output *output,
+    struct convert **converts,
+    int nr_converts);
+
+int output_add_convert(struct output *output,
+    const char *name);
+
+int output_add_palette(struct output *output,
+    const char *name);
+
+int output_converts(struct output *output,
+    struct convert **converts,
+    int nr_converts);
+
+int output_palettes(struct output *output,
+    struct palette **palettes,
+    int nr_palettes);
+
+int output_include_header(struct output *output);
+
+int output_init(struct output *output);
 
 #ifdef __cplusplus
 }

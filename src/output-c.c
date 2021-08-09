@@ -22,7 +22,6 @@
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
@@ -34,14 +33,9 @@
 #include "image.h"
 #include "log.h"
 
-#include <stdio.h>
-#include <stdint.h>
 #include <errno.h>
 #include <string.h>
 
-/*
- * Outputs to C format.
- */
 static int output_c(unsigned char *arr, size_t size, FILE *fdo)
 {
     size_t i;
@@ -67,22 +61,19 @@ static int output_c(unsigned char *arr, size_t size, FILE *fdo)
     return 0;
 }
 
-/*
- * Outputs a converted C image.
- */
-int output_c_image(image_t *image)
+int output_c_image(struct image *image)
 {
     char *header = strdupcat(image->directory, ".h");
     char *source = strdupcat(image->directory, ".c");
     FILE *fdh;
     FILE *fds;
 
-    LL_INFO(" - Writing \'%s\'", header);
+    LOG_INFO(" - Writing \'%s\'\n", header);
 
     fdh = fopen(header, "wt");
     if (fdh == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
@@ -95,7 +86,7 @@ int output_c_image(image_t *image)
     fprintf(fdh, "\n");
     fprintf(fdh, "#define %s_width %d\n", image->name, image->width);
     fprintf(fdh, "#define %s_height %d\n", image->name, image->height);
-    fprintf(fdh, "#define %s_size %d\n", image->name, image->origSize);
+    fprintf(fdh, "#define %s_size %d\n", image->name, image->orig_size);
 
     if (image->compressed)
     {
@@ -120,12 +111,12 @@ int output_c_image(image_t *image)
 
     fclose(fdh);
 
-    LL_INFO(" - Writing \'%s\'", source);
+    LOG_INFO(" - Writing \'%s\'\n", source);
 
     fds = fopen(source, "wt");
     if (fds == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
@@ -150,14 +141,10 @@ int output_c_image(image_t *image)
 error:
     free(header);
     free(source);
-    return 1;
+    return -1;
 }
 
-
-/*
- * Outputs a converted C tileset.
- */
-int output_c_tileset(tileset_t *tileset)
+int output_c_tileset(struct tileset *tileset)
 {
     char *header = strdupcat(tileset->directory, ".h");
     char *source = strdupcat(tileset->directory, ".c");
@@ -165,12 +152,12 @@ int output_c_tileset(tileset_t *tileset)
     FILE *fds;
     int i;
 
-    LL_INFO(" - Writing \'%s\'", header);
+    LOG_INFO(" - Writing \'%s\'\n", header);
 
     fdh = fopen(header, "wt");
     if (fdh == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
@@ -182,9 +169,9 @@ int output_c_tileset(tileset_t *tileset)
     fprintf(fdh, "#endif\n");
     fprintf(fdh, "\n");
 
-    for (i = 0; i < tileset->numTiles; ++i)
+    for (i = 0; i < tileset->nr_tiles; ++i)
     {
-        tileset_tile_t *tile = &tileset->tiles[i];
+        struct tileset_tile *tile = &tileset->tiles[i];
 
         if (tileset->compressed)
         {
@@ -210,21 +197,21 @@ int output_c_tileset(tileset_t *tileset)
 
     fprintf(fdh, "#define %s_num_tiles %d\n",
         tileset->image.name,
-        tileset->numTiles);
+        tileset->nr_tiles);
 
-    if (tileset->pTable)
+    if (tileset->p_table)
     {
         if (tileset->compressed)
         {
             fprintf(fdh, "extern unsigned char *%s_tiles_compressed[%d];\n",
                 tileset->image.name,
-                tileset->numTiles);
+                tileset->nr_tiles);
         }
         else
         {
             fprintf(fdh, "extern unsigned char *%s_tiles_data[%d];\n",
                 tileset->image.name,
-                tileset->numTiles);
+                tileset->nr_tiles);
 
             fprintf(fdh, "#define %s_tiles ((%s**)%s_tiles_data)\n",
                 tileset->image.name,
@@ -242,18 +229,18 @@ int output_c_tileset(tileset_t *tileset)
 
     fclose(fdh);
 
-    LL_INFO(" - Writing \'%s\'", source);
+    LOG_INFO(" - Writing \'%s\'\n", source);
 
     fds = fopen(source, "wt");
     if (fds == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
-    for (i = 0; i < tileset->numTiles; ++i)
+    for (i = 0; i < tileset->nr_tiles; ++i)
     {
-        tileset_tile_t *tile = &tileset->tiles[i];
+        struct tileset_tile *tile = &tileset->tiles[i];
 
         if (tileset->compressed)
         {
@@ -273,22 +260,22 @@ int output_c_tileset(tileset_t *tileset)
         output_c(tile->data, tile->size, fds);
     }
 
-    if (tileset->pTable)
+    if (tileset->p_table)
     {
         if (tileset->compressed)
         {
             fprintf(fds, "unsigned char *%s_tiles_compressed[%d] =\n{\n",
                 tileset->image.name,
-                tileset->numTiles);
+                tileset->nr_tiles);
         }
         else
         {
             fprintf(fds, "unsigned char *%s_tiles_data[%d] =\n{\n",
                 tileset->image.name,
-                tileset->numTiles);
+                tileset->nr_tiles);
         }
 
-        for (i = 0; i < tileset->numTiles; ++i)
+        for (i = 0; i < tileset->nr_tiles; ++i)
         {
             if (tileset->compressed)
             {
@@ -317,27 +304,24 @@ int output_c_tileset(tileset_t *tileset)
 error:
     free(header);
     free(source);
-    return 1;
+    return -1;
 }
 
-/*
- * Outputs a converted C tileset.
- */
-int output_c_palette(palette_t *palette)
+int output_c_palette(struct palette *palette)
 {
     char *header = strdupcat(palette->directory, ".h");
     char *source = strdupcat(palette->directory, ".c");
-    int size = palette->numEntries * 2;
+    int size = palette->nr_entries * 2;
     FILE *fdh;
     FILE *fds;
     int i;
 
-    LL_INFO(" - Writing \'%s\'", header);
+    LOG_INFO(" - Writing \'%s\'\n", header);
 
     fdh = fopen(header, "wt");
     if (fdh == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
@@ -359,21 +343,21 @@ int output_c_palette(palette_t *palette)
 
     fclose(fdh);
 
-    LL_INFO(" - Writing \'%s\'", source);
+    LOG_INFO(" - Writing \'%s\'\n", source);
 
     fds = fopen(source, "wt");
     if (fds == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
     fprintf(fds, "unsigned char %s[%d] =\n{\n", palette->name, size);
 
-    for (i = 0; i < palette->numEntries; ++i)
+    for (i = 0; i < palette->nr_entries; ++i)
     {
-        color_t *color = &palette->entries[i].color;
-        color_t *origcolor = &palette->entries[i].origcolor;
+        struct color *color = &palette->entries[i].color;
+        struct color *origcolor = &palette->entries[i].orig_color;
 
         if (palette->entries[i].exact)
         {
@@ -415,68 +399,65 @@ int output_c_palette(palette_t *palette)
 error:
     free(header);
     free(source);
-    return 1;
+    return -1;
 }
 
-/*
- * Outputs an include file for the output structure
- */
-int output_c_include_file(output_t *output)
+int output_c_include_file(struct output *output)
 {
-    char *includeFile = strdupcat(output->directory, output->includeFileName);
-    char *includeName = strdup(output->includeFileName);
+    char *include_file = strdupcat(output->directory, output->include_file);
+    char *include_name = strdup(output->include_file);
     char *tmp;
     FILE *fdi;
     int i, j, k;
 
-    tmp = strchr(includeName, '.');
+    tmp = strchr(include_name, '.');
     if (tmp != NULL)
     {
         *tmp = '\0';
     }
 
-    LL_INFO(" - Writing \'%s\'", includeFile);
+    LOG_INFO(" - Writing \'%s\'\n", include_file);
 
-    fdi = fopen(includeFile, "wt");
+    fdi = fopen(include_file, "wt");
     if (fdi == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
     }
 
-    fprintf(fdi, "#ifndef %s_include_file\n", includeName);
-    fprintf(fdi, "#define %s_include_file\n", includeName);
+    fprintf(fdi, "#ifndef %s_include_file\n", include_name);
+    fprintf(fdi, "#define %s_include_file\n", include_name);
     fprintf(fdi, "\n");
     fprintf(fdi, "#ifdef __cplusplus\n");
     fprintf(fdi, "extern \"C\" {\n");
     fprintf(fdi, "#endif\n");
     fprintf(fdi, "\n");
 
-    for (i = 0; i < output->numPalettes; ++i)
+    for (i = 0; i < output->nr_palettes; ++i)
     {
         fprintf(fdi, "#include \"%s.h\"\n", output->palettes[i]->name);
     }
 
-    for (i = 0; i < output->numConverts; ++i)
+    for (i = 0; i < output->nr_converts; ++i)
     {
-        convert_t *convert = output->converts[i];
-        tileset_group_t *tilesetGroup = convert->tilesetGroup;
+        struct convert *convert = output->converts[i];
+        struct tileset_group *tileset_group = convert->tileset_group;
 
         fprintf(fdi, "#define %s_palette_offset %d\n",
-            convert->name, convert->paletteOffset);
+            convert->name, convert->palette_offset);
 
-        for (j = 0; j < convert->numImages; ++j)
+        for (j = 0; j < convert->nr_images; ++j)
         {
-            image_t *image = &convert->images[j];
+            struct image *image = &convert->images[j];
 
             fprintf(fdi, "#include \"%s.h\"\n", image->name);
         }
 
-        if (tilesetGroup != NULL)
+        if (tileset_group != NULL)
         {
-            for (k = 0; k < tilesetGroup->numTilesets; ++k)
+            for (k = 0; k < tileset_group->nr_tilesets; ++k)
             {
-                tileset_t *tileset = &tilesetGroup->tilesets[k];
+                struct tileset *tileset = &tileset_group->tilesets[k];
 
                 fprintf(fdi, "#include \"%s.h\"\n", tileset->image.name);
             }
@@ -492,13 +473,13 @@ int output_c_include_file(output_t *output)
 
     fclose(fdi);
 
-    free(includeName);
-    free(includeFile);
+    free(include_name);
+    free(include_file);
 
     return 0;
 
 error:
-    free(includeName);
-    free(includeFile);
-    return 1;
+    free(include_name);
+    free(include_file);
+    return -1;
 }

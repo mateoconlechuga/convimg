@@ -31,66 +31,61 @@
 #include "convert.h"
 #include "strings.h"
 #include "compress.h"
+#include "tileset.h"
 #include "log.h"
 
 #include <string.h>
 #include <glob.h>
 
-/*
- * Allocates a convert structure.
- */
-convert_t *convert_alloc(void)
+struct convert *convert_alloc(void)
 {
-    convert_t *convert = NULL;
-
-    convert = malloc(sizeof(convert_t));
+    struct convert *convert = malloc(sizeof(struct convert));
     if (convert == NULL)
     {
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
     convert->images = NULL;
-    convert->numImages = 0;
+    convert->nr_images = 0;
     convert->compress = COMPRESS_NONE;
     convert->palette = NULL;
-    convert->paletteOffset = 0;
-    convert->tilesetGroup = NULL;
+    convert->palette_offset = 0;
+    convert->tileset_group = NULL;
     convert->style = CONVERT_STYLE_NORMAL;
-    convert->numOmitIndices = 0;
-    convert->widthAndHeight = true;
-    convert->transparentIndex = -1;
+    convert->nr_omit_indices = 0;
+    convert->add_width_height = true;
+    convert->transparent_index = -1;
     convert->bpp = BPP_8;
     convert->name = NULL;
-    convert->paletteName = strdup("xlibc");
-    convert->quantizeSpeed = CONVERT_DEFAULT_QUANTIZE_SPEED;
+    convert->palette_name = strdup("xlibc");
+    convert->quantize_speed = CONVERT_DEFAULT_QUANTIZE_SPEED;
     convert->dither = 0;
     convert->rotate = 0;
-    convert->flipx = false;
-    convert->flipy = false;
+    convert->flip_x = false;
+    convert->flip_y = false;
 
     return convert;
 }
 
-/*
- * Adds a image file to a convert (does not load).
- */
-static int convert_add_image(convert_t *convert, const char *path)
+static int convert_add_image(struct convert *convert, const char *path)
 {
-    image_t *image;
+    struct image *image;
 
     if (convert == NULL || path == NULL)
     {
-        return 1;
+        return -1;
     }
 
     convert->images =
-        realloc(convert->images, (convert->numImages + 1) * sizeof(image_t));
+        realloc(convert->images, (convert->nr_images + 1) * sizeof(struct image));
     if (convert->images == NULL)
     {
-        return 1;
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    image = &convert->images[convert->numImages];
+    image = &convert->images[convert->nr_images];
 
     image->path = strdup(path);
     image->name = strings_basename(path);
@@ -100,66 +95,60 @@ static int convert_add_image(convert_t *convert, const char *path)
     image->rlet = false;
     image->compressed = false;
 
-    convert->numImages++;
+    convert->nr_images++;
 
-    LL_DEBUG("Adding image: %s [%s]", image->path, image->name);
+    LOG_DEBUG("Adding convert image: %s [%s]\n", image->path, image->name);
 
     return 0;
 }
 
-/*
- * Allocates output structure.
- */
-tileset_group_t *convert_alloc_tileset_group(convert_t *convert)
+struct tileset_group *convert_alloc_tileset_group(struct convert *convert)
 {
-    tileset_group_t *tmpTilesetGroup;
+    struct tileset_group *tmp;
 
-    LL_DEBUG("Allocating convert tileset group...");
+    LOG_DEBUG("Allocating convert tileset group...\n");
 
-    tmpTilesetGroup = tileset_group_alloc();
-    if (tmpTilesetGroup == NULL)
+    tmp = tileset_group_alloc();
+    if (tmp == NULL)
     {
-        LL_DEBUG("Memory error in %s", __func__);
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
-    convert->tilesetGroup = tmpTilesetGroup;
+    convert->tileset_group = tmp;
 
-    return tmpTilesetGroup;
+    return tmp;
 }
 
-/*
- * Adds a tileset to a convert (does not load).
- */
-static int convert_add_tileset(convert_t *convert, const char *path)
+static int convert_add_tileset(struct convert *convert, const char *path)
 {
-    image_t *image;
-    tileset_group_t *tilesetGroup;
-    tileset_t *tileset;
+    struct image *image;
+    struct tileset_group *tileset_group;
+    struct tileset *tileset;
 
     if (convert == NULL || path == NULL)
     {
-        LL_DEBUG("Invalid param in %s", __func__);
-        return 1;
+        LOG_ERROR("Invalid param in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    tilesetGroup = convert->tilesetGroup;
+    tileset_group = convert->tileset_group;
 
-    tilesetGroup->tilesets =
-        realloc(tilesetGroup->tilesets, (tilesetGroup->numTilesets + 1) * sizeof(tileset_t));
-    if (tilesetGroup->tilesets == NULL)
+    tileset_group->tilesets =
+        realloc(tileset_group->tilesets, (tileset_group->nr_tilesets + 1) * sizeof(struct tileset));
+    if (tileset_group->tilesets == NULL)
     {
-        LL_DEBUG("Memory error in %s", __func__);
-        return 1;
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    tileset = &tilesetGroup->tilesets[tilesetGroup->numTilesets];
+    tileset = &tileset_group->tilesets[tileset_group->nr_tilesets];
 
-    tileset->tileHeight = tilesetGroup->tileHeight;
-    tileset->tileWidth = tilesetGroup->tileWidth;
-    tileset->pTable = tilesetGroup->pTable;
+    tileset->tile_height = tileset_group->tile_height;
+    tileset->tile_width = tileset_group->tile_width;
+    tileset->p_table = tileset_group->p_table;
     tileset->tiles = NULL;
-    tileset->numTiles = 0;
+    tileset->nr_tiles = 0;
 
     image = &tileset->image;
     image->path = strdup(path);
@@ -170,18 +159,15 @@ static int convert_add_tileset(convert_t *convert, const char *path)
     image->compressed = false;
     image->rlet = false;
     image->rotate = 0;
-    image->flipx = false;
-    image->flipy = false;
+    image->flip_x = false;
+    image->flip_y = false;
 
-    tilesetGroup->numTilesets++;
+    tileset_group->nr_tilesets++;
 
     return 0;
 }
 
-/*
- * Adds a path which may or may not include images.
- */
-int convert_add_image_path(convert_t *convert, const char *path)
+int convert_add_image_path(struct convert *convert, const char *path)
 {
     glob_t *globbuf = NULL;
     char **paths = NULL;
@@ -190,7 +176,7 @@ int convert_add_image_path(convert_t *convert, const char *path)
 
     if (convert == NULL || path == NULL)
     {
-        return 1;
+        return -1;
     }
 
     globbuf = strings_find_images(path);
@@ -199,8 +185,8 @@ int convert_add_image_path(convert_t *convert, const char *path)
 
     if (len == 0)
     {
-        LL_ERROR("Could not find file(s): \'%s\'", path);
-        return 1;
+        LOG_ERROR("Could not find file(s): \'%s\'\n", path);
+        return -1;
     }
 
     for (i = 0; i < len; ++i)
@@ -214,10 +200,7 @@ int convert_add_image_path(convert_t *convert, const char *path)
     return 0;
 }
 
-/*
- * Adds a path which may or may not include images.
- */
-int convert_add_tileset_path(convert_t *convert, const char *path)
+int convert_add_tileset_path(struct convert *convert, const char *path)
 {
     glob_t *globbuf = NULL;
     char **paths = NULL;
@@ -226,7 +209,7 @@ int convert_add_tileset_path(convert_t *convert, const char *path)
 
     if (convert == NULL || path == NULL)
     {
-        return 1;
+        return -1;
     }
 
     globbuf = strings_find_images(path);
@@ -235,8 +218,8 @@ int convert_add_tileset_path(convert_t *convert, const char *path)
 
     if (len == 0)
     {
-        LL_ERROR("Could not find file(s): \'%s\'", path);
-        return 1;
+        LOG_ERROR("Could not find file(s): \'%s\'\n", path);
+        return -1;
     }
 
     for (i = 0; i < len; ++i)
@@ -250,10 +233,7 @@ int convert_add_tileset_path(convert_t *convert, const char *path)
     return 0;
 }
 
-/*
- * Frees an allocated convert.
- */
-void convert_free(convert_t *convert)
+void convert_free(struct convert *convert)
 {
     int i;
 
@@ -262,14 +242,14 @@ void convert_free(convert_t *convert)
         return;
     }
 
-    for (i = 0; i < convert->numImages; ++i)
+    for (i = 0; i < convert->nr_images; ++i)
     {
         image_free(&convert->images[i]);
     }
 
-    tileset_group_free(convert->tilesetGroup);
-    free(convert->tilesetGroup);
-    convert->tilesetGroup = NULL;
+    tileset_group_free(convert->tileset_group);
+    free(convert->tileset_group);
+    convert->tileset_group = NULL;
 
     free(convert->images);
     convert->images = NULL;
@@ -277,56 +257,51 @@ void convert_free(convert_t *convert)
     free(convert->name);
     convert->name = NULL;
 
-    free(convert->paletteName);
-    convert->paletteName = NULL;
+    free(convert->palette_name);
+    convert->palette_name = NULL;
 }
 
-/*
- * Gets the pallete data used for converting.
- */
-int convert_find_palette(convert_t *convert, palette_t **palettes, int numPalettes)
+int convert_find_palette(struct convert *convert, struct palette **palettes, int nr_palettes)
 {
     int i;
 
-    if (convert == NULL || palettes == NULL || convert->paletteName == NULL)
+    if (convert == NULL || palettes == NULL || convert->palette_name == NULL)
     {
-        LL_ERROR("A palette with the same name \'%s\' already exists.",
+        LOG_ERROR("A palette with the same name \'%s\' already exists.\n",
             convert->name);
-        return 1;
+        return -1;
     }
 
-    for (i = 0; i < numPalettes; ++i)
+    for (i = 0; i < nr_palettes; ++i)
     {
-        if (!strcmp(convert->paletteName, palettes[i]->name))
+        if (!strcmp(convert->palette_name, palettes[i]->name))
         {
             convert->palette = palettes[i];
             return 0;
         }
     }
 
-    LL_ERROR("No palette \'%s\' found for convert \'%s\'",
-        convert->paletteName,
+    LOG_ERROR("No palette \'%s\' found for convert \'%s\'\n",
+        convert->palette_name,
         convert->name);
-    return 1;
+
+    return -1;
 }
 
-/*
- * Converts an image using flags.
- */
-static int convert_image(convert_t *convert, image_t *image)
+static int convert_image(struct convert *convert, struct image *image)
 {
     int ret;
 
-    if (convert->paletteOffset != 0)
+    if (convert->palette_offset != 0)
     {
-        if (convert->paletteOffset + convert->palette->numEntries >=
+        if (convert->palette_offset + convert->palette->nr_entries >=
             PALETTE_MAX_ENTRIES)
         {
-            LL_ERROR("Palette offset places indices out of range for convert \'%s\'",
+            LOG_ERROR("Palette offset places indices out of range for convert \'%s\'\n",
                 convert->name);
-            return 1;
+            return -1;
         }
-        ret = image_add_offset(image, convert->paletteOffset);
+        ret = image_add_offset(image, convert->palette_offset);
         if (ret != 0)
         {
             return ret;
@@ -335,7 +310,7 @@ static int convert_image(convert_t *convert, image_t *image)
 
     if (convert->style == CONVERT_STYLE_RLET)
     {
-        ret = image_rlet(image, convert->transparentIndex);
+        ret = image_rlet(image, convert->transparent_index);
         if (ret != 0)
         {
             return ret;
@@ -344,9 +319,9 @@ static int convert_image(convert_t *convert, image_t *image)
         image->rlet = true;
     }
 
-    if (convert->numOmitIndices != 0)
+    if (convert->nr_omit_indices != 0)
     {
-        ret = image_remove_omits(image, convert->omitIndices, convert->numOmitIndices);
+        ret = image_remove_omits(image, convert->omit_indices, convert->nr_omit_indices);
         if (ret != 0)
         {
             return ret;
@@ -355,14 +330,14 @@ static int convert_image(convert_t *convert, image_t *image)
 
     if (convert->bpp != BPP_8)
     {
-        ret = image_set_bpp(image, convert->bpp, convert->palette->numEntries);
+        ret = image_set_bpp(image, convert->bpp, convert->palette->nr_entries);
         if (ret != 0)
         {
             return ret;
         }
     }
 
-    if (convert->widthAndHeight == true)
+    if (convert->add_width_height == true)
     {
         ret = image_add_width_and_height(image);
         if (ret != 0)
@@ -371,7 +346,7 @@ static int convert_image(convert_t *convert, image_t *image)
         }
     }
 
-    image->origSize = image->size;
+    image->orig_size = image->size;
 
     if (convert->compress != COMPRESS_NONE)
     {
@@ -387,28 +362,25 @@ static int convert_image(convert_t *convert, image_t *image)
     return 0;
 }
 
-/*
- * Converts a tileset to multiple data blocks for conversion.
- */
-int convert_tileset(convert_t *convert, tileset_t *tileset)
+int convert_tileset(struct convert *convert, struct tileset *tileset)
 {
     int ret = 0;
     int i, j, k;
     int x, y;
 
-    tileset->numTiles =
-        (tileset->image.width / tileset->tileWidth) *
-        (tileset->image.height / tileset->tileHeight);
+    tileset->nr_tiles =
+        (tileset->image.width / tileset->tile_width) *
+        (tileset->image.height / tileset->tile_height);
 
-    if (tileset->image.width % tileset->tileWidth)
+    if (tileset->image.width % tileset->tile_width)
     {
-        LL_ERROR("Image dimensions do not support tile width");
-        return 1;
+        LOG_ERROR("Image dimensions do not support tile width.\n");
+        return -1;
     }
-    if (tileset->image.height % tileset->tileHeight)
+    if (tileset->image.height % tileset->tile_height)
     {
-        LL_ERROR("Image dimensions do not support tile height");
-        return 1;
+        LOG_ERROR("Image dimensions do not support tile height.\n");
+        return -1;
     }
 
     tileset->compressed = convert->compress != COMPRESS_NONE;
@@ -418,13 +390,13 @@ int convert_tileset(convert_t *convert, tileset_t *tileset)
 
     y = x = 0;
 
-    for (i = 0; i < tileset->numTiles; ++i)
+    for (i = 0; i < tileset->nr_tiles; ++i)
     {
-        image_t tile =
+        struct image tile =
         {
             .data = tileset->tiles[i].data,
-            .width = tileset->tileWidth,
-            .height = tileset->tileHeight,
+            .width = tileset->tile_width,
+            .height = tileset->tile_height,
             .size = tileset->tiles[i].size,
             .name = NULL,
             .path = NULL
@@ -455,64 +427,61 @@ int convert_tileset(convert_t *convert, tileset_t *tileset)
         tileset->tiles[i].size = tile.size;
         tileset->tiles[i].data = tile.data;
 
-        x += tileset->tileWidth;
+        x += tileset->tile_width;
 
         if (x >= tileset->image.width)
         {
             x = 0;
-            y += tileset->image.width * tileset->tileHeight;
+            y += tileset->image.width * tileset->tile_height;
         }
     }
 
     return ret;
 }
 
-/*
- * Converts an image to a palette or raw data as needed.
- */
-int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
+int convert_convert(struct convert *convert, struct palette **palettes, int nr_palettes)
 {
     int i, j;
     int ret = 0;
 
     if (convert == NULL)
     {
-        return 1;
+        return -1;
     }
 
-    if (convert->numImages > 0)
+    if (convert->nr_images > 0)
     {
-        LL_INFO("Generating convert \'%s\'", convert->name);
+        LOG_INFO("Generating convert \'%s\'\n", convert->name);
     }
 
-    ret = convert_find_palette(convert, palettes, numPalettes);
+    ret = convert_find_palette(convert, palettes, nr_palettes);
     if (ret != 0)
     {
         return ret;
     }
 
-    for (i = 0; i < convert->numImages; ++i)
+    for (i = 0; i < convert->nr_images; ++i)
     {
-        image_t *image = &convert->images[i];
+        struct image *image = &convert->images[i];
 
         if (ret != 0)
         {
             break;
         }
 
-        LL_INFO(" - Reading image \'%s\'",
+        LOG_INFO(" - Reading image \'%s\'\n",
             image->path);
 
         image->dither = convert->dither;
         image->rotate = convert->rotate;
-        image->flipx = convert->flipx;
-        image->flipy = convert->flipy;
-        image->quantizeSpeed = convert->quantizeSpeed;
+        image->flip_x = convert->flip_x;
+        image->flip_y = convert->flip_y;
+        image->quantize_speed = convert->quantize_speed;
 
         ret = image_load(image);
         if (ret != 0)
         {
-            LL_ERROR("Failed to load image \'%s\'", image->path);
+            LOG_ERROR("Failed to load image \'%s\'\n", image->path);
             break;
         }
 
@@ -529,34 +498,34 @@ int convert_convert(convert_t *convert, palette_t **palettes, int numPalettes)
         }
     }
 
-    if (ret == 0 && convert->tilesetGroup != NULL)
+    if (ret == 0 && convert->tileset_group != NULL)
     {
-        tileset_group_t *tilesetGroup = convert->tilesetGroup;
+        struct tileset_group *tileset_group = convert->tileset_group;
 
-        LL_INFO("Converting tilesets for \'%s\'", convert->name);
+        LOG_INFO("Converting tilesets for \'%s\'\n", convert->name);
 
-        for (j = 0; j < tilesetGroup->numTilesets; ++j)
+        for (j = 0; j < tileset_group->nr_tilesets; ++j)
         {
-            tileset_t *tileset = &tilesetGroup->tilesets[j];
-            image_t *image = &tileset->image;
+            struct tileset *tileset = &tileset_group->tilesets[j];
+            struct image *image = &tileset->image;
 
             if (ret != 0)
             {
                 break;
             }
 
-            LL_INFO(" - Reading tileset \'%s\'",
+            LOG_INFO(" - Reading tileset \'%s\'\n",
                 image->path);
 
             ret = image_load(image);
             if (ret != 0)
             {
-                LL_ERROR("Failed to load image \'%s\'", image->path);
+                LOG_ERROR("Failed to load image \'%s\'\n", image->path);
                 break;
             }
 
             image->dither = convert->dither;
-            image->quantizeSpeed = convert->quantizeSpeed;
+            image->quantize_speed = convert->quantize_speed;
 
             ret = image_quantize(image, convert->palette);
             if (ret != 0)

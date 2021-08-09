@@ -31,150 +31,147 @@
 #include "options.h"
 #include "convert.h"
 #include "icon.h"
+#include "parser.h"
 #include "log.h"
 
-/*
- * Main entry function, cli arguments.
- */
-int main(int argc, char **argv)
+static int process_yaml(struct yaml *yaml)
 {
+    unsigned int i;
     int ret;
-    static options_t options;
+
+    ret = parser_open(yaml);
+    if (ret != 0)
+    {
+        return -1;
+    }
+
+    if (yaml->nr_outputs == 0)
+    {
+        LOG_ERROR("No output rules found; exiting.\n");
+        return -1;
+    }
+
+    for (i = 0; i < yaml->nr_palettes; ++i)
+    {
+        ret = palette_generate(yaml->palettes[i],
+            yaml->converts,
+            yaml->nr_converts);
+        if (ret != 0)
+        {
+            return -1;
+        }
+    }
+
+    for (i = 0; i < yaml->nr_converts; ++i)
+    {
+        ret = convert_convert(yaml->converts[i],
+            yaml->palettes,
+            yaml->nr_palettes);
+        if (ret != 0)
+        {
+            return -1;
+        }
+    }
+
+    for (i = 0; i < yaml->nr_outputs; ++i)
+    {
+        struct output *output = yaml->outputs[i];
+
+        ret = output_find_palettes(output,
+            yaml->palettes,
+            yaml->nr_palettes);
+        if (ret != 0)
+        {
+            return -1;
+        }
+
+        ret = output_find_converts(output,
+            yaml->converts,
+            yaml->nr_converts);
+        if (ret != 0)
+        {
+            return -1;
+        }
+
+        ret = output_init(output);
+        if (ret != 0)
+        {
+            return -1;
+        }
+
+        if (output->order == OUTPUT_PALETTES_FIRST)
+        {
+            ret = output_palettes(output,
+                yaml->palettes,
+                yaml->nr_palettes);
+            if (ret != 0)
+            {
+                return -1;
+            }
+
+            ret = output_converts(output,
+                yaml->converts,
+                yaml->nr_converts);
+            if (ret != 0)
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            ret = output_converts(output,
+                yaml->converts,
+                yaml->nr_converts);
+            if (ret != 0)
+            {
+                return -1;
+            }
+
+            ret = output_palettes(output,
+                yaml->palettes,
+                yaml->nr_palettes);
+            if (ret != 0)
+            {
+                return -1;
+            }
+        }
+
+        ret = output_include_header(output);
+        if (ret != 0)
+        {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    static struct options options;
+    int ret;
 
     ret = options_get(argc, argv, &options);
-
-    if (ret == OPTIONS_SUCCESS)
+    switch (ret)
     {
-        if (options.convertIcon)
-        {
-            ret = icon_convert(&options.icon);
-            ret = ret == 0 ? OPTIONS_IGNORE : ret;
-        }
+        default:
+        case OPTIONS_FAILED:
+            return EXIT_FAILURE;
+        case OPTIONS_IGNORE:
+            return EXIT_SUCCESS;
+        case OPTIONS_SUCCESS:
+            break;
     }
 
-    if (ret == OPTIONS_SUCCESS)
+    if (options.convert_icon)
     {
-        int i;
-        yaml_file_t *yamlfile = &options.yamlfile;
-
-        ret = yaml_parse_file(yamlfile);
-
-        /* check to see if there are actually outputs */
-        if (ret == 0)
-        {
-            if (yamlfile->numOutputs == 0)
-            {
-                LL_ERROR("No output rules in file, quitting.");
-                ret = 1;
-            }
-        }
-
-        /* generate palettes */
-        if (ret == 0)
-        {
-            for (i = 0; i < yamlfile->numPalettes; ++i)
-            {
-                ret = palette_generate(yamlfile->palettes[i],
-                                       yamlfile->converts,
-                                       yamlfile->numConverts);
-                if (ret != 0)
-                {
-                    break;
-                }
-            }
-        }
-
-        /* convert images using palettes */
-        if (ret == 0)
-        {
-            for (i = 0; i < yamlfile->numConverts; ++i)
-            {
-                ret = convert_convert(yamlfile->converts[i],
-                                      yamlfile->palettes,
-                                      yamlfile->numPalettes);
-                if (ret != 0)
-                {
-                    break;
-                }
-            }
-        }
-
-        /* output converted files (converts and palettes) */
-        if (ret == 0)
-        {
-            for (i = 0; i < yamlfile->numOutputs; ++i)
-            {
-                output_t *output = yamlfile->outputs[i];
-
-                ret = output_find_palettes(output,
-                                           yamlfile->palettes,
-                                           yamlfile->numPalettes);
-                if (ret != 0)
-                {
-                    break;
-                }
-
-                ret = output_find_converts(output,
-                                           yamlfile->converts,
-                                           yamlfile->numConverts);
-                if (ret != 0)
-                {
-                    break;
-                }
-
-                ret = output_init(output);
-                if (ret != 0)
-                {
-                    break;
-                }
-
-                if (output->order == OUTPUT_PALETTES_FIRST)
-                {
-                    ret = output_palettes(output,
-                                          yamlfile->palettes,
-                                          yamlfile->numPalettes);
-                    if (ret != 0)
-                    {
-                        break;
-                    }
-
-                    ret = output_converts(output,
-                                          yamlfile->converts,
-                                          yamlfile->numConverts);
-                    if (ret != 0)
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    ret = output_converts(output,
-                                          yamlfile->converts,
-                                          yamlfile->numConverts);
-                    if (ret != 0)
-                    {
-                        break;
-                    }
-
-                    ret = output_palettes(output,
-                                          yamlfile->palettes,
-                                          yamlfile->numPalettes);
-                    if (ret != 0)
-                    {
-                        break;
-                    }
-                }
-
-                ret = output_include_header(output);
-                if (ret != 0)
-                {
-                    break;
-                }
-            }
-        }
-
-        yaml_release_file(yamlfile);
+        ret = icon_convert(&options.icon);
+    }
+    else
+    {
+        ret = process_yaml(&options.yaml);
+        parser_close(&options.yaml);
     }
 
-    return ret == OPTIONS_IGNORE ? 0 : ret;
+    return ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

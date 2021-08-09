@@ -33,24 +33,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * Allocates storage for a tileset.
- */
-tileset_t *tileset_alloc(void)
+struct tileset *tileset_alloc(void)
 {
-    tileset_t *tileset = NULL;
+    struct tileset *tileset = NULL;
 
-    tileset = malloc(sizeof(tileset_t));
+    tileset = malloc(sizeof(struct tileset));
     if (tileset == NULL)
     {
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
-    tileset->tileHeight = 16;
-    tileset->tileWidth = 16;
-    tileset->pTable = true;
+    tileset->tile_height = 16;
+    tileset->tile_width = 16;
+    tileset->p_table = true;
     tileset->tiles = NULL;
-    tileset->numTiles = 0;
+    tileset->nr_tiles = 0;
     tileset->image.name = NULL;
     tileset->image.path = NULL;
     tileset->image.data = NULL;
@@ -60,61 +58,54 @@ tileset_t *tileset_alloc(void)
     return tileset;
 }
 
-/*
- * Allocates a new tileset group.
- */
-tileset_group_t *tileset_group_alloc(void)
+struct tileset_group *tileset_group_alloc(void)
 {
-    tileset_group_t *tilesetGroup;
+    struct tileset_group *tileset_group;
 
-    tilesetGroup = malloc(sizeof(tileset_group_t));
-    if (tilesetGroup == NULL)
+    tileset_group = malloc(sizeof(struct tileset_group));
+    if (tileset_group == NULL)
     {
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
-    tilesetGroup->tilesets = NULL;
-    tilesetGroup->numTilesets = 0;
-    tilesetGroup->tileHeight = 16;
-    tilesetGroup->tileWidth = 16;
-    tilesetGroup->pTable = true;
+    tileset_group->tilesets = NULL;
+    tileset_group->nr_tilesets = 0;
+    tileset_group->tile_height = 16;
+    tileset_group->tile_width = 16;
+    tileset_group->p_table = true;
 
-    return tilesetGroup;
+    return tileset_group;
 }
 
-/*
- * Allocates storage for each tile.
- */
-int tileset_alloc_tiles(tileset_t *tileset)
+int tileset_alloc_tiles(struct tileset *tileset)
 {
     int i;
-    int tileSize = tileset->tileWidth * tileset->tileHeight;
+    int tile_size = tileset->tile_width * tileset->tile_height;
 
     tileset->tiles =
-        malloc(tileset->numTiles * sizeof(tileset_tile_t));
+        malloc(tileset->nr_tiles * sizeof(struct tileset_tile));
     if (tileset->tiles == NULL)
     {
-        return 1;
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    for (i = 0; i < tileset->numTiles; ++i)
+    for (i = 0; i < tileset->nr_tiles; ++i)
     {
-        tileset->tiles[i].data = malloc(tileSize);
+        tileset->tiles[i].data = malloc(tile_size);
         if (tileset->tiles[i].data == NULL)
         {
-            return 1;
+            return -1;
         }
 
-        tileset->tiles[i].size = tileSize;
+        tileset->tiles[i].size = tile_size;
     }
 
     return 0;
 }
 
-/*
- * Frees an allocated tileset.
- */
-void tileset_free(tileset_t *tileset)
+void tileset_free(struct tileset *tileset)
 {
     int i;
 
@@ -123,7 +114,7 @@ void tileset_free(tileset_t *tileset)
         return;
     }
 
-    for (i = 0; i < tileset->numTiles; ++i)
+    for (i = 0; i < tileset->nr_tiles; ++i)
     {
         if (tileset->tiles != NULL)
         {
@@ -138,28 +129,25 @@ void tileset_free(tileset_t *tileset)
     image_free(&tileset->image);
 }
 
-/*
- * Frees a whole tileset group.
- */
-void tileset_group_free(tileset_group_t *tilesetGroup)
+void tileset_group_free(struct tileset_group *tileset_group)
 {
     int i;
 
-    if (tilesetGroup == NULL)
+    if (tileset_group == NULL)
     {
         return;
     }
 
-    for (i = 0; i < tilesetGroup->numTilesets; ++i)
+    for (i = 0; i < tileset_group->nr_tilesets; ++i)
     {
-        if (tilesetGroup->tilesets != NULL)
+        if (tileset_group->tilesets != NULL)
         {
-            tileset_free(&tilesetGroup->tilesets[i]);
+            tileset_free(&tileset_group->tilesets[i]);
         }
     }
 
-    free(tilesetGroup->tilesets);
-    tilesetGroup->tilesets = NULL;
+    free(tileset_group->tilesets);
+    tileset_group->tilesets = NULL;
 
-    tilesetGroup->numTilesets = 0;
+    tileset_group->nr_tilesets = 0;
 }

@@ -31,14 +31,14 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "yaml.h"
+#include "parser.h"
 #include "icon.h"
 
 #include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum
 {
@@ -47,15 +47,15 @@ enum
     OPTIONS_IGNORE
 };
 
-typedef struct
+struct options
 {
     const char *prgm;
-    yaml_file_t yamlfile;
-    icon_t icon;
-    bool convertIcon;
-} options_t;
+    bool convert_icon;
+    struct yaml yaml;
+    struct icon icon;
+};
 
-int options_get(int argc, char *argv[], options_t *options);
+int options_get(int argc, char *argv[], struct options *options);
 
 #ifdef __cplusplus
 }

@@ -42,61 +42,55 @@
 #include <string.h>
 #include <glob.h>
 
-/*
- * Builtin palettes.
- */
+// built-in palettes
 static uint8_t palette_xlibc[];
 static uint8_t palette_rgb332[];
 
-/*
- * Allocates palette structure.
- */
-palette_t *palette_alloc(void)
+struct palette *palette_alloc(void)
 {
-    palette_t *palette = NULL;
+    struct palette *palette = NULL;
 
-    palette = malloc(sizeof(palette_t));
+    palette = malloc(sizeof(struct palette));
     if (palette == NULL)
     {
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
     palette->images = NULL;
-    palette->numImages = 0;
-    palette->maxEntries = PALETTE_MAX_ENTRIES;
-    palette->numEntries = 0;
-    palette->numFixedEntries = 0;
+    palette->nr_images = 0;
+    palette->max_entries = PALETTE_MAX_ENTRIES;
+    palette->nr_entries = 0;
+    palette->nr_fixed_entries = 0;
     palette->bpp = BPP_8;
     palette->mode = COLOR_MODE_1555_GBGR;
-    palette->quantizeSpeed = PALETTE_DEFAULT_QUANTIZE_SPEED;
+    palette->quantize_speed = PALETTE_DEFAULT_QUANTIZE_SPEED;
     palette->automatic = false;
     palette->name = NULL;
-    palette->includeSize = false;
+    palette->include_size = false;
     palette->directory = NULL;
 
     return palette;
 }
 
-/*
- * Adds a image file to a palette (does not load).
- */
-static int palette_add_image(palette_t *palette, const char *path)
+static int palette_add_image(struct palette *palette, const char *path)
 {
-    image_t *image;
+    struct image *image;
 
     if (palette == NULL || path == NULL)
     {
-        return 1;
+        return -1;
     }
 
     palette->images =
-        realloc(palette->images, (palette->numImages + 1) * sizeof(image_t));
+        realloc(palette->images, (palette->nr_images + 1) * sizeof(struct image));
     if (palette->images == NULL)
     {
-        return 1;
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        return -1;
     }
 
-    image = &palette->images[palette->numImages];
+    image = &palette->images[palette->nr_images];
 
     image->path = strdup(path);
     image->name = strings_basename(path);
@@ -104,22 +98,18 @@ static int palette_add_image(palette_t *palette, const char *path)
     image->width = 0;
     image->height = 0;
     image->rotate = 0;
-    image->flipx = false;
-    image->flipy = false;
+    image->flip_x = false;
+    image->flip_y = false;
     image->rlet = false;
 
-    palette->numImages++;
+    palette->nr_images++;
 
-    LL_DEBUG("Adding image: %s [%s]", image->path, image->name);
+    LOG_DEBUG("Adding image: %s [%s]\n", image->path, image->name);
 
     return 0;
 }
 
-
-/*
- * Adds a path which may or may not include images.
- */
-int pallete_add_path(palette_t *palette, const char *path)
+int pallete_add_path(struct palette *palette, const char *path)
 {
     glob_t *globbuf = NULL;
     char **paths = NULL;
@@ -128,7 +118,7 @@ int pallete_add_path(palette_t *palette, const char *path)
 
     if (palette == NULL || path == NULL)
     {
-        return 1;
+        return -1;
     }
 
     globbuf = strings_find_images(path);
@@ -137,8 +127,8 @@ int pallete_add_path(palette_t *palette, const char *path)
 
     if (len == 0)
     {
-        LL_ERROR("Could not find file(s): \'%s\'", path);
-        return 1;
+        LOG_ERROR("Could not find file(s): %s\n", path);
+        return -1;
     }
 
     for (i = 0; i < len; ++i)
@@ -152,10 +142,7 @@ int pallete_add_path(palette_t *palette, const char *path)
     return 0;
 }
 
-/*
- * Frees an allocated palette.
- */
-void palette_free(palette_t *palette)
+void palette_free(struct palette *palette)
 {
     int i;
 
@@ -164,9 +151,9 @@ void palette_free(palette_t *palette)
         return;
     }
 
-    for (i = 0; i < palette->numImages; ++i)
+    for (i = 0; i < palette->nr_images; ++i)
     {
-        image_t *image = &palette->images[i];
+        struct image *image = &palette->images[i];
 
         free(image->name);
         image->name = NULL;
@@ -182,19 +169,16 @@ void palette_free(palette_t *palette)
     palette->name = NULL;
 }
 
-/*
- * Generates a palette from a builtin one.
- */
-int palette_generate_builtin(palette_t *palette,
+int palette_generate_builtin(struct palette *palette,
                              uint8_t *builtin,
-                             int numEntries,
+                             int nr_entries,
                              color_mode_t mode)
 {
     int i;
 
-    for (i = 0; i < numEntries; ++i)
+    for (i = 0; i < nr_entries; ++i)
     {
-        color_t *ec = &palette->entries[i].color;
+        struct color *ec = &palette->entries[i].color;
         liq_color color =
         {
             .r = builtin[(i * 3) + 0],
@@ -208,30 +192,28 @@ int palette_generate_builtin(palette_t *palette,
         color_convert(ec, mode);
     }
 
-    palette->numEntries = numEntries;
+    palette->nr_entries = nr_entries;
 
     return 0;
 }
 
-/*
- * In automatic mode, read the images from the converts using the palette.
- */
-int palette_automatic_build(palette_t *palette, convert_t **converts, int numConverts)
+// in automatic mode, read the images from the converts using the palette.
+int palette_automatic_build(struct palette *palette, struct convert **converts, int nr_converts)
 {
     int ret = 0;
     int i;
 
-    for (i = 0; i < numConverts; ++i)
+    for (i = 0; i < nr_converts; ++i)
     {
-        tileset_group_t *tilesetGroup = converts[i]->tilesetGroup;
+        struct tileset_group *tileset_group = converts[i]->tileset_group;
         int j;
 
-        if (strcmp(palette->name, converts[i]->paletteName))
+        if (strcmp(palette->name, converts[i]->palette_name))
         {
             continue;
         }
 
-        for (j = 0; j < converts[i]->numImages; ++j)
+        for (j = 0; j < converts[i]->nr_images; ++j)
         {
             ret = palette_add_image(palette, converts[i]->images[j].path);
             if (ret != 0)
@@ -240,11 +222,11 @@ int palette_automatic_build(palette_t *palette, convert_t **converts, int numCon
             }
         }
 
-        if (tilesetGroup != NULL)
+        if (tileset_group != NULL)
         {
-            for (j = 0; j < tilesetGroup->numTilesets; ++j)
+            for (j = 0; j < tileset_group->nr_tilesets; ++j)
             {
-                ret = palette_add_image(palette, tilesetGroup->tilesets[j].image.path);
+                ret = palette_add_image(palette, tileset_group->tilesets[j].image.path);
                 if (ret != 0)
                 {
                     return ret;
@@ -256,50 +238,49 @@ int palette_automatic_build(palette_t *palette, convert_t **converts, int numCon
     return ret;
 }
 
-int palette_generate_with_images(palette_t *palette)
+int palette_generate_with_images(struct palette *palette)
 {
     liq_attr *attr = NULL;
     liq_histogram *hist = NULL;
-    liq_result *liqresult = NULL;
     const liq_palette *liqpalette = NULL;
     liq_error liqerr;
-    bool needquantize = false;
-    int maxIndex = -1;
-    int exactEntries;
-    int maxEntries;
+    bool need_quantize = false;
+    int max_index = -1;
+    int exact_entries;
+    int max_entries;
     int unused;
     int i, j;
 
     attr = liq_attr_create();
 
-    liq_set_speed(attr, palette->quantizeSpeed);
+    liq_set_speed(attr, palette->quantize_speed);
 
-    exactEntries = 0;
+    exact_entries = 0;
 
-    /* set the total number of palette entries that will be */
-    /* quantized against (exclude exact entries) */
-    for (i = 0; i < palette->numFixedEntries; ++i)
+    // set the total number of palette entries that will be
+    // quantized against (exclude exact entries)
+    for (i = 0; i < palette->nr_fixed_entries; ++i)
     {
-        palette_entry_t *entry = &palette->fixedEntries[i];
+        struct palette_entry *entry = &palette->fixed_entries[i];
 
         if (entry->exact)
         {
-            exactEntries++;
+            exact_entries++;
         }
     }
 
-    maxEntries = palette->maxEntries - exactEntries;
+    max_entries = palette->max_entries - exact_entries;
 
-    LL_DEBUG("Available quantization colors: %d", maxEntries);
+    LOG_DEBUG("Available quantization colors: %d\n", max_entries);
 
-    liq_set_max_colors(attr, maxEntries);
+    liq_set_max_colors(attr, max_entries);
 
     hist = liq_histogram_create(attr);
 
-    /* only add fixed colors that are not exact to the quantizer */
-    for (i = 0; i < palette->numFixedEntries; ++i)
+    // only add fixed colors that are not exact to the quantizer
+    for (i = 0; i < palette->nr_fixed_entries; ++i)
     {
-        palette_entry_t *entry = &palette->fixedEntries[i];
+        struct palette_entry *entry = &palette->fixed_entries[i];
 
         if (!entry->exact)
         {
@@ -310,44 +291,44 @@ int palette_generate_with_images(palette_t *palette)
 
     i = 0;
 
-    /* quantize the images into a palette */
-    while (i < palette->numImages && maxEntries > 1)
+    // quantize the images into a palette
+    while (i < palette->nr_images && max_entries > 1)
     {
-        image_t *image = &palette->images[i];
+        struct image *image = &palette->images[i];
         liq_image *liqimage;
         int numcolors = 0;
         int j;
 
-        LL_INFO(" - Reading \'%s\'",
+        LOG_INFO(" - Reading \'%s\'\n",
             image->path);
 
         if( image_load(image) != 0 )
         {
-            LL_ERROR("Failed to load image \'%s\'", image->path);
+            LOG_ERROR("Failed to load image \'%s\'\n", image->path);
             liq_histogram_destroy(hist);
             liq_attr_destroy(attr);
-            return 1;
+            return -1;
         }
 
-        /* only add colors of the image that aren't fixed colors */
-        /* exact matched pixels shouldn't even contribute to quantization */
+        // only add colors of the image that aren't fixed colors
+        // exact matched pixels shouldn't even contribute to quantization
         for (j = 0; j < image->width * image->height; ++j)
         {
             bool addcolor = true;
             int o = j * 4;
             int k;
 
-            color_t color;
+            struct color color;
 
             color.rgb.r = image->data[o + 0];
             color.rgb.g = image->data[o + 1];
             color.rgb.b = image->data[o + 2];
             color.rgb.a = image->data[o + 3];
 
-            for (k = 0; k < palette->numFixedEntries; ++k)
+            for (k = 0; k < palette->nr_fixed_entries; ++k)
             {
-                palette_entry_t *entry = &palette->fixedEntries[k];
-                color_t fixed = entry->color;
+                struct palette_entry *entry = &palette->fixed_entries[k];
+                struct color fixed = entry->color;
 
                 if (entry->exact &&
                     color.rgb.r == fixed.rgb.r &&
@@ -384,30 +365,32 @@ int palette_generate_with_images(palette_t *palette)
 
             liq_histogram_add_image(hist, attr, liqimage);
             liq_image_destroy(liqimage);
-            needquantize = true;
+            need_quantize = true;
         }
 
         free(image->data);
         ++i;
     }
 
-    if (needquantize == true)
+    if (need_quantize == true)
     {
+        liq_result *liqresult = NULL;
+
         liqerr = liq_histogram_quantize(hist, attr, &liqresult);
         if (liqerr != LIQ_OK)
         {
-            LL_ERROR("Failed to generate palette \'%s\'\n", palette->name);
+            LOG_ERROR("Failed to generate palette \'%s\'\n", palette->name);
             liq_histogram_destroy(hist);
             liq_attr_destroy(attr);
-            return 1;
+            return -1;
         }
 
         liqpalette = liq_get_palette(liqresult);
 
-        /* store the quantized palette */
+        // store the quantized palette
         for (i = 0; i < (int)liqpalette->count; ++i)
         {
-            color_t color;
+            struct color color;
 
             color.rgb.r = liqpalette->entries[i].r;
             color.rgb.g = liqpalette->entries[i].g;
@@ -418,63 +401,65 @@ int palette_generate_with_images(palette_t *palette)
             palette->entries[i].color = color;
             palette->entries[i].valid = true;
 
-            if (i > maxIndex)
+            if (i > max_index)
             {
-                maxIndex = i;
+                max_index = i;
             }
         }
-    }
 
-    // find the non-exact fixed colors in the quantized palette
-    // and move them to the correct index
-    for (i = 0; i < palette->numFixedEntries; ++i)
-    {
-        palette_entry_t *fixedEntry = &palette->fixedEntries[i];
-        if (fixedEntry->exact)
+        liq_result_destroy(liqresult);
+
+        // find the non-exact fixed colors in the quantized palette
+        // and move them to the correct index
+        for (i = 0; i < palette->nr_fixed_entries; ++i)
         {
-            continue;
-        }
-
-        for (j = 0; j < (int)liqpalette->count; ++j)
-        {
-            palette_entry_t *entry = &palette->entries[j];
-
-            if (fixedEntry->color.rgb.r == entry->color.rgb.r &&
-                fixedEntry->color.rgb.g == entry->color.rgb.g &&
-                fixedEntry->color.rgb.b == entry->color.rgb.b)
+            struct palette_entry *fixed_entry = &palette->fixed_entries[i];
+            if (fixed_entry->exact)
             {
-                palette_entry_t tmpEntry;
+                continue;
+            }
 
-                tmpEntry = palette->entries[j];
-                palette->entries[j] = palette->entries[fixedEntry->index];
-                palette->entries[fixedEntry->index] = tmpEntry;
-                palette->entries[fixedEntry->index].valid = true;
+            for (j = 0; j < (int)liqpalette->count; ++j)
+            {
+                struct palette_entry *entry = &palette->entries[j];
 
-                if ((int)fixedEntry->index > maxIndex)
+                if (fixed_entry->color.rgb.r == entry->color.rgb.r &&
+                    fixed_entry->color.rgb.g == entry->color.rgb.g &&
+                    fixed_entry->color.rgb.b == entry->color.rgb.b)
                 {
-                    maxIndex = fixedEntry->index;
-                }
+                    struct palette_entry tmp_entry;
 
-                break;
+                    tmp_entry = palette->entries[j];
+                    palette->entries[j] = palette->entries[fixed_entry->index];
+                    palette->entries[fixed_entry->index] = tmp_entry;
+                    palette->entries[fixed_entry->index].valid = true;
+
+                    if ((int)fixed_entry->index > max_index)
+                    {
+                        max_index = fixed_entry->index;
+                    }
+
+                    break;
+                }
             }
         }
     }
 
     // add exact fixed colors to the palette
     // they are just place holders (will be removed in the quantized image)
-    for (i = 0; i < palette->numFixedEntries; ++i)
+    for (i = 0; i < palette->nr_fixed_entries; ++i)
     {
-        palette_entry_t *fixedEntry = &palette->fixedEntries[i];
-        if (!fixedEntry->exact)
+        struct palette_entry *fixed_entry = &palette->fixed_entries[i];
+        if (!fixed_entry->exact)
         {
             continue;
         }
 
-        color_convert(&fixedEntry->color, palette->mode);
+        color_convert(&fixed_entry->color, palette->mode);
 
         // locate another valid place to store an entry
         // if an entry already occupies this location
-        if (palette->entries[fixedEntry->index].valid)
+        if (palette->entries[fixed_entry->index].valid)
         {
             int j;
 
@@ -486,26 +471,26 @@ int palette_generate_with_images(palette_t *palette)
                 }
             }
 
-            palette->entries[j] = palette->entries[fixedEntry->index];
+            palette->entries[j] = palette->entries[fixed_entry->index];
 
-            if (j > maxIndex)
+            if (j > max_index)
             {
-                maxIndex = j;
+                max_index = j;
             }
         }
 
-        palette->entries[fixedEntry->index] = *fixedEntry;
-        palette->entries[fixedEntry->index].valid = true;
+        palette->entries[fixed_entry->index] = *fixed_entry;
+        palette->entries[fixed_entry->index].valid = true;
 
-        if ((int)fixedEntry->index > maxIndex)
+        if ((int)fixed_entry->index > max_index)
         {
-            maxIndex = fixedEntry->index;
+            max_index = fixed_entry->index;
         }
     }
 
-    palette->numEntries = maxIndex + 1;
+    palette->nr_entries = max_index + 1;
 
-    for (i = unused = 0; i < palette->numEntries; ++i)
+    for (i = unused = 0; i < palette->nr_entries; ++i)
     {
         if (!palette->entries[i].valid)
         {
@@ -513,27 +498,23 @@ int palette_generate_with_images(palette_t *palette)
         }
     }
 
-    LL_INFO("Generated palette \'%s\' with %d colors (%d unused)",
-            palette->name, palette->numEntries,
-            PALETTE_MAX_ENTRIES - palette->numEntries + unused);
+    LOG_INFO("Generated palette \'%s\' with %d colors (%d unused)\n",
+            palette->name, palette->nr_entries,
+            PALETTE_MAX_ENTRIES - palette->nr_entries + unused);
 
-    liq_result_destroy(liqresult);
     liq_histogram_destroy(hist);
     liq_attr_destroy(attr);
 
     return 0;
 }
 
-/*
- * Reads all input images, and generates a palette for convert.
- */
-int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
+int palette_generate(struct palette *palette, struct convert **converts, int nr_converts)
 {
     int ret;
 
     if (palette == NULL)
     {
-        return 1;
+        return -1;
     }
 
     if (!strcmp(palette->name, "xlibc"))
@@ -551,26 +532,26 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
                                         COLOR_MODE_1555_GBGR);
     }
 
-    LL_INFO("Generating palette \'%s\'", palette->name);
+    LOG_INFO("Generating palette \'%s\'\n", palette->name);
 
     if (palette->automatic)
     {
-        ret = palette_automatic_build(palette, converts, numConverts);
+        ret = palette_automatic_build(palette, converts, nr_converts);
         if (ret != 0)
         {
-            LL_ERROR("Failed building automatic palette.");
+            LOG_ERROR("Failed building automatic palette.\n");
             return ret;
         }
     }
 
-    if (palette->numFixedEntries > palette->maxEntries)
+    if (palette->nr_fixed_entries > palette->max_entries)
     {
-        LL_ERROR("Number of fixed colors exceeds maximum palette size "
-                 "for palette \'%s\'", palette->name);
-        return 1;
+        LOG_ERROR("Number of fixed colors exceeds maximum palette size "
+                 "in palette \'%s\'\n", palette->name);
+        return -1;
     }
 
-    if (palette->numImages > 0)
+    if (palette->nr_images > 0)
     {
         ret = palette_generate_with_images(palette);
         if (ret != 0)
@@ -580,35 +561,35 @@ int palette_generate(palette_t *palette, convert_t **converts, int numConverts)
     }
     else
     {
-        int maxIndex = -1;
+        int max_index = -1;
         int i;
 
-        LL_WARNING("Creating palette \'%s\' without images", palette->name);
+        LOG_WARNING("Creating palette \'%s\' without images\n", palette->name);
 
-        if (palette->numFixedEntries == 0)
+        if (palette->nr_fixed_entries == 0)
         {
-            LL_ERROR("No fixed colors to create palette \'%s\' with.",
+            LOG_ERROR("No fixed colors to create palette \'%s\' with.\n",
                 palette->name);
-            return 1;
+            return -1;
         }
 
-        for (i = 0; i < palette->numFixedEntries; ++i)
+        for (i = 0; i < palette->nr_fixed_entries; ++i)
         {
-            palette_entry_t *entry = &palette->fixedEntries[i];
+            struct palette_entry *entry = &palette->fixed_entries[i];
             color_convert(&entry->color, palette->mode);
             palette->entries[entry->index] = *entry;
             palette->entries[entry->index].valid = true;
-            if ((int)entry->index > maxIndex)
+            if ((int)entry->index > max_index)
             {
-                maxIndex = entry->index;
+                max_index = entry->index;
             }
         }
 
-        palette->numEntries = maxIndex + 1;
+        palette->nr_entries = max_index + 1;
 
-        LL_INFO("Generated palette \'%s\' with %d colors (%d unused)",
-                palette->name, palette->numEntries,
-                PALETTE_MAX_ENTRIES - palette->numEntries + palette->numFixedEntries);
+        LOG_INFO("Generated palette \'%s\' with %d colors (%d unused)\n",
+                palette->name, palette->nr_entries,
+                PALETTE_MAX_ENTRIES - palette->nr_entries + palette->nr_fixed_entries);
     }
 
     return 0;

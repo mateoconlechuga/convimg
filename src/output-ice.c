@@ -39,9 +39,6 @@
 #include <errno.h>
 #include <string.h>
 
-/*
- * Outputs to ICE format.
- */
 static int output_ice(unsigned char *data, size_t size, FILE *fd)
 {
     size_t i;
@@ -58,18 +55,15 @@ static int output_ice(unsigned char *data, size_t size, FILE *fd)
     return 0;
 }
 
-/*
- * Outputs a converted C image.
- */
-int output_ice_image(image_t *image, char *file)
+int output_ice_image(struct image *image, char *file)
 {
     FILE *fd;
 
     fd = fopen(file, "at");
     if (fd == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
-        return 1;
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
+        return -1;
     }
 
     fprintf(fd, "%s | %d bytes\n", image->name, image->size);
@@ -80,44 +74,38 @@ int output_ice_image(image_t *image, char *file)
     return 0;
 }
 
-/*
- * Outputs a converted ICE tileset.
- */
-int output_ice_tileset(tileset_t *tileset, char *file)
+int output_ice_tileset(struct tileset *tileset, char *file)
 {
-    LL_ERROR("Tilesets are not supported for ICE output!");
+    LOG_ERROR("Tilesets are not yet supported for ICE output!\n");
 
     (void)tileset;
     (void)file;
 
-    return 1;
+    return -1;
 }
 
-/*
- * Outputs a converted C tileset.
- */
-int output_ice_palette(palette_t *palette, char *file)
+int output_ice_palette(struct palette *palette, char *file)
 {
-    int size = palette->numEntries * 2;
+    int size = palette->nr_entries * 2;
     FILE *fd;
     int i;
 
     fd = fopen(file, "at");
     if (fd == NULL)
     {
-        LL_ERROR("Could not open file: %s", strerror(errno));
-        return 1;
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
+        return -1;
     }
 
     fprintf(fd, "%s | %d bytes\n\"", palette->name, size);
 
-    for (i = 0; i < palette->numEntries; ++i)
+    for (i = 0; i < palette->nr_entries; ++i)
     {
-        color_t *color = &palette->entries[i].color;
+        struct color *c = &palette->entries[i].color;
 
         fprintf(fd, "%02X%02X",
-                color->target & 255,
-                (color->target >> 8) & 255);
+                c->target & 255,
+                (c->target >> 8) & 255);
     }
     fprintf(fd, "\"\n\n");
 
@@ -126,12 +114,9 @@ int output_ice_palette(palette_t *palette, char *file)
     return 0;
 }
 
-/*
- * Outputs an include file for the output structure
- */
-int output_ice_include_file(output_t *output, char *file)
+int output_ice_include_file(struct output *output, char *file)
 {
-    LL_INFO(" - Wrote \'%s\'", file);
+    LOG_INFO(" - Wrote \'%s\'\n", file);
 
     (void)output;
 

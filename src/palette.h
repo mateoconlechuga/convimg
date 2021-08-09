@@ -31,10 +31,6 @@
 #ifndef PALETTE_H
 #define PALETTE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "bpp.h"
 #include "image.h"
 #include "color.h"
@@ -44,45 +40,54 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PALETTE_MAX_ENTRIES 256
 #define PALETTE_DEFAULT_QUANTIZE_SPEED 3
 
-typedef struct
+struct convert;
+
+struct palette_entry
 {
-    color_t color;
-    color_t origcolor;
+    struct color color;
+    struct color orig_color;
     unsigned int index;
     bool exact;
     bool valid;
-} palette_entry_t;
+};
 
-typedef struct palette
+struct palette
 {
     char *name;
-    image_t *images;
-    int numImages;
-    int maxEntries;
-    int numEntries;
-    int numFixedEntries;
-    int quantizeSpeed;
-    palette_entry_t entries[PALETTE_MAX_ENTRIES];
-    palette_entry_t fixedEntries[PALETTE_MAX_ENTRIES];
+    struct image *images;
+    int nr_images;
+    int max_entries;
+    int nr_entries;
+    int nr_fixed_entries;
+    int quantize_speed;
+    struct palette_entry entries[PALETTE_MAX_ENTRIES];
+    struct palette_entry fixed_entries[PALETTE_MAX_ENTRIES];
     color_mode_t mode;
     bpp_t bpp;
     bool automatic;
 
-    /* set by output */
+    // set by output
     char *directory;
-    bool includeSize;
-} palette_t;
+    bool include_size;
+};
 
-/* I despise forward declartions, but meh */
-typedef struct convert convert_t;
+struct palette *palette_alloc(void);
 
-palette_t *palette_alloc(void);
-void palette_free(palette_t *palette);
-int pallete_add_path(palette_t *palette, const char *path);
-int palette_generate(palette_t *palette, convert_t **converts, int numConverts);
+void palette_free(struct palette *palette);
+
+int pallete_add_path(struct palette *palette,
+    const char *path);
+
+int palette_generate(struct palette *palette,
+    struct convert **converts,
+    int nr_converts);
 
 #ifdef __cplusplus
 }

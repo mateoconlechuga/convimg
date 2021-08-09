@@ -31,15 +31,15 @@
 #ifndef APPVAR_H
 #define APPVAR_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "compress.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define APPVAR_MAX_FILE_SIZE (64 * 1024 + 300)
 #define APPVAR_MAX_DATA_SIZE (65505)
@@ -73,28 +73,28 @@ typedef enum
     APPVAR_SOURCE_ICE,
 } appvar_source_t;
 
-typedef struct
+struct appvar
 {
     char *name;
+    char *header;
+    uint8_t *data;
     bool archived;
-    appvar_source_t source;
     bool init;
     bool lut;
-    int entrySize;
-    compress_t compress;
-    uint8_t *data;
     int size;
-    int numEntries;
-    int totalEntries;
-    char *header;
-    int headerSize;
-    int dataOffset;
+    int entry_size;
+    int nr_entries;
+    int total_entries;
+    int header_size;
+    int data_offset;
+    appvar_source_t source;
+    compress_t compress;
 
-    /* set by output */
+    // set by output
     char *directory;
-} appvar_t;
+};
 
-int appvar_write(appvar_t *a, FILE *fdv);
+int appvar_write(struct appvar *a, FILE *fdv);
 
 #ifdef __cplusplus
 }

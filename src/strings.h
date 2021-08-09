@@ -38,9 +38,13 @@ extern "C" {
 #include <glob.h>
 
 char *strdupcat(const char *s, const char *c);
-glob_t *strings_find_images(const char *fullPath);
+
+glob_t *strings_find_images(const char *full_path);
+
 char *strings_basename(const char *path);
+
 char *strings_trim(char *str);
+
 int strings_utf8_to_iso8859_1(const char *in, int inlen, char *out, int maxlen);
 
 #ifdef __cplusplus

@@ -31,55 +31,59 @@
 #ifndef TILESET_H
 #define TILESET_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "image.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct tileset_tile
 {
     uint8_t *data;
     int size;
-} tileset_tile_t;
+};
 
-typedef struct
+struct tileset
 {
-    tileset_tile_t *tiles;
-    int numTiles;
-    image_t image;
+    struct image image;
+    struct tileset_tile *tiles;
+    int nr_tiles;
 
     /* duplicate parameters from parent */
-    int tileHeight;
-    int tileWidth;
-    bool pTable;
+    int tile_height;
+    int tile_width;
+    bool p_table;
 
     /* set by convert */
     bool compressed;
     bool rlet;
 
     /* set by output */
-    int appvarIndex;
+    int appvar_index;
     char *directory;
-} tileset_t;
+};
 
-typedef struct
+struct tileset_group
 {
-    tileset_t *tilesets;
-    int numTilesets;
-    int tileHeight;
-    int tileWidth;
-    bool pTable;
-} tileset_group_t;
+    struct tileset *tilesets;
+    int nr_tilesets;
+    int tile_height;
+    int tile_width;
+    bool p_table;
+};
 
-tileset_t *tileset_alloc(void);
-tileset_group_t *tileset_group_alloc(void);
-int tileset_alloc_tiles(tileset_t *tileset);
-void tileset_free(tileset_t *tileset);
-void tileset_group_free(tileset_group_t *tilesetGroup);
+struct tileset *tileset_alloc(void);
+
+struct tileset_group *tileset_group_alloc(void);
+
+int tileset_alloc_tiles(struct tileset *tileset);
+
+void tileset_free(struct tileset *tileset);
+
+void tileset_group_free(struct tileset_group *tileset_group);
 
 #ifdef __cplusplus
 }

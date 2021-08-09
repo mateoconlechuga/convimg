@@ -35,54 +35,55 @@
 
 #include <string.h>
 
-static int compress_zx7(unsigned char **arr, size_t *size)
+static int compress_zx7(uint8_t *data, size_t *size)
 {
-    long delta;
     Optimal *opt;
-    unsigned char *compressed;
+    uint8_t *compressed_data;
+    size_t new_size;
+    long delta;
 
-    if (size == NULL || arr == NULL)
+    if (size == NULL || data == NULL)
     {
-        LL_DEBUG("invalid param in %s.", __func__);
-        return 1;
+        return -1;
     }
 
-    opt = optimize(*arr, *size);
-    compressed = compress(opt, *arr, *size, size, &delta);
-    free(*arr);
-    *arr = compressed;
-
-    if (delta < 0)
+    opt = optimize(data, *size, 0);
+    if (opt == NULL)
     {
-        /* send warning to user? */
+        LOG_ERROR("Could not optimize zx7.\n");
+        return -1;
     }
 
+    compressed_data = compress(opt, data, *size, 0, &new_size, &delta);
     free(opt);
+    if (compressed_data == NULL)
+    {
+        LOG_ERROR("Could not compress zx7.\n");
+        return -1;
+    }
+
+    memcpy(data, compressed_data, new_size);
+    *size = new_size;
+
+    free(compressed_data);
+
     return 0;
 }
 
-/*
- * Compress output array before writing to output.
- * Returns compressed array, or NULL if error.
- */
-int compress_array(unsigned char **arr, size_t *size, compress_t mode)
+int compress_array(uint8_t *data, size_t *size, compress_t mode)
 {
-    int ret = 0;
-
     switch (mode)
     {
+        default:
+        case COMPRESS_INVALID:
+            return -1;
+
         case COMPRESS_NONE:
-            ret = 0;
-            break;
+            return 0;
 
         case COMPRESS_ZX7:
-            ret = compress_zx7(arr, size);
-            break;
-
-        case COMPRESS_INVALID:
-            ret = 1;
-            break;
+            return compress_zx7(data, size);
     }
 
-    return ret;
+    return 0;
 }

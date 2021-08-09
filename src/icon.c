@@ -39,123 +39,112 @@
 
 static uint8_t icon_palette[];
 
-/*
- * Makes an icon be an icon.
- */
-int icon_convert(icon_t *icon)
+int icon_convert(struct icon *icon)
 {
-    image_t image;
-    int ret = 0;
-    liq_attr *liqattr = NULL;
-    liq_image *liqimage = NULL;
-    liq_result *liqresult = NULL;
-    uint8_t *data = NULL;
-    FILE *fd = NULL;
+    struct image image;
+    liq_attr *liqattr;
+    liq_image *liqimage;
+    liq_result *liqresult;
+    uint8_t *data;
+    FILE *fd;
+    bool has_icon = false;
+    unsigned int i;
+    int ret;
+    int x;
+    int y;
 
-    image.flipx = false;
-    image.flipy = false;
+    image.flip_x = false;
+    image.flip_y = false;
     image.rotate = 0;
 
-    if (icon->imageFile == NULL || *icon->imageFile == 0)
-    {
-        image.path = NULL;
-    }
-    else
-    {
-        image.path = icon->imageFile;
-    }
+    image.path = icon->image_file;
 
     if (image.path != NULL)
     {
-        if (ret == 0)
+        has_icon = true;
+
+        ret = image_load(&image);
+        if (ret != 0)
         {
-            ret = image_load(&image);
-            if (ret != 0)
-            {
-                LL_ERROR("Failed loading icon image file.");
-            }
+            LOG_ERROR("Failed loading icon image file.\n");
+            return -1;
         }
 
-        if (ret == 0)
+        liqattr = liq_attr_create();
+        if (liqattr == NULL)
         {
-            liqattr = liq_attr_create();
-            if (liqattr == NULL)
-            {
-                LL_ERROR("Failed creating image attributes.");
-                ret = 1;
-            }
+            LOG_ERROR("Failed creating icon image attributes.\n");
+            free(image.data);
+            return -1;
         }
 
-        if (ret == 0)
+        liqimage = liq_image_create_rgba(liqattr, image.data, image.width, image.height, 0);
+        if (liqimage == NULL)
         {
-            liqimage = liq_image_create_rgba(liqattr, image.data, image.width, image.height, 0);
-            if (liqimage == NULL)
-            {
-                LL_ERROR("Failed creating image data.");
-                ret = 1;
-            }
+            LOG_ERROR("Failed creating icon image data.\n");
+            liq_attr_destroy(liqattr);
+            free(image.data);
+            return -1;
         }
 
-        if (ret == 0)
+        for (i = 0; i < 256; ++i)
         {
-            int i;
+            unsigned int o = i * 3;
+            liq_color liqcolor;
 
-            for (i = 0; i < 256; ++i)
-            {
-                unsigned int o = i * 3;
-                liq_color liqcolor;
+            liqcolor.r = icon_palette[o + 0];
+            liqcolor.g = icon_palette[o + 1];
+            liqcolor.b = icon_palette[o + 2];
+            liqcolor.a = 255;
 
-                liqcolor.r = icon_palette[o + 0];
-                liqcolor.g = icon_palette[o + 1];
-                liqcolor.b = icon_palette[o + 2];
-                liqcolor.a = 255;
-
-                liq_image_add_fixed_color(liqimage, liqcolor);
-            }
-
-            data = malloc(image.size);
-            if (data == NULL)
-            {
-                LL_DEBUG("Memory error in %s", __func__);
-                ret = 1;
-            }
+            liq_image_add_fixed_color(liqimage, liqcolor);
         }
 
-        if (ret == 0)
+        data = malloc(image.size);
+        if (data == NULL)
         {
-            liqresult = liq_quantize_image(liqattr, liqimage);
-            if (liqresult == NULL)
-            {
-                LL_ERROR("Could not quantize image.");
-                ret = 1;
-            }
+            LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+            liq_attr_destroy(liqattr);
+            free(image.data);
+            return -1;
         }
 
-        if (ret == 0)
+        liqresult = liq_quantize_image(liqattr, liqimage);
+        if (liqresult == NULL)
         {
-            liq_write_remapped_image(liqresult, liqimage, data, image.size);
+            LOG_ERROR("Could not quantize icon image.\n");
+            liq_attr_destroy(liqattr);
+            free(image.data);
+            free(data);
+            return -1;
         }
+
+        liq_write_remapped_image(liqresult, liqimage, data, image.size);
+    }
+    
+    fd = fopen(icon->output_file, "wt");
+    if (fd == NULL)
+    {
+        LOG_ERROR("Could not open output file: %s\n", strerror(errno));
+        if (has_icon)
+        {
+            liq_result_destroy(liqresult);
+            liq_image_destroy(liqimage);
+            liq_attr_destroy(liqattr);
+            free(image.data);
+            free(data);
+        }
+        return -1;
     }
 
-    if (ret == 0)
+    switch (icon->format)
     {
-        fd = fopen(icon->outputFile, "wt");
-        if (fd == NULL)
-        {
-            LL_ERROR("Could not open output file: %s", strerror(errno));
-            ret = 1;
-        }
-    }
-
-    if (ret == 0)
-    {
-        int x, y;
-
-        if (icon->format == ICON_FORMAT_ASM)
-        {
+        default:
+            // fall through
+        case ICON_FORMAT_ASM:
             fprintf(fd, "\tsection .icon\n\n");
             fprintf(fd, "\tjp\t___prgm_init\n");
-            if (image.path != NULL)
+            if (has_icon)
             {
                 fprintf(fd, "\tdb\t$01\n");
                 fprintf(fd, "\tpublic ___icon\n");
@@ -198,39 +187,38 @@ int icon_convert(icon_t *icon)
                 fprintf(fd, "\tdb\t0\n");
             }
             fprintf(fd, "___prgm_init:\n");
-        }
-        else if (icon->format == ICON_FORMAT_ICE)
-        {
-            fprintf(fd, "\"01%02X%02X", image.width, image.height);
-            for (y = 0; y < image.height; y++)
+            break;
+    
+        case ICON_FORMAT_ICE:
+            if (has_icon)
             {
-                int offset = y * image.width;
-
-                for (x = 0; x < image.width; x++)
+                fprintf(fd, "\"01%02X%02X", image.width, image.height);
+                for (y = 0; y < image.height; y++)
                 {
-                    fprintf(fd, "%02X", data[x + offset]);
-                }
-            }
-            fprintf(fd, "\"\n");
-        }
-        else
-        {
-            LL_ERROR("Invalid icon format.");
-            ret = 1;
-        }
+                    int offset = y * image.width;
 
-        fclose(fd);
+                    for (x = 0; x < image.width; x++)
+                    {
+                        fprintf(fd, "%02X", data[x + offset]);
+                    }
+                }
+                fprintf(fd, "\"\n");
+            }
+            break;
     }
 
-    if( image.path != NULL )
+    fclose(fd);
+
+    if (has_icon)
     {
+        liq_result_destroy(liqresult);
         liq_attr_destroy(liqattr);
         liq_image_destroy(liqimage);
         free(image.data);
         free(data);
     }
 
-    return ret;
+    return 0;
 }
 
 static uint8_t icon_palette[] =

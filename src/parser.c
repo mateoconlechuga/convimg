@@ -195,6 +195,7 @@ static struct output *parser_alloc_output(struct yaml *yaml, void *type)
     else
     {
         LOG_ERROR("Unknown output type.\n");
+        free(output);
         return NULL;
     }
 
@@ -1300,7 +1301,7 @@ static int parse_yaml(struct yaml *yaml, yaml_document_t *doc)
         yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
         int ret;
 
-        if (keyn == NULL)
+        if (keyn == NULL || valuen == NULL)
         {
             continue;
         }
@@ -1361,6 +1362,7 @@ int parser_open(struct yaml *yaml)
     if (!yaml_parser_initialize(&parser))
     {
         LOG_ERROR("Could not initialize YAML parser.\n");
+        fclose(fd);
         return -1;
     }
 

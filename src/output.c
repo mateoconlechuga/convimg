@@ -197,7 +197,10 @@ int output_init(struct output *output)
         char *tmp = strdupcat(output->directory, output->include_file);
         if (tmp != NULL)
         {
-            remove(tmp);
+            if (remove(tmp) != 0)
+	    {
+                LOG_ERROR("Could not remove output file: %s\n", strerror(errno));
+            }
             free(tmp);
         }
     }
@@ -226,8 +229,10 @@ int output_find_converts(struct output *output, struct convert **converts, int n
         return -1;
     }
 
-    if (converts == NULL)
+    if (converts == NULL || nr_converts == 0)
+    {
         return 0;
+    }
 
     output->converts = malloc(output->nr_converts * sizeof(struct convert *));
     if (output->converts == NULL)
@@ -260,7 +265,7 @@ nextconvert:
 
 int output_find_palettes(struct output *output, struct palette **palettes, int nr_palettes)
 {
-    int i, j;
+    int i = 0;
 
     if (output == NULL || nr_palettes < 0)
     {
@@ -270,6 +275,7 @@ int output_find_palettes(struct output *output, struct palette **palettes, int n
 
     if (palettes == NULL || nr_palettes == 0)
     {
+
         goto nopalette;
     }
 
@@ -282,6 +288,7 @@ int output_find_palettes(struct output *output, struct palette **palettes, int n
 
     for (i = 0; i < output->nr_palettes; ++i)
     {
+        int j;
         for (j = 0; j < nr_palettes; ++j)
         {
             if (strcmp(output->palette_names[i], palettes[j]->name) == 0)
@@ -292,7 +299,7 @@ int output_find_palettes(struct output *output, struct palette **palettes, int n
         }
 
 nopalette:
-        LOG_ERROR("No matching convert name \'%s\' found for output.\n",
+        LOG_ERROR("No matching palette name \'%s\' found for output.\n",
             output->palette_names[i]);
         return -1;
 

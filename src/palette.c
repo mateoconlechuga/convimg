@@ -128,6 +128,8 @@ int pallete_add_path(struct palette *palette, const char *path)
     if (len == 0)
     {
         LOG_ERROR("Could not find file(s): %s\n", path);
+        globfree(globbuf);
+        free(globbuf);
         return -1;
     }
 
@@ -463,7 +465,7 @@ int palette_generate_with_images(struct palette *palette)
         {
             int j;
 
-            for (j = 0; j < PALETTE_MAX_ENTRIES; ++j)
+            for (j = 0; j < PALETTE_MAX_ENTRIES - 1; ++j)
             {
                 if (!palette->entries[j].valid)
                 {

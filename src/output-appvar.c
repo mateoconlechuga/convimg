@@ -924,19 +924,22 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
 
 int output_appvar_include_file(struct output *output, struct appvar *appvar)
 {
-    char *var_name = strdupcat(appvar->directory, ".8xv");
-    char *var_c_name = strdupcat(appvar->directory, ".c");
+    char *var_name;
+    char *var_c_name;
     char *tmp;
     FILE *fdh;
     FILE *fds;
     FILE *fdv;
-    int ret = 1;
+    int ret = -1;
 
     if (appvar == NULL)
     {
         LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
-        goto error;
+        return -1;
     }
+
+    var_name = strdupcat(appvar->directory, ".8xv");
+    var_c_name = strdupcat(appvar->directory, ".c");
 
     if (appvar->name == NULL)
     {
@@ -1008,7 +1011,10 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
     if (ret != 0)
     {
         fclose(fdv);
-        remove(var_name);
+        if (remove(var_name) != 0)
+	{
+            LOG_ERROR("Could not remove file: %s\n", strerror(errno));
+	}
         goto error;
     }
 

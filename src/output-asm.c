@@ -107,7 +107,8 @@ int output_asm_tileset(struct tileset *tileset)
     if (fds == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
-        goto error;
+        free(source);
+        return -1;
     }
 
     fprintf(fds, "%s_num_tiles := %d\n",
@@ -125,8 +126,7 @@ int output_asm_tileset(struct tileset *tileset)
 
     if (tileset->p_table == true)
     {
-        fprintf(fds, "%s_tiles:\n",
-            tileset->image.name);
+        fprintf(fds, "%s_tiles:\n", tileset->image.name);
 
         for (i = 0; i < tileset->nr_tiles; ++i)
         {
@@ -136,13 +136,10 @@ int output_asm_tileset(struct tileset *tileset)
         }
     }
 
+    fclose(fds);
     free(source);
 
     return 0;
-
-error:
-    free(source);
-    return -1;
 }
 
 int output_asm_palette(struct palette *palette)

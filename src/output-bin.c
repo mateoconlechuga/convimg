@@ -164,8 +164,8 @@ error:
 
 int output_bin_include_file(struct output *output)
 {
-    char *include_file = output->include_file;
-    char *include_name = strdup(output->include_file);
+    char *include_file;
+    char *include_name;
     char *tmp;
     FILE *fdi;
     int i, j, k;
@@ -174,6 +174,9 @@ int output_bin_include_file(struct output *output)
     {
         return 0;
     }
+
+    include_file = output->include_file;
+    include_name = strdup(output->include_file);
 
     tmp = strchr(include_name, '.');
     if (tmp != NULL)

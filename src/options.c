@@ -359,6 +359,7 @@ static int options_write_new(void)
     fd = fopen(name, "rt");
     if (fd != NULL)
     {
+        fclose(fd);
         LOG_ERROR("\'%s\' already exists.\n", name);
         return -1;
     }

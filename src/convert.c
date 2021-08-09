@@ -186,6 +186,8 @@ int convert_add_image_path(struct convert *convert, const char *path)
     if (len == 0)
     {
         LOG_ERROR("Could not find file(s): \'%s\'\n", path);
+        globfree(globbuf);
+        free(globbuf);
         return -1;
     }
 
@@ -219,6 +221,8 @@ int convert_add_tileset_path(struct convert *convert, const char *path)
     if (len == 0)
     {
         LOG_ERROR("Could not find file(s): \'%s\'\n", path);
+        globfree(globbuf);
+        free(globbuf);
         return -1;
     }
 
@@ -265,11 +269,15 @@ int convert_find_palette(struct convert *convert, struct palette **palettes, int
 {
     int i;
 
-    if (convert == NULL || palettes == NULL || convert->palette_name == NULL)
+    if (convert == NULL)
     {
-        LOG_ERROR("A palette with the same name \'%s\' already exists.\n",
-            convert->name);
+        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
+    }
+
+    if (palettes == NULL || convert->palette_name == NULL)
+    {
+        goto error;
     }
 
     for (i = 0; i < nr_palettes; ++i)
@@ -281,6 +289,7 @@ int convert_find_palette(struct convert *convert, struct palette **palettes, int
         }
     }
 
+error:
     LOG_ERROR("No palette \'%s\' found for convert \'%s\'\n",
         convert->palette_name,
         convert->name);
@@ -364,7 +373,6 @@ static int convert_image(struct convert *convert, struct image *image)
 
 int convert_tileset(struct convert *convert, struct tileset *tileset)
 {
-    int ret = 0;
     int i, j, k;
     int x, y;
 
@@ -402,11 +410,7 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
             .path = NULL
         };
         int byte = 0;
-
-        if (ret != 0)
-        {
-            break;
-        }
+        int ret;
 
         for (j = 0; j < tile.height; ++j)
         {
@@ -421,7 +425,7 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
         ret = convert_image(convert, &tile);
         if (ret != 0)
         {
-            break;
+            return ret;
         }
 
         tileset->tiles[i].size = tile.size;
@@ -436,7 +440,7 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
         }
     }
 
-    return ret;
+    return 0;
 }
 
 int convert_convert(struct convert *convert, struct palette **palettes, int nr_palettes)
@@ -508,11 +512,6 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         {
             struct tileset *tileset = &tileset_group->tilesets[j];
             struct image *image = &tileset->image;
-
-            if (ret != 0)
-            {
-                break;
-            }
 
             LOG_INFO(" - Reading tileset \'%s\'\n",
                 image->path);

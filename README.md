@@ -1,4 +1,4 @@
-# convimg [![linux status](https://github.com/mateoconlechuga/convimg/workflows/linux/badge.svg)](https://github.com/mateoconlechuga/convimg/actions?query=workflow%3Alinux) [![macOS status](https://github.com/mateoconlechuga/convimg/workflows/macOS/badge.svg)](https://github.com/mateoconlechuga/convimg/actions?query=workflow%3AmacOS) [![windows status](https://github.com/mateoconlechuga/convimg/workflows/windows/badge.svg)](https://github.com/mateoconlechuga/convimg/actions?query=workflow%3Awindows)
+# convimg [![Windows/Linux/MacOS](https://github.com/mateoconlechuga/convimg/actions/workflows/make.yml/badge.svg)](https://github.com/mateoconlechuga/convimg/actions/workflows/make.yml)
 
 This program is used to convert images to other formats, specifically for the TI84+CE and related calculators.
 

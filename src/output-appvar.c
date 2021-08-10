@@ -942,6 +942,7 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
 
     var_name = strdupcat(appvar->directory, ".8xv");
     var_c_name = strdupcat(appvar->directory, ".c");
+    tmp = NULL;
 
     if (appvar->name == NULL)
     {
@@ -1023,6 +1024,7 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
     fclose(fdv);
 
 error:
+    free(tmp);
     free(var_name);
     free(var_c_name);
     return ret;

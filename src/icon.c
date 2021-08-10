@@ -48,8 +48,6 @@ int icon_convert(struct icon *icon)
     uint8_t *data;
     FILE *fd;
     bool has_icon = false;
-    unsigned int i;
-    int ret;
     int x;
     int y;
 
@@ -61,6 +59,9 @@ int icon_convert(struct icon *icon)
 
     if (image.path != NULL)
     {
+        unsigned int i;
+        int ret;
+
         has_icon = true;
 
         ret = image_load(&image);
@@ -121,7 +122,7 @@ int icon_convert(struct icon *icon)
 
         liq_write_remapped_image(liqresult, liqimage, data, image.size);
     }
-    
+
     fd = fopen(icon->output_file, "wt");
     if (fd == NULL)
     {
@@ -188,7 +189,7 @@ int icon_convert(struct icon *icon)
             }
             fprintf(fd, "___prgm_init:\n");
             break;
-    
+
         case ICON_FORMAT_ICE:
             if (has_icon)
             {

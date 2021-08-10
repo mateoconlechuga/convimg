@@ -62,12 +62,13 @@ int appvar_write(struct appvar *a, FILE *fdv)
     size_t varb_size;
     size_t var_size;
     size_t size;
-    int ret = 0;
 
     size = a->size;
 
     if (a->compress != COMPRESS_NONE)
     {
+        int ret;
+
         LOG_INFO("    - Size before compression: %u bytes\n", (unsigned int)a->size);
 
         ret = compress_array(a->data, &size, a->compress);

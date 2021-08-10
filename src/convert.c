@@ -171,8 +171,8 @@ int convert_add_image_path(struct convert *convert, const char *path)
 {
     glob_t *globbuf = NULL;
     char **paths = NULL;
-    int i;
     int len;
+    int i;
 
     if (convert == NULL || path == NULL)
     {
@@ -445,8 +445,8 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
 
 int convert_convert(struct convert *convert, struct palette **palettes, int nr_palettes)
 {
-    int i, j;
-    int ret = 0;
+    int ret;
+    int i;
 
     if (convert == NULL)
     {
@@ -461,17 +461,12 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
     ret = convert_find_palette(convert, palettes, nr_palettes);
     if (ret != 0)
     {
-        return ret;
+        return -1;
     }
 
     for (i = 0; i < convert->nr_images; ++i)
     {
         struct image *image = &convert->images[i];
-
-        if (ret != 0)
-        {
-            break;
-        }
 
         LOG_INFO(" - Reading image \'%s\'\n",
             image->path);
@@ -486,25 +481,26 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         if (ret != 0)
         {
             LOG_ERROR("Failed to load image \'%s\'\n", image->path);
-            break;
+            return -1;
         }
 
         ret = image_quantize(image, convert->palette);
         if (ret != 0)
         {
-            break;
+            return -1;
         }
 
         ret = convert_image(convert, image);
         if (ret != 0)
         {
-            break;
+            return -1;
         }
     }
 
-    if (ret == 0 && convert->tileset_group != NULL)
+    if (convert->tileset_group != NULL)
     {
         struct tileset_group *tileset_group = convert->tileset_group;
+        int j;
 
         LOG_INFO("Converting tilesets for \'%s\'\n", convert->name);
 
@@ -520,7 +516,7 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
             if (ret != 0)
             {
                 LOG_ERROR("Failed to load image \'%s\'\n", image->path);
-                break;
+                return -1;
             }
 
             image->dither = convert->dither;
@@ -529,16 +525,16 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
             ret = image_quantize(image, convert->palette);
             if (ret != 0)
             {
-                break;
+                return -1;
             }
 
             ret = convert_tileset(convert, tileset);
             if (ret != 0)
             {
-                break;
+                return -1;
             }
         }
     }
 
-    return ret;
+    return 0;
 }

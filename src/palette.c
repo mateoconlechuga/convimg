@@ -252,7 +252,6 @@ int palette_generate_with_images(struct palette *palette)
     int max_entries;
     int unused;
     int i;
-    int j;
 
     attr = liq_attr_create();
 
@@ -308,7 +307,6 @@ int palette_generate_with_images(struct palette *palette)
     while (i < palette->nr_images && max_entries > 1)
     {
         struct image *image = &palette->images[i];
-        liq_image *liqimage;
         int numcolors = 0;
         int j;
 
@@ -369,11 +367,11 @@ int palette_generate_with_images(struct palette *palette)
 
         if (numcolors > 0)
         {
-            liqimage = liq_image_create_rgba(attr,
-                                             image->data,
-                                             numcolors,
-                                             1,
-                                             0);
+            liq_image *liqimage = liq_image_create_rgba(attr,
+                image->data,
+                numcolors,
+                1,
+                0);
 
             liq_histogram_add_image(hist, attr, liqimage);
             liq_image_destroy(liqimage);
@@ -424,6 +422,8 @@ int palette_generate_with_images(struct palette *palette)
         for (i = 0; i < palette->nr_fixed_entries; ++i)
         {
             struct palette_entry *fixed_entry = &palette->fixed_entries[i];
+            int j;
+
             if (fixed_entry->exact)
             {
                 continue;

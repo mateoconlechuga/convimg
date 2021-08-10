@@ -299,7 +299,7 @@ static int parse_palette_entry(struct palette_entry *entry, yaml_document_t *doc
         }
     }
 
-    LOG_DEBUG("Adding fixed color: i: %d r: %d g: %d b: %d exact: %s\n",
+    LOG_DEBUG("Adding fixed color: i: %u r: %d g: %d b: %d exact: %s\n",
         entry->index,
         entry->color.rgb.r,
         entry->color.rgb.g,
@@ -359,7 +359,7 @@ static int parse_palette_image(struct palette *palette, const char *file)
         {
             if (palette->fixed_entries[j].index == i)
             {
-                LOG_WARNING("Overriding palette index %d with (%d,%d,%d)\n",
+                LOG_WARNING("Overriding palette index %u with (%d,%d,%d)\n",
                     entry.index,
                     entry.color.rgb.r,
                     entry.color.rgb.g,
@@ -369,7 +369,7 @@ static int parse_palette_image(struct palette *palette, const char *file)
 
         entry.orig_color = entry.color;
 
-        LOG_DEBUG("Adding fixed color: i: %d r: %d g: %d b: %d exact: %s\n",
+        LOG_DEBUG("Adding fixed color: i: %u r: %d g: %d b: %d exact: %s\n",
             entry.index,
             entry.color.rgb.r,
             entry.color.rgb.g,
@@ -426,7 +426,7 @@ static int parse_palette_fixed_entry(struct palette *palette, yaml_document_t *d
             {
                 if (palette->fixed_entries[j].index == entry.index)
                 {
-                    LOG_WARNING("Overriding palette index %d with (%d,%d,%d).\n",
+                    LOG_WARNING("Overriding palette index %u with (%d,%d,%d).\n",
                         entry.index,
                         entry.color.rgb.r,
                         entry.color.rgb.g,

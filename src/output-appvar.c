@@ -584,7 +584,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
 {
     struct appvar *appvar = &output->appvar;
     int offset = appvar->data_offset;
-    int i, j, k, l;
+    int i, k, l;
 
     fprintf(fds, "#include \"%s\"\n", output->include_file);
     if (appvar->compress == COMPRESS_NONE)
@@ -592,7 +592,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
         fprintf(fds, "#include <fileioc.h>\n");
     }
     fprintf(fds, "\n");
-    fprintf(fds, "#define %s_HEADER_SIZE %u\n",
+    fprintf(fds, "#define %s_HEADER_SIZE %d\n",
         appvar->name, appvar->header_size);
     fprintf(fds, "\n");
 
@@ -617,6 +617,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
         {
             struct convert *convert = output->converts[i];
             struct tileset_group *tileset_group = convert->tileset_group;
+            int j;
 
             for (j = 0; j < convert->nr_images; ++j)
             {
@@ -665,10 +666,11 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
             for (k = 0; k < tileset_group->nr_tilesets; ++k)
             {
                 struct tileset *tileset = &tileset_group->tilesets[k];
-                int tileset_offset = 0;
 
                 if (appvar->lut == false)
                 {
+                    int tileset_offset = 0;
+
                     if (tileset->compressed)
                     {
                         fprintf(fds, "unsigned char *%s_tiles_compressed[%d] =\n{\n",
@@ -770,7 +772,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
 
                         if (tileset->compressed)
                         {
-                            fprintf(fds, "    data = (unsigned int)%s_appvar[%u] - (unsigned int)%s_tiles_compressed[0];\n",
+                            fprintf(fds, "    data = (unsigned int)%s_appvar[%d] - (unsigned int)%s_tiles_compressed[0];\n",
                                 appvar->name,
                                 tileset->appvar_index,
                                 tileset->image.name);
@@ -783,7 +785,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                         }
                         else
                         {
-                            fprintf(fds, "    data = (unsigned int)%s_appvar[%u] - (unsigned int)%s_tiles_data[0];\n",
+                            fprintf(fds, "    data = (unsigned int)%s_appvar[%d] - (unsigned int)%s_tiles_data[0];\n",
                                 appvar->name,
                                 tileset->appvar_index,
                                 tileset->image.name);
@@ -893,7 +895,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                     {
                         struct tileset *tileset = &tileset_group->tilesets[k];
 
-                        fprintf(fds, "    tileset = (unsigned int)%s_appvar[%u];\n",
+                        fprintf(fds, "    tileset = (unsigned int)%s_appvar[%d];\n",
                             appvar->name,
                             tileset->appvar_index);
                         fprintf(fds, "    for (i = 0; i < %s_tiles_num; i++)\n",

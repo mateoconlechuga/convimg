@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <limits.h>
 
 #include "zx7.h"
@@ -46,6 +47,10 @@ Optimal* optimize(unsigned char *input_data, size_t input_size, unsigned long sk
     size_t best_len;
     size_t bits;
     size_t i;
+
+    memset(matches, 0, sizeof matches);
+    memset(min, 0, sizeof min);
+    memset(max, 0, sizeof max);
 
     match_slots = calloc(input_size, sizeof(size_t));
     if (match_slots == NULL) {

@@ -242,22 +242,26 @@ int palette_automatic_build(struct palette *palette, struct convert **converts, 
 
 int palette_generate_with_images(struct palette *palette)
 {
-    liq_attr *attr = NULL;
-    liq_histogram *hist = NULL;
-    const liq_palette *liqpalette = NULL;
     liq_error liqerr;
-    bool need_quantize = false;
-    int max_index = -1;
+    liq_attr *attr;
+    liq_histogram *hist;
+    const liq_palette *liqpalette;
+    bool need_quantize;
+    int max_index;
     int exact_entries;
     int max_entries;
     int unused;
-    int i, j;
+    int i;
+    int j;
 
     attr = liq_attr_create();
 
     liq_set_speed(attr, palette->quantize_speed);
 
+    max_index = -1;
     exact_entries = 0;
+    need_quantize = false;
+    hist = NULL;
 
     // set the total number of palette entries that will be
     // quantized against (exclude exact entries)
@@ -287,7 +291,14 @@ int palette_generate_with_images(struct palette *palette)
         if (!entry->exact)
         {
             color_convert(&entry->color, palette->mode);
-            liq_histogram_add_fixed_color(hist, entry->color.rgb, 0);
+            liqerr = liq_histogram_add_fixed_color(hist, entry->color.rgb, 0);
+            if (liqerr != LIQ_OK)
+            {
+                LOG_ERROR("Failed to add fixed color. Please contact the developer.\n");
+                liq_histogram_destroy(hist);
+                liq_attr_destroy(attr);
+                return -1;
+            }
         }
     }
 
@@ -301,10 +312,9 @@ int palette_generate_with_images(struct palette *palette)
         int numcolors = 0;
         int j;
 
-        LOG_INFO(" - Reading \'%s\'\n",
-            image->path);
+        LOG_INFO(" - Reading \'%s\'\n", image->path);
 
-        if( image_load(image) != 0 )
+        if (image_load(image) != 0)
         {
             LOG_ERROR("Failed to load image \'%s\'\n", image->path);
             liq_histogram_destroy(hist);
@@ -409,8 +419,6 @@ int palette_generate_with_images(struct palette *palette)
             }
         }
 
-        liq_result_destroy(liqresult);
-
         // find the non-exact fixed colors in the quantized palette
         // and move them to the correct index
         for (i = 0; i < palette->nr_fixed_entries; ++i)
@@ -445,6 +453,8 @@ int palette_generate_with_images(struct palette *palette)
                 }
             }
         }
+
+        liq_result_destroy(liqresult);
     }
 
     // add exact fixed colors to the palette
@@ -465,12 +475,21 @@ int palette_generate_with_images(struct palette *palette)
         {
             int j;
 
-            for (j = 0; j < PALETTE_MAX_ENTRIES - 1; ++j)
+            for (j = 0; j < PALETTE_MAX_ENTRIES; ++j)
             {
                 if (!palette->entries[j].valid)
                 {
                     break;
                 }
+            }
+
+            if (j == PALETTE_MAX_ENTRIES)
+            {
+                 LOG_ERROR("Could not find a valid fixed entry location. "
+                     "Please contact the developer.\n");
+                 liq_histogram_destroy(hist);
+                 liq_attr_destroy(attr);
+                 return -1;
             }
 
             palette->entries[j] = palette->entries[fixed_entry->index];

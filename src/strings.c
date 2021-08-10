@@ -34,9 +34,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-/*
- * strdup with a strcat.
- */
 char *strdupcat(const char *s, const char *c)
 {
     char *d;
@@ -59,9 +56,6 @@ char *strdupcat(const char *s, const char *c)
     return d;
 }
 
-/*
- * Removes leading and trailing whitespace.
- */
 char *strings_trim(char *str)
 {
     char *end;
@@ -87,9 +81,6 @@ char *strings_trim(char *str)
     return str;
 }
 
-/*
- * Gets the basename of a file path.
- */
 char *strings_basename(const char *path)
 {
     char *result = strdup(path);
@@ -112,9 +103,6 @@ char *strings_basename(const char *path)
     return result;
 }
 
-/*
- * Finds images in directories.
- */
 glob_t *strings_find_images(const char *fullPath)
 {
     char *path;
@@ -138,7 +126,7 @@ glob_t *strings_find_images(const char *fullPath)
 
 int strings_utf8_to_iso8859_1(const char *in, int inlen, char *out, int maxlen)
 {
-    unsigned int codepoint;
+    unsigned int codepoint = 0;
     int len;
 
     if (in == NULL || out == NULL || inlen == 0)

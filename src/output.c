@@ -33,6 +33,8 @@
 #include "strings.h"
 #include "log.h"
 
+#include <errno.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -199,7 +201,8 @@ int output_init(struct output *output)
         {
             if (remove(tmp) != 0)
             {
-                LOG_ERROR("Could not remove output file: %s\n", strerror(errno));
+                LOG_ERROR("Could not remove output file: %s\n",
+                    strerror(errno));
             }
             free(tmp);
         }

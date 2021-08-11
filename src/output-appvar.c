@@ -745,7 +745,6 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                 fprintf(fds, "{\n");
                 fprintf(fds, "    unsigned int data, i;\n");
                 fprintf(fds, "    ti_var_t appvar;\n\n");
-                fprintf(fds, "    ti_CloseAll();\n\n");
                 fprintf(fds, "    appvar = ti_Open(\"%s\", \"r\");\n", appvar->name);
                 fprintf(fds, "    if (appvar == 0)\n");
                 fprintf(fds, "    {\n");
@@ -756,7 +755,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                 fprintf(fds, "    {\n");
                 fprintf(fds, "        %s_appvar[i] += data;\n", appvar->name);
                 fprintf(fds, "    }\n\n");
-                fprintf(fds, "    ti_CloseAll();\n\n");
+                fprintf(fds, "    ti_Close(appvar);\n\n");
             }
 
             for (i = 0; i < output->nr_converts; ++i)
@@ -800,7 +799,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                 }
             }
 
-            fprintf(fds, "    return -1;\n");
+            fprintf(fds, "    return 1;\n");
             fprintf(fds, "}\n\n");
         }
         else
@@ -833,12 +832,14 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                 fprintf(fds, "    table = base = (unsigned char*)addr + %s_HEADER_SIZE;\n", appvar->name);
                 fprintf(fds, "    if (*table != %d)\n", appvar->total_entries - 1);
                 fprintf(fds, "    {\n");
+                fprintf(fds, "        ti_Close(appvar);\n");
                 fprintf(fds, "        return 0;\n");
                 fprintf(fds, "    }\n\n");
                 fprintf(fds, "    for (i = 0; i < %d; i++)\n", appvar->nr_entries);
                 fprintf(fds, "    {\n");
                 fprintf(fds, "        %s_appvar[i] = (void*)(*++table + (unsigned int)base);\n", appvar->name);
                 fprintf(fds, "    }\n\n");
+                fprintf(fds, "    ti_Close(appvar);\n\n");
             }
             else
             {
@@ -866,7 +867,6 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                 {
                     fprintf(fds, "    unsigned int i;\n\n");
                 }
-                fprintf(fds, "    ti_CloseAll();\n\n");
                 fprintf(fds, "    appvar = ti_Open(\"%s\", \"r\");\n", appvar->name);
                 fprintf(fds, "    if (appvar == 0)\n");
                 fprintf(fds, "    {\n");
@@ -875,13 +875,14 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                 fprintf(fds, "    table = base = (char*)ti_GetDataPtr(appvar) + %s_HEADER_SIZE;\n", appvar->name);
                 fprintf(fds, "    if (*table != %d)\n", appvar->total_entries - 1);
                 fprintf(fds, "    {\n");
+                fprintf(fds, "        ti_Close(appvar);\n");
                 fprintf(fds, "        return 0;\n");
                 fprintf(fds, "    }\n\n");
                 fprintf(fds, "    for (i = 0; i < %d; i++)\n", appvar->nr_entries);
                 fprintf(fds, "    {\n");
                 fprintf(fds, "        %s_appvar[i] = (void*)(*++table + (unsigned int)base);\n", appvar->name);
                 fprintf(fds, "    }\n\n");
-                fprintf(fds, "    ti_CloseAll();\n\n");
+                fprintf(fds, "    ti_Close(appvar);\n\n");
             }
 
             for (i = 0; i < output->nr_converts; ++i)
@@ -918,7 +919,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                 }
             }
 
-            fprintf(fds, "    return -1;\n");
+            fprintf(fds, "    return 1;\n");
             fprintf(fds, "}\n\n");
         }
     }

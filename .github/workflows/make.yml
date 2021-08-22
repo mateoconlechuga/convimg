@@ -39,7 +39,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: linux-convimg
+        name: ${{matrix.os-name}}-convimg
         path: bin/convimg${{matrix.exe}}
 
   coverity-scan:

@@ -49,6 +49,7 @@ static uint8_t palette_rgb332[];
 struct palette *palette_alloc(void)
 {
     struct palette *palette = NULL;
+    unsigned int i;
 
     palette = malloc(sizeof(struct palette));
     if (palette == NULL)
@@ -69,6 +70,15 @@ struct palette *palette_alloc(void)
     palette->name = NULL;
     palette->include_size = false;
     palette->directory = NULL;
+
+    for (i = 0; i < PALETTE_MAX_ENTRIES; ++i)
+    {
+        struct palette_entry *entry = &palette->entries[i];
+        entry->index = i;
+        entry->exact = false;
+        entry->valid = false;
+        entry->fixed = false;
+    }
 
     return palette;
 }
@@ -238,6 +248,54 @@ int palette_automatic_build(struct palette *palette, struct convert **converts, 
     }
 
     return ret;
+}
+
+void palette_sort(struct palette *palette)
+{
+    unsigned int i;
+
+    for (i = 0; i < palette->nr_entries; ++i)
+    {
+        struct palette_entry *e1 = &palette->entries[i];
+        unsigned int j;
+
+        if (!e1->valid || e1->fixed)
+        {
+            continue;
+        }
+
+        for (j = i + 1; j < palette->nr_entries; ++j)
+        {
+            struct palette_entry *e2 = &palette->entries[j];
+            uint8_t r1, r2;
+            uint8_t g1, g2;
+            uint8_t b1, b2;
+
+            if (!e2->valid || e2->fixed)
+            {
+                continue;
+            }
+
+            r1 = e1->color.rgb.r;
+            g1 = e1->color.rgb.g;
+            b1 = e1->color.rgb.b;
+
+            r2 = e2->color.rgb.r;
+            g2 = e2->color.rgb.g;
+            b2 = e2->color.rgb.b;
+
+            if ((r2 < r1) ||
+                (r2 == r1 && g2 < g1) ||
+                (r2 == r1 && g2 == g1 && b2 < b1))
+            {
+                struct palette_entry tmp = *e1;
+                *e1 = *e2;
+                *e2 = tmp;
+                i = -1;
+                break;
+            }
+        }
+    }
 }
 
 int palette_generate_with_images(struct palette *palette)
@@ -443,6 +501,7 @@ int palette_generate_with_images(struct palette *palette)
                     palette->entries[j] = palette->entries[fixed_entry->index];
                     palette->entries[fixed_entry->index] = tmp_entry;
                     palette->entries[fixed_entry->index].valid = true;
+                    palette->entries[fixed_entry->index].fixed = true;
 
                     if ((int)fixed_entry->index > max_index)
                     {
@@ -502,6 +561,7 @@ int palette_generate_with_images(struct palette *palette)
 
         palette->entries[fixed_entry->index] = *fixed_entry;
         palette->entries[fixed_entry->index].valid = true;
+        palette->entries[fixed_entry->index].fixed = true;
 
         if ((int)fixed_entry->index > max_index)
         {
@@ -518,6 +578,10 @@ int palette_generate_with_images(struct palette *palette)
             unused++;
         }
     }
+
+    // sort the palette to prevent different invocations from messing
+    // everything up (hashmaps!)
+    palette_sort(palette);
 
     LOG_INFO("Generated palette \'%s\' with %d colors (%d unused)\n",
             palette->name, palette->nr_entries,

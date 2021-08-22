@@ -56,6 +56,7 @@ struct palette_entry
     unsigned int index;
     bool exact;
     bool valid;
+    bool fixed;
 };
 
 struct palette

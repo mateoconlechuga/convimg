@@ -63,6 +63,8 @@ int appvar_write(struct appvar *a, FILE *fdv)
     size_t var_size;
     size_t size;
 
+    memset(output, 0, sizeof output);
+
     size = a->size;
 
     if (a->compress != COMPRESS_NONE)

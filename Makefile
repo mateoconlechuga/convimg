@@ -63,6 +63,7 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(DEPDIR)/libimagequant/mempool.c \
           $(DEPDIR)/libimagequant/nearest.c \
           $(DEPDIR)/libimagequant/pam.c \
+          $(DEPDIR)/libimagequant/remap.c \
           $(DEPDIR)/zx7/compress.c \
           $(DEPDIR)/zx7/optimize.c \
           $(DEPDIR)/libyaml/src/api.c \

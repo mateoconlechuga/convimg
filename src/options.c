@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2022 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -342,11 +342,11 @@ static void options_show(const char *prgm)
     LOG_PRINT("----------------------------------------------------------------------------\n");
     LOG_PRINT("\n");
     LOG_PRINT("Credits:\n");
-    LOG_PRINT("    (c) 2017-2021 by Matt \"MateoConLechuga\" Waltz.\n");
+    LOG_PRINT("    (c) 2017-2022 by Matt \"MateoConLechuga\" Waltz.\n");
     LOG_PRINT("\n");
     LOG_PRINT("    This program utilizes the following libraries:\n");
-    LOG_PRINT("        libimagequant: (c) 2009-2018 by Kornel Lesiński.\n");
-    LOG_PRINT("        libyaml: (c) 2006-2020 by Ingy döt Net & Kirill Simonov.\n");
+    LOG_PRINT("        libimagequant: (c) 2009-20022 by Kornel Lesiński.\n");
+    LOG_PRINT("        libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.\n");
     LOG_PRINT("        stb: (c) 2017 by Sean Barrett.\n");
     LOG_PRINT("        zx7: (c) 2012-2013 by Einar Saukas.\n");
 }

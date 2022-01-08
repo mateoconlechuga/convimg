@@ -304,10 +304,10 @@ This program is used to convert images to other formats, specifically for the TI
     ----------------------------------------------------------------------------
 
     Credits:
-        (c) 2017-2021 by Matt "MateoConLechuga" Waltz.
+        (c) 2017-2022 by Matt "MateoConLechuga" Waltz.
 
         This program utilizes the following libraries:
-            libimagequant: (c) 2009-2021 by Kornel Lesiński.
-            libyaml: (c) 2006-2021 by Ingy döt Net & Kirill Simonov.
+            libimagequant: (c) 2009-2022 by Kornel Lesiński.
+            libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx7: (c) 2012-2013 by Einar Saukas.

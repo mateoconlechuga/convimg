@@ -954,6 +954,10 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         {
             convert->flip_y = parse_str_bool(value);
         }
+        else if (parse_str_cmp("add-tcp", key))
+        {
+            convert->add_tcp = parse_str_bool(value);
+        }
         else if (parse_str_cmp("width-and-height", key))
         {
             convert->add_width_height = parse_str_bool(value);

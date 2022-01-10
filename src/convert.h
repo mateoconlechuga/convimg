@@ -69,6 +69,7 @@ struct convert
     bool flip_x;
     bool flip_y;
     bpp_t bpp;
+    bool add_tcp;
 };
 
 struct convert *convert_alloc(void);

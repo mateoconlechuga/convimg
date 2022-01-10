@@ -64,6 +64,7 @@ struct convert *convert_alloc(void)
     convert->rotate = 0;
     convert->flip_x = false;
     convert->flip_y = false;
+    convert->add_tcp = false;
 
     return convert;
 }
@@ -94,6 +95,7 @@ static int convert_add_image(struct convert *convert, const char *path)
     image->height = 0;
     image->rlet = false;
     image->compressed = false;
+    image->add_tcp = false;
 
     convert->nr_images++;
 
@@ -161,6 +163,7 @@ static int convert_add_tileset(struct convert *convert, const char *path)
     image->rotate = 0;
     image->flip_x = false;
     image->flip_y = false;
+    image->add_tcp = false;
 
     tileset_group->nr_tilesets++;
 
@@ -355,6 +358,15 @@ static int convert_image(struct convert *convert, struct image *image)
         }
     }
 
+    if (convert->add_tcp == true)
+    {
+        ret = image_add_tcp(image);
+        if (ret != 0)
+        {
+            return ret;
+        }
+    }
+
     image->orig_size = image->size;
 
     if (convert->compress != COMPRESS_NONE)
@@ -475,6 +487,7 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         image->rotate = convert->rotate;
         image->flip_x = convert->flip_x;
         image->flip_y = convert->flip_y;
+        image->add_tcp = convert->add_tcp;
         image->quantize_speed = convert->quantize_speed;
 
         ret = image_load(image);

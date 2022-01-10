@@ -408,6 +408,75 @@ nextbyte:
     return 0;
 }
 
+int image_add_tcp(struct image *image)
+{
+    int i;
+    unsigned int dist_prev_tcp = 0;
+    unsigned int new_length = image->size + 6;
+    unsigned int tcp_header_offset = image->size + 2;
+    unsigned int tcp_amount_of_pixels = 0;
+
+    image->data = realloc(image->data, image->size + 2 + 1000);
+    if (image->data == NULL)
+    {
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        return -1;
+    }
+
+    memmove(image->data + 2, image->data, image->size);
+
+    image->data[0] = image->size & 0xFF;
+    image->data[1] = (image->size >> 8) & 0xFF;
+
+    for (i = 2; i < image->size + 2; i++)
+    {
+        uint8_t byte = image->data[i];
+
+        if (byte == 247 || byte == 249 || byte == 251 || byte == 253)
+        {
+            if (tcp_amount_of_pixels)
+            {
+                if (dist_prev_tcp > 255)
+                {
+                    // Insert information about the TCP data
+                    image->data[tcp_header_offset + 2] = -30 - ((tcp_amount_of_pixels - 1) % 8 * 5);
+                    image->data[tcp_header_offset + 3] = (tcp_amount_of_pixels - 1) / 8 + 1;
+                    tcp_header_offset = new_length;
+                    new_length += 4;
+
+                    // Insert new TCP header
+                    image->data[tcp_header_offset] = dist_prev_tcp >> 8;
+                    image->data[tcp_header_offset + 1] = dist_prev_tcp & 0xFF;
+                    tcp_amount_of_pixels = 1;
+                }
+                else
+                {
+                    // Insert TCP pixel
+                    image->data[new_length++] = dist_prev_tcp;
+                    tcp_amount_of_pixels++;
+                }
+            }
+            else
+            {
+                // Insert TCP header
+                image->data[tcp_header_offset] = dist_prev_tcp >> 8;
+                image->data[tcp_header_offset + 1] = dist_prev_tcp & 0xFF;
+                tcp_amount_of_pixels++;
+            }
+            dist_prev_tcp = 0;
+        }
+        dist_prev_tcp++;
+    }
+
+    image->data[tcp_header_offset + 2] = -30 - ((tcp_amount_of_pixels - 1) % 8 * 5);
+    image->data[tcp_header_offset + 3] = (tcp_amount_of_pixels - 1) / 8 + 1;
+    image->data[new_length++] = 0x80;
+
+    image->size = new_length;
+
+    return 0;
+}
+
 int image_compress(struct image *image, compress_t compress)
 {
     size_t new_size;

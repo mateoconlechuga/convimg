@@ -61,6 +61,7 @@ struct image
     bool flip_x;
     bool flip_y;
     int orig_size;
+    bool add_tcp;
 
     // set by output
     char *directory;
@@ -75,6 +76,8 @@ int image_rlet(struct image *image, int transparent_index);
 int image_add_width_and_height(struct image *image);
 
 int image_add_offset(struct image *image, int offset);
+
+int image_add_tcp(struct image *image);
 
 int image_compress(struct image *image, compress_t compress);
 

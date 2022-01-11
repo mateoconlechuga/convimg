@@ -399,6 +399,7 @@ static void output_appvar_c_include_file_palettes(struct output *output, FILE *f
 static void output_appvar_c_include_file_converts(struct output *output, FILE *fdh, int *index)
 {
     int i;
+    int offset = 0;
 
     for (i = 0; i < output->nr_converts; ++i)
     {
@@ -420,6 +421,11 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
             fprintf(fdh, "#define %s_height %d\n",
                 image->name,
                 image->height);
+            fprintf(fdh, "#define %s_offset %d\n",
+                image->name,
+                offset);
+
+            offset += image->size;
 
             if (image->compressed)
             {

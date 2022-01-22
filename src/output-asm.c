@@ -194,7 +194,7 @@ error:
 
 int output_asm_include_file(struct output *output)
 {
-    char *include_file = output->include_file;
+    char *include_file = strdupcat(output->directory, output->include_file);
     char *include_name = strdup(output->include_file);
     char *tmp;
     FILE *fdi;

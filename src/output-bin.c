@@ -175,7 +175,7 @@ int output_bin_include_file(struct output *output)
         return 0;
     }
 
-    include_file = output->include_file;
+    include_file = strdupcat(output->directory, output->include_file);
     include_name = strdup(output->include_file);
 
     tmp = strchr(include_name, '.');

@@ -468,6 +468,7 @@ int palette_generate_with_images(struct palette *palette)
 
             palette->entries[i].color = color;
             palette->entries[i].valid = true;
+            palette->entries[i].fixed = false;
 
             if (i > max_index)
             {
@@ -491,7 +492,8 @@ int palette_generate_with_images(struct palette *palette)
             {
                 struct palette_entry *entry = &palette->entries[j];
 
-                if (fixed_entry->color.rgb.r == entry->color.rgb.r &&
+                if (entry->fixed == false &&
+                    fixed_entry->color.rgb.r == entry->color.rgb.r &&
                     fixed_entry->color.rgb.g == entry->color.rgb.g &&
                     fixed_entry->color.rgb.b == entry->color.rgb.b)
                 {

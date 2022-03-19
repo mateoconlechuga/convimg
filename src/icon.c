@@ -71,6 +71,17 @@ int icon_convert(struct icon *icon)
             return -1;
         }
 
+        if (image.width > 256 || image.height > 256)
+        {
+            LOG_ERROR("%s height and/or width is too large.\n", image.path);
+            return -1;
+        }
+
+        if (image.width != 16 || image.height != 16)
+        {
+            LOG_WARNING("%s is not 16x16 pixels, and may display incorrectly.\n", image.path);
+        }
+
         liqattr = liq_attr_create();
         if (liqattr == NULL)
         {

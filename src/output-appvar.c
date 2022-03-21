@@ -925,6 +925,162 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
     }
 }
 
+void output_appvar_asm_include_file(struct output *output, FILE *fdh)
+{
+    struct appvar *appvar = &output->appvar;
+    int offset = appvar->data_offset;
+    int nr_entries = 0;
+    bool order = output->order;
+    int o;
+
+    for (o = 0; o < 2; ++o)
+    {
+        int i;
+
+        if (order == OUTPUT_PALETTES_FIRST)
+        {
+            for (i = 0; i < output->nr_palettes; ++i)
+            {
+                struct palette *palette = output->palettes[i];
+                int size = palette->nr_entries * 2;
+
+                fprintf(fdh, "%s_%s_size := %d\n",
+                    output->appvar.name,
+                    palette->name,
+                    size);
+
+                fprintf(fdh, "%s_%s_offset := %d\n",
+                    output->appvar.name,
+                    palette->name,
+                    offset);
+
+                nr_entries++;
+
+                offset += size;
+            }
+        }
+        else
+        {
+            for (i = 0; i < output->nr_converts; ++i)
+            {
+                struct convert *convert = output->converts[i];
+                struct tileset_group *tileset_group = convert->tileset_group;
+                int j;
+
+                fprintf(fdh, "%s_%s_palette_offset := %d\n",
+                    output->appvar.name,
+                    convert->name,
+                    convert->palette_offset);
+
+                for (j = 0; j < convert->nr_images; ++j)
+                {
+                    struct image *image = &convert->images[j];
+
+                    fprintf(fdh, "%s_%s_%s_width := %d\n",
+                        output->appvar.name,
+                        convert->name,
+                        image->name,
+                        image->width);
+                    fprintf(fdh, "%s_%s_%s_height := %d\n",
+                        output->appvar.name,
+                        convert->name,
+                        image->name,
+                        image->height);
+
+                    if (image->compressed)
+                    {
+                        fprintf(fdh, "%s_%s_%s_compressed_offset := %d\n",
+                            output->appvar.name,
+                            convert->name,
+                            image->name,
+                            offset);
+                    }
+                    else
+                    {
+                        fprintf(fdh, "%s_%s_%s_offset := %d\n",
+                            output->appvar.name,
+                            convert->name,
+                            image->name,
+                            offset);
+                    }
+
+                    nr_entries++;
+
+                    offset += convert->images[j].size;
+                }
+
+                if (tileset_group != NULL)
+                {
+                    int k;
+
+                    for (k = 0; k < tileset_group->nr_tilesets; ++k)
+                    {
+                        struct tileset *tileset = &tileset_group->tilesets[k];
+                        int tileset_offset = 0;
+                        int l;
+
+                        tileset->appvar_index = nr_entries;
+
+                        fprintf(fdh, "%s_%s_%s_tile_width := %d\n",
+                            output->appvar.name,
+                            convert->name,
+                            tileset->image.name,
+                            tileset->tile_width);
+                        fprintf(fdh, "%s_%s_%s_tile_height := %d\n",
+                            output->appvar.name,
+                            convert->name,
+                            tileset->image.name,
+                            tileset->tile_height);
+                        fprintf(fdh, "%s_%s_%s_tiles_num := %d\n",
+                            output->appvar.name,
+                            convert->name,
+                            tileset->image.name,
+                            tileset->nr_tiles);
+                        fprintf(fdh, "%s_%s_%s_tiles%soffset := %d\n",
+                            output->appvar.name,
+                            convert->name,
+                            tileset->image.name,
+                            tileset->compressed ? "_compressed_" : "_",
+                            offset);
+
+                        for (l = 0; l < tileset->nr_tiles; l++)
+                        {
+                            tileset_offset += tileset->tiles[l].size;
+
+                            fprintf(fdh, "%s_%s_%s_tile_%d%soffset := %d\n",
+                                output->appvar.name,
+                                convert->name,
+                                tileset->image.name,
+                                l,
+                                tileset->compressed ? "_compressed_" : "_",
+                                offset + tileset_offset);
+                        }
+
+                        nr_entries++;
+
+                        offset += tileset_offset;
+                    }
+                }
+            }
+        }
+
+        order = order == OUTPUT_PALETTES_FIRST ?
+            OUTPUT_CONVERTS_FIRST : OUTPUT_PALETTES_FIRST;
+
+        fprintf(fdh, "\n");
+    }
+
+    appvar->nr_entries = nr_entries;
+
+    fprintf(fdh, "%s_entries_num := %d\n",
+        appvar->name,
+        appvar->nr_entries);
+
+    fprintf(fdh, "%s_header_size := %d\n",
+        appvar->name,
+        appvar->header_size);
+}
+
 int output_appvar_include_file(struct output *output, struct appvar *appvar)
 {
     char *var_name;
@@ -979,20 +1135,43 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
 
             output_appvar_c_include_file(output, fdh);
 
+            fclose(fdh);
+
             LOG_INFO(" - Writing \'%s\'\n", var_c_name);
 
             fds = fopen(var_c_name, "wt");
             if (fds == NULL)
             {
-                fclose(fdh);
                 LOG_ERROR("Could not open file: %s\n", strerror(errno));
                 goto error;
             }
 
             output_appvar_c_source_file(output, fds);
 
-            fclose(fdh);
             fclose(fds);
+            break;
+
+        case APPVAR_SOURCE_ASM:
+            if (output->include_file == NULL)
+            {
+                LOG_ERROR("Missing \"include-file\" parameter for AppVar.\n");
+                goto error;
+            }
+
+            tmp = strdupcat(output->directory, output->include_file);
+
+            LOG_INFO(" - Writing \'%s\'\n", tmp);
+
+            fdh = fopen(tmp, "wt");
+            if (fdh == NULL)
+            {
+                LOG_ERROR("Could not open file: %s\n", strerror(errno));
+                goto error;
+            }
+
+            output_appvar_asm_include_file(output, fdh);
+
+            fclose(fdh);
             break;
 
         case APPVAR_SOURCE_ICE:

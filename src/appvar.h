@@ -71,6 +71,7 @@ typedef enum
     APPVAR_SOURCE_NONE,
     APPVAR_SOURCE_C,
     APPVAR_SOURCE_ICE,
+    APPVAR_SOURCE_ASM,
 } appvar_source_t;
 
 struct appvar

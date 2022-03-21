@@ -220,6 +220,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : by a custom drawing routine. A comma
                                       : separated list in [] should be provided.
 
+    ----------------------------------------------------------------------------
 
     outputs:
         The YAML file outputs section is a list of different "groups" of outputs,
@@ -264,20 +265,22 @@ This program is used to convert images to other formats, specifically for the TI
 
            source-format: <format>    : Source files to create to access
                                       : image and palette data. format can be
-                                      : 'c', 'ice', or 'none'.
+                                      : 'c', 'ice', 'asm', or 'none'.
                                       : Default is 'none'.
                                       : Optional parameter.
 
            source-init: <bool>        : Whether to output AppVar initialization
                                       : code for loading and setting up image
                                       : and palette pointers. Default is 'true'
+                                      : Only compatible with source-format: 'c'.
                                       : Optional parameter.
 
            lut-entries: <bool>        : Embeddeds a lookup table (LUT) for
                                       : determining the image offsets in the
-                                      : appvar. Format consists of an entry containing
-                                      : the table size, followed by the LUT entries.
-                                      : Entry sizes are controlled via the parameter
+                                      : appvar. Format consists of an entry
+                                      : containing the table size, followed by
+                                      : the LUT entries. Entry sizes are
+                                      : controlled via the parameter
                                       : 'lut-entry-size'. Default is 'false'.
                                       : Optional parameter.
 
@@ -311,3 +314,5 @@ This program is used to convert images to other formats, specifically for the TI
             libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx7: (c) 2012-2013 by Einar Saukas.
+
+

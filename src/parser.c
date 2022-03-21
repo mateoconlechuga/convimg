@@ -1172,6 +1172,10 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
                 {
                     output->appvar.source = APPVAR_SOURCE_ICE;
                 }
+                else if (parse_str_cmp("asm", value))
+                {
+                    output->appvar.source = APPVAR_SOURCE_ASM;
+                }
                 else if (parse_str_cmp("none", value))
                 {
                     output->appvar.source = APPVAR_SOURCE_NONE;

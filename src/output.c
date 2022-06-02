@@ -32,6 +32,7 @@
 #include "output-formats.h"
 #include "strings.h"
 #include "log.h"
+#include "clean.h"
 
 #include <errno.h>
 

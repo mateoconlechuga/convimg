@@ -28,35 +28,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#ifndef CLEAN_H
+#define CLEAN_H
 
-#include "parser.h"
-#include "icon.h"
-
+#include <stdio.h>
 #include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum
-{
-    OPTIONS_SUCCESS,
-    OPTIONS_FAILED,
-    OPTIONS_IGNORE
-};
+FILE *clean_fopen(const char *path, const char *mode);
 
-struct options
-{
-    const char *prgm;
-    bool convert_icon;
-    bool clean;
-    struct yaml yaml;
-    struct icon icon;
-};
+int clean_begin(const char *path, bool info);
 
-int options_get(int argc, char *argv[], struct options *options);
+void clean_end(void);
 
 #ifdef __cplusplus
 }

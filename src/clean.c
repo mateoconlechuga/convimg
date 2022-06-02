@@ -28,98 +28,100 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "output.h"
-#include "tileset.h"
-#include "strings.h"
-#include "image.h"
-#include "log.h"
 #include "clean.h"
+#include "log.h"
 
-#include <stdio.h>
-#include <stdint.h>
-#include <errno.h>
 #include <string.h>
 
-static int output_ice(unsigned char *data, size_t size, FILE *fd)
+static struct
 {
-    size_t i;
-
-    fprintf(fd, "\"");
-
-    for (i = 0; i < size; ++i)
+    bool rdy;
+    struct
     {
-        fprintf(fd, "%02X", data[i]);
+        FILE *fd;
+    } clean;
+} global;
+
+static void clean_run_file(FILE *fd, bool info)
+{
+    static char buf[8192];
+    char *ptr;
+
+    while (fgets(buf, sizeof(buf), fd) != NULL)
+    {
+        ptr = strchr(buf, '\n');
+        if (ptr)
+        {
+            *ptr  = '\0';
+        }
+
+        if (info)
+        {
+            LOG_INFO(" - Removing %s\n", buf);
+        }
+
+        remove(buf);
     }
-
-    fprintf(fd, "\"\n\n");
-
-    return 0;
 }
 
-int output_ice_image(struct image *image, char *file)
+static int clean_add_path(const char *path)
 {
-    FILE *fd;
+    int ret;
 
-    fd = fopen(file, "at");
-    if (fd == NULL)
+    ret = fputs(path, global.clean.fd);
+    if (ret < 0 || ret == EOF)
     {
-        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         return -1;
     }
 
-    fprintf(fd, "%s | %d bytes\n", image->name, image->size);
-    output_ice(image->data, image->size, fd);
-
-    fclose(fd);
-
-    return 0;
-}
-
-int output_ice_tileset(struct tileset *tileset, char *file)
-{
-    LOG_ERROR("Tilesets are not yet supported for ICE output!\n");
-
-    (void)tileset;
-    (void)file;
-
-    return -1;
-}
-
-int output_ice_palette(struct palette *palette, char *file)
-{
-    int size = palette->nr_entries * 2;
-    FILE *fd;
-    int i;
-
-    fd = fopen(file, "at");
-    if (fd == NULL)
+    ret = fputc('\n', global.clean.fd);
+    if (ret != '\n')
     {
-        LOG_ERROR("Could not open file: %s\n", strerror(errno));
         return -1;
     }
 
-    fprintf(fd, "%s | %d bytes\n\"", palette->name, size);
+    return 0;
+}
 
-    for (i = 0; i < palette->nr_entries; ++i)
+FILE *clean_fopen(const char *path, const char *mode)
+{
+    clean_add_path(path);
+
+    return fopen(path, mode);
+}
+
+int clean_begin(const char *path, bool info)
+{
+    FILE *fd;
+
+    global.rdy = false;
+
+    fd = fopen(path, "rt");
+    if (fd == NULL)
     {
-        struct color *c = &palette->entries[i].color;
-
-        fprintf(fd, "%02X%02X",
-                c->target & 255,
-                (c->target >> 8) & 255);
+        goto create;
     }
-    fprintf(fd, "\"\n\n");
+
+    clean_run_file(fd, info);
 
     fclose(fd);
+
+create:
+    fd = fopen(path, "wt");
+    if (fd == NULL)
+    {
+        return -1;
+    }
+
+    global.clean.fd = fd;
 
     return 0;
 }
 
-int output_ice_include_file(struct output *output, char *file)
+void clean_end(void)
 {
-    LOG_INFO(" - Wrote \'%s\'\n", file);
-
-    (void)output;
-
-    return 0;
+    if (global.clean.fd != NULL)
+    {
+        fclose(global.clean.fd);
+    }
 }

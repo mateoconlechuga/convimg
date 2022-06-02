@@ -38,6 +38,7 @@ SRCDIR := ./src
 DEPDIR := ./src/deps
 INCLUDEDIRS = $(DEPDIR)/libyaml/include
 SOURCES = $(SRCDIR)/appvar.c \
+          $(SRCDIR)/clean.c \
           $(SRCDIR)/color.c \
           $(SRCDIR)/compress.c \
           $(SRCDIR)/convert.c \

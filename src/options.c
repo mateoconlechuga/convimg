@@ -30,6 +30,7 @@
 
 #include "options.h"
 #include "version.h"
+#include "clean.h"
 #include "log.h"
 
 #include <getopt.h>
@@ -58,6 +59,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("    -n, --new                Create a new template YAML file.\n");
     LOG_PRINT("    -h, --help               Show this screen.\n");
     LOG_PRINT("    -v, --version            Show program version.\n");
+    LOG_PRINT("    -c, --clean              Deletes files listed in \'convimg.out\' and exits.\n");
     LOG_PRINT("    -l, --log-level <level>  Set program logging level.\n");
     LOG_PRINT("                             0=none, 1=error, 2=warning, 3=normal\n");
     LOG_PRINT("\n");
@@ -426,10 +428,33 @@ static int options_write_new(void)
     return 0;
 }
 
+static int options_clean(void)
+{
+    int ret;
+
+    LOG_INFO("Cleaning output files...\n");
+
+    ret = clean_begin("convimg.out", true);
+    clean_end();
+    remove("convimg.out");
+    
+    if (ret == 0)
+    {
+        LOG_INFO("Clean complete.\n");
+    }
+    else
+    {
+        LOG_ERROR("Clean failed.\n");
+    }
+
+    return ret;
+}
+
 static void options_set_default(struct options *options)
 {
     options->prgm = NULL;
     options->convert_icon = false;
+    options->clean = false;
     options->yaml.path = strdup(DEFAULT_CONVIMG_YAML);
 }
 
@@ -485,6 +510,7 @@ int options_get(int argc, char *argv[], struct options *options)
             {"icon-output",      required_argument, 0, 0},
             {"icon-description", required_argument, 0, 0},
             {"icon-format",      required_argument, 0, 0},
+            {"clean",            no_argument,       0, 'c'},
             {"new",              no_argument,       0, 'n'},
             {"input",            required_argument, 0, 'i'},
             {"help",             no_argument,       0, 'h'},
@@ -492,7 +518,7 @@ int options_get(int argc, char *argv[], struct options *options)
             {"log-level",        required_argument, 0, 'l'},
             {0, 0, 0, 0}
         };
-        int c = getopt_long(argc, argv, "i:l:nhv", long_options, &optidx);
+        int c = getopt_long(argc, argv, "ci:l:nhv", long_options, &optidx);
 
         if (c == -1)
         {
@@ -548,6 +574,10 @@ int options_get(int argc, char *argv[], struct options *options)
 
             case 'n':
                 ret = options_write_new();
+                return ret == 0 ? OPTIONS_IGNORE : ret;
+
+            case 'c':
+                ret = options_clean();
                 return ret == 0 ? OPTIONS_IGNORE : ret;
 
             case 'v':

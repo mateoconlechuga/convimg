@@ -33,6 +33,7 @@
 #include "strings.h"
 #include "image.h"
 #include "log.h"
+#include "clean.h"
 
 #include <errno.h>
 #include <string.h>
@@ -70,7 +71,7 @@ int output_asm_image(struct image *image)
 
     LOG_INFO(" - Writing \'%s\'\n", source);
 
-    fds = fopen(source, "wt");
+    fds = clean_fopen(source, "wt");
     if (fds == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -103,7 +104,7 @@ int output_asm_tileset(struct tileset *tileset)
 
     LOG_INFO(" - Writing \'%s\'\n", source);
 
-    fds = fopen(source, "wt");
+    fds = clean_fopen(source, "wt");
     if (fds == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -151,7 +152,7 @@ int output_asm_palette(struct palette *palette)
 
     LOG_INFO(" - Writing \'%s\'\n", source);
 
-    fds = fopen(source, "wt");
+    fds = clean_fopen(source, "wt");
     if (fds == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -208,7 +209,7 @@ int output_asm_include_file(struct output *output)
 
     LOG_INFO(" - Writing \'%s\'\n", include_file);
 
-    fdi = fopen(include_file, "wt");
+    fdi = clean_fopen(include_file, "wt");
     if (fdi == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));

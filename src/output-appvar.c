@@ -32,6 +32,7 @@
 #include "appvar.h"
 #include "strings.h"
 #include "log.h"
+#include "clean.h"
 
 #include <string.h>
 #include <errno.h>
@@ -1126,7 +1127,7 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
 
             LOG_INFO(" - Writing \'%s\'\n", tmp);
 
-            fdh = fopen(tmp, "wt");
+            fdh = clean_fopen(tmp, "wt");
             if (fdh == NULL)
             {
                 LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -1139,7 +1140,7 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
 
             LOG_INFO(" - Writing \'%s\'\n", var_c_name);
 
-            fds = fopen(var_c_name, "wt");
+            fds = clean_fopen(var_c_name, "wt");
             if (fds == NULL)
             {
                 LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -1162,7 +1163,7 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
 
             LOG_INFO(" - Writing \'%s\'\n", tmp);
 
-            fdh = fopen(tmp, "wt");
+            fdh = clean_fopen(tmp, "wt");
             if (fdh == NULL)
             {
                 LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -1183,7 +1184,7 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
 
     LOG_INFO(" - Writing \'%s\'\n", var_name);
 
-    fdv = fopen(var_name, "wb");
+    fdv = clean_fopen(var_name, "wb");
     if (fdv == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));

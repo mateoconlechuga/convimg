@@ -30,6 +30,7 @@
 
 #include "options.h"
 #include "convert.h"
+#include "clean.h"
 #include "icon.h"
 #include "parser.h"
 #include "log.h"
@@ -169,8 +170,13 @@ int main(int argc, char *argv[])
     }
     else
     {
-        ret = process_yaml(&options.yaml);
-        parser_close(&options.yaml);
+        ret = clean_begin("convimg.out", false);
+        if (ret == 0)
+        {
+            ret = process_yaml(&options.yaml);
+            parser_close(&options.yaml);
+        }
+        clean_end();
     }
 
     return ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE;

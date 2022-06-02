@@ -10,3 +10,6 @@
 [submodule "src/deps/libyaml"]
 	path = src/deps/libyaml
 	url = https://github.com/yaml/libyaml.git
+[submodule "src/deps/zx"]
+	path = src/deps/zx
+	url = https://github.com/mateoconlechuga/zx.git

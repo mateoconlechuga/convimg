@@ -31,13 +31,14 @@
 #include "compress.h"
 #include "log.h"
 
-#include "deps/zx7/zx7.h"
+#include "deps/zx/zx7/zx7.h"
+#include "deps/zx/zx0/zx0.h"
 
 #include <string.h>
 
 static int compress_zx7(uint8_t *data, size_t *size)
 {
-    Optimal *opt;
+    zx7_Optimal *opt;
     uint8_t *compressed_data;
     size_t new_size;
     long delta;
@@ -47,18 +48,53 @@ static int compress_zx7(uint8_t *data, size_t *size)
         return -1;
     }
 
-    opt = optimize(data, *size, 0);
+    opt = zx7_optimize(data, *size, 0);
     if (opt == NULL)
     {
         LOG_ERROR("Could not optimize zx7.\n");
         return -1;
     }
 
-    compressed_data = compress(opt, data, *size, 0, &new_size, &delta);
+    compressed_data = zx7_compress(opt, data, *size, 0, &new_size, &delta);
     free(opt);
     if (compressed_data == NULL)
     {
         LOG_ERROR("Could not compress zx7.\n");
+        return -1;
+    }
+
+    memcpy(data, compressed_data, new_size);
+    *size = new_size;
+
+    free(compressed_data);
+
+    return 0;
+}
+
+static void compress_zx0_progress(void)
+{
+    LOG_PRINT(".");
+}
+
+static int compress_zx0(uint8_t *data, size_t *size)
+{
+    int delta;
+    uint8_t *compressed_data;
+    int new_size;
+
+    if (size == NULL || data == NULL)
+    {
+        return -1;
+    }
+
+    LOG_PRINT("[info] Compressing [");
+
+    compressed_data = zx0_compress(zx0_optimize(data, *size, 0, 2000, compress_zx0_progress),
+                                   data, *size, 0, 0, 1, &new_size, &delta);
+    LOG_PRINT("]\n");
+    if (compressed_data == NULL)
+    {
+        LOG_ERROR("Could not compress zx0.\n");
         return -1;
     }
 
@@ -83,6 +119,9 @@ int compress_array(uint8_t *data, size_t *size, compress_t mode)
 
         case COMPRESS_ZX7:
             return compress_zx7(data, size);
+
+        case COMPRESS_ZX0:
+            return compress_zx0(data, size);
     }
 
     return 0;

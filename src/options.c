@@ -232,8 +232,11 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : the output size if there are many\n");
     LOG_PRINT("                                  : transparent pixels.\n");
     LOG_PRINT("\n");
-    LOG_PRINT("       compress: zx7              : After quantization, images can then\n");
-    LOG_PRINT("                                  : optionally be compressed in zx7 format.\n");
+    LOG_PRINT("       compress: <mode>           : After quantization, images can then\n");
+    LOG_PRINT("                                  : optionally be compressed.\n");
+    LOG_PRINT("                                  : Available modes: \'zx0\', \'zx7\'\n");
+    LOG_PRINT("                                  : The 'zx7' compression time is faster,\n");
+    LOG_PRINT("                                  : however 'zx0' is usually better.\n");
     LOG_PRINT("                                  : The images will then be required to be\n");
     LOG_PRINT("                                  : decompressed before use.\n");
     LOG_PRINT("\n");
@@ -330,7 +333,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : Optional parameter.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       compress: <mode>           : Compress AppVar data.\n");
-    LOG_PRINT("                                  : Current \'mode\' parameters are \'zx7\'.\n");
+    LOG_PRINT("                                  : Available \'mode\'s: \'zx0\', \'zx7\'.\n");
     LOG_PRINT("                                  : The AppVar then needs to be decompressed\n");
     LOG_PRINT("                                  : to access image and palette data.\n");
     LOG_PRINT("                                  : Optional parameter.\n");
@@ -353,7 +356,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("        libimagequant: (c) 2009-2022 by Kornel Lesiński.\n");
     LOG_PRINT("        libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.\n");
     LOG_PRINT("        stb: (c) 2017 by Sean Barrett.\n");
-    LOG_PRINT("        zx7: (c) 2012-2013 by Einar Saukas.\n");
+    LOG_PRINT("        zx0,zx7: (c) 2012-2021 by Einar Saukas.\n");
 }
 
 static int options_write_new(void)

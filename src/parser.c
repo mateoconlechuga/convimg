@@ -870,6 +870,10 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
             {
                 convert->compress = COMPRESS_ZX7;
             }
+            else if (parse_str_cmp("zx0", value))
+            {
+                convert->compress = COMPRESS_ZX0;
+            }
             else
             {
                 LOG_ERROR("Invalid compression mode.\n");
@@ -1192,6 +1196,10 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
                 if (parse_str_cmp("zx7", value))
                 {
                     output->appvar.compress = COMPRESS_ZX7;
+                }
+                else if (parse_str_cmp("zx0", value))
+                {
+                    output->appvar.compress = COMPRESS_ZX0;
                 }
                 else
                 {

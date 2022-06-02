@@ -192,8 +192,11 @@ This program is used to convert images to other formats, specifically for the TI
                                       : the output size if there are many
                                       : transparent pixels.
 
-           compress: zx7              : After quantization, images can then
-                                      : optionally be compressed in zx7 format.
+           compress: <mode>           : After quantization, images can then
+                                      : optionally be compressed.
+                                      : Available modes: 'zx0', 'zx7'
+                                      : The 'zx7' compression time is faster,
+                                      : however 'zx0' is usually better.
                                       : The images will then be required to be
                                       : decompressed before use.
 
@@ -290,7 +293,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : Optional parameter.
 
            compress: <mode>           : Compress AppVar data.
-                                      : Current 'mode' parameters are 'zx7'.
+                                      : Available 'mode's: 'zx0', 'zx7'.
                                       : The AppVar then needs to be decompressed
                                       : to access image and palette data.
                                       : Optional parameter.
@@ -313,6 +316,5 @@ This program is used to convert images to other formats, specifically for the TI
             libimagequant: (c) 2009-2022 by Kornel Lesiński.
             libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
-            zx7: (c) 2012-2013 by Einar Saukas.
-
-
+            zx0,zx7: (c) 2012-2021 by Einar Saukas.
+        

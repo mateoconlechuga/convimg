@@ -42,6 +42,7 @@ typedef enum
 {
     COMPRESS_NONE,
     COMPRESS_ZX7,
+    COMPRESS_ZX0,
     COMPRESS_INVALID,
 } compress_t;
 

@@ -18,6 +18,7 @@ This program is used to convert images to other formats, specifically for the TI
         -n, --new                Create a new template YAML file.
         -h, --help               Show this screen.
         -v, --version            Show program version.
+        -c, --clean              Deletes files listed in 'convimg.out' and exits.
         -l, --log-level <level>  Set program logging level.
                                  0=none, 1=error, 2=warning, 3=normal
 
@@ -317,4 +318,4 @@ This program is used to convert images to other formats, specifically for the TI
             libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx0,zx7: (c) 2012-2021 by Einar Saukas.
-        
+

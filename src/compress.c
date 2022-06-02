@@ -89,7 +89,7 @@ static int compress_zx0(uint8_t *data, size_t *size)
 
     LOG_PRINT("[info] Compressing [");
 
-    compressed_data = zx0_compress(zx0_optimize(data, *size, 0, 2000, compress_zx0_progress),
+    compressed_data = zx0_compress(zx0_optimize(data, *size, 0, ZX0_MAX_OFFSET, compress_zx0_progress),
                                    data, *size, 0, 0, 1, &new_size, &delta);
     LOG_PRINT("]\n");
     if (compressed_data == NULL)

@@ -121,8 +121,9 @@ static int palette_add_image(struct palette *palette, const char *path)
 
 int pallete_add_path(struct palette *palette, const char *path)
 {
-    glob_t *globbuf = NULL;
+    static glob_t globbuf;
     char **paths = NULL;
+    char *realPath;
     int i;
     int len;
 
@@ -131,15 +132,21 @@ int pallete_add_path(struct palette *palette, const char *path)
         return -1;
     }
 
-    globbuf = strings_find_images(path);
-    paths = globbuf->gl_pathv;
-    len = globbuf->gl_pathc;
+    realPath = strings_find_images(path, &globbuf);
+    if (realPath == NULL)
+    {
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+	return -1;
+    }
+
+    paths = globbuf.gl_pathv;
+    len = globbuf.gl_pathc;
 
     if (len == 0)
     {
-        LOG_ERROR("Could not find file(s): %s\n", path);
-        globfree(globbuf);
-        free(globbuf);
+        LOG_ERROR("Could not find file(s): \'%s\'\n", realPath);
+        globfree(&globbuf);
+        free(realPath);
         return -1;
     }
 
@@ -148,8 +155,8 @@ int pallete_add_path(struct palette *palette, const char *path)
         palette_add_image(palette, paths[i]);
     }
 
-    globfree(globbuf);
-    free(globbuf);
+    globfree(&globbuf);
+    free(realPath);
 
     return 0;
 }

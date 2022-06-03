@@ -169,25 +169,32 @@ static int convert_add_tileset(struct convert *convert, const char *path)
 
 int convert_add_image_path(struct convert *convert, const char *path)
 {
-    glob_t *globbuf = NULL;
+    static glob_t globbuf;
     char **paths = NULL;
-    int len;
+    char *realPath;
     int i;
+    int len;
 
     if (convert == NULL || path == NULL)
     {
         return -1;
     }
 
-    globbuf = strings_find_images(path);
-    paths = globbuf->gl_pathv;
-    len = globbuf->gl_pathc;
+    realPath = strings_find_images(path, &globbuf);
+    if (realPath == NULL)
+    {
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+	return -1;
+    }
+
+    paths = globbuf.gl_pathv;
+    len = globbuf.gl_pathc;
 
     if (len == 0)
     {
-        LOG_ERROR("Could not find file(s): \'%s\'\n", path);
-        globfree(globbuf);
-        free(globbuf);
+        LOG_ERROR("Could not find file(s): \'%s\'\n", realPath);
+        globfree(&globbuf);
+        free(realPath);
         return -1;
     }
 
@@ -196,16 +203,17 @@ int convert_add_image_path(struct convert *convert, const char *path)
         convert_add_image(convert, paths[i]);
     }
 
-    globfree(globbuf);
-    free(globbuf);
+    globfree(&globbuf);
+    free(realPath);
 
     return 0;
 }
 
 int convert_add_tileset_path(struct convert *convert, const char *path)
 {
-    glob_t *globbuf = NULL;
+    static glob_t globbuf;
     char **paths = NULL;
+    char *realPath;
     int i;
     int len;
 
@@ -214,15 +222,21 @@ int convert_add_tileset_path(struct convert *convert, const char *path)
         return -1;
     }
 
-    globbuf = strings_find_images(path);
-    paths = globbuf->gl_pathv;
-    len = globbuf->gl_pathc;
+    realPath = strings_find_images(path, &globbuf);
+    if (realPath == NULL)
+    {
+        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+	return -1;
+    }
+
+    paths = globbuf.gl_pathv;
+    len = globbuf.gl_pathc;
 
     if (len == 0)
     {
-        LOG_ERROR("Could not find file(s): \'%s\'\n", path);
-        globfree(globbuf);
-        free(globbuf);
+        LOG_ERROR("Could not find file(s): \'%s\'\n", realPath);
+        globfree(&globbuf);
+        free(realPath);
         return -1;
     }
 
@@ -231,8 +245,8 @@ int convert_add_tileset_path(struct convert *convert, const char *path)
         convert_add_tileset(convert, paths[i]);
     }
 
-    globfree(globbuf);
-    free(globbuf);
+    globfree(&globbuf);
+    free(realPath);
 
     return 0;
 }

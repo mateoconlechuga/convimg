@@ -53,6 +53,7 @@ char *strdupcat(const char *s, const char *c)
         strcpy(d, s);
         strcat(d, c);
     }
+
     return d;
 }
 
@@ -83,32 +84,68 @@ char *strings_trim(char *str)
 
 char *strings_basename(const char *path)
 {
-    char *result = strdup(path);
+    char *ret = strdup(path);
     char *tmp;
 
-    tmp = strrchr(result, '/');
+    tmp = strrchr(ret, '/');
     if (tmp != NULL && *tmp && *(tmp + 1))
     {
         size_t len = strlen(tmp + 1);
-        memmove(result, tmp + 1, len);
-        result[len] = '\0';
+        memmove(ret, tmp + 1, len);
+        ret[len] = '\0';
     }
 
-    tmp = strchr(result, '.');
+    tmp = strchr(ret, '.');
     if (tmp != NULL)
     {
         *tmp = '\0';
     }
 
-    return result;
+    return ret;
 }
 
-glob_t *strings_find_images(const char *fullPath)
+const char *strings_file_suffix(const char *path)
 {
+    const char *ret;
+    int i;
+    int n;
+
+    if (path == NULL)
+    {
+        return NULL;
+    }
+
+    n = strlen(path);
+    i = n - 1;
+
+    while ((i >= 0) && (path[i] != '.') && (path[i] != '/') & (path[i] != '\\'))
+    {
+        i--;
+    }
+
+    if ((i > 0) && (path[i] == '.') && (path[i - 1] != '/') && (path[i - 1] != '\\'))
+    {
+        ret = path + i;
+    }
+    else
+    {
+        ret = path + n;
+    }
+
+    return ret;
+}
+
+char *strings_find_images(const char *fullPath, glob_t *globbuf)
+{
+    const char *suffix = strings_file_suffix(fullPath);
     char *path;
 
-    if (!strstr(fullPath, ".png") &&
-        !strstr(fullPath, ".bmp"))
+    if (suffix == NULL)
+    {
+        return NULL;
+    }
+
+    if (strcmp("", suffix) == 0)
     {
         path = strdupcat(fullPath, ".png");
     }
@@ -117,11 +154,14 @@ glob_t *strings_find_images(const char *fullPath)
         path = strdup(fullPath);
     }
 
-    glob_t *globbuf = calloc(sizeof(glob_t), 1);
-    glob(path, 0, NULL, globbuf);
-    free(path);
+    if (path == NULL)
+    {
+        return NULL;
+    }
 
-    return globbuf;
+    glob(path, 0, NULL, globbuf);
+
+    return path;
 }
 
 int strings_utf8_to_iso8859_1(const char *in, int inlen, char *out, int maxlen)

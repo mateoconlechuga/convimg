@@ -39,9 +39,11 @@ extern "C" {
 
 char *strdupcat(const char *s, const char *c);
 
-glob_t *strings_find_images(const char *full_path);
+char *strings_find_images(const char *fullPath, glob_t *globbuf);
 
 char *strings_basename(const char *path);
+
+const char *strings_file_suffix(const char *path);
 
 char *strings_trim(char *str);
 

@@ -745,7 +745,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                 fprintf(fds, "unsigned char %s_init(void)\n", appvar->name);
                 fprintf(fds, "{\n");
                 fprintf(fds, "    unsigned int data, i;\n");
-                fprintf(fds, "    ti_var_t appvar;\n\n");
+                fprintf(fds, "    uint8_t appvar;\n\n");
                 fprintf(fds, "    appvar = ti_Open(\"%s\", \"r\");\n", appvar->name);
                 fprintf(fds, "    if (appvar == 0)\n");
                 fprintf(fds, "    {\n");
@@ -846,7 +846,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
             {
                 fprintf(fds, "\nunsigned char %s_init(void)\n", appvar->name);
                 fprintf(fds, "{\n");
-                fprintf(fds, "    ti_var_t appvar;\n");
+                fprintf(fds, "    uint8_t appvar;\n");
                 if (appvar->entry_size == 3)
                 {
                     fprintf(fds, "    unsigned int *table;\n");

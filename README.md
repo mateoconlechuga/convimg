@@ -172,16 +172,18 @@ This program is used to convert images to other formats, specifically for the TI
                                       : pointers to each tile.
                                       : The default is 'true'.
 
-           transparent-color-index:   : Transparent color index in the palette
-                                      : (probably determined using fixed-color),
+           transparent-index: <index> : Transparent color index in the palette
                                       : that represents a transparent color.
-                                      : Note that the color itself is not
-                                      : transparent, but rather a placeholder
-                                      : in the palette.
-                                      : The format of this option is:
-                                      : transparent-color-index: <index>
-                                      : where <index> is the index/entry in the
-                                      : palette.
+                                      : This only is used in two cases!
+                                      : When converting 'rlet' images,
+                                      : or for assigning pixels in the source
+                                      : image that have an alpha channel.
+                                      : If the alpha chanel is 0 in an pixel,
+                                      : the converted output will be assigned
+                                      : this value.
+                                      : Generally, you want transparency to be.
+                                      : defined as a 'fixed-entry' color in the
+                                      : palette instead of using this option.
 
            style: <mode>              : Style controls the converted format of
                                       : images. In 'normal' mode, converted

@@ -316,15 +316,12 @@ static int parse_palette_image(struct palette *palette, const char *file)
     struct image image;
     int i;
 
-    image.flip_x = false;
-    image.flip_y = false;
-    image.rotate = 0;
-    image.name = NULL;
-    image.path = strdup(file);
+    image_init(&image, file);
 
     if (image_load(&image))
     {
-        return -1;
+        LOG_ERROR("Could not load image \'%s\'.\n", file);
+        goto fail;
     }
 
     if (image.height != 1 || image.width > 256)
@@ -1347,12 +1344,14 @@ static int parse_yaml(struct yaml *yaml, yaml_document_t *doc)
     return 0;
 }
 
-int parser_open(struct yaml *yaml)
+int parser_open(struct yaml *yaml, const char *path)
 {
     yaml_parser_t parser;
     yaml_document_t document;
     FILE *fd;
     int ret;
+
+    yaml->path = strdup(path);
 
     ret = parser_init(yaml);
     if (ret != 0)

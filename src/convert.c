@@ -87,13 +87,7 @@ static int convert_add_image(struct convert *convert, const char *path)
 
     image = &convert->images[convert->nr_images];
 
-    image->path = strdup(path);
-    image->name = strings_basename(path);
-    image->data = NULL;
-    image->width = 0;
-    image->height = 0;
-    image->rlet = false;
-    image->compressed = false;
+    image_init(image, path);
 
     convert->nr_images++;
 
@@ -461,14 +455,13 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
 int convert_convert(struct convert *convert, struct palette **palettes, int nr_palettes)
 {
     int ret;
-    int i;
 
     if (convert == NULL)
     {
         return -1;
     }
 
-    if (convert->nr_images > 0)
+    if (convert->nr_images > 0 || convert->tileset_group != NULL)
     {
         LOG_INFO("Generating convert \'%s\'\n", convert->name);
     }
@@ -479,19 +472,20 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         return -1;
     }
 
-    for (i = 0; i < convert->nr_images; ++i)
+    for (int i = 0; i < convert->nr_images; ++i)
     {
         struct image *image = &convert->images[i];
-
-        LOG_INFO(" - Reading image \'%s\'\n",
-            image->path);
-
+        
+        /* assign values to image based on convert flags */
+        image->quantize_speed = convert->quantize_speed;
         image->dither = convert->dither;
         image->rotate = convert->rotate;
         image->flip_x = convert->flip_x;
         image->flip_y = convert->flip_y;
         image->transparent_index = convert->transparent_index;
-        image->quantize_speed = convert->quantize_speed;
+
+        LOG_INFO(" - Reading image \'%s\'\n",
+                 image->path);
 
         ret = image_load(image);
         if (ret != 0)
@@ -500,7 +494,7 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
             return -1;
         }
 
-        if (convert->add_width_height == true)
+        if (convert->add_width_height)
         {
             if (image->width > 255)
             {
@@ -514,7 +508,7 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
             {
                 LOG_ERROR("Image \'%s\' height is %u. Maximum height is 255.\n",
                     image->path,
-                    image->width);
+                    image->height);
                 return -1;
             }
         }
@@ -541,14 +535,21 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
     if (convert->tileset_group != NULL)
     {
         struct tileset_group *tileset_group = convert->tileset_group;
-        int j;
 
         LOG_INFO("Converting tilesets for \'%s\'\n", convert->name);
 
-        for (j = 0; j < tileset_group->nr_tilesets; ++j)
+        for (int j = 0; j < tileset_group->nr_tilesets; ++j)
         {
             struct tileset *tileset = &tileset_group->tilesets[j];
             struct image *image = &tileset->image;
+
+            /* assign values to image based on convert flags */
+            image->quantize_speed = convert->quantize_speed;
+            image->dither = convert->dither;
+            image->rotate = convert->rotate;
+            image->flip_x = convert->flip_x;
+            image->flip_y = convert->flip_y;
+            image->transparent_index = convert->transparent_index;
 
             LOG_INFO(" - Reading tileset \'%s\'\n",
                 image->path);
@@ -559,9 +560,6 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
                 LOG_ERROR("Failed to load image \'%s\'\n", image->path);
                 return -1;
             }
-
-            image->dither = convert->dither;
-            image->quantize_speed = convert->quantize_speed;
 
             ret = image_quantize(image, convert->palette);
             if (ret != 0)

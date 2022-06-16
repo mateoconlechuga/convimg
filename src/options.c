@@ -454,10 +454,13 @@ static int options_clean(void)
 
 static void options_set_default(struct options *options)
 {
+    /* default yaml path if not assigned */
+    static const char *yaml_path = DEFAULT_CONVIMG_YAML;
+
     options->prgm = NULL;
     options->convert_icon = false;
     options->clean = false;
-    options->yaml.path = strdup(DEFAULT_CONVIMG_YAML);
+    options->yaml_path = yaml_path;
 }
 
 static int options_verify(struct options *options)
@@ -469,7 +472,7 @@ static int options_verify(struct options *options)
         return OPTIONS_SUCCESS;
     }
 
-    fd = fopen(options->yaml.path, "rt");
+    fd = fopen(options->yaml_path, "rt");
     if (fd != NULL)
     {
         fclose(fd);
@@ -477,7 +480,7 @@ static int options_verify(struct options *options)
     }
 
     LOG_ERROR("Could not open \'%s\': %s\n",
-        options->yaml.path,
+        options->yaml_path,
         strerror(errno));
     LOG_INFO("Run %s --help for usage guidlines.\n",
         options->prgm);
@@ -570,8 +573,7 @@ int options_get(int argc, char *argv[], struct options *options)
                 {
                     break;
                 }
-                free(options->yaml.path);
-                options->yaml.path = strdup(optarg);
+                options->yaml_path = optarg;
                 break;
 
             case 'n':
@@ -595,8 +597,6 @@ int options_get(int argc, char *argv[], struct options *options)
                 break;
 
             case 'h':
-                free(options->yaml.path);
-                options->yaml.path = NULL;
                 options_show(options->prgm);
                 return OPTIONS_IGNORE;
 

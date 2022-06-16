@@ -45,12 +45,11 @@ static struct
 static void clean_run_file(FILE *fd, bool info)
 {
     static char buf[8192];
-    char *ptr;
 
     while (fgets(buf, sizeof(buf), fd) != NULL)
     {
-        ptr = strchr(buf, '\n');
-        if (ptr)
+        char *ptr = strchr(buf, '\n');
+        if (ptr != NULL)
         {
             *ptr = '\0';
         }

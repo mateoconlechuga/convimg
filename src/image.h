@@ -34,8 +34,8 @@
 #include "bpp.h"
 #include "compress.h"
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,6 +45,7 @@ struct palette;
 
 struct image
 {
+    /* assigned on init */
     char *name;
     char *path;
     uint8_t *data;
@@ -52,7 +53,7 @@ struct image
     int height;
     int size;
 
-    // set by convert
+    /* set by convert */
     int quantize_speed;
     float dither;
     bool compressed;
@@ -64,11 +65,13 @@ struct image
     int orig_size;
     int transparent_index;
 
-    // set by output
+    /* set by output */
     char *directory;
 };
 
 #define WIDTH_HEIGHT_SIZE 2
+
+void image_init(struct image *image, const char *path);
 
 int image_load(struct image *image);
 
@@ -80,7 +83,8 @@ int image_add_offset(struct image *image, int offset);
 
 int image_compress(struct image *image, compress_t compress);
 
-int image_remove_omits(struct image *image, int *omit_indices, int nr_omit_indices);
+int image_remove_omits(struct image *image, int *omit_indices,
+    int nr_omit_indices);
 
 int image_set_bpp(struct image *image, bpp_t bpp, int palette_nr_entries);
 

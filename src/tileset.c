@@ -34,32 +34,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct tileset *tileset_alloc(void)
-{
-    struct tileset *tileset = NULL;
-
-    tileset = malloc(sizeof(struct tileset));
-    if (tileset == NULL)
-    {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
-        return NULL;
-    }
-
-    tileset->tile_height = 16;
-    tileset->tile_width = 16;
-    tileset->p_table = true;
-    tileset->bad_alpha = false;
-    tileset->tiles = NULL;
-    tileset->nr_tiles = 0;
-    tileset->image.name = NULL;
-    tileset->image.path = NULL;
-    tileset->image.data = NULL;
-    tileset->image.width = 0;
-    tileset->image.height = 0;
-
-    return tileset;
-}
-
 struct tileset_group *tileset_group_alloc(void)
 {
     struct tileset_group *tileset_group;

@@ -76,8 +76,6 @@ struct tileset_group
     bool p_table;
 };
 
-struct tileset *tileset_alloc(void);
-
 struct tileset_group *tileset_group_alloc(void);
 
 int tileset_alloc_tiles(struct tileset *tileset);

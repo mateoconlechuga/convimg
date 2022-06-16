@@ -35,12 +35,12 @@
 #include "parser.h"
 #include "log.h"
 
-static int process_yaml(struct yaml *yaml)
+static int process_yaml(struct yaml *yaml, const char *path)
 {
     unsigned int i;
     int ret;
 
-    ret = parser_open(yaml);
+    ret = parser_open(yaml, path);
     if (ret != 0)
     {
         return -1;
@@ -173,8 +173,10 @@ int main(int argc, char *argv[])
         ret = clean_begin("convimg.out", false);
         if (ret == 0)
         {
-            ret = process_yaml(&options.yaml);
-            parser_close(&options.yaml);
+            static struct yaml yaml;
+
+            ret = process_yaml(&yaml, options.yaml_path);
+            parser_close(&yaml);
         }
         clean_end();
     }

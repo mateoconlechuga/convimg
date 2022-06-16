@@ -31,6 +31,7 @@
 #include "image.h"
 #include "palette.h"
 #include "log.h"
+#include "strings.h"
 
 #include "deps/libimagequant/libimagequant.h"
 
@@ -96,6 +97,32 @@ static void image_rotate_90(uint32_t *image, int width, int height)
 
     memcpy(image, newimage, size * sizeof(uint32_t));
     free(newimage);
+}
+
+void image_init(struct image *image, const char *path)
+{
+    /* normal intiialization */
+    image->name = strings_basename(path);
+    image->path = strdup(path);
+    image->data = NULL;
+    image->width = 0;
+    image->height = 0;
+    image->size = 0;
+
+    /* set by convert */
+    image->quantize_speed = 1;
+    image->dither =  0.0;
+    image->compressed = false;
+    image->bad_alpha = false;
+    image->rlet = false;
+    image->rotate = 0;
+    image->flip_x = false;
+    image->flip_y = false;
+    image->orig_size = 0;
+    image->transparent_index = -1;
+
+    /* set by output */
+    image->directory = NULL;
 }
 
 int image_load(struct image *image)

@@ -55,7 +55,7 @@ struct yaml
     int nr_outputs;
 };
 
-int parser_open(struct yaml *yaml);
+int parser_open(struct yaml *yaml, const char *path);
 
 void parser_close(struct yaml *yaml);
 

@@ -50,9 +50,9 @@ enum
 struct options
 {
     const char *prgm;
+    const char *yaml_path;
     bool convert_icon;
     bool clean;
-    struct yaml yaml;
     struct icon icon;
 };
 

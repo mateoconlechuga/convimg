@@ -43,11 +43,11 @@ extern "C" {
 
 typedef enum
 {
-    LOG_LVL_NONE,
-    LOG_LVL_ERROR,
-    LOG_LVL_WARNING,
-    LOG_LVL_INFO,
-    LOG_LVL_DEBUG
+    LOG_LVL_NONE = 0,
+    LOG_LVL_ERROR = 1,
+    LOG_LVL_WARNING = 2,
+    LOG_LVL_INFO = 3,
+    LOG_LVL_DEBUG = 4
 } log_level_t;
 
 extern log_level_t log_level;

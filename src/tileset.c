@@ -48,6 +48,7 @@ struct tileset *tileset_alloc(void)
     tileset->tile_height = 16;
     tileset->tile_width = 16;
     tileset->p_table = true;
+    tileset->bad_alpha = false;
     tileset->tiles = NULL;
     tileset->nr_tiles = 0;
     tileset->image.name = NULL;

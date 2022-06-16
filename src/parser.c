@@ -914,7 +914,8 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
             }
             convert->quantize_speed = tmpi;
         }
-        else if (parse_str_cmp("transparent-color-index", key))
+        else if (parse_str_cmp("transparent-index", key) ||
+                 parse_str_cmp("transparent-color-index", key))
         {
             tmpi = strtol(value, NULL, 0);
             if (tmpi >= PALETTE_MAX_ENTRIES || tmpi < 0)

@@ -118,6 +118,7 @@ int image_load(struct image *image)
 
     image->orig_size = image->size = width * height;
     image->compressed = false;
+    image->bad_alpha = false;
 
     if (image->flip_x)
     {
@@ -493,12 +494,32 @@ int image_quantize(struct image *image, struct palette *palette)
     for (i = 0; i < image->size; ++i)
     {
         int offset = i * 4;
-        uint8_t r, g, b;
+        uint8_t r, g, b, a;
         int j;
 
         r = image->data[offset + 0];
         g = image->data[offset + 1];
         b = image->data[offset + 2];
+        a = image->data[offset + 3];
+
+        /* if alpha == 0, this is a transparent pixel */
+        if (a == 0)
+        {
+            if (image->transparent_index < 0)
+            {
+                LOG_ERROR("Encountered pixel alpha of 0, but `transparent-index` is not set.\n");
+                return -1;
+            }
+
+            data[i] = image->transparent_index;
+            continue;
+        }
+
+        /* otherwise, the user might get bad colors */
+        if (a != 255)
+        {
+            image->bad_alpha = true;
+        }
 
         for (j = 0; j < palette->nr_fixed_entries; ++j)
         {

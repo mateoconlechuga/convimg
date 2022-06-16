@@ -400,6 +400,12 @@ int palette_generate_with_images(struct palette *palette)
             color.rgb.b = image->data[o + 2];
             color.rgb.a = image->data[o + 3];
 
+            /* don't add transparent pixels to palette */
+            if (color.rgb.a == 0)
+            {
+                continue;
+            }
+
             for (k = 0; k < palette->nr_fixed_entries; ++k)
             {
                 struct palette_entry *entry = &palette->fixed_entries[k];

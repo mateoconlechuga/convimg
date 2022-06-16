@@ -184,7 +184,7 @@ int convert_add_image_path(struct convert *convert, const char *path)
     if (realPath == NULL)
     {
         LOG_ERROR("Memory error in \'%s\'.\n", __func__);
-	return -1;
+        return -1;
     }
 
     paths = globbuf.gl_pathv;
@@ -226,7 +226,7 @@ int convert_add_tileset_path(struct convert *convert, const char *path)
     if (realPath == NULL)
     {
         LOG_ERROR("Memory error in \'%s\'.\n", __func__);
-	return -1;
+        return -1;
     }
 
     paths = globbuf.gl_pathv;
@@ -320,7 +320,8 @@ static int convert_image(struct convert *convert, struct image *image)
         if (convert->palette_offset + convert->palette->nr_entries >=
             PALETTE_MAX_ENTRIES)
         {
-            LOG_ERROR("Palette offset places indices out of range for convert \'%s\'\n",
+            LOG_ERROR("Palette offset places indices out of range for "
+                      "convert \'%s\'\n",
                 convert->name);
             return -1;
         }
@@ -489,6 +490,7 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         image->rotate = convert->rotate;
         image->flip_x = convert->flip_x;
         image->flip_y = convert->flip_y;
+        image->transparent_index = convert->transparent_index;
         image->quantize_speed = convert->quantize_speed;
 
         ret = image_load(image);
@@ -498,10 +500,35 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
             return -1;
         }
 
+        if (convert->add_width_height == true)
+        {
+            if (image->width > 255)
+            {
+                LOG_ERROR("Image \'%s\' width is %u. Maximum width is 255.\n",
+                    image->path,
+                    image->width);
+                return -1;
+            }
+
+            if (image->height > 255)
+            {
+                LOG_ERROR("Image \'%s\' height is %u. Maximum height is 255.\n",
+                    image->path,
+                    image->width);
+                return -1;
+            }
+        }
+
         ret = image_quantize(image, convert->palette);
         if (ret != 0)
         {
             return -1;
+        }
+
+        if (image->bad_alpha)
+        {
+            LOG_WARNING("Image has pixels with an alpha not 0 or 255.\n");
+            LOG_WARNING("This may result in incorrect color conversion.\n");
         }
 
         ret = convert_image(convert, image);
@@ -540,6 +567,12 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
             if (ret != 0)
             {
                 return -1;
+            }
+
+            if (image->bad_alpha)
+            {
+                LOG_WARNING("Tileset has pixels with an alpha not 0 or 255.\n");
+                LOG_WARNING("This may result in incorrect color conversion.\n");
             }
 
             ret = convert_tileset(convert, tileset);

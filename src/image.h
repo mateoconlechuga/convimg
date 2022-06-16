@@ -56,11 +56,13 @@ struct image
     int quantize_speed;
     float dither;
     bool compressed;
+    bool bad_alpha;
     bool rlet;
     int rotate;
     bool flip_x;
     bool flip_y;
     int orig_size;
+    int transparent_index;
 
     // set by output
     char *directory;

@@ -52,7 +52,7 @@ static void clean_run_file(FILE *fd, bool info)
         ptr = strchr(buf, '\n');
         if (ptr)
         {
-            *ptr  = '\0';
+            *ptr = '\0';
         }
 
         if (info)
@@ -69,7 +69,7 @@ static int clean_add_path(const char *path)
     int ret;
 
     ret = fputs(path, global.clean.fd);
-    if (ret < 0 || ret == EOF)
+    if (ret < 0)
     {
         return -1;
     }

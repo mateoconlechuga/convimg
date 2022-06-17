@@ -31,11 +31,14 @@
 #include "clean.h"
 #include "log.h"
 
+#include <errno.h>
 #include <string.h>
+#include <stdbool.h>
+
+#define CLEAN_OUTPUT_NAME "convimg.out"
 
 static struct
 {
-    bool rdy;
     struct
     {
         FILE *fd;
@@ -56,10 +59,14 @@ static void clean_run_file(FILE *fd, bool info)
 
         if (info)
         {
-            LOG_INFO(" - Removing %s\n", buf);
+            LOG_INFO(" - Removing \'%s\'\n", buf);
         }
 
-        remove(buf);
+        if (remove(buf))
+        {
+            LOG_WARNING("Could not remove: %s\n",
+                strerror(errno));
+        }
     }
 }
 
@@ -89,30 +96,42 @@ FILE *clean_fopen(const char *path, const char *mode)
     return fopen(path, mode);
 }
 
-int clean_begin(const char *path, bool info)
+int clean_begin(uint8_t flags)
 {
+    const char *name = CLEAN_OUTPUT_NAME;
     FILE *fd;
 
-    global.rdy = false;
+    global.clean.fd = NULL;
 
-    fd = fopen(path, "rt");
+    fd = fopen(name, "rt");
     if (fd == NULL)
     {
         goto create;
     }
 
-    clean_run_file(fd, info);
+    clean_run_file(fd, flags & CLEAN_INFO);
 
     fclose(fd);
 
-create:
-    fd = fopen(path, "wt");
-    if (fd == NULL)
+    if (!(flags & CLEAN_CREATE))
     {
-        return -1;
+        if (remove(name))
+        {
+            LOG_WARNING("Could not remove output log.\n");
+        }
     }
 
-    global.clean.fd = fd;
+create:
+    if ((flags & CLEAN_CREATE))
+    {
+        fd = fopen(name, "wt");
+        if (fd == NULL)
+        {
+            return -1;
+        }
+
+        global.clean.fd = fd;
+    }
 
     return 0;
 }

@@ -200,11 +200,12 @@ int output_init(struct output *output)
         char *tmp = strdupcat(output->directory, output->include_file);
         if (tmp != NULL)
         {
-            if (remove(tmp) != 0)
+            if (remove(tmp))
             {
                 LOG_ERROR("Could not remove output file: %s\n",
                     strerror(errno));
             }
+            
             free(tmp);
         }
     }

@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        ret = clean_begin("convimg.out", false);
+        ret = clean_begin(CLEAN_CREATE);
         if (ret == 0)
         {
             static struct yaml yaml;

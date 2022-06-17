@@ -31,8 +31,11 @@
 #ifndef CLEAN_H
 #define CLEAN_H
 
+#include <stdint.h>
 #include <stdio.h>
-#include <stdbool.h>
+
+#define CLEAN_CREATE (1 << 0)
+#define CLEAN_INFO   (1 << 1)
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,7 +43,7 @@ extern "C" {
 
 FILE *clean_fopen(const char *path, const char *mode);
 
-int clean_begin(const char *path, bool info);
+int clean_begin(uint8_t flags);
 
 void clean_end(void);
 

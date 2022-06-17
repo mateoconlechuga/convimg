@@ -215,9 +215,19 @@ fail:
 
     if (has_icon)
     {
-        liq_result_destroy(liqresult);
-        liq_image_destroy(liqimage);
-        liq_attr_destroy(liqattr);
+        if (liqresult != NULL)
+        {
+            liq_result_destroy(liqresult);
+        }
+        if (liqimage != NULL)
+        {
+            liq_image_destroy(liqimage);
+        }
+        if (liqattr != NULL)
+        {
+            liq_attr_destroy(liqattr);
+        }
+        
         image_free(&image);
         free(data);
     }

@@ -436,10 +436,8 @@ static int options_clean(void)
 
     LOG_INFO("Cleaning output files...\n");
 
-    ret = clean_begin("convimg.out", true);
-    clean_end();
-    remove("convimg.out");
-    
+    ret = clean_begin(CLEAN_INFO);
+
     if (ret == 0)
     {
         LOG_INFO("Clean complete.\n");

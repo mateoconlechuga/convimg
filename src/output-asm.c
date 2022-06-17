@@ -247,10 +247,13 @@ int output_asm_include_file(struct output *output)
     fclose(fdi);
 
     free(include_name);
+    free(include_file);
 
     return 0;
 
 error:
     free(include_name);
+    free(include_file);
+
     return -1;
 }

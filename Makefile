@@ -105,7 +105,11 @@ else
   MKDIR = mkdir -p $1
   RMDIR = rm -rf $1
   ifeq ($(shell uname -s),Darwin)
-    STRIP = echo "no strip available"
+    STRIP = strip "$1"
+    CFLAGS += -mmacosx-version-min=10.13
+    CFLAGS_LIQ += -mmacosx-version-min=10.13
+    CFLAGS_LIBYAML += -mmacosx-version-min=10.13
+    LDLAGS += -mmacosx-version-min=10.13
   else
     STRIP = strip --strip-all "$1"
   endif

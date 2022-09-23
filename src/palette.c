@@ -69,7 +69,6 @@ struct palette *palette_alloc(void)
     palette->automatic = false;
     palette->name = NULL;
     palette->include_size = false;
-    palette->directory = NULL;
 
     for (i = 0; i < PALETTE_MAX_ENTRIES; ++i)
     {
@@ -136,7 +135,7 @@ int pallete_add_path(struct palette *palette, const char *path)
     if (realPath == NULL)
     {
         LOG_ERROR("Memory error in \'%s\'.\n", __func__);
-	return -1;
+        return -1;
     }
 
     paths = globbuf.gl_pathv;

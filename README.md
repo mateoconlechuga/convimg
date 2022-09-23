@@ -260,7 +260,11 @@ This program is used to convert images to other formats, specifically for the TI
                <bool>                 : entry containing the total size in
                                       : bytes of the palette.
                                       : Default is 'false'.
-                                      : Optional parameter.
+                                      : Optional parameter, default false.
+
+           const: <bool>              : Only applicable to C outputs.
+                                      : Adds the 'const' parameter to output types.
+                                      : Optional parameter, default false.
 
        AppVars are a special type of output and require a few more options.
        The below options are only available for AppVars, however the above
@@ -308,7 +312,7 @@ This program is used to convert images to other formats, specifically for the TI
 
            archived: <bool>           : 'true' makes the AppVar archived, while
                                       : 'false' leaves it unarchived.
-                                      : Optional parameter.
+                                      : Optional parameter, default false.
 
     ----------------------------------------------------------------------------
 
@@ -320,4 +324,3 @@ This program is used to convert images to other formats, specifically for the TI
             libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx0,zx7: (c) 2012-2021 by Einar Saukas.
-

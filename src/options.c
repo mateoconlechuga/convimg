@@ -301,7 +301,11 @@ static void options_show(const char *prgm)
     LOG_PRINT("           <bool>                 : entry containing the total size in\n");
     LOG_PRINT("                                  : bytes of the palette.\n");
     LOG_PRINT("                                  : Default is \'false\'.\n");
-    LOG_PRINT("                                  : Optional parameter.\n");
+    LOG_PRINT("                                  : Optional parameter, default false.\n");
+    LOG_PRINT("\n");
+    LOG_PRINT("       const: <bool>              : Only applicable to C outputs.\n");
+    LOG_PRINT("                                  : Adds the \'const\' parameter to output types.\n");
+    LOG_PRINT("                                  : Optional parameter, default false.\n");
     LOG_PRINT("\n");
     LOG_PRINT("   AppVars are a special type of output and require a few more options.\n");
     LOG_PRINT("   The below options are only available for AppVars, however the above\n");
@@ -349,7 +353,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("\n");
     LOG_PRINT("       archived: <bool>           : \'true\' makes the AppVar archived, while\n");
     LOG_PRINT("                                  : \'false\' leaves it unarchived.\n");
-    LOG_PRINT("                                  : Optional parameter.\n");
+    LOG_PRINT("                                  : Optional parameter, default false.\n");
     LOG_PRINT("\n");
     LOG_PRINT("----------------------------------------------------------------------------\n");
     LOG_PRINT("\n");

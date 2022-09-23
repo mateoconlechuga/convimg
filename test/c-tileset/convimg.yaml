@@ -1,0 +1,26 @@
+palettes:
+  - name: mypalette
+    images: automatic
+    fixed-entries:
+      - color: {index: 0, r: 255, g: 255, b: 255}
+      - color: {index: 1, r: 255, g: 216, b: 0  }
+
+converts:
+  - name: tileset
+    palette: mypalette
+    style: rlet
+    transparent-color-index: 0
+    tilesets:
+      tile-width: 16
+      tile-height: 16
+      images:
+        - tileset.png
+
+outputs:
+  - type: c
+    include-file: gfx.h
+    const: true
+    palettes:
+      - mypalette
+    converts:
+      - tileset

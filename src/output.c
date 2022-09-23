@@ -60,6 +60,7 @@ struct output *output_alloc(void)
     output->palette_sizes = false;
     output->order = OUTPUT_PALETTES_FIRST;
     output->format = OUTPUT_FORMAT_INVALID;
+    output->constant = false;
     output->appvar.name = NULL;
     output->appvar.directory = NULL;
     output->appvar.archived = true;
@@ -343,8 +344,12 @@ int output_converts(struct output *output, struct convert **converts, int nr_con
         for (j = 0; j < convert->nr_images; ++j)
         {
             struct image *image = &convert->images[j];
-            image->directory =
-                strdupcat(output->directory, image->name);
+            image->directory = strdupcat(output->directory, image->name);
+            image->constant[0] = '\0';
+            if (output->constant)
+            {
+                strcpy(image->constant, "const ");
+            }
 
             switch (output->format)
             {
@@ -388,6 +393,11 @@ int output_converts(struct output *output, struct convert **converts, int nr_con
                 struct tileset *tileset = &group->tilesets[j];
                 tileset->directory =
                     strdupcat(output->directory, tileset->image.name);
+                tileset->constant[0] = '\0';
+                if (output->constant)
+                {
+                    strcpy(tileset->constant, "const ");
+                }
 
                 switch (output->format)
                 {
@@ -448,9 +458,13 @@ int output_palettes(struct output *output, struct palette **palettes, int nr_pal
     for (i = 0; i < output->nr_palettes; ++i)
     {
         struct palette *palette = output->palettes[i];
-        palette->directory =
-            strdupcat(output->directory, palette->name);
+        palette->directory = strdupcat(output->directory, palette->name);
         palette->include_size = output->palette_sizes;
+        palette->constant[0] = '\0';
+        if (output->constant)
+        {
+            strcpy(palette->constant, "const ");
+        }
 
         LOG_INFO("Generating output for palette \'%s\'\n",
             palette->name);

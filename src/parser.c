@@ -1124,6 +1124,10 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
         {
             output->palette_sizes = parse_str_bool(value);
         }
+        else if (parse_str_cmp("const", key))
+        {
+            output->constant = parse_str_bool(value);
+        }
         else
         {
             if (output->format != OUTPUT_FORMAT_APPVAR)

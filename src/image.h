@@ -67,6 +67,7 @@ struct image
 
     /* set by output */
     char *directory;
+    char constant[7];
 };
 
 #define WIDTH_HEIGHT_SIZE 2

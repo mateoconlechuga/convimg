@@ -120,9 +120,6 @@ void image_init(struct image *image, const char *path)
     image->flip_y = false;
     image->orig_size = 0;
     image->transparent_index = -1;
-
-    /* set by output */
-    image->directory = NULL;
 }
 
 int image_load(struct image *image)

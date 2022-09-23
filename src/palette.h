@@ -74,9 +74,10 @@ struct palette
     bpp_t bpp;
     bool automatic;
 
-    // set by output
+    /* set by output */
     char *directory;
     bool include_size;
+    char constant[7];
 };
 
 struct palette *palette_alloc(void);

@@ -61,9 +61,10 @@ struct tileset
     bool compressed;
     bool rlet;
     bool bad_alpha;
-    
+
     /* set by output */
     int appvar_index;
+    char constant[7];
     char *directory;
 };
 

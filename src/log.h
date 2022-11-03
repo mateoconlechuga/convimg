@@ -53,13 +53,13 @@ typedef enum
 extern log_level_t log_level;
 extern const char *log_strings[];
 
-#define LOG(level, fmt, ...)                                                  \
-do {                                                                          \
-    if (level <= LOG_BUILD_LEVEL && level <= log_level)                       \
-    {                                                                         \
+#define LOG(level, fmt, ...) \
+do { \
+    if (level <= LOG_BUILD_LEVEL && level <= log_level) \
+    { \
         fprintf(stdout, "[%s] " fmt, log_strings[level], ##__VA_ARGS__); \
-        fflush(stdout);                                                       \
-    }                                                                         \
+        fflush(stdout); \
+    } \
 } while(0)
 
 #define LOG_DEBUG(fmt, ...) LOG(LOG_LVL_DEBUG, fmt, ##__VA_ARGS__)
@@ -67,14 +67,14 @@ do {                                                                          \
 #define LOG_WARNING(fmt, ...) LOG(LOG_LVL_WARNING, fmt, ##__VA_ARGS__)
 #define LOG_ERROR(fmt, ...) LOG(LOG_LVL_ERROR, fmt, ##__VA_ARGS__)
 
-#define LOG_PRINT(fmt, ...)                         \
-do {                                               \
-    if (LOG_LVL_INFO <= LOG_BUILD_LEVEL &&         \
-        LOG_LVL_INFO <= log_level)                 \
-    {                                              \
-        fprintf(stdout, fmt, ##__VA_ARGS__);  \
-        fflush(stdout);                            \
-    }                                              \
+#define LOG_PRINT(fmt, ...) \
+do { \
+    if (LOG_LVL_INFO <= LOG_BUILD_LEVEL && \
+        LOG_LVL_INFO <= log_level) \
+    { \
+        fprintf(stdout, fmt, ##__VA_ARGS__); \
+        fflush(stdout); \
+    } \
 } while(0)
 
 void log_set_level(log_level_t level);

@@ -411,7 +411,7 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
         struct convert *convert = output->converts[i];
         struct tileset_group *tileset_group = convert->tileset_group;
 
-        fprintf(fdh, "#define %s_palette_offset %d\n",
+        fprintf(fdh, "#define %s_palette_offset %u\n",
             convert->name, convert->palette_offset);
 
         for (j = 0; j < convert->nr_images; ++j)
@@ -990,7 +990,7 @@ void output_appvar_asm_include_file(struct output *output, FILE *fdh)
                 struct tileset_group *tileset_group = convert->tileset_group;
                 uint32_t j;
 
-                fprintf(fdh, "%s_%s_palette_offset := %d\n",
+                fprintf(fdh, "%s_%s_palette_offset := %u\n",
                     output->appvar.name,
                     convert->name,
                     convert->palette_offset);

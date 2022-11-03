@@ -85,7 +85,6 @@ static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
     yaml->palettes = realloc(yaml->palettes, resize);
     if (yaml->palettes == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
@@ -103,11 +102,13 @@ static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
 
         entry->valid = false;
         entry->exact = false;
-        entry->color.rgb.r = 255;
-        entry->color.rgb.g = 255;
-        entry->color.rgb.b = 255;
-        entry->color.rgb.a = 255;
-        entry->orig_color = entry->color;
+        entry->target = 0;
+        entry->color.r = 0;
+        entry->color.g = 0;
+        entry->color.b = 0;
+        entry->orig_color.r = 0;
+        entry->orig_color.g = 0;
+        entry->orig_color.b = 0;
     }
 
     yaml->palettes[yaml->nr_palettes] = palette;
@@ -128,7 +129,6 @@ static struct convert *parser_alloc_convert(struct yaml *yaml, void *name)
     yaml->converts = realloc(yaml->converts, resize);
     if (yaml->converts == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
@@ -158,7 +158,6 @@ static struct output *parser_alloc_output(struct yaml *yaml, void *type)
     yaml->outputs = realloc(yaml->outputs, resize);
     if (yaml->outputs == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
@@ -236,7 +235,6 @@ static int parse_palette_entry(struct palette_entry *entry, yaml_document_t *doc
 
     memset(entry, 0, sizeof(struct palette_entry));
 
-    entry->color.rgb.a = 255;
     entry->exact = false;
 
     pair = root->data.mapping.pairs.start;
@@ -277,15 +275,15 @@ static int parse_palette_entry(struct palette_entry *entry, yaml_document_t *doc
         }
         else if (parse_str_cmp("r", key) || parse_str_cmp("red", key))
         {
-            entry->color.rgb.r = tmpi;
+            entry->color.r = tmpi;
         }
         else if (parse_str_cmp("g", key) || parse_str_cmp("green", key))
         {
-            entry->color.rgb.g = tmpi;
+            entry->color.g = tmpi;
         }
         else if (parse_str_cmp("b", key) || parse_str_cmp("blue", key))
         {
-            entry->color.rgb.b = tmpi;
+            entry->color.b = tmpi;
         }
         else if (parse_str_cmp("exact", key))
         {
@@ -301,9 +299,9 @@ static int parse_palette_entry(struct palette_entry *entry, yaml_document_t *doc
 
     LOG_DEBUG("Adding fixed color: i: %u r: %d g: %d b: %d exact: %s\n",
         entry->index,
-        entry->color.rgb.r,
-        entry->color.rgb.g,
-        entry->color.rgb.b,
+        entry->color.r,
+        entry->color.g,
+        entry->color.b,
         entry->exact ? "true" : "false");
 
     entry->orig_color = entry->color;
@@ -311,44 +309,53 @@ static int parse_palette_entry(struct palette_entry *entry, yaml_document_t *doc
     return 0;
 }
 
-static int parse_palette_image(struct palette *palette, const char *file)
+static int parse_palette_image(struct palette *palette, const char *path)
 {
     struct image image;
     int i;
 
-    image_init(&image, file);
+    image_init(&image, path);
 
     if (image_load(&image))
     {
-        LOG_ERROR("Could not load image \'%s\'.\n", file);
+        LOG_ERROR("Could not load image.\n");
         goto fail;
     }
 
     if (image.height != 1 || image.width > 256)
     {
-        LOG_ERROR("Invalid palette image format for \'%s\'.\n", file);
+        LOG_ERROR("Invalid palette image format.\n");
         goto fail;
     }
 
     for (i = 0; i < image.width; ++i)
     {
         struct palette_entry entry;
+        uint8_t alpha;
         int o = i * 4;
         int j;
 
         memset(&entry, 0, sizeof entry);
 
-        entry.color.rgb.a = 255;
         entry.exact = false;
 
         entry.index = i;
-        entry.color.rgb.r = image.data[o + 0];
-        entry.color.rgb.g = image.data[o + 1];
-        entry.color.rgb.b = image.data[o + 2];
+        entry.color.r = image.data[o + 0];
+        entry.color.g = image.data[o + 1];
+        entry.color.b = image.data[o + 2];
+        alpha = image.data[o + 3];
+
+        if (alpha != 255)
+        {
+            LOG_ERROR("Palette image \'%s\' has alpha transparency.\n",
+                palette->name);
+            goto fail;
+        }
 
         if (palette->nr_fixed_entries > PALETTE_MAX_ENTRIES - 1)
         {
-            LOG_ERROR("Too many fixed colors for palette \'%s\'\n", palette->name);
+            LOG_ERROR("Too many fixed colors for palette \'%s\'.\n",
+                palette->name);
             goto fail;
         }
 
@@ -356,11 +363,11 @@ static int parse_palette_image(struct palette *palette, const char *file)
         {
             if (palette->fixed_entries[j].index == i)
             {
-                LOG_WARNING("Overriding palette index %u with (%d,%d,%d)\n",
+                LOG_WARNING("Overriding palette index %u with (r: %d, g: %d, b: %d).\n",
                     entry.index,
-                    entry.color.rgb.r,
-                    entry.color.rgb.g,
-                    entry.color.rgb.b);
+                    entry.color.r,
+                    entry.color.g,
+                    entry.color.b);
             }
         }
 
@@ -368,9 +375,9 @@ static int parse_palette_image(struct palette *palette, const char *file)
 
         LOG_DEBUG("Adding fixed color: i: %u r: %d g: %d b: %d exact: %s\n",
             entry.index,
-            entry.color.rgb.r,
-            entry.color.rgb.g,
-            entry.color.rgb.b,
+            entry.color.r,
+            entry.color.g,
+            entry.color.b,
             entry.exact ? "true" : "false");
 
         palette->fixed_entries[palette->nr_fixed_entries] = entry;
@@ -408,7 +415,7 @@ static int parse_palette_fixed_entry(struct palette *palette, yaml_document_t *d
 
         if (parse_str_cmp("color", key))
         {
-            int j;
+            size_t j;
 
             if (palette->nr_fixed_entries >= 255)
             {
@@ -419,15 +426,16 @@ static int parse_palette_fixed_entry(struct palette *palette, yaml_document_t *d
             {
                 return -1;
             }
+
             for (j = 0; j < palette->nr_fixed_entries; ++j)
             {
                 if (palette->fixed_entries[j].index == entry.index)
                 {
-                    LOG_WARNING("Overriding palette index %u with (%d,%d,%d).\n",
+                    LOG_WARNING("Overriding palette index %u with (r: %d, g: %d, b: %d).\n",
                         entry.index,
-                        entry.color.rgb.r,
-                        entry.color.rgb.g,
-                        entry.color.rgb.b);
+                        entry.color.r,
+                        entry.color.g,
+                        entry.color.b);
                 }
             }
             palette->fixed_entries[palette->nr_fixed_entries] = entry;
@@ -850,9 +858,21 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         }
         else if (parse_str_cmp("style", key))
         {
-            if (parse_str_cmp("rlet", value))
+            if (parse_str_cmp("normal", value))
+            {
+                convert->style = CONVERT_STYLE_NORMAL;
+            }
+            else if (parse_str_cmp("rlet", value))
             {
                 convert->style = CONVERT_STYLE_RLET;
+            }
+            else if (parse_str_cmp("rgb565", value))
+            {
+                convert->style = CONVERT_STYLE_RGB565;
+            }
+            else if (parse_str_cmp("bgr565", value))
+            {
+                convert->style = CONVERT_STYLE_BGR565;
             }
             else
             {
@@ -1088,12 +1108,11 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
             char *tmp = strdup(value);
             if (tmp == NULL)
             {
-                LOG_ERROR("Memory error in \'%s\'.\n", __func__);
                 return -1;
             }
             if (*tmp && tmp[strlen(tmp) - 1] != '/')
             {
-                output->directory = strdupcat(tmp, "/");
+                output->directory = strings_concat(tmp, "/", NULL);
                 free(tmp);
             }
             else
@@ -1126,7 +1145,7 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
         }
         else if (parse_str_cmp("const", key))
         {
-            output->constant = parse_str_bool(value);
+            output->constant = parse_str_bool(value) ? "const " : "";
         }
         else
         {
@@ -1225,7 +1244,6 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
                 header = malloc(valuelen);
                 if (header == NULL)
                 {
-                    LOG_ERROR("Memory error in \'%s\'.\n", __func__);
                     return -1;
                 }
 
@@ -1287,6 +1305,79 @@ static int parse_outputs(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *r
         if (node != NULL && parse_output(yaml, doc, node) != 0)
         {
             return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int parser_validate(struct yaml *yaml)
+{
+    int i;
+
+    for (i = 0; i < yaml->nr_converts; ++i)
+    {
+        struct convert *convert = yaml->converts[i];
+
+        switch (convert->style)
+        {
+            case CONVERT_STYLE_BGR565:
+            case CONVERT_STYLE_GBGR1555:
+            case CONVERT_STYLE_RGB565:
+                if (convert->bpp != BPP_8)
+                {
+                    LOG_ERROR("Convert \'%s\' style does not support \'bpp\' option.\n",
+                        convert->name);
+                    return -1;
+                }
+                if (convert->palette_name != NULL)
+                {
+                    LOG_ERROR("Convert \'%s\' style does not support \'palette\' option.\n",
+                        convert->name);
+                    return -1;
+                }
+                if (convert->nr_omit_indices)
+                {
+                    LOG_ERROR("Convert \'%s\' style does not support \'omit-indices\' option.\n",
+                        convert->name);
+                    return -1;
+                }
+                if (convert->transparent_index >= 0)
+                {
+                    LOG_ERROR("Convert \'%s\' style does not support \'transparent-index\' option.\n",
+                        convert->name);
+                    return -1;
+                }
+                if (convert->palette_offset != 0)
+                {
+                    LOG_ERROR("Convert \'%s\' style does not support \'palette-offset\' option.\n",
+                        convert->name);
+                    return -1;
+                }
+                convert->bpp = BPP_16;
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    for (i = 0; i < yaml->nr_outputs; ++i)
+    {
+        struct output *output = yaml->outputs[i];
+
+        if (output->directory != NULL && output->include_file != NULL)
+        {
+            char *include_file =
+                strings_concat(output->directory, output->include_file, NULL);
+
+            if (include_file == NULL)
+            {
+                return -1;
+            }
+
+            free(output->include_file);
+            output->include_file = include_file;
         }
     }
 
@@ -1398,6 +1489,11 @@ int parser_open(struct yaml *yaml, const char *path)
 
     fclose(fd);
 
+    if (!ret)
+    {
+        ret = parser_validate(yaml);
+    }
+    
     return ret;
 }
 

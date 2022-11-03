@@ -116,7 +116,6 @@ int icon_convert(struct icon *icon)
         data = malloc(image.size);
         if (data == NULL)
         {
-            LOG_ERROR("Memory error in \'%s\'.\n", __func__);
             goto fail;
         }
 

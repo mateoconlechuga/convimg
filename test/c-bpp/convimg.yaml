@@ -7,13 +7,14 @@ converts:
   - name: myimages
     palette: mypalette
     width-and-height: true
-    bpp: 1
+    bpp: 2
     images:
       - bpp_test.png
 
 outputs:
   - type: c
     include-file: gfx.h
+    const: true
     palettes:
       - mypalette
     converts:

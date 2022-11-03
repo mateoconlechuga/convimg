@@ -35,7 +35,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -89,13 +88,10 @@ struct appvar
     int header_size;
     int data_offset;
     appvar_source_t source;
-    compress_t compress;
-
-    // set by output
-    char *directory;
+    compress_mode_t compress;
 };
 
-int appvar_write(struct appvar *a, FILE *fdv);
+int appvar_write(struct appvar *a, const char *path);
 
 #ifdef __cplusplus
 }

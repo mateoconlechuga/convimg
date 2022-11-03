@@ -434,24 +434,19 @@ static int options_write_new(void)
     return 0;
 }
 
-static int options_clean(void)
+static int options_clean(const char *path)
 {
-    int ret;
-
     LOG_INFO("Cleaning output files...\n");
 
-    ret = clean_begin(CLEAN_INFO);
-
-    if (ret == 0)
-    {
-        LOG_INFO("Clean complete.\n");
-    }
-    else
+    if (clean_begin(path, CLEAN_INFO))
     {
         LOG_ERROR("Clean failed.\n");
+        return -1;
     }
+    
+    LOG_INFO("Clean complete.\n");
 
-    return ret;
+    return 0;
 }
 
 static void options_set_default(struct options *options)
@@ -495,6 +490,7 @@ static int options_verify(struct options *options)
 
 int options_get(int argc, char *argv[], struct options *options)
 {
+    bool clean = false;
     int ret;
 
     log_set_level(LOG_BUILD_LEVEL);
@@ -583,8 +579,8 @@ int options_get(int argc, char *argv[], struct options *options)
                 return ret == 0 ? OPTIONS_IGNORE : ret;
 
             case 'c':
-                ret = options_clean();
-                return ret == 0 ? OPTIONS_IGNORE : ret;
+                clean = true;
+                break;
 
             case 'v':
                 LOG_PRINT("%s v%s by mateoconlechuga\n", PRGM_NAME, VERSION_STRING);
@@ -605,6 +601,12 @@ int options_get(int argc, char *argv[], struct options *options)
             default:
                 return OPTIONS_FAILED;
         }
+    }
+
+    if (clean)
+    {
+        ret = options_clean(options->yaml_path);
+        return ret ? -1 : OPTIONS_IGNORE;
     }
 
     return options_verify(options);

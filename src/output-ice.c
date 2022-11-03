@@ -40,7 +40,7 @@
 #include <errno.h>
 #include <string.h>
 
-static int output_ice(unsigned char *data, size_t size, FILE *fd)
+static int output_ice_array(unsigned char *data, size_t size, FILE *fd)
 {
     size_t i;
 
@@ -56,11 +56,11 @@ static int output_ice(unsigned char *data, size_t size, FILE *fd)
     return 0;
 }
 
-int output_ice_image(struct image *image, char *file)
+int output_ice_image(struct output *output, struct image *image)
 {
     FILE *fd;
 
-    fd = fopen(file, "at");
+    fd = fopen(output->include_file, "at");
     if (fd == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -68,7 +68,7 @@ int output_ice_image(struct image *image, char *file)
     }
 
     fprintf(fd, "%s | %d bytes\n", image->name, image->size);
-    output_ice(image->data, image->size, fd);
+    output_ice_array(image->data, image->size, fd);
 
     fclose(fd);
 
@@ -77,7 +77,7 @@ int output_ice_image(struct image *image, char *file)
 
 int output_ice_tileset(struct tileset *tileset, char *file)
 {
-    LOG_ERROR("Tilesets are not yet supported for ICE output!\n");
+    LOG_ERROR("Tilesets are not yet supported for ICE output.\n");
 
     (void)tileset;
     (void)file;
@@ -85,29 +85,32 @@ int output_ice_tileset(struct tileset *tileset, char *file)
     return -1;
 }
 
-int output_ice_palette(struct palette *palette, char *file)
+int output_ice_palette(struct output *output, struct palette *palette)
 {
-    int size = palette->nr_entries * 2;
+    unsigned int size;
     FILE *fd;
     int i;
 
-    fd = fopen(file, "at");
+    fd = fopen(output->include_file, "at");
     if (fd == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
         return -1;
     }
 
-    fprintf(fd, "%s | %d bytes\n\"", palette->name, size);
+    size = palette->nr_entries * sizeof(uint16_t);
+
+    fprintf(fd, "%s | %u bytes\n\"", palette->name, size);
 
     for (i = 0; i < palette->nr_entries; ++i)
     {
-        struct color *c = &palette->entries[i].color;
+        uint16_t target = palette->entries[i].target;
 
         fprintf(fd, "%02X%02X",
-                c->target & 255,
-                (c->target >> 8) & 255);
+                target & 255,
+                (target >> 8) & 255);
     }
+
     fprintf(fd, "\"\n\n");
 
     fclose(fd);
@@ -115,11 +118,27 @@ int output_ice_palette(struct palette *palette, char *file)
     return 0;
 }
 
-int output_ice_include_file(struct output *output, char *file)
+int output_ice_include(struct output *output)
 {
-    LOG_INFO(" - Wrote \'%s\'\n", file);
+    FILE *fd;
 
-    (void)output;
+    fd = clean_fopen(output->include_file, "rt");
+    if (fd == NULL)
+    {
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
+        return -1;
+    }
+
+    fclose(fd);
+
+    LOG_INFO(" - Wrote \'%s\'\n", output->include_file);
+
+    return 0;
+}
+
+int output_ice_init(struct output *output)
+{
+    remove(output->include_file);
 
     return 0;
 }

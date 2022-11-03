@@ -113,12 +113,11 @@ void image_init(struct image *image, const char *path)
     image->quantize_speed = 1;
     image->dither =  0.0;
     image->compressed = false;
-    image->bad_alpha = false;
     image->rlet = false;
     image->rotate = 0;
     image->flip_x = false;
     image->flip_y = false;
-    image->orig_size = 0;
+    image->compressed_size = 0;
     image->transparent_index = -1;
 }
 
@@ -140,9 +139,8 @@ int image_load(struct image *image)
         return -1;
     }
 
-    image->orig_size = image->size = width * height;
+    image->size = width * height * sizeof(uint32_t);
     image->compressed = false;
-    image->bad_alpha = false;
 
     if (image->flip_x)
     {
@@ -159,7 +157,7 @@ int image_load(struct image *image)
         default:
             LOG_WARNING("Invalid image rotation \'%d\' -- using 0 degrees.\n",
                 image->rotate);
-            // fall through
+            /* fall through */
         case 0:
             image->width = width;
             image->height = height;
@@ -196,7 +194,7 @@ int image_load(struct image *image)
 
 void image_free(struct image *image)
 {
-    if( image == NULL )
+    if (image == NULL)
     {
         return;
     }
@@ -217,7 +215,6 @@ int image_add_width_and_height(struct image *image)
     image->data = realloc(image->data, image->size + WIDTH_HEIGHT_SIZE);
     if (image->data == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return -1;
     }
 
@@ -244,11 +241,11 @@ int image_rlet(struct image *image, int transparent_index)
         return -1;
     }
 
-    size = (size_t)image->width * (size_t)image->height * (size_t)2;
+    /* multiply by 3 for worst-case encoding */
+    size = image->width * image->height * 3;
     new_data = malloc(size);
     if (new_data == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return -1;
     }
 
@@ -305,6 +302,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
     int j, k;
     int new_size;
     uint8_t *new_data;
+    size_t size;
 
     switch (bpp)
     {
@@ -316,6 +314,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
             }
             shift = 3;
             shift_mult = 1;
+            inc = 8;
             break;
         case BPP_2:
             if (nr_palette_entries > 4)
@@ -325,6 +324,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
             }
             shift = 2;
             shift_mult = 2;
+            inc = 4;
             break;
         case BPP_4:
             if (nr_palette_entries > 16)
@@ -334,6 +334,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
             }
             shift = 1;
             shift_mult = 4;
+            inc = 2;
             break;
         case BPP_8:
             return 0;
@@ -342,20 +343,24 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
             return -1;
     }
 
-    new_size = 0;
-    new_data = malloc(image->size);
-    if (new_data == NULL)
+    /* if not a multiple of the bit width, reject the image */
+    if (image->width % inc)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        LOG_ERROR("Image width is not a multiple of the BPP (needs to be multiple of %d).\n", inc);
         return -1;
     }
 
-    inc = pow(2, shift);
+    size = image->width * image->height;
+    new_data = malloc(size);
+    if (new_data == NULL)
+    {
+        return -1;
+    }
+
+    new_size = 0;
 
     for (j = 0; j < image->height; ++j)
     {
-        int line = j * image->width;
-
         for (k = 0; k < image->width; k += inc)
         {
             int cur_inc = inc;
@@ -364,7 +369,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
 
             for (col = 0; col < inc; col++)
             {
-                byte |= image->data[k + line + col] << (--cur_inc * shift_mult);
+                byte |= image->data[k + (j * image->width) + col] << (--cur_inc * shift_mult);
             }
 
             new_data[new_size] = byte;
@@ -397,19 +402,21 @@ int image_remove_omits(struct image *image, int *omit_indices, int nr_omit_indic
     int i, j;
     int new_size = 0;
     uint8_t *new_data;
+    size_t size;
 
     if (nr_omit_indices == 0)
     {
         return 0;
     }
 
-    new_data = malloc(image->size);
+    size = image->width * image->height;
+    new_data = malloc(size);
     if (new_data == NULL)
     {
         return -1;
     }
 
-    for (i = 0; i < image->size; ++i)
+    for (i = 0; i < size; ++i)
     {
         for (j = 0; j < nr_omit_indices; ++j)
         {
@@ -433,35 +440,35 @@ nextbyte:
     return 0;
 }
 
-int image_compress(struct image *image, compress_t compress)
+int image_compress(struct image *image, compress_mode_t mode)
 {
-    size_t new_size;
-    int ret = 0;
+    size_t size;
 
     if (image == NULL)
     {
-        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
         return -1;
     }
 
-    if (compress == COMPRESS_NONE)
+    size = image->width * image->height;
+
+    if (compress_array(image->data, &size, mode))
     {
-        return 0;
+        return -1;
     }
 
-    new_size = image->size;
-    ret = compress_array(image->data, &new_size, compress);
-    image->size = new_size;
+    image->compressed_size = size;
 
-    return ret;
+    return 0;
 }
 
-int image_quantize(struct image *image, struct palette *palette)
+int image_quantize(struct image *image, const struct palette *palette)
 {
     liq_image *liqimage = NULL;
     liq_result *liqresult = NULL;
     liq_attr *liqattr = NULL;
     uint8_t *data = NULL;
+    bool bad_alpha = false;
+    size_t size;
     int i;
 
     liqattr = liq_attr_create();
@@ -487,7 +494,16 @@ int image_quantize(struct image *image, struct palette *palette)
 
     for (i = 0; i < palette->nr_entries; ++i)
     {
-        liq_image_add_fixed_color(liqimage, palette->entries[i].color.rgb);
+        const struct color *c = &palette->entries[i].color;
+        liq_color color =
+        {
+            .r = c->r,
+            .g = c->g,
+            .b = c->b,
+            .a = 255,
+        };
+
+        liq_image_add_fixed_color(liqimage, color);
     }
 
     liqresult = liq_quantize_image(liqattr, liqimage);
@@ -502,7 +518,8 @@ int image_quantize(struct image *image, struct palette *palette)
 
     liq_set_dithering_level(liqresult, image->dither);
 
-    data = malloc(image->size);
+    size = image->width * image->height;
+    data = malloc(size);
     if (data == NULL)
     {
         LOG_ERROR("Failed to allocate \'%s\'\n", image->path);
@@ -512,26 +529,27 @@ int image_quantize(struct image *image, struct palette *palette)
         return -1;
     }
 
-    liq_write_remapped_image(liqresult, liqimage, data, image->size);
+    liq_write_remapped_image(liqresult, liqimage, data, size);
 
-    // loop through each input pixel and insert exact fixed colors
-    for (i = 0; i < image->size; ++i)
+    /* loop through each input pixel and insert exact fixed colors */
+    for (i = 0; i < size; ++i)
     {
         int offset = i * 4;
-        uint8_t r, g, b, a;
+        uint8_t r, g, b, alpha;
         int j;
 
         r = image->data[offset + 0];
         g = image->data[offset + 1];
         b = image->data[offset + 2];
-        a = image->data[offset + 3];
+        alpha = image->data[offset + 3];
 
         /* if alpha == 0, this is a transparent pixel */
-        if (a == 0)
+        if (alpha == 0)
         {
             if (image->transparent_index < 0)
             {
                 LOG_ERROR("Encountered pixel alpha of 0, but `transparent-index` is not set.\n");
+                free(data);
                 return -1;
             }
 
@@ -540,34 +558,128 @@ int image_quantize(struct image *image, struct palette *palette)
         }
 
         /* otherwise, the user might get bad colors */
-        if (a != 255)
+        if (alpha != 255)
         {
-            image->bad_alpha = true;
+            bad_alpha = true;
         }
 
         for (j = 0; j < palette->nr_fixed_entries; ++j)
         {
-            struct palette_entry *fixed_entry = &palette->fixed_entries[j];
-            if (!fixed_entry->exact)
+            const struct palette_entry *fixed = &palette->fixed_entries[j];
+
+            if (!fixed->exact)
             {
                 continue;
             }
 
-            if (r == fixed_entry->orig_color.rgb.r &&
-                g == fixed_entry->orig_color.rgb.g &&
-                b == fixed_entry->orig_color.rgb.b)
+            if (r == fixed->orig_color.r &&
+                g == fixed->orig_color.g &&
+                b == fixed->orig_color.b)
             {
-                data[i] = fixed_entry->index;
+                data[i] = fixed->index;
             }
         }
     }
 
     free(image->data);
     image->data = data;
+    image->size = size;
 
     liq_result_destroy(liqresult);
     liq_image_destroy(liqimage);
     liq_attr_destroy(liqattr);
+
+    if (bad_alpha)
+    {
+        LOG_WARNING("Image has pixels with an alpha not 0 or 255.\n");
+        LOG_WARNING("This may result in incorrect color conversion.\n");
+    }
+
+    return 0;
+}
+
+int image_colorspace_convert(struct image *image, color_format_t fmt)
+{
+    bool bad_alpha = false;
+    size_t size;
+    size_t new_size;
+    uint8_t *data;
+    uint8_t *dst;
+    int i;
+
+    switch (fmt)
+    {
+        case COLOR_1555_GBGR:
+        case COLOR_565_RGB:
+        case COLOR_565_BGR:
+            new_size = image->width * image->height * sizeof(uint16_t);
+            break;
+
+        default:
+            return -1;
+    }
+
+    data = malloc(new_size);
+    if (data == NULL)
+    {
+        return -1;
+    }
+
+    dst = data;
+    size = image->width * image->height;
+
+    /* loop through each input pixel and output new format */
+    for (i = 0; i < size; ++i)
+    {
+        int offset = i * 4;
+        struct color color;
+        uint16_t target;
+        uint8_t alpha;
+
+        color.r = image->data[offset + 0];
+        color.g = image->data[offset + 1];
+        color.b = image->data[offset + 2];
+        alpha = image->data[offset + 3];
+
+        /* the user might get bad colors if alpha is set */
+        if (alpha != 255)
+        {
+            bad_alpha = true;
+        }
+
+        /* convert the color and store to the new data array */
+        switch (fmt)
+        {
+            case COLOR_1555_GBGR:
+                target = color_to_1555_gbgr(&color);
+                break;
+
+            case COLOR_565_RGB:
+                target = color_to_565_rgb(&color);
+                break;
+            
+            case COLOR_565_BGR:
+                target = color_to_565_bgr(&color);
+                break;
+
+            default:
+                target = 0;
+                break;
+        }
+
+        *dst++ = target & 255;
+        *dst++ = (target >> 8) & 255;
+    }
+
+    free(image->data);
+    image->data = data;
+    image->size = new_size;
+
+    if (bad_alpha)
+    {
+        LOG_WARNING("Image has pixels with an alpha not 0 or 255.\n");
+        LOG_WARNING("This may result in incorrect color conversion.\n");
+    }
 
     return 0;
 }

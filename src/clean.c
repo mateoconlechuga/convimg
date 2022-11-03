@@ -29,13 +29,13 @@
  */
 
 #include "clean.h"
+#include "strings.h"
 #include "log.h"
 
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdbool.h>
-
-#define CLEAN_OUTPUT_NAME "convimg.out"
 
 static struct
 {
@@ -96,10 +96,16 @@ FILE *clean_fopen(const char *path, const char *mode)
     return fopen(path, mode);
 }
 
-int clean_begin(uint8_t flags)
+int clean_begin(const char *yaml_name, uint8_t flags)
 {
-    const char *name = CLEAN_OUTPUT_NAME;
+    char *name;
     FILE *fd;
+
+    name = strings_concat(yaml_name, ".lst", NULL);
+    if (name == NULL)
+    {
+        return -1;
+    }
 
     global.clean.fd = NULL;
 
@@ -117,7 +123,7 @@ int clean_begin(uint8_t flags)
     {
         if (remove(name))
         {
-            LOG_WARNING("Could not remove output log.\n");
+            LOG_WARNING("Could not remove output file list.\n");
         }
     }
 
@@ -127,13 +133,19 @@ create:
         fd = fopen(name, "wt");
         if (fd == NULL)
         {
-            return -1;
+            goto error;
         }
 
         global.clean.fd = fd;
     }
 
+    free(name);
+
     return 0;
+
+error:
+    free(name);
+    return -1;
 }
 
 void clean_end(void)

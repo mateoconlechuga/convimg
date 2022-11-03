@@ -31,8 +31,6 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-#include "deps/libimagequant/libimagequant.h"
-
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -41,17 +39,25 @@ extern "C" {
 
 typedef enum
 {
-    COLOR_MODE_1555_GRGB,
-    COLOR_MODE_1555_GBGR,
-} color_mode_t;
+    COLOR_1555_GBGR,
+    COLOR_565_BGR,
+    COLOR_565_RGB,
+} color_format_t;
 
 struct color
 {
-    liq_color rgb;
-    uint16_t target;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 };
 
-void color_convert(struct color *c, color_mode_t mode);
+uint16_t color_to_565_rgb(const struct color *color);
+
+uint16_t color_to_565_bgr(const struct color *color);
+
+uint16_t color_to_1555_gbgr(const struct color *color);
+
+void color_normalize(struct color *color, color_format_t fmt);
 
 #ifdef __cplusplus
 }

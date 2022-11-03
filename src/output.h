@@ -70,9 +70,9 @@ struct output
     struct palette **palettes;
     int nr_palettes;
     output_format_t format;
-    bool constant;
+    const char *constant;
     bool palette_sizes;
-    compress_t compress;
+    compress_mode_t compress;
     struct appvar appvar;
     output_order_t order;
 };
@@ -103,7 +103,7 @@ int output_palettes(struct output *output,
     struct palette **palettes,
     int nr_palettes);
 
-int output_include_header(struct output *output);
+int output_include(struct output *output);
 
 int output_init(struct output *output);
 

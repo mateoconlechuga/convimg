@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <string.h>
 
-static int output_asm(unsigned char *arr, size_t size, FILE *fdo)
+static int output_asm_array(unsigned char *arr, size_t size, FILE *fdo)
 {
     size_t i;
 
@@ -59,15 +59,22 @@ static int output_asm(unsigned char *arr, size_t size, FILE *fdo)
              fprintf(fdo, "$%02x,", arr[i]);
         }
     }
-    fputs("\n", fdo);
+
+    fputc('\n', fdo);
 
     return 0;
 }
 
-int output_asm_image(struct image *image)
+int output_asm_image(struct output *output, struct image *image)
 {
-    char *source = strdupcat(image->directory, ".asm");
-    FILE *fds;
+    char *source = NULL;
+    FILE *fds = NULL;
+
+    source = strings_concat(output->directory, image->name, ".asm", NULL);
+    if (source == NULL)
+    {
+        goto error;
+    }
 
     LOG_INFO(" - Writing \'%s\'\n", source);
 
@@ -83,7 +90,7 @@ int output_asm_image(struct image *image)
     fprintf(fds, "%s_size := %d\n", image->name, image->size);
     fprintf(fds, "%s:\n\tdb\t", image->name);
 
-    output_asm(image->data, image->size, fds);
+    output_asm_array(image->data, image->size, fds);
 
     fclose(fds);
 
@@ -96,11 +103,17 @@ error:
     return -1;
 }
 
-int output_asm_tileset(struct tileset *tileset)
+int output_asm_tileset(struct output *output, struct tileset *tileset)
 {
-    char *source = strdupcat(tileset->directory, ".asm");
-    FILE *fds;
+    char *source = NULL;
+    FILE *fds = NULL;
     int i;
+
+    source = strings_concat(output->directory, tileset->image.name, ".asm", NULL);
+    if (source == NULL)
+    {
+        goto error;
+    }
 
     LOG_INFO(" - Writing \'%s\'\n", source);
 
@@ -108,8 +121,7 @@ int output_asm_tileset(struct tileset *tileset)
     if (fds == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
-        free(source);
-        return -1;
+        goto error;
     }
 
     fprintf(fds, "%s_num_tiles := %d\n",
@@ -122,7 +134,7 @@ int output_asm_tileset(struct tileset *tileset)
 
         fprintf(fds, "%s_tile_%d:\n\tdb\t", tileset->image.name, i);
 
-        output_asm(tile->data, tile->size, fds);
+        output_asm_array(tile->data, tile->size, fds);
     }
 
     if (tileset->p_table == true)
@@ -141,14 +153,24 @@ int output_asm_tileset(struct tileset *tileset)
     free(source);
 
     return 0;
+
+error:
+    free(source);
+    return -1;
 }
 
-int output_asm_palette(struct palette *palette)
+int output_asm_palette(struct output *output, struct palette *palette)
 {
-    char *source = strdupcat(palette->directory, ".asm");
-    FILE *fds;
+    char *source = NULL;
+    FILE *fds = NULL;
     int size;
     int i;
+
+    source = strings_concat(output->directory, palette->name, ".asm", NULL);
+    if (source == NULL)
+    {
+        goto error;
+    }
 
     LOG_INFO(" - Writing \'%s\'\n", source);
 
@@ -163,7 +185,7 @@ int output_asm_palette(struct palette *palette)
 
     fprintf(fds, "sizeof_%s := %d\n", palette->name, size);
 
-    if (palette->include_size)
+    if (output->palette_sizes)
     {
         fprintf(fds, "\tdw\t%d\n", size);
     }
@@ -172,14 +194,23 @@ int output_asm_palette(struct palette *palette)
 
     for (i = 0; i < palette->nr_entries; ++i)
     {
-        struct color *color = &palette->entries[i].color;
+        struct palette_entry *entry = &palette->entries[i];
+        struct color *color = &entry->color;
+        uint16_t target = entry->target;
 
-        fprintf(fds, "\tdw\t$%04x ; %3d: rgb(%3d, %3d, %3d)\n",
-                color->target,
-                i,
-                color->rgb.r,
-                color->rgb.g,
-                color->rgb.b);
+        if (entry->valid)
+        {
+            fprintf(fds, "\tdw\t$%04x ; %3d: rgb(%3d, %3d, %3d)\n",
+                    target,
+                    i,
+                    color->r,
+                    color->g,
+                    color->b);
+        }
+        else
+        {
+            fprintf(fds, "\tdw\t$0000 ; %3d: unused\n", i);
+        }
     }
 
     fclose(fds);
@@ -193,13 +224,18 @@ error:
     return -1;
 }
 
-int output_asm_include_file(struct output *output)
+int output_asm_include(struct output *output)
 {
-    char *include_file = strdupcat(output->directory, output->include_file);
-    char *include_name = strdup(output->include_file);
-    char *tmp;
-    FILE *fdi;
+    char *include_name = NULL;
+    char *tmp = NULL;
+    FILE *fdi = NULL;
     int i, j, k;
+
+    include_name = strdup(output->include_file);
+    if (include_name == NULL)
+    {
+        goto error;
+    }
 
     tmp = strchr(include_name, '.');
     if (tmp != NULL)
@@ -207,9 +243,9 @@ int output_asm_include_file(struct output *output)
         *tmp = '\0';
     }
 
-    LOG_INFO(" - Writing \'%s\'\n", include_file);
+    LOG_INFO(" - Writing \'%s\'\n", output->include_file);
 
-    fdi = clean_fopen(include_file, "wt");
+    fdi = clean_fopen(output->include_file, "wt");
     if (fdi == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -247,13 +283,17 @@ int output_asm_include_file(struct output *output)
     fclose(fdi);
 
     free(include_name);
-    free(include_file);
 
     return 0;
 
 error:
     free(include_name);
-    free(include_file);
-
     return -1;
+}
+
+int output_asm_init(struct output *output)
+{
+    (void)output;
+    
+    return 0;
 }

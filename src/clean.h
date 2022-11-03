@@ -43,7 +43,7 @@ extern "C" {
 
 FILE *clean_fopen(const char *path, const char *mode);
 
-int clean_begin(uint8_t flags);
+int clean_begin(const char *yaml_name, uint8_t flags);
 
 void clean_end(void);
 

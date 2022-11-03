@@ -41,7 +41,6 @@ struct tileset_group *tileset_group_alloc(void)
     tileset_group = malloc(sizeof(struct tileset_group));
     if (tileset_group == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
@@ -52,33 +51,6 @@ struct tileset_group *tileset_group_alloc(void)
     tileset_group->p_table = true;
 
     return tileset_group;
-}
-
-int tileset_alloc_tiles(struct tileset *tileset)
-{
-    int i;
-    int tile_size = tileset->tile_width * tileset->tile_height;
-
-    tileset->tiles =
-        malloc(tileset->nr_tiles * sizeof(struct tileset_tile));
-    if (tileset->tiles == NULL)
-    {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
-        return -1;
-    }
-
-    for (i = 0; i < tileset->nr_tiles; ++i)
-    {
-        tileset->tiles[i].data = malloc(tile_size);
-        if (tileset->tiles[i].data == NULL)
-        {
-            return -1;
-        }
-
-        tileset->tiles[i].size = tile_size;
-    }
-
-    return 0;
 }
 
 void tileset_free(struct tileset *tileset)

@@ -40,8 +40,7 @@ static int process_yaml(struct yaml *yaml, const char *path)
     unsigned int i;
     int ret;
 
-    ret = parser_open(yaml, path);
-    if (ret != 0)
+    if (parser_open(yaml, path))
     {
         return -1;
     }
@@ -57,7 +56,7 @@ static int process_yaml(struct yaml *yaml, const char *path)
         ret = palette_generate(yaml->palettes[i],
             yaml->converts,
             yaml->nr_converts);
-        if (ret != 0)
+        if (ret)
         {
             return -1;
         }
@@ -68,7 +67,7 @@ static int process_yaml(struct yaml *yaml, const char *path)
         ret = convert_convert(yaml->converts[i],
             yaml->palettes,
             yaml->nr_palettes);
-        if (ret != 0)
+        if (ret)
         {
             return -1;
         }
@@ -81,7 +80,7 @@ static int process_yaml(struct yaml *yaml, const char *path)
         ret = output_find_palettes(output,
             yaml->palettes,
             yaml->nr_palettes);
-        if (ret != 0)
+        if (ret)
         {
             return -1;
         }
@@ -94,8 +93,7 @@ static int process_yaml(struct yaml *yaml, const char *path)
             return -1;
         }
 
-        ret = output_init(output);
-        if (ret != 0)
+        if (output_init(output))
         {
             return -1;
         }
@@ -105,7 +103,7 @@ static int process_yaml(struct yaml *yaml, const char *path)
             ret = output_palettes(output,
                 yaml->palettes,
                 yaml->nr_palettes);
-            if (ret != 0)
+            if (ret)
             {
                 return -1;
             }
@@ -113,7 +111,7 @@ static int process_yaml(struct yaml *yaml, const char *path)
             ret = output_converts(output,
                 yaml->converts,
                 yaml->nr_converts);
-            if (ret != 0)
+            if (ret)
             {
                 return -1;
             }
@@ -123,7 +121,7 @@ static int process_yaml(struct yaml *yaml, const char *path)
             ret = output_converts(output,
                 yaml->converts,
                 yaml->nr_converts);
-            if (ret != 0)
+            if (ret)
             {
                 return -1;
             }
@@ -131,14 +129,13 @@ static int process_yaml(struct yaml *yaml, const char *path)
             ret = output_palettes(output,
                 yaml->palettes,
                 yaml->nr_palettes);
-            if (ret != 0)
+            if (ret)
             {
                 return -1;
             }
         }
 
-        ret = output_include_header(output);
-        if (ret != 0)
+        if (output_include(output))
         {
             return -1;
         }
@@ -170,16 +167,22 @@ int main(int argc, char *argv[])
     }
     else
     {
-        ret = clean_begin(CLEAN_CREATE);
-        if (ret == 0)
+        ret = clean_begin(options.yaml_path, CLEAN_CREATE);
+        if (!ret)
         {
             static struct yaml yaml;
 
             ret = process_yaml(&yaml, options.yaml_path);
+
+            if (!ret)
+            {
+                LOG_PRINT("[success] Generated file listing \'%s.lst\'\n", options.yaml_path);
+            }
+
             parser_close(&yaml);
         }
         clean_end();
     }
 
-    return ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    return ret ? EXIT_FAILURE : EXIT_SUCCESS;
 }

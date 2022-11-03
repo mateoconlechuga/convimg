@@ -41,6 +41,7 @@ typedef enum
     BPP_2,
     BPP_4,
     BPP_8,
+    BPP_16,
 } bpp_t;
 
 #ifdef __cplusplus

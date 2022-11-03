@@ -44,7 +44,6 @@ struct output *output_alloc(void)
     struct output *output = malloc(sizeof(struct output));
     if (output == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
@@ -60,19 +59,24 @@ struct output *output_alloc(void)
     output->palette_sizes = false;
     output->order = OUTPUT_PALETTES_FIRST;
     output->format = OUTPUT_FORMAT_INVALID;
-    output->constant = false;
+    output->constant = "";
     output->appvar.name = NULL;
-    output->appvar.directory = NULL;
     output->appvar.archived = true;
     output->appvar.init = true;
     output->appvar.source = APPVAR_SOURCE_NONE;
     output->appvar.compress = COMPRESS_NONE;
-    output->appvar.data = malloc(APPVAR_MAX_BEFORE_COMPRESSION_SIZE);
     output->appvar.size = 0;
     output->appvar.lut = false;
     output->appvar.header = NULL;
     output->appvar.header_size = 0;
     output->appvar.entry_size = 3;
+    output->appvar.data = malloc(APPVAR_MAX_BEFORE_COMPRESSION_SIZE);
+
+    if (output->appvar.data == NULL)
+    {
+        free(output);
+        return NULL;
+    }
 
     return output;
 }
@@ -91,7 +95,6 @@ int output_add_convert(struct output *output, const char *name)
         realloc(output->convert_names, (output->nr_converts + 1) * sizeof(char *));
     if (output->convert_names == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return -1;
     }
 
@@ -117,7 +120,6 @@ int output_add_palette(struct output *output, const char *name)
         realloc(output->palette_names, (output->nr_palettes + 1) * sizeof(char *));
     if (output->palette_names == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return -1;
     }
 
@@ -148,11 +150,6 @@ void output_free(struct output *output)
     {
         free(output->palette_names[i]);
         output->palette_names[i] = NULL;
-    }
-
-    if (output->appvar.name != NULL)
-    {
-        free(output->appvar.directory);
     }
 
     free(output->convert_names);
@@ -193,47 +190,36 @@ int output_init(struct output *output)
 {
     if (output->nr_converts == 0 && output->nr_palettes == 0)
     {
-        LOG_WARNING("No palettes or converts will be output!\n");
+        LOG_WARNING("No palettes or converts will be generated!\n");
     }
 
-    if (output->format == OUTPUT_FORMAT_ICE)
+    switch (output->format)
     {
-        char *tmp = strdupcat(output->directory, output->include_file);
-        if (tmp != NULL)
-        {
-            if (remove(tmp))
-            {
-                LOG_ERROR("Could not remove output file: %s\n",
-                    strerror(errno));
-            }
-            
-            free(tmp);
-        }
-    }
+        case OUTPUT_FORMAT_C:
+            return output_c_init(output);
 
-    if (output->format == OUTPUT_FORMAT_APPVAR)
-    {
-        output_appvar_header(output, &output->appvar);
-    }
+        case OUTPUT_FORMAT_ASM:
+            return output_asm_init(output);
 
-    if (output->appvar.name != NULL)
-    {
-        output->appvar.directory =
-            strdupcat(output->directory, output->appvar.name);
-    }
+        case OUTPUT_FORMAT_BIN:
+            return output_bin_init(output);
 
-    return 0;
+        case OUTPUT_FORMAT_ICE:
+            return output_ice_init(output);
+
+        case OUTPUT_FORMAT_APPVAR:
+            return output_appvar_init(output);
+
+        default:
+            break;
+    }
+    
+    return -1;
 }
 
 int output_find_converts(struct output *output, struct convert **converts, int nr_converts)
 {
-    int i, j;
-
-    if (output == NULL)
-    {
-        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
-        return -1;
-    }
+    int i;
 
     if (converts == NULL || nr_converts == 0)
     {
@@ -243,12 +229,13 @@ int output_find_converts(struct output *output, struct convert **converts, int n
     output->converts = malloc(output->nr_converts * sizeof(struct convert *));
     if (output->converts == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return -1;
     }
 
     for (i = 0; i < output->nr_converts; ++i)
     {
+        int j;
+
         for (j = 0; j < nr_converts; ++j)
         {
             if (strcmp(output->convert_names[i], converts[j]->name) == 0)
@@ -281,14 +268,12 @@ int output_find_palettes(struct output *output, struct palette **palettes, int n
 
     if (palettes == NULL || nr_palettes == 0)
     {
-
         goto nopalette;
     }
 
     output->palettes = malloc(output->nr_palettes * sizeof(struct palette *));
     if (output->palettes == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return -1;
     }
 
@@ -344,33 +329,27 @@ int output_converts(struct output *output, struct convert **converts, int nr_con
         for (j = 0; j < convert->nr_images; ++j)
         {
             struct image *image = &convert->images[j];
-            image->directory = strdupcat(output->directory, image->name);
-            image->constant[0] = '\0';
-            if (output->constant)
-            {
-                strcpy(image->constant, "const ");
-            }
 
             switch (output->format)
             {
                 case OUTPUT_FORMAT_C:
-                    ret = output_c_image(image);
+                    ret = output_c_image(output, image);
                     break;
 
                 case OUTPUT_FORMAT_ASM:
-                    ret = output_asm_image(image);
+                    ret = output_asm_image(output, image);
                     break;
 
                 case OUTPUT_FORMAT_ICE:
-                    ret = output_ice_image(image, output->include_file);
+                    ret = output_ice_image(output, image);
                     break;
 
                 case OUTPUT_FORMAT_APPVAR:
-                    ret = output_appvar_image(image, &output->appvar);
+                    ret = output_appvar_image(output, image);
                     break;
 
                 case OUTPUT_FORMAT_BIN:
-                    ret = output_bin_image(image);
+                    ret = output_bin_image(output, image);
                     break;
 
                 default:
@@ -378,11 +357,9 @@ int output_converts(struct output *output, struct convert **converts, int nr_con
                     break;
             }
 
-            free(image->directory);
-
-            if (ret != 0)
+            if (ret)
             {
-                return ret;
+                return -1;
             }
         }
 
@@ -391,34 +368,27 @@ int output_converts(struct output *output, struct convert **converts, int nr_con
             for (j = 0; j < group->nr_tilesets; ++j)
             {
                 struct tileset *tileset = &group->tilesets[j];
-                tileset->directory =
-                    strdupcat(output->directory, tileset->image.name);
-                tileset->constant[0] = '\0';
-                if (output->constant)
-                {
-                    strcpy(tileset->constant, "const ");
-                }
 
                 switch (output->format)
                 {
                     case OUTPUT_FORMAT_C:
-                        ret = output_c_tileset(tileset);
+                        ret = output_c_tileset(output, tileset);
                         break;
 
                     case OUTPUT_FORMAT_ASM:
-                        ret = output_asm_tileset(tileset);
+                        ret = output_asm_tileset(output, tileset);
                         break;
 
                     case OUTPUT_FORMAT_BIN:
-                        ret = output_bin_tileset(tileset);
+                        ret = output_bin_tileset(output, tileset);
                         break;
 
                     case OUTPUT_FORMAT_ICE:
-                        ret = output_ice_tileset(tileset, output->include_file);
+                        ret = output_ice_tileset(output, tileset);
                         break;
 
                     case OUTPUT_FORMAT_APPVAR:
-                        ret = output_appvar_tileset(tileset, &output->appvar);
+                        ret = output_appvar_tileset(output, tileset);
                         break;
 
                     default:
@@ -426,11 +396,9 @@ int output_converts(struct output *output, struct convert **converts, int nr_con
                         break;
                 }
 
-                free(tileset->directory);
-
-                if (ret != 0)
+                if (ret)
                 {
-                    return ret;
+                    return -1;
                 }
             }
         }
@@ -458,13 +426,6 @@ int output_palettes(struct output *output, struct palette **palettes, int nr_pal
     for (i = 0; i < output->nr_palettes; ++i)
     {
         struct palette *palette = output->palettes[i];
-        palette->directory = strdupcat(output->directory, palette->name);
-        palette->include_size = output->palette_sizes;
-        palette->constant[0] = '\0';
-        if (output->constant)
-        {
-            strcpy(palette->constant, "const ");
-        }
 
         LOG_INFO("Generating output for palette \'%s\'\n",
             palette->name);
@@ -472,23 +433,23 @@ int output_palettes(struct output *output, struct palette **palettes, int nr_pal
         switch (output->format)
         {
             case OUTPUT_FORMAT_C:
-                ret = output_c_palette(palette);
+                ret = output_c_palette(output, palette);
                 break;
 
             case OUTPUT_FORMAT_ASM:
-                ret = output_asm_palette(palette);
+                ret = output_asm_palette(output, palette);
                 break;
 
             case OUTPUT_FORMAT_BIN:
-                ret = output_bin_palette(palette);
+                ret = output_bin_palette(output, palette);
                 break;
 
             case OUTPUT_FORMAT_ICE:
-                ret = output_ice_palette(palette, output->include_file);
+                ret = output_ice_palette(output, palette);
                 break;
 
             case OUTPUT_FORMAT_APPVAR:
-                ret = output_appvar_palette(palette, &output->appvar);
+                ret = output_appvar_palette(output, palette);
                 break;
 
             default:
@@ -496,21 +457,17 @@ int output_palettes(struct output *output, struct palette **palettes, int nr_pal
                 break;
         }
 
-        free(palette->directory);
-
-        if (ret != 0)
+        if (ret)
         {
-            return ret;
+            return -1;
         }
     }
 
     return 0;
 }
 
-int output_include_header(struct output *output)
+int output_include(struct output *output)
 {
-    int ret = 0;
-
     if (output->nr_palettes == 0 && output->nr_converts == 0)
     {
         return 0;
@@ -519,29 +476,23 @@ int output_include_header(struct output *output)
     switch (output->format)
     {
         case OUTPUT_FORMAT_C:
-            ret = output_c_include_file(output);
-            break;
+            return output_c_include(output);
 
         case OUTPUT_FORMAT_ASM:
-            ret = output_asm_include_file(output);
-            break;
+            return output_asm_include(output);
 
         case OUTPUT_FORMAT_BIN:
-            ret = output_bin_include_file(output);
-            break;
+            return output_bin_include(output);
 
         case OUTPUT_FORMAT_ICE:
-            ret = output_ice_include_file(output, output->include_file);
-            break;
+            return output_ice_include(output);
 
         case OUTPUT_FORMAT_APPVAR:
-            ret = output_appvar_include_file(output, &output->appvar);
-            break;
+            return output_appvar_include(output);
 
         default:
-            ret = -1;
             break;
     }
 
-    return ret;
+    return -1;
 }

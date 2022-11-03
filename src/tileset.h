@@ -58,14 +58,13 @@ struct tileset
     bool p_table;
 
     /* set by convert */
-    bool compressed;
     bool rlet;
+    bool gfx;
+    bool compressed;
     bool bad_alpha;
 
     /* set by output */
     int appvar_index;
-    char constant[7];
-    char *directory;
 };
 
 struct tileset_group
@@ -78,8 +77,6 @@ struct tileset_group
 };
 
 struct tileset_group *tileset_group_alloc(void);
-
-int tileset_alloc_tiles(struct tileset *tileset);
 
 void tileset_free(struct tileset *tileset);
 

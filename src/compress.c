@@ -106,14 +106,10 @@ static int compress_zx0(uint8_t *data, size_t *size)
     return 0;
 }
 
-int compress_array(uint8_t *data, size_t *size, compress_t mode)
+int compress_array(uint8_t *data, size_t *size, compress_mode_t mode)
 {
     switch (mode)
     {
-        default:
-        case COMPRESS_INVALID:
-            return -1;
-
         case COMPRESS_NONE:
             return 0;
 
@@ -122,7 +118,10 @@ int compress_array(uint8_t *data, size_t *size, compress_t mode)
 
         case COMPRESS_ZX0:
             return compress_zx0(data, size);
+
+        default:
+            break;
     }
 
-    return 0;
+    return -1;
 }

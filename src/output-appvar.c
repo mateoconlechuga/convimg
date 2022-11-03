@@ -81,8 +81,9 @@ int appvar_insert_entry(struct appvar *appvar, int index, int data)
     return 0;
 }
 
-int output_appvar_header(struct output *output, struct appvar *appvar)
+int output_appvar_init(struct output *output)
 {
+    struct appvar *appvar = &output->appvar;
     int nr_entries;
     int i, j, k, l;
     int offset;
@@ -303,8 +304,10 @@ int output_appvar_header(struct output *output, struct appvar *appvar)
     return 0;
 }
 
-int output_appvar_image(struct image *image, struct appvar *appvar)
+int output_appvar_image(struct output *output, struct image *image)
 {
+    struct appvar *appvar = &output->appvar;
+
     if (validate_data_size(appvar, image->size) != 0)
     {
         return -1;
@@ -316,8 +319,9 @@ int output_appvar_image(struct image *image, struct appvar *appvar)
     return 0;
 }
 
-int output_appvar_tileset(struct tileset *tileset, struct appvar *appvar)
+int output_appvar_tileset(struct output *output, struct tileset *tileset)
 {
+    struct appvar *appvar = &output->appvar;
     int i;
 
     for (i = 0; i < tileset->nr_tiles; ++i)
@@ -336,12 +340,12 @@ int output_appvar_tileset(struct tileset *tileset, struct appvar *appvar)
     return 0;
 }
 
-int output_appvar_palette(struct palette *palette, struct appvar *appvar)
+int output_appvar_palette(struct output *output, struct palette *palette)
 {
-    uint8_t tmp[2];
-    int i;
+    struct appvar *appvar = &output->appvar;
+    size_t i;
 
-    if (palette->include_size)
+    if (output->palette_sizes)
     {
         uint16_t size = palette->nr_entries * 2;
 
@@ -350,27 +354,25 @@ int output_appvar_palette(struct palette *palette, struct appvar *appvar)
             return -1;
         }
 
-        tmp[0] = size & 255;
-        tmp[1] = (size >> 8) & 255;
-
-        memcpy(&appvar->data[appvar->size], tmp, sizeof(uint16_t));
-        appvar->size += 2;
+        appvar->data[appvar->size] = size & 255;
+        appvar->size++;
+        appvar->data[appvar->size] = (size >> 8) & 255;
+        appvar->size++;
     }
 
     for (i = 0; i < palette->nr_entries; ++i)
     {
-        struct color *color = &palette->entries[i].color;
+        uint16_t target = palette->entries[i].target;
 
         if (validate_data_size(appvar, sizeof(uint16_t)) != 0)
         {
             return -1;
         }
 
-        tmp[0] = color->target & 255;
-        tmp[1] = (color->target >> 8) & 255;
-
-        memcpy(&appvar->data[appvar->size], tmp, sizeof(uint16_t));
-        appvar->size += 2;
+        appvar->data[appvar->size] = target & 255;
+        appvar->size++;
+        appvar->data[appvar->size] = (target >> 8) & 255;
+        appvar->size++;
     }
 
     return 0;
@@ -443,11 +445,14 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
                     image->name,
                     *index);
 
-                fprintf(fdh, "#define %s ((%s*)%s_appvar[%d])\n",
-                    image->name,
-                    image->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
-                    output->appvar.name,
-                    *index);
+                if (image->gfx)
+                {
+                    fprintf(fdh, "#define %s ((%s*)%s_appvar[%d])\n",
+                        image->name,
+                        image->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
+                        output->appvar.name,
+                        *index);
+                }
             }
 
             *index = *index + 1;
@@ -504,18 +509,34 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
                     fprintf(fdh, "extern unsigned char *%s_tiles_data[%d];\n",
                         tileset->image.name,
                         tileset->nr_tiles);
-                    fprintf(fdh, "#define %s_tiles ((%s**)%s_tiles_data)\n",
-                        tileset->image.name,
-                        tileset->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
-                        tileset->image.name);
-                    for (l = 0; l < tileset->nr_tiles; l++)
+                        
+                    if (tileset->image.gfx)
                     {
-                        fprintf(fdh, "#define %s_tile_%d ((%s*)%s_tiles_data[%d])\n",
-                        tileset->image.name,
-                        l,
-                        tileset->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
-                        tileset->image.name,
-                        l);
+                        fprintf(fdh, "#define %s_tiles ((%s**)%s_tiles_data)\n",
+                            tileset->image.name,
+                            tileset->image.rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
+                            tileset->image.name);
+
+                        for (l = 0; l < tileset->nr_tiles; l++)
+                        {
+                            fprintf(fdh, "#define %s_tile_%d ((%s*)%s_tiles_data[%d])\n",
+                            tileset->image.name,
+                            l,
+                            tileset->image.rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
+                            tileset->image.name,
+                            l);
+                        }
+                    }
+                    else
+                    {
+                        for (l = 0; l < tileset->nr_tiles; l++)
+                        {
+                            fprintf(fdh, "#define %s_tile_%d_data %s_tiles_data[%d]\n",
+                            tileset->image.name,
+                            l,
+                            tileset->image.name,
+                            l);
+                        }
                     }
                 }
 
@@ -943,7 +964,7 @@ void output_appvar_asm_include_file(struct output *output, FILE *fdh)
             for (i = 0; i < output->nr_palettes; ++i)
             {
                 struct palette *palette = output->palettes[i];
-                int size = palette->nr_entries * 2;
+                int size = palette->nr_entries * sizeof(uint16_t);
 
                 fprintf(fdh, "%s_%s_size := %d\n",
                     output->appvar.name,
@@ -1082,25 +1103,13 @@ void output_appvar_asm_include_file(struct output *output, FILE *fdh)
         appvar->header_size);
 }
 
-int output_appvar_include_file(struct output *output, struct appvar *appvar)
+int output_appvar_include(struct output *output)
 {
-    char *var_name;
-    char *var_c_name;
-    char *tmp;
-    FILE *fdh;
-    FILE *fds;
-    FILE *fdv;
-    int ret = -1;
-
-    if (appvar == NULL)
-    {
-        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
-        return -1;
-    }
-
-    var_name = strdupcat(appvar->directory, ".8xv");
-    var_c_name = strdupcat(appvar->directory, ".c");
-    tmp = NULL;
+    struct appvar *appvar = &output->appvar;
+    char *var_name = NULL;
+    char *var_c_name = NULL;
+    FILE *fdh = NULL;
+    FILE *fds = NULL;
 
     if (appvar->name == NULL)
     {
@@ -1108,26 +1117,31 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
         goto error;
     }
 
-    if (var_name == NULL || var_c_name == NULL)
+    var_name = strings_concat(output->directory, appvar->name, ".8xv", NULL);
+    if (var_name == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
+        goto error;
+    }
+
+    var_c_name = strings_concat(output->directory, appvar->name, ".c", NULL);
+    if (var_c_name == NULL)
+    {
         goto error;
     }
 
     switch (appvar->source)
     {
         case APPVAR_SOURCE_C:
+        {
             if (output->include_file == NULL)
             {
                 LOG_ERROR("Missing \"include-file\" parameter for AppVar.\n");
                 goto error;
             }
 
-            tmp = strdupcat(output->directory, output->include_file);
+            LOG_INFO(" - Writing \'%s\'\n", output->include_file);
 
-            LOG_INFO(" - Writing \'%s\'\n", tmp);
-
-            fdh = clean_fopen(tmp, "wt");
+            fdh = clean_fopen(output->include_file, "wt");
             if (fdh == NULL)
             {
                 LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -1151,19 +1165,19 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
 
             fclose(fds);
             break;
+        }
 
         case APPVAR_SOURCE_ASM:
+        {
             if (output->include_file == NULL)
             {
                 LOG_ERROR("Missing \"include-file\" parameter for AppVar.\n");
                 goto error;
             }
 
-            tmp = strdupcat(output->directory, output->include_file);
+            LOG_INFO(" - Writing \'%s\'\n", output->include_file);
 
-            LOG_INFO(" - Writing \'%s\'\n", tmp);
-
-            fdh = clean_fopen(tmp, "wt");
+            fdh = clean_fopen(output->include_file, "wt");
             if (fdh == NULL)
             {
                 LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -1174,6 +1188,7 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
 
             fclose(fdh);
             break;
+        }
 
         case APPVAR_SOURCE_ICE:
             break;
@@ -1182,31 +1197,19 @@ int output_appvar_include_file(struct output *output, struct appvar *appvar)
             break;
     }
 
-    LOG_INFO(" - Writing \'%s\'\n", var_name);
-
-    fdv = clean_fopen(var_name, "wb");
-    if (fdv == NULL)
+    if (appvar_write(appvar, var_name))
     {
-        LOG_ERROR("Could not open file: %s\n", strerror(errno));
+        LOG_ERROR("Failed to write AppVar.\n");
         goto error;
     }
 
-    ret = appvar_write(appvar, fdv);
-    if (ret != 0)
-    {
-        fclose(fdv);
-        if (remove(var_name) != 0)
-        {
-            LOG_ERROR("Could not remove file: %s\n", strerror(errno));
-        }
-        goto error;
-    }
-
-    fclose(fdv);
-
-error:
-    free(tmp);
     free(var_name);
     free(var_c_name);
-    return ret;
+
+    return 0;
+
+error:
+    free(var_name);
+    free(var_c_name);
+    return -1;
 }

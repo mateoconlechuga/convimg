@@ -29,32 +29,67 @@
  */
 
 #include "strings.h"
+#include "log.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <ctype.h>
 
-char *strdupcat(const char *s, const char *c)
+char *strings_concat(char const *first, ...)
 {
-    char *d;
+    size_t used;
+    size_t size;
+    size_t len;
 
-    if (s == NULL)
+    va_list ap;
+    va_start(ap, first);
+
+    va_list cp_ap;
+    va_copy(cp_ap, ap); // copy for future use
+
+    size = 1; // need the size of the future string
+    for (char const *ptr = first; ptr != NULL; ptr = va_arg(ap, char const *))
     {
-        return strdup(c);
+        size += strlen(ptr);
     }
-    else if (c == NULL)
+    va_end(ap);
+
+    char *result = malloc(size);
+    if (result == NULL)
     {
-        return strdup(s);
+        va_end(cp_ap);
+        return NULL;
     }
 
-    d = malloc(strlen(s) + strlen(c) + 1);
-    if (d != NULL)
+    used = 0;
+    for (char const *ptr = first; ptr != NULL; ptr = va_arg(cp_ap, char const *))
     {
-        strcpy(d, s);
-        strcat(d, c);
+        len = strlen(ptr);
+
+        if (size < used || size - used < len)
+        {
+            free(result);
+            va_end(cp_ap);
+            return NULL;
+        }
+
+        memcpy(result + used, ptr, len);
+        used += len;
     }
 
-    return d;
+    va_end(cp_ap);
+
+    if (size < used || size - used != 1)
+    {
+        free(result);
+        return NULL;
+    }
+
+    result[used] = '\0';
+
+    return result;
 }
 
 char *strings_trim(char *str)
@@ -135,9 +170,9 @@ const char *strings_file_suffix(const char *path)
     return ret;
 }
 
-char *strings_find_images(const char *fullPath, glob_t *globbuf)
+char *strings_find_images(const char *full_path, glob_t *globbuf)
 {
-    const char *suffix = strings_file_suffix(fullPath);
+    const char *suffix = strings_file_suffix(full_path);
     char *path;
 
     if (suffix == NULL)
@@ -145,13 +180,13 @@ char *strings_find_images(const char *fullPath, glob_t *globbuf)
         return NULL;
     }
 
-    if (strcmp("", suffix) == 0)
+    if (!strcmp("", suffix))
     {
-        path = strdupcat(fullPath, ".png");
+        path = strings_concat(full_path, ".png", NULL);
     }
     else
     {
-        path = strdup(fullPath);
+        path = strdup(full_path);
     }
 
     if (path == NULL)

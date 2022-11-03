@@ -32,6 +32,7 @@
 #define IMAGE_H
 
 #include "bpp.h"
+#include "color.h"
 #include "compress.h"
 
 #include <stdbool.h>
@@ -55,19 +56,15 @@ struct image
 
     /* set by convert */
     int quantize_speed;
+    bool gfx;
     float dither;
     bool compressed;
-    bool bad_alpha;
     bool rlet;
     int rotate;
     bool flip_x;
     bool flip_y;
-    int orig_size;
+    int compressed_size;
     int transparent_index;
-
-    /* set by output */
-    char *directory;
-    char constant[7];
 };
 
 #define WIDTH_HEIGHT_SIZE 2
@@ -82,14 +79,16 @@ int image_add_width_and_height(struct image *image);
 
 int image_add_offset(struct image *image, int offset);
 
-int image_compress(struct image *image, compress_t compress);
+int image_compress(struct image *image, compress_mode_t mode);
 
 int image_remove_omits(struct image *image, int *omit_indices,
     int nr_omit_indices);
 
 int image_set_bpp(struct image *image, bpp_t bpp, int palette_nr_entries);
 
-int image_quantize(struct image *image, struct palette *palette);
+int image_quantize(struct image *image, const struct palette *palette);
+
+int image_colorspace_convert(struct image *image, color_format_t fmt);
 
 void image_free(struct image *image);
 

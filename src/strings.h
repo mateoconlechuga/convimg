@@ -37,7 +37,8 @@ extern "C" {
 
 #include <glob.h>
 
-char *strdupcat(const char *s, const char *c);
+/* must pass NULL as final arg */
+char *strings_concat(char const *first, ...);
 
 char *strings_find_images(const char *fullPath, glob_t *globbuf);
 

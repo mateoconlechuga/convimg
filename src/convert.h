@@ -46,6 +46,9 @@ typedef enum
 {
     CONVERT_STYLE_NORMAL,
     CONVERT_STYLE_RLET,
+    CONVERT_STYLE_RGB565,
+    CONVERT_STYLE_BGR565,
+    CONVERT_STYLE_GBGR1555,
 } convert_style_t;
 
 struct convert
@@ -60,7 +63,7 @@ struct convert
     struct image *images;
     int nr_images;
     struct tileset_group *tileset_group;
-    compress_t compress;
+    compress_mode_t compress;
     convert_style_t style;
     int quantize_speed;
     float dither;

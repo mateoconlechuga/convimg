@@ -38,18 +38,24 @@
 #include <errno.h>
 #include <string.h>
 
-static int output_bin(unsigned char *data, size_t size, FILE *fdo)
+static int output_bin_array(unsigned char *data, size_t size, FILE *fdo)
 {
     int ret = fwrite(data, size, 1, fdo);
 
     return ret == 1 ? 0 : 1;
 }
 
-int output_bin_image(struct image *image)
+int output_bin_image(struct output *output, struct image *image)
 {
-    char *source = strdupcat(image->directory, ".bin");
+    char *source;
     FILE *fds;
     int ret;
+
+    source = strings_concat(output->directory, image->name, ".bin", NULL);
+    if (source == NULL)
+    {
+        goto error;
+    }
 
     LOG_INFO(" - Writing \'%s\'\n", source);
 
@@ -60,7 +66,7 @@ int output_bin_image(struct image *image)
         goto error;
     }
 
-    ret = output_bin(image->data, image->size, fds);
+    ret = output_bin_array(image->data, image->size, fds);
 
     fclose(fds);
 
@@ -73,11 +79,17 @@ error:
     return -1;
 }
 
-int output_bin_tileset(struct tileset *tileset)
+int output_bin_tileset(struct output *output, struct tileset *tileset)
 {
-    char *source = strdupcat(tileset->directory, ".bin");
+    char *source;
     FILE *fds;
     int i;
+
+    source = strings_concat(output->directory, tileset->image.name, ".bin", NULL);
+    if (source == NULL)
+    {
+        goto error;
+    }
 
     LOG_INFO(" - Writing \'%s\'\n", source);
 
@@ -100,7 +112,7 @@ int output_bin_tileset(struct tileset *tileset)
             tile_offset[1] = (offset >> 8) & 255;
             tile_offset[2] = (offset >> 16) & 255;
 
-            output_bin(tile_offset, sizeof tile_offset, fds);
+            output_bin_array(tile_offset, sizeof tile_offset, fds);
 
             offset += tileset->tiles[i].size;
         }
@@ -110,7 +122,7 @@ int output_bin_tileset(struct tileset *tileset)
     {
         struct tileset_tile *tile = &tileset->tiles[i];
 
-        output_bin(tile->data, tile->size, fds);
+        output_bin_array(tile->data, tile->size, fds);
     }
 
     fclose(fds);
@@ -124,11 +136,17 @@ error:
     return -1;
 }
 
-int output_bin_palette(struct palette *palette)
+int output_bin_palette(struct output *output, struct palette *palette)
 {
-    char *source = strdupcat(palette->directory, ".bin");
+    char *source;
     FILE *fds;
     int i;
+
+    source = strings_concat(output->directory, palette->name, ".bin", NULL);
+    if (source == NULL)
+    {
+        goto error;
+    }
 
     LOG_INFO(" - Writing \'%s\'\n", source);
 
@@ -139,17 +157,20 @@ int output_bin_palette(struct palette *palette)
         goto error;
     }
 
-    if (palette->include_size)
+    if (output->palette_sizes)
     {
         uint16_t size = palette->nr_entries * 2;
-        fwrite(&size, sizeof(uint16_t), 1, fds);
+
+        fputc(size & 255, fds);
+        fputc((size >> 8) & 255, fds);
     }
 
     for (i = 0; i < palette->nr_entries; ++i)
     {
-        struct color *color = &palette->entries[i].color;
+        uint16_t target = palette->entries[i].target;
 
-        fwrite(&color->target, sizeof(uint16_t), 1, fds);
+        fputc(target & 255, fds);
+        fputc((target >> 8) & 255, fds);
     }
 
     fclose(fds);
@@ -163,10 +184,9 @@ error:
     return -1;
 }
 
-int output_bin_include_file(struct output *output)
+int output_bin_include(struct output *output)
 {
-    char *include_file;
-    char *include_name;
+    char *include_name = NULL;
     char *tmp;
     FILE *fdi;
     int i, j, k;
@@ -176,8 +196,11 @@ int output_bin_include_file(struct output *output)
         return 0;
     }
 
-    include_file = strdupcat(output->directory, output->include_file);
     include_name = strdup(output->include_file);
+    if (include_name == NULL)
+    {
+        goto error;
+    }
 
     tmp = strchr(include_name, '.');
     if (tmp != NULL)
@@ -185,9 +208,9 @@ int output_bin_include_file(struct output *output)
         *tmp = '\0';
     }
 
-    LOG_INFO(" - Writing \'%s\'\n", include_file);
+    LOG_INFO(" - Writing \'%s\'\n", output->include_file);
 
-    fdi = clean_fopen(include_file, "wt");
+    fdi = clean_fopen(output->include_file, "wt");
     if (fdi == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
@@ -225,14 +248,17 @@ int output_bin_include_file(struct output *output)
     fclose(fdi);
 
     free(include_name);
-    free(include_file);
 
     return 0;
 
 error:
-
     free(include_name);
-    free(include_file);
-
     return -1;
+}
+
+int output_bin_init(struct output *output)
+{
+    (void)output;
+    
+    return 0;
 }

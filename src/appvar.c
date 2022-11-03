@@ -29,11 +29,13 @@
  */
 
 #include "appvar.h"
+#include "clean.h"
 #include "log.h"
 
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 
 static unsigned int appvar_checksum(uint8_t *arr, size_t size)
 {
@@ -49,19 +51,29 @@ static unsigned int appvar_checksum(uint8_t *arr, size_t size)
     return checksum;
 }
 
-int appvar_write(struct appvar *a, FILE *fdv)
+int appvar_write(struct appvar *a, const char *path)
 {
-    unsigned int checksum;
     static const uint8_t file_header[11] =
         { 0x2A,0x2A,0x54,0x49,0x38,0x33,0x46,0x2A,0x1A,0x0A,0x00 };
-
     static uint8_t output[APPVAR_MAX_FILE_SIZE];
+    unsigned int checksum;
+    FILE *fdv = NULL;
     size_t name_size;
     size_t file_size;
     size_t data_size;
     size_t varb_size;
     size_t var_size;
     size_t size;
+    int write_error;
+
+    LOG_INFO(" - Writing \'%s\'\n", path);
+
+    fdv = clean_fopen(path, "wb");
+    if (fdv == NULL)
+    {
+        LOG_ERROR("Could not open file: %s\n", strerror(errno));
+        return -1;
+    }
 
     memset(output, 0, sizeof output);
 
@@ -69,16 +81,14 @@ int appvar_write(struct appvar *a, FILE *fdv)
 
     if (a->compress != COMPRESS_NONE)
     {
-        int ret;
-
         LOG_INFO("    - Size before compression: %u bytes\n", (unsigned int)a->size);
 
-        ret = compress_array(a->data, &size, a->compress);
-        if (ret != 0)
+        if (compress_array(a->data, &size, a->compress))
         {
             LOG_ERROR("Failed to compress data for AppVar \'%s\'.\n", a->name);
-            return ret;
+            return -1;
         }
+
         a->size = size;
 
         LOG_INFO("    - Size after compression: %u bytes\n", (unsigned int)a->size);
@@ -121,5 +131,17 @@ int appvar_write(struct appvar *a, FILE *fdv)
     output[APPVAR_DATA_POS + varb_size + 0] = (checksum >> 0) & 0xff;
     output[APPVAR_DATA_POS + varb_size + 1] = (checksum >> 8) & 0xff;
 
-    return fwrite(output, file_size, 1, fdv) == 1 ? 0 : -1;
+    write_error = fwrite(output, file_size, 1, fdv) == 1 ? 0 : -1;
+
+    if (write_error)
+    {
+        if (remove(path))
+        {
+            LOG_ERROR("Could not remove file: %s\n", strerror(errno));
+        }
+    }
+
+    fclose(fdv);
+
+    return write_error;
 }

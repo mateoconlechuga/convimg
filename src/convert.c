@@ -42,7 +42,6 @@ struct convert *convert_alloc(void)
     struct convert *convert = malloc(sizeof(struct convert));
     if (convert == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
@@ -58,7 +57,7 @@ struct convert *convert_alloc(void)
     convert->transparent_index = -1;
     convert->bpp = BPP_8;
     convert->name = NULL;
-    convert->palette_name = strdup("xlibc");
+    convert->palette_name = NULL;
     convert->quantize_speed = CONVERT_DEFAULT_QUANTIZE_SPEED;
     convert->dither = 0;
     convert->rotate = 0;
@@ -66,6 +65,11 @@ struct convert *convert_alloc(void)
     convert->flip_y = false;
 
     return convert;
+}
+
+static bool convert_is_palette_style(const struct convert *convert)
+{
+    return convert->style == CONVERT_STYLE_NORMAL || convert->style == CONVERT_STYLE_RLET;
 }
 
 static int convert_add_image(struct convert *convert, const char *path)
@@ -81,7 +85,6 @@ static int convert_add_image(struct convert *convert, const char *path)
         realloc(convert->images, (convert->nr_images + 1) * sizeof(struct image));
     if (convert->images == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return -1;
     }
 
@@ -105,7 +108,6 @@ struct tileset_group *convert_alloc_tileset_group(struct convert *convert)
     tmp = tileset_group_alloc();
     if (tmp == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return NULL;
     }
 
@@ -132,7 +134,6 @@ static int convert_add_tileset(struct convert *convert, const char *path)
         realloc(tileset_group->tilesets, (tileset_group->nr_tilesets + 1) * sizeof(struct tileset));
     if (tileset_group->tilesets == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return -1;
     }
 
@@ -177,7 +178,6 @@ int convert_add_image_path(struct convert *convert, const char *path)
     realPath = strings_find_images(path, &globbuf);
     if (realPath == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return -1;
     }
 
@@ -219,7 +219,6 @@ int convert_add_tileset_path(struct convert *convert, const char *path)
     realPath = strings_find_images(path, &globbuf);
     if (realPath == NULL)
     {
-        LOG_ERROR("Memory error in \'%s\'.\n", __func__);
         return -1;
     }
 
@@ -307,71 +306,95 @@ error:
 
 static int convert_image(struct convert *convert, struct image *image)
 {
-    int ret;
-
-    if (convert->palette_offset != 0)
+    if (convert_is_palette_style(convert))
     {
-        if (convert->palette_offset + convert->palette->nr_entries >=
-            PALETTE_MAX_ENTRIES)
+        if (image_quantize(image, convert->palette))
         {
-            LOG_ERROR("Palette offset places indices out of range for "
-                      "convert \'%s\'\n",
-                convert->name);
             return -1;
         }
-        ret = image_add_offset(image, convert->palette_offset);
-        if (ret != 0)
+
+        if (convert->palette_offset != 0)
         {
-            return ret;
+            if (convert->palette_offset + convert->palette->nr_entries >=
+                PALETTE_MAX_ENTRIES)
+            {
+                LOG_ERROR("Palette offset places indices out of range for "
+                        "convert \'%s\'\n",
+                    convert->name);
+                return -1;
+            }
+
+            if (image_add_offset(image, convert->palette_offset))
+            {
+                return -1;
+            }
+        }
+
+        if (convert->style == CONVERT_STYLE_RLET)
+        {
+            if (image_rlet(image, convert->transparent_index))
+            {
+                return -1;
+            }
+        }
+
+        if (convert->nr_omit_indices)
+        {
+            if (image_remove_omits(image, convert->omit_indices, convert->nr_omit_indices))
+            {
+                return -1;
+            }
+        }
+
+        if (convert->bpp != BPP_8)
+        {
+            if (image_set_bpp(image, convert->bpp, convert->palette->nr_entries))
+            {
+                return -1;
+            }
         }
     }
-
-    if (convert->style == CONVERT_STYLE_RLET)
+    else
     {
-        ret = image_rlet(image, convert->transparent_index);
-        if (ret != 0)
+        color_format_t fmt;
+
+        switch (convert->style)
         {
-            return ret;
+            case CONVERT_STYLE_RGB565:
+                fmt = COLOR_565_RGB;
+                break;
+
+            case CONVERT_STYLE_BGR565:
+                fmt = COLOR_565_BGR;
+                break;
+
+            case CONVERT_STYLE_GBGR1555:
+                fmt = COLOR_1555_GBGR;
+                break;
+
+            default:
+                return -1;
         }
 
-        image->rlet = true;
-    }
-
-    if (convert->nr_omit_indices != 0)
-    {
-        ret = image_remove_omits(image, convert->omit_indices, convert->nr_omit_indices);
-        if (ret != 0)
+        if (image_colorspace_convert(image, fmt))
         {
-            return ret;
-        }
-    }
-
-    if (convert->bpp != BPP_8)
-    {
-        ret = image_set_bpp(image, convert->bpp, convert->palette->nr_entries);
-        if (ret != 0)
-        {
-            return ret;
+            return -1;
         }
     }
 
     if (convert->add_width_height == true)
     {
-        ret = image_add_width_and_height(image);
-        if (ret != 0)
+        if (image_add_width_and_height(image))
         {
-            return ret;
+            return -1;
         }
     }
 
-    image->orig_size = image->size;
-
     if (convert->compress != COMPRESS_NONE)
     {
-        ret = image_compress(image, convert->compress);
-        if (ret != 0)
+        if (image_compress(image, convert->compress))
         {
-            return ret;
+            return -1;
         }
 
         image->compressed = true;
@@ -382,71 +405,67 @@ static int convert_image(struct convert *convert, struct image *image)
 
 int convert_tileset(struct convert *convert, struct tileset *tileset)
 {
-    int i, j, k;
-    int x, y;
+    size_t i;
+    size_t x, y;
 
-    tileset->nr_tiles =
-        (tileset->image.width / tileset->tile_width) *
-        (tileset->image.height / tileset->tile_height);
-
-    if (tileset->image.width % tileset->tile_width)
-    {
-        LOG_ERROR("Image dimensions do not support tile width.\n");
-        return -1;
-    }
-    if (tileset->image.height % tileset->tile_height)
-    {
-        LOG_ERROR("Image dimensions do not support tile height.\n");
-        return -1;
-    }
-
-    tileset->compressed = convert->compress != COMPRESS_NONE;
     tileset->rlet = convert->style == CONVERT_STYLE_RLET;
+    tileset->compressed = convert->compress != COMPRESS_NONE;
 
-    tileset_alloc_tiles(tileset);
-
-    y = x = 0;
+    y = 0;
+    x = 0;
 
     for (i = 0; i < tileset->nr_tiles; ++i)
     {
+        size_t tile_dim = tileset->tile_width * tileset->tile_height;
+        size_t tile_data_size = tile_dim * 4;
+        size_t tile_stride = tileset->tile_width * 4;
+        size_t image_stride = tileset->image.width * 4;
+        uint8_t *tile_data;
+        uint8_t *dst;
+        size_t j;
+
+        tile_data = malloc(tile_data_size);
+        if (tile_data == NULL)
+        {
+            return -1;
+        }
+
         struct image tile =
         {
-            .data = tileset->tiles[i].data,
+            .data = tile_data,
             .width = tileset->tile_width,
             .height = tileset->tile_height,
-            .size = tileset->tiles[i].size,
+            .size = tile_data_size,
             .name = NULL,
-            .path = NULL
+            .path = NULL,
         };
-        int byte = 0;
-        int ret;
+
+        dst = tile_data;
 
         for (j = 0; j < tile.height; ++j)
         {
-            int offset = j * tileset->image.width + y;
-            for (k = 0; k < tile.width; ++k)
-            {
-                tile.data[byte] = tileset->image.data[k + x + offset];
-                byte++;
-            }
+            size_t o = (j * image_stride) + y;
+
+            memcpy(dst, &tileset->image.data[x + o], tile_stride);
+
+            dst += tile_stride;
         }
 
-        ret = convert_image(convert, &tile);
-        if (ret != 0)
+        x += tile_stride;
+
+        if (x >= image_stride)
         {
-            return ret;
+            x = 0;
+            y += tileset->tile_height * image_stride;
+        }
+
+        if (convert_image(convert, &tile))
+        {
+            return -1;
         }
 
         tileset->tiles[i].size = tile.size;
         tileset->tiles[i].data = tile.data;
-
-        x += tileset->tile_width;
-
-        if (x >= tileset->image.width)
-        {
-            x = 0;
-            y += tileset->image.width * tileset->tile_height;
-        }
     }
 
     return 0;
@@ -454,8 +473,6 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
 
 int convert_convert(struct convert *convert, struct palette **palettes, int nr_palettes)
 {
-    int ret;
-
     if (convert == NULL)
     {
         return -1;
@@ -466,10 +483,12 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         LOG_INFO("Generating convert \'%s\'\n", convert->name);
     }
 
-    ret = convert_find_palette(convert, palettes, nr_palettes);
-    if (ret != 0)
+    if (convert_is_palette_style(convert))
     {
-        return -1;
+        if (convert_find_palette(convert, palettes, nr_palettes))
+        {
+            return -1;
+        }
     }
 
     for (int i = 0; i < convert->nr_images; ++i)
@@ -483,12 +502,18 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         image->flip_x = convert->flip_x;
         image->flip_y = convert->flip_y;
         image->transparent_index = convert->transparent_index;
+        image->rlet = convert->style == CONVERT_STYLE_RLET;
+
+        image->gfx = false;
+        if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)
+        {
+            image->gfx = true;
+        }
 
         LOG_INFO(" - Reading image \'%s\'\n",
                  image->path);
 
-        ret = image_load(image);
-        if (ret != 0)
+        if (image_load(image))
         {
             LOG_ERROR("Failed to load image \'%s\'\n", image->path);
             return -1;
@@ -498,7 +523,7 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         {
             if (image->width > 255)
             {
-                LOG_ERROR("Image \'%s\' width is %u. Maximum width is 255.\n",
+                LOG_ERROR("Image \'%s\' width is %d. Maximum width is 255 when using the option \'width-and-height\'.\n",
                     image->path,
                     image->width);
                 return -1;
@@ -506,27 +531,14 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
 
             if (image->height > 255)
             {
-                LOG_ERROR("Image \'%s\' height is %u. Maximum height is 255.\n",
+                LOG_ERROR("Image \'%s\' height is %d. Maximum height is 255 when using the option \'width-and-height\'.\n",
                     image->path,
                     image->height);
                 return -1;
             }
         }
 
-        ret = image_quantize(image, convert->palette);
-        if (ret != 0)
-        {
-            return -1;
-        }
-
-        if (image->bad_alpha)
-        {
-            LOG_WARNING("Image has pixels with an alpha not 0 or 255.\n");
-            LOG_WARNING("This may result in incorrect color conversion.\n");
-        }
-
-        ret = convert_image(convert, image);
-        if (ret != 0)
+        if (convert_image(convert, image))
         {
             return -1;
         }
@@ -550,31 +562,24 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
             image->flip_x = convert->flip_x;
             image->flip_y = convert->flip_y;
             image->transparent_index = convert->transparent_index;
+            image->rlet = convert->style == CONVERT_STYLE_RLET;
+
+            image->gfx = false;
+            if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)
+            {
+                image->gfx = true;
+            }
 
             LOG_INFO(" - Reading tileset \'%s\'\n",
                 image->path);
 
-            ret = image_load(image);
-            if (ret != 0)
+            if (image_load(image))
             {
                 LOG_ERROR("Failed to load image \'%s\'\n", image->path);
                 return -1;
             }
 
-            ret = image_quantize(image, convert->palette);
-            if (ret != 0)
-            {
-                return -1;
-            }
-
-            if (image->bad_alpha)
-            {
-                LOG_WARNING("Tileset has pixels with an alpha not 0 or 255.\n");
-                LOG_WARNING("This may result in incorrect color conversion.\n");
-            }
-
-            ret = convert_tileset(convert, tileset);
-            if (ret != 0)
+            if (convert_tileset(convert, tileset))
             {
                 return -1;
             }

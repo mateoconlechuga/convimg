@@ -33,40 +33,68 @@
 
 #include <stdbool.h>
 
-static void color_888_to_1555(liq_color *in, uint16_t *out)
+uint16_t color_to_565_rgb(const struct color *color)
 {
-    uint8_t r5 = round((int)in->r * 31.0 / 255.0);
-    uint8_t g6 = round((int)in->g * 63.0 / 255.0);
-    uint8_t b5 = round((int)in->b * 31.0 / 255.0);
+    uint8_t r5 = round((int)color->r * 31.0 / 255.0);
+    uint8_t g6 = round((int)color->g * 63.0 / 255.0);
+    uint8_t b5 = round((int)color->b * 31.0 / 255.0);
 
-    *out = ((g6 & 1) << 15) | (r5 << 10) | ((g6 >> 1) << 5) | b5;
+    return (r5 << 11) | (g6 << 5) | b5;
 }
 
-static void color_1555_to_888(uint16_t *in, liq_color *out)
+uint16_t color_to_565_bgr(const struct color *color)
 {
-    uint8_t r5 = (*in >> 10) & 31;
-    uint8_t g6 = ((*in >> 4) & 62) | (*in >> 15);
-    uint8_t b5 = *in & 31;
+    uint8_t r5 = round((int)color->r * 31.0 / 255.0);
+    uint8_t g6 = round((int)color->g * 63.0 / 255.0);
+    uint8_t b5 = round((int)color->b * 31.0 / 255.0);
 
-    liq_color color =
-    {
-        .r = round((int)r5 * 255.0 / 31.0),
-        .g = round((int)g6 * 255.0 / 63.0),
-        .b = round((int)b5 * 255.0 / 31.0),
-        .a = 255,
-    };
-
-    *out = color;
+    return (b5 << 11) | (g6 << 5) | r5;
 }
 
-void color_convert(struct color *c, color_mode_t mode)
+uint16_t color_to_1555_gbgr(const struct color *color)
 {
-    switch (mode)
+    uint8_t r5 = round((int)color->r * 31.0 / 255.0);
+    uint8_t g6 = round((int)color->g * 63.0 / 255.0);
+    uint8_t b5 = round((int)color->b * 31.0 / 255.0);
+
+    return ((g6 & 1) << 15) | (r5 << 10) | ((g6 >> 1) << 5) | b5;
+}
+
+void color_normalize(struct color *color, color_format_t fmt)
+{
+    uint16_t tmp;
+
+    switch (fmt)
     {
-        case COLOR_MODE_1555_GRGB:
-        case COLOR_MODE_1555_GBGR:
-            color_888_to_1555(&c->rgb, &c->target);
-            color_1555_to_888(&c->target, &c->rgb);
+        case COLOR_1555_GBGR:
+            tmp = color_to_1555_gbgr(color);
+
+            /* 1555 -> 888 */
+            {
+                uint8_t r5 = (tmp >> 10) & 31;
+                uint8_t g6 = ((tmp >> 4) & 62) | (tmp >> 15);
+                uint8_t b5 = tmp & 31;
+
+                color->r = round((int)r5 * 255.0 / 31.0);
+                color->g = round((int)g6 * 255.0 / 63.0);
+                color->b = round((int)b5 * 255.0 / 31.0);
+            }
+            break;
+
+        case COLOR_565_BGR:
+        case COLOR_565_RGB:
+            tmp = color_to_565_rgb(color);
+
+            /* 565 -> 888 */
+            {
+                uint8_t r5 = (tmp >> 11) & 31;
+                uint8_t g6 = ((tmp >> 5) & 62);
+                uint8_t b5 = tmp & 31;
+
+                color->r = round((int)r5 * 255.0 / 31.0);
+                color->g = round((int)g6 * 255.0 / 63.0);
+                color->b = round((int)b5 * 255.0 / 31.0);
+            }
             break;
     }
 }

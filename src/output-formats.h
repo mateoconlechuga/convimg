@@ -38,31 +38,35 @@
 extern "C" {
 #endif
 
-int output_c_image(struct image *image);
-int output_c_tileset(struct tileset *tileset);
-int output_c_palette(struct palette *palette);
-int output_c_include_file(struct output *output);
+int output_c_init(struct output *output);
+int output_c_image(struct output *output, struct image *image);
+int output_c_tileset(struct output *output, struct tileset *tileset);
+int output_c_palette(struct output *output, struct palette *palette);
+int output_c_include(struct output *output);
 
-int output_asm_image(struct image *image);
-int output_asm_tileset(struct tileset *tileset);
-int output_asm_palette(struct palette *palette);
-int output_asm_include_file(struct output *output);
+int output_asm_init(struct output *output);
+int output_asm_image(struct output *output, struct image *image);
+int output_asm_tileset(struct output *output, struct tileset *tileset);
+int output_asm_palette(struct output *output, struct palette *palette);
+int output_asm_include(struct output *output);
 
-int output_bin_image(struct image *image);
-int output_bin_tileset(struct tileset *tileset);
-int output_bin_palette(struct palette *palette);
-int output_bin_include_file(struct output *output);
+int output_bin_init(struct output *output);
+int output_bin_image(struct output *output, struct image *image);
+int output_bin_tileset(struct output *output, struct tileset *tileset);
+int output_bin_palette(struct output *output, struct palette *palette);
+int output_bin_include(struct output *output);
 
-int output_ice_image(struct image *image, char *file);
-int output_ice_tileset(struct tileset *tileset, char *file);
-int output_ice_palette(struct palette *palette, char *file);
-int output_ice_include_file(struct output *output, char *file);
+int output_ice_init(struct output *output);
+int output_ice_image(struct output *output, struct image *image);
+int output_ice_tileset(struct output *output, struct tileset *tileset);
+int output_ice_palette(struct output *output, struct palette *palette);
+int output_ice_include(struct output *output);
 
-int output_appvar_header(struct output *output, struct appvar *appvar);
-int output_appvar_image(struct image *image, struct appvar *appvar);
-int output_appvar_tileset(struct tileset *tileset, struct appvar *appvar);
-int output_appvar_palette(struct palette *palette, struct appvar *appvar);
-int output_appvar_include_file(struct output *output, struct appvar *appvar);
+int output_appvar_init(struct output *output);
+int output_appvar_image(struct output *output, struct image *image);
+int output_appvar_tileset(struct output *output, struct tileset *tileset);
+int output_appvar_palette(struct output *output, struct palette *palette);
+int output_appvar_include(struct output *output);
 
 #ifdef __cplusplus
 }

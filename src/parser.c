@@ -860,7 +860,11 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         {
             if (parse_str_cmp("normal", value))
             {
-                convert->style = CONVERT_STYLE_NORMAL;
+                convert->style = CONVERT_STYLE_PALETTE;
+            }
+            else if (parse_str_cmp("palette", value))
+            {
+                convert->style = CONVERT_STYLE_PALETTE;
             }
             else if (parse_str_cmp("rlet", value))
             {

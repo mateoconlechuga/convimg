@@ -51,7 +51,7 @@ struct convert *convert_alloc(void)
     convert->palette = NULL;
     convert->palette_offset = 0;
     convert->tileset_group = NULL;
-    convert->style = CONVERT_STYLE_NORMAL;
+    convert->style = CONVERT_STYLE_PALETTE;
     convert->nr_omit_indices = 0;
     convert->add_width_height = true;
     convert->transparent_index = -1;
@@ -69,7 +69,7 @@ struct convert *convert_alloc(void)
 
 static bool convert_is_palette_style(const struct convert *convert)
 {
-    return convert->style == CONVERT_STYLE_NORMAL || convert->style == CONVERT_STYLE_RLET;
+    return convert->style == CONVERT_STYLE_PALETTE || convert->style == CONVERT_STYLE_RLET;
 }
 
 static int convert_add_image(struct convert *convert, const char *path)

@@ -227,7 +227,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : palette instead of using this option.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       style: <mode>              : Style controls the converted format of\n");
-    LOG_PRINT("                                  : images. In \'normal\' mode, converted\n");
+    LOG_PRINT("                                  : images. In \'palette\' mode, converted\n");
     LOG_PRINT("                                  : images map 1-1 where each pixel byte\n");
     LOG_PRINT("                                  : represents a palette index.\n");
     LOG_PRINT("                                  : In \'rlet\' mode, the transparent color\n");
@@ -242,7 +242,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : These two styles may limit the other\n");
     LOG_PRINT("                                  : options (a palette is also not required\n");
     LOG_PRINT("                                  : to be listed in the \'palettes\' section).\n");
-    LOG_PRINT("                                  : Default is \'normal\'\n");
+    LOG_PRINT("                                  : Default is \'palette\'\n");
     LOG_PRINT("\n");
     LOG_PRINT("       compress: <mode>           : After quantization, images can then\n");
     LOG_PRINT("                                  : optionally be compressed.\n");

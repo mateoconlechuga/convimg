@@ -186,7 +186,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : palette instead of using this option.
 
            style: <mode>              : Style controls the converted format of
-                                      : images. In 'normal' mode, converted
+                                      : images. In 'palette' mode, converted
                                       : images map 1-1 where each pixel byte
                                       : represents a palette index.
                                       : In 'rlet' mode, the transparent color
@@ -201,7 +201,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : These two styles may limit the other
                                       : options (a palette is also not required
                                       : to be listed in the 'palettes' section).
-                                      : Default is 'normal'
+                                      : Default is 'palette'
 
            compress: <mode>           : After quantization, images can then
                                       : optionally be compressed.

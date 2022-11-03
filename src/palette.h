@@ -45,7 +45,7 @@ extern "C" {
 #endif
 
 #define PALETTE_MAX_ENTRIES 256
-#define PALETTE_DEFAULT_QUANTIZE_SPEED 4
+#define PALETTE_DEFAULT_QUANTIZE_SPEED 3
 
 struct convert;
 
@@ -54,7 +54,7 @@ struct palette_entry
     struct color color;
     struct color orig_color;
     uint16_t target;
-    unsigned int index;
+    uint32_t index;
     bool exact;
     bool valid;
     bool fixed;
@@ -64,11 +64,11 @@ struct palette
 {
     char *name;
     struct image *images;
-    int nr_images;
-    int max_entries;
-    int nr_entries;
-    int nr_fixed_entries;
-    int quantize_speed;
+    uint32_t nr_images;
+    uint32_t max_entries;
+    uint32_t nr_entries;
+    uint32_t nr_fixed_entries;
+    uint32_t quantize_speed;
     struct palette_entry entries[PALETTE_MAX_ENTRIES];
     struct palette_entry fixed_entries[PALETTE_MAX_ENTRIES];
     color_format_t fmt;
@@ -85,7 +85,7 @@ int pallete_add_path(struct palette *palette,
 
 int palette_generate(struct palette *palette,
     struct convert **converts,
-    int nr_converts);
+    uint32_t nr_converts);
 
 #ifdef __cplusplus
 }

@@ -54,7 +54,7 @@ struct convert *convert_alloc(void)
     convert->style = CONVERT_STYLE_PALETTE;
     convert->nr_omit_indices = 0;
     convert->add_width_height = true;
-    convert->transparent_index = -1;
+    convert->transparent_index = 0;
     convert->bpp = BPP_8;
     convert->name = NULL;
     convert->palette_name = NULL;
@@ -246,7 +246,7 @@ int convert_add_tileset_path(struct convert *convert, const char *path)
 
 void convert_free(struct convert *convert)
 {
-    int i;
+    uint32_t i;
 
     if (convert == NULL)
     {
@@ -390,6 +390,8 @@ static int convert_image(struct convert *convert, struct image *image)
         }
     }
 
+    image->uncompressed_size = image->data_size;
+    
     if (convert->compress != COMPRESS_NONE)
     {
         if (image_compress(image, convert->compress))
@@ -405,8 +407,9 @@ static int convert_image(struct convert *convert, struct image *image)
 
 int convert_tileset(struct convert *convert, struct tileset *tileset)
 {
-    size_t i;
-    size_t x, y;
+    uint32_t i;
+    uint32_t x;
+    uint32_t y;
 
     tileset->rlet = convert->style == CONVERT_STYLE_RLET;
     tileset->compressed = convert->compress != COMPRESS_NONE;
@@ -416,13 +419,13 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
 
     for (i = 0; i < tileset->nr_tiles; ++i)
     {
-        size_t tile_dim = tileset->tile_width * tileset->tile_height;
-        size_t tile_data_size = tile_dim * 4;
-        size_t tile_stride = tileset->tile_width * 4;
-        size_t image_stride = tileset->image.width * 4;
+        uint32_t tile_dim = tileset->tile_width * tileset->tile_height;
+        uint32_t tile_data_size = tile_dim * sizeof(uint32_t);
+        uint32_t tile_stride = tileset->tile_width * sizeof(uint32_t);
+        uint32_t image_stride = tileset->image.width * sizeof(uint32_t);
         uint8_t *tile_data;
         uint8_t *dst;
-        size_t j;
+        uint32_t j;
 
         tile_data = malloc(tile_data_size);
         if (tile_data == NULL)
@@ -433,9 +436,9 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
         struct image tile =
         {
             .data = tile_data,
+            .data_size = tile_data_size,
             .width = tileset->tile_width,
             .height = tileset->tile_height,
-            .size = tile_data_size,
             .name = NULL,
             .path = NULL,
         };
@@ -444,7 +447,7 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
 
         for (j = 0; j < tile.height; ++j)
         {
-            size_t o = (j * image_stride) + y;
+            uint32_t o = (j * image_stride) + y;
 
             memcpy(dst, &tileset->image.data[x + o], tile_stride);
 
@@ -464,7 +467,7 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
             return -1;
         }
 
-        tileset->tiles[i].size = tile.size;
+        tileset->tiles[i].data_size = tile.data_size;
         tileset->tiles[i].data = tile.data;
     }
 
@@ -473,6 +476,8 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
 
 int convert_convert(struct convert *convert, struct palette **palettes, int nr_palettes)
 {
+    uint32_t i;
+
     if (convert == NULL)
     {
         return -1;
@@ -491,7 +496,7 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         }
     }
 
-    for (int i = 0; i < convert->nr_images; ++i)
+    for (i = 0; i < convert->nr_images; ++i)
     {
         struct image *image = &convert->images[i];
         
@@ -515,7 +520,6 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
 
         if (image_load(image))
         {
-            LOG_ERROR("Failed to load image \'%s\'\n", image->path);
             return -1;
         }
 
@@ -547,10 +551,11 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
     if (convert->tileset_group != NULL)
     {
         struct tileset_group *tileset_group = convert->tileset_group;
+        uint32_t j;
 
         LOG_INFO("Converting tilesets for \'%s\'\n", convert->name);
 
-        for (int j = 0; j < tileset_group->nr_tilesets; ++j)
+        for (j = 0; j < tileset_group->nr_tilesets; ++j)
         {
             struct tileset *tileset = &tileset_group->tilesets[j];
             struct image *image = &tileset->image;
@@ -575,7 +580,6 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
 
             if (image_load(image))
             {
-                LOG_ERROR("Failed to load image \'%s\'\n", image->path);
                 return -1;
             }
 

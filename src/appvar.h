@@ -81,12 +81,12 @@ struct appvar
     bool archived;
     bool init;
     bool lut;
-    int size;
-    int entry_size;
-    int nr_entries;
-    int total_entries;
-    int header_size;
-    int data_offset;
+    uint32_t size;
+    uint32_t entry_size;
+    uint32_t nr_entries;
+    uint32_t total_entries;
+    uint32_t header_size;
+    uint32_t data_offset;
     appvar_source_t source;
     compress_mode_t compress;
 };

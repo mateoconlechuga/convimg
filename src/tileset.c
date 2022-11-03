@@ -55,12 +55,7 @@ struct tileset_group *tileset_group_alloc(void)
 
 void tileset_free(struct tileset *tileset)
 {
-    int i;
-
-    if (tileset == NULL)
-    {
-        return;
-    }
+    uint32_t i;
 
     for (i = 0; i < tileset->nr_tiles; ++i)
     {
@@ -79,13 +74,13 @@ void tileset_free(struct tileset *tileset)
 
 void tileset_group_free(struct tileset_group *tileset_group)
 {
-    int i;
+    uint32_t i;
 
     if (tileset_group == NULL)
     {
         return;
     }
-
+    
     for (i = 0; i < tileset_group->nr_tilesets; ++i)
     {
         if (tileset_group->tilesets != NULL)

@@ -38,9 +38,9 @@
 #include <errno.h>
 #include <string.h>
 
-static int output_c_array(unsigned char *arr, size_t size, FILE *fdo)
+static int output_c_array(unsigned char *arr, uint32_t size, FILE *fdo)
 {
-    size_t i;
+    uint32_t i;
 
     for (i = 0; i < size; ++i)
     {
@@ -101,13 +101,13 @@ int output_c_image(struct output *output, struct image *image)
     fprintf(fdh, "\n");
     fprintf(fdh, "#define %s_width %d\n", image->name, image->width);
     fprintf(fdh, "#define %s_height %d\n", image->name, image->height);
-    fprintf(fdh, "#define %s_size %d\n", image->name, image->size);
+    fprintf(fdh, "#define %s_size %d\n", image->name, image->uncompressed_size);
 
     if (image->compressed)
     {
-        fprintf(fdh, "#define %s_compressed_size %d\n", image->name, image->compressed_size);
+        fprintf(fdh, "#define %s_compressed_size %d\n", image->name, image->data_size);
         fprintf(fdh, "extern %sunsigned char %s_compressed[%d];\n",
-            output->constant, image->name, image->size);
+            output->constant, image->name, image->data_size);
     }
     else
     {
@@ -121,7 +121,7 @@ int output_c_image(struct output *output, struct image *image)
         }
 
         fprintf(fdh, "extern %sunsigned char %s_data[%d];\n",
-            output->constant, image->name, image->size);
+            output->constant, image->name, image->data_size);
     }
 
     fprintf(fdh, "\n");
@@ -144,16 +144,16 @@ int output_c_image(struct output *output, struct image *image)
 
     if (image->compressed)
     {
-        fprintf(fds, "%sunsigned char %s_compressed[%d] =\n{",
-            output->constant, image->name, image->size);
+        fprintf(fds, "%sunsigned char %s_compressed[%u] =\n{",
+            output->constant, image->name, image->data_size);
     }
     else
     {
-        fprintf(fds, "%sunsigned char %s_data[%d] =\n{",
-            output->constant, image->name, image->size);
+        fprintf(fds, "%sunsigned char %s_data[%u] =\n{",
+            output->constant, image->name, image->data_size);
     }
 
-    output_c_array(image->data, image->size, fds);
+    output_c_array(image->data, image->data_size, fds);
 
     fclose(fds);
 
@@ -174,7 +174,7 @@ int output_c_tileset(struct output *output, struct tileset *tileset)
     char *source = NULL;
     FILE *fdh;
     FILE *fds;
-    int i;
+    uint32_t i;
 
     header = strings_concat(output->directory, tileset->image.name, ".h", NULL);
     if (header == NULL)
@@ -211,17 +211,17 @@ int output_c_tileset(struct output *output, struct tileset *tileset)
 
         if (tileset->compressed)
         {
-            fprintf(fdh, "extern %sunsigned char %s_tile_%d_compressed[%d];\n",
+            fprintf(fdh, "extern %sunsigned char %s_tile_%u_compressed[%u];\n",
                 output->constant,
                 tileset->image.name,
                 i,
-                tile->size);
+                tile->data_size);
         }
         else
         {
             if (tileset->image.gfx)
             {
-                fprintf(fdh, "#define %s_tile_%d ((%s%s*)%s_tile_%d_data)\n",
+                fprintf(fdh, "#define %s_tile_%u ((%s%s*)%s_tile_%u_data)\n",
                     tileset->image.name,
                     i,
                     output->constant,
@@ -230,15 +230,15 @@ int output_c_tileset(struct output *output, struct tileset *tileset)
                     i);
             }
 
-            fprintf(fdh, "extern %sunsigned char %s_tile_%d_data[%d];\n",
+            fprintf(fdh, "extern %sunsigned char %s_tile_%u_data[%u];\n",
                 output->constant,
                 tileset->image.name,
                 i,
-                tile->size);
+                tile->data_size);
         }
     }
 
-    fprintf(fdh, "#define %s_num_tiles %d\n",
+    fprintf(fdh, "#define %s_num_tiles %u\n",
         tileset->image.name,
         tileset->nr_tiles);
 
@@ -246,7 +246,7 @@ int output_c_tileset(struct output *output, struct tileset *tileset)
     {
         if (tileset->compressed)
         {
-            fprintf(fdh, "extern %sunsigned char *%s_tiles_compressed[%d];\n",
+            fprintf(fdh, "extern %sunsigned char *%s_tiles_compressed[%u];\n",
                 output->constant,
                 tileset->image.name,
                 tileset->nr_tiles);
@@ -262,7 +262,7 @@ int output_c_tileset(struct output *output, struct tileset *tileset)
                     tileset->image.name);
             }
             
-            fprintf(fdh, "extern %sunsigned char *%s_tiles_data[%d];\n",
+            fprintf(fdh, "extern %sunsigned char *%s_tiles_data[%u];\n",
                 output->constant,
                 tileset->image.name,
                 tileset->nr_tiles);
@@ -293,36 +293,36 @@ int output_c_tileset(struct output *output, struct tileset *tileset)
 
         if (tileset->compressed)
         {
-            fprintf(fds, "%sunsigned char %s_tile_%d_compressed[%d] =\n{",
+            fprintf(fds, "%sunsigned char %s_tile_%u_compressed[%u] =\n{",
                 output->constant,
                 tileset->image.name,
                 i,
-                tile->size);
+                tile->data_size);
         }
         else
         {
-            fprintf(fds, "%sunsigned char %s_tile_%d_data[%d] =\n{",
+            fprintf(fds, "%sunsigned char %s_tile_%u_data[%u] =\n{",
                 output->constant,
                 tileset->image.name,
                 i,
-                tile->size);
+                tile->data_size);
         }
 
-        output_c_array(tile->data, tile->size, fds);
+        output_c_array(tile->data, tile->data_size, fds);
     }
 
     if (tileset->p_table)
     {
         if (tileset->compressed)
         {
-            fprintf(fds, "%sunsigned char *%s_tiles_compressed[%d] =\n{\n",
+            fprintf(fds, "%sunsigned char *%s_tiles_compressed[%u] =\n{\n",
                 output->constant,
                 tileset->image.name,
                 tileset->nr_tiles);
         }
         else
         {
-            fprintf(fds, "%sunsigned char *%s_tiles_data[%d] =\n{\n",
+            fprintf(fds, "%sunsigned char *%s_tiles_data[%u] =\n{\n",
                 output->constant,
                 tileset->image.name,
                 tileset->nr_tiles);
@@ -332,13 +332,13 @@ int output_c_tileset(struct output *output, struct tileset *tileset)
         {
             if (tileset->compressed)
             {
-                fprintf(fds, "    %s_tile_%d_compressed,\n",
+                fprintf(fds, "    %s_tile_%u_compressed,\n",
                     tileset->image.name,
                     i);
             }
             else
             {
-                fprintf(fds, "    %s_tile_%d_data,\n",
+                fprintf(fds, "    %s_tile_%u_data,\n",
                     tileset->image.name,
                     i);
             }
@@ -366,8 +366,8 @@ int output_c_palette(struct output *output, struct palette *palette)
     char *source = NULL;
     FILE *fdh;
     FILE *fds;
-    int size;
-    int i;
+    uint32_t size;
+    uint32_t i;
 
     header = strings_concat(output->directory, palette->name, ".h", NULL);
     if (header == NULL)
@@ -400,7 +400,7 @@ int output_c_palette(struct output *output, struct palette *palette)
     fprintf(fdh, "#endif\n");
     fprintf(fdh, "\n");
     fprintf(fdh, "#define sizeof_%s %d\n", palette->name, size);
-    fprintf(fdh, "extern %sunsigned char %s[%d];\n",
+    fprintf(fdh, "extern %sunsigned char %s[%u];\n",
         output->constant, palette->name, size);
     fprintf(fdh, "\n");
     fprintf(fdh, "#ifdef __cplusplus\n");
@@ -420,32 +420,32 @@ int output_c_palette(struct output *output, struct palette *palette)
         goto error;
     }
 
-    fprintf(fds, "%sunsigned char %s[%d] =\n{\n",
+    fprintf(fds, "%sunsigned char %s[%u] =\n{\n",
         output->constant, palette->name, size);
 
     for (i = 0; i < palette->nr_entries; ++i)
     {
         struct palette_entry *entry = &palette->entries[i];
         struct color *color = &entry->color;
-        struct color *origcolor = &entry->orig_color;
+        struct color *origc = &entry->orig_color;
         uint16_t target = entry->target;
 
         if (entry->exact)
         {
-            fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) [exact original: rgb(%3d, %3d, %3d)] */\n",
+            fprintf(fds, "    0x%02x, 0x%02x, /* %3u: rgb(%3u, %3u, %3u) [exact original: rgb(%3u, %3u, %3u)] */\n",
                     target & 255,
                     (target >> 8) & 255,
                     i,
                     color->r, color->g, color->b,
-                    origcolor->r, origcolor->g, origcolor->b);
+                    origc->r, origc->g, origc->b);
         }
         else if (!entry->valid)
         {
-            fprintf(fds, "    0x00, 0x00, /* %3d: (unused) */\n", i);
+            fprintf(fds, "    0x00, 0x00, /* %3u: (unused) */\n", i);
         }
         else
         {
-            fprintf(fds, "    0x%02x, 0x%02x, /* %3d: rgb(%3d, %3d, %3d) */\n",
+            fprintf(fds, "    0x%02x, 0x%02x, /* %3u: rgb(%3u, %3u, %3u) */\n",
                     target & 255,
                     (target >> 8) & 255,
                     i,
@@ -473,7 +473,7 @@ int output_c_include(struct output *output)
     char *include_name = NULL;
     char *tmp;
     FILE *fdi;
-    int i;
+    uint32_t i;
 
     include_name = strdup(output->include_file);
     if (include_name == NULL)
@@ -513,9 +513,9 @@ int output_c_include(struct output *output)
     {
         struct convert *convert = output->converts[i];
         struct tileset_group *tileset_group = convert->tileset_group;
-        int j;
+        uint32_t j;
 
-        fprintf(fdi, "#define %s_palette_offset %d\n",
+        fprintf(fdi, "#define %s_palette_offset %u\n",
             convert->name, convert->palette_offset);
 
         for (j = 0; j < convert->nr_images; ++j)
@@ -527,7 +527,7 @@ int output_c_include(struct output *output)
 
         if (tileset_group != NULL)
         {
-            int k;
+            uint32_t k;
 
             for (k = 0; k < tileset_group->nr_tilesets; ++k)
             {

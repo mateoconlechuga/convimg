@@ -133,7 +133,7 @@ int output_add_palette(struct output *output, const char *name)
 
 void output_free(struct output *output)
 {
-    int i;
+    uint32_t i;
 
     if (output == NULL)
     {
@@ -217,9 +217,9 @@ int output_init(struct output *output)
     return -1;
 }
 
-int output_find_converts(struct output *output, struct convert **converts, int nr_converts)
+int output_find_converts(struct output *output, struct convert **converts, uint32_t nr_converts)
 {
-    int i;
+    uint32_t i;
 
     if (converts == NULL || nr_converts == 0)
     {
@@ -234,7 +234,7 @@ int output_find_converts(struct output *output, struct convert **converts, int n
 
     for (i = 0; i < output->nr_converts; ++i)
     {
-        int j;
+        uint32_t j;
 
         for (j = 0; j < nr_converts; ++j)
         {
@@ -256,15 +256,9 @@ nextconvert:
     return 0;
 }
 
-int output_find_palettes(struct output *output, struct palette **palettes, int nr_palettes)
+int output_find_palettes(struct output *output, struct palette **palettes, uint32_t nr_palettes)
 {
-    int i = 0;
-
-    if (output == NULL || nr_palettes < 0)
-    {
-        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
-        return -1;
-    }
+    uint32_t i;
 
     if (palettes == NULL || nr_palettes == 0)
     {
@@ -279,7 +273,8 @@ int output_find_palettes(struct output *output, struct palette **palettes, int n
 
     for (i = 0; i < output->nr_palettes; ++i)
     {
-        int j;
+        uint32_t j;
+
         for (j = 0; j < nr_palettes; ++j)
         {
             if (strcmp(output->palette_names[i], palettes[j]->name) == 0)
@@ -301,16 +296,10 @@ nextpalette:
     return 0;
 }
 
-int output_converts(struct output *output, struct convert **converts, int nr_converts)
+int output_converts(struct output *output, struct convert **converts, uint32_t nr_converts)
 {
+    uint32_t i;
     int ret;
-    int i;
-
-    if (output == NULL || nr_converts < 0)
-    {
-        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
-        return -1;
-    }
 
     if (converts == NULL || nr_converts == 0)
     {
@@ -321,7 +310,7 @@ int output_converts(struct output *output, struct convert **converts, int nr_con
     {
         struct convert *convert = output->converts[i];
         struct tileset_group *group = convert->tileset_group;
-        int j;
+        uint32_t j;
 
         LOG_INFO("Generating output for convert \'%s\'\n",
             convert->name);
@@ -407,16 +396,10 @@ int output_converts(struct output *output, struct convert **converts, int nr_con
     return 0;
 }
 
-int output_palettes(struct output *output, struct palette **palettes, int nr_palettes)
+int output_palettes(struct output *output, struct palette **palettes, uint32_t nr_palettes)
 {
+    uint32_t i;
     int ret;
-    int i;
-
-    if (output == NULL || nr_palettes < 0)
-    {
-        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
-        return -1;
-    }
 
     if (palettes == NULL || nr_palettes == 0)
     {

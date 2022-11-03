@@ -78,9 +78,9 @@ static void compress_zx0_progress(void)
 
 static int compress_zx0(uint8_t *data, size_t *size)
 {
-    int delta;
     uint8_t *compressed_data;
     int new_size;
+    int delta;
 
     if (size == NULL || data == NULL)
     {

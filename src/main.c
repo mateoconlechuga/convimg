@@ -37,7 +37,7 @@
 
 static int process_yaml(struct yaml *yaml, const char *path)
 {
-    unsigned int i;
+    uint32_t i;
     int ret;
 
     if (parser_open(yaml, path))

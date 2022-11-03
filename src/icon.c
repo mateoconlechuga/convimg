@@ -52,14 +52,15 @@ int icon_convert(struct icon *icon)
 
     if (icon->image_file != NULL)
     {
+        size_t size;
+        uint32_t i;
+
         has_icon = true;
 
         image_init(&image, icon->image_file);
 
-        ret = image_load(&image);
-        if (ret != 0)
+        if (image_load(&image))
         {
-            LOG_ERROR("Failed loading icon image file.\n");
             goto fail;
         }
 
@@ -100,9 +101,9 @@ int icon_convert(struct icon *icon)
             goto fail;
         }
 
-        for (unsigned int i = 0; i < 256; ++i)
+        for (i = 0; i < 256; ++i)
         {
-            unsigned int o = i * 3;
+            uint32_t o = i * 3;
             liq_color liqcolor;
 
             liqcolor.r = icon_palette[o + 0];
@@ -113,7 +114,8 @@ int icon_convert(struct icon *icon)
             liq_image_add_fixed_color(liqimage, liqcolor);
         }
 
-        data = malloc(image.size);
+        size = image.width * image.height;
+        data = malloc(size);
         if (data == NULL)
         {
             goto fail;
@@ -126,7 +128,7 @@ int icon_convert(struct icon *icon)
             goto fail;
         }
 
-        liq_write_remapped_image(liqresult, liqimage, data, image.size);
+        liq_write_remapped_image(liqresult, liqimage, data, size);
     }
 
     fd = fopen(icon->output_file, "wt");
@@ -145,16 +147,19 @@ int icon_convert(struct icon *icon)
             fprintf(fd, "\tjp\t___prgm_init\n");
             if (has_icon)
             {
+                uint32_t y;
+
                 fprintf(fd, "\tdb\t$01\n");
                 fprintf(fd, "\tpublic ___icon\n");
                 fprintf(fd, "___icon:\n");
                 fprintf(fd, "\tdb\t$%02X, $%02X", image.width, image.height);
-                for (int y = 0; y < image.height; y++)
+                for (y = 0; y < image.height; y++)
                 {
-                    int offset = y * image.width;
+                    uint32_t offset = y * image.width;
+                    uint32_t x;
 
                     fprintf(fd, "\n\tdb\t");
-                    for (int x = 0; x < image.width; x++)
+                    for (x = 0; x < image.width; x++)
                     {
                         if (x + 1 == image.width)
                         {
@@ -191,12 +196,15 @@ int icon_convert(struct icon *icon)
         case ICON_FORMAT_ICE:
             if (has_icon)
             {
-                fprintf(fd, "\"01%02X%02X", image.width, image.height);
-                for (int y = 0; y < image.height; y++)
-                {
-                    int offset = y * image.width;
+                uint32_t y;
 
-                    for (int x = 0; x < image.width; x++)
+                fprintf(fd, "\"01%02X%02X", image.width, image.height);
+                for (y = 0; y < image.height; y++)
+                {
+                    uint32_t offset = y * image.width;
+                    uint32_t x;
+
+                    for (x = 0; x < image.width; x++)
                     {
                         fprintf(fd, "%02X", data[x + offset]);
                     }

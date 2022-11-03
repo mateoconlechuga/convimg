@@ -43,18 +43,18 @@ extern "C" {
 struct tileset_tile
 {
     uint8_t *data;
-    int size;
+    uint32_t data_size;
 };
 
 struct tileset
 {
     struct image image;
     struct tileset_tile *tiles;
-    int nr_tiles;
+    uint32_t nr_tiles;
 
     /* duplicate parameters from parent */
-    int tile_height;
-    int tile_width;
+    uint32_t tile_height;
+    uint32_t tile_width;
     bool p_table;
 
     /* set by convert */
@@ -64,15 +64,15 @@ struct tileset
     bool bad_alpha;
 
     /* set by output */
-    int appvar_index;
+    uint32_t appvar_index;
 };
 
 struct tileset_group
 {
     struct tileset *tilesets;
-    int nr_tilesets;
-    int tile_height;
-    int tile_width;
+    uint32_t nr_tilesets;
+    uint32_t tile_height;
+    uint32_t tile_width;
     bool p_table;
 };
 

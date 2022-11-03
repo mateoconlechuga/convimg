@@ -104,10 +104,11 @@ This program is used to convert images to other formats, specifically for the TI
                                       : index is 0 and increments by 1 moving
                                       : from left to right.
 
-           speed: <speed>             : Speed controls (somewhat, not really)
-                                      : the quality of the palette generated.
-                                      : Value range is 1-10, where 1 is best
-                                      : and 10 is worst. Default is 4.
+           quality: <value>           : Controls the quality of the palette generated.
+                                      : Value range is 1-10, where 1 is the worst
+                                      : and 10 is the best. Lower quality may use
+                                      : less palette entries.
+                                      : Default is 8.
 
            images: <option>           : A list of images separated by a newline
                                       : and indented with a leading '-'
@@ -184,6 +185,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : Generally, you want transparency to be.
                                       : defined as a 'fixed-entry' color in the
                                       : palette instead of using this option.
+                                      : Default is '0'.
 
            style: <mode>              : Style controls the converted format of
                                       : images. In 'palette' mode, converted

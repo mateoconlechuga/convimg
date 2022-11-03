@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <string.h>
 
-static int output_bin_array(unsigned char *data, size_t size, FILE *fdo)
+static int output_bin_array(unsigned char *data, uint32_t size, FILE *fdo)
 {
     int ret = fwrite(data, size, 1, fdo);
 
@@ -66,7 +66,7 @@ int output_bin_image(struct output *output, struct image *image)
         goto error;
     }
 
-    ret = output_bin_array(image->data, image->size, fds);
+    ret = output_bin_array(image->data, image->data_size, fds);
 
     fclose(fds);
 
@@ -83,7 +83,7 @@ int output_bin_tileset(struct output *output, struct tileset *tileset)
 {
     char *source;
     FILE *fds;
-    int i;
+    uint32_t i;
 
     source = strings_concat(output->directory, tileset->image.name, ".bin", NULL);
     if (source == NULL)
@@ -102,11 +102,11 @@ int output_bin_tileset(struct output *output, struct tileset *tileset)
 
     if (tileset->p_table == true)
     {
-        int offset = tileset->nr_tiles * 3;
+        uint32_t offset = tileset->nr_tiles * 3;
 
         for (i = 0; i < tileset->nr_tiles; ++i)
         {
-            unsigned char tile_offset[3];
+            uint8_t tile_offset[3];
 
             tile_offset[0] = offset & 255;
             tile_offset[1] = (offset >> 8) & 255;
@@ -114,7 +114,7 @@ int output_bin_tileset(struct output *output, struct tileset *tileset)
 
             output_bin_array(tile_offset, sizeof tile_offset, fds);
 
-            offset += tileset->tiles[i].size;
+            offset += tileset->tiles[i].data_size;
         }
     }
 
@@ -122,7 +122,7 @@ int output_bin_tileset(struct output *output, struct tileset *tileset)
     {
         struct tileset_tile *tile = &tileset->tiles[i];
 
-        output_bin_array(tile->data, tile->size, fds);
+        output_bin_array(tile->data, tile->data_size, fds);
     }
 
     fclose(fds);
@@ -140,7 +140,7 @@ int output_bin_palette(struct output *output, struct palette *palette)
 {
     char *source;
     FILE *fds;
-    int i;
+    uint32_t i;
 
     source = strings_concat(output->directory, palette->name, ".bin", NULL);
     if (source == NULL)
@@ -189,7 +189,7 @@ int output_bin_include(struct output *output)
     char *include_name = NULL;
     char *tmp;
     FILE *fdi;
-    int i, j, k;
+    uint32_t i;
 
     if (output->include_file == NULL)
     {
@@ -226,6 +226,7 @@ int output_bin_include(struct output *output)
     {
         struct convert *convert = output->converts[i];
         struct tileset_group *tileset_group = convert->tileset_group;
+        uint32_t j;
 
         for (j = 0; j < convert->nr_images; ++j)
         {
@@ -236,6 +237,8 @@ int output_bin_include(struct output *output)
 
         if (tileset_group != NULL)
         {
+            uint32_t k;
+            
             for (k = 0; k < tileset_group->nr_tilesets; ++k)
             {
                 struct tileset *tileset = &tileset_group->tilesets[k];

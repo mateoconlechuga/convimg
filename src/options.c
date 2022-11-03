@@ -145,10 +145,11 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : index is 0 and increments by 1 moving\n");
     LOG_PRINT("                                  : from left to right.\n");
     LOG_PRINT("\n");
-    LOG_PRINT("       speed: <speed>             : Speed controls (somewhat, not really)\n");
-    LOG_PRINT("                                  : the quality of the palette generated.\n");
-    LOG_PRINT("                                  : Value range is 1-10, where 1 is best\n");
-    LOG_PRINT("                                  : and 10 is worst. Default is 4.\n");
+    LOG_PRINT("       quality: <value>           : Controls the quality of the palette generated.\n");
+    LOG_PRINT("                                  : Value range is 1-10, where 1 is the worst\n");
+    LOG_PRINT("                                  : and 10 is the best. Lower quality may use\n");
+    LOG_PRINT("                                  : less palette entries.\n");
+    LOG_PRINT("                                  : Default is 8.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       images: <option>           : A list of images separated by a newline\n");
     LOG_PRINT("                                  : and indented with a leading \'-\'\n");
@@ -225,6 +226,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : Generally, you want transparency to be.\n");
     LOG_PRINT("                                  : defined as a \'fixed-entry\' color in the\n");
     LOG_PRINT("                                  : palette instead of using this option.\n");
+    LOG_PRINT("                                  : Default is \'0\'.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       style: <mode>              : Style controls the converted format of\n");
     LOG_PRINT("                                  : images. In \'palette\' mode, converted\n");

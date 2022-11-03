@@ -38,9 +38,9 @@
 #include <errno.h>
 #include <string.h>
 
-static int output_asm_array(unsigned char *arr, size_t size, FILE *fdo)
+static int output_asm_array(unsigned char *arr, uint32_t size, FILE *fdo)
 {
-    size_t i;
+    uint32_t i;
 
     for (i = 0; i < size; ++i)
     {
@@ -87,10 +87,14 @@ int output_asm_image(struct output *output, struct image *image)
 
     fprintf(fds, "%s_width := %d\n", image->name, image->width);
     fprintf(fds, "%s_height := %d\n", image->name, image->height);
-    fprintf(fds, "%s_size := %d\n", image->name, image->size);
+    fprintf(fds, "%s_size := %d\n", image->name, image->uncompressed_size);
+    if (image->compressed)
+    {
+        fprintf(fds, "%s_compressed_size := %d\n", image->name, image->data_size);
+    }
     fprintf(fds, "%s:\n\tdb\t", image->name);
 
-    output_asm_array(image->data, image->size, fds);
+    output_asm_array(image->data, image->data_size, fds);
 
     fclose(fds);
 
@@ -107,7 +111,7 @@ int output_asm_tileset(struct output *output, struct tileset *tileset)
 {
     char *source = NULL;
     FILE *fds = NULL;
-    int i;
+    uint32_t i;
 
     source = strings_concat(output->directory, tileset->image.name, ".asm", NULL);
     if (source == NULL)
@@ -134,7 +138,7 @@ int output_asm_tileset(struct output *output, struct tileset *tileset)
 
         fprintf(fds, "%s_tile_%d:\n\tdb\t", tileset->image.name, i);
 
-        output_asm_array(tile->data, tile->size, fds);
+        output_asm_array(tile->data, tile->data_size, fds);
     }
 
     if (tileset->p_table == true)
@@ -163,8 +167,8 @@ int output_asm_palette(struct output *output, struct palette *palette)
 {
     char *source = NULL;
     FILE *fds = NULL;
-    int size;
-    int i;
+    uint32_t size;
+    uint32_t i;
 
     source = strings_concat(output->directory, palette->name, ".asm", NULL);
     if (source == NULL)
@@ -229,7 +233,7 @@ int output_asm_include(struct output *output)
     char *include_name = NULL;
     char *tmp = NULL;
     FILE *fdi = NULL;
-    int i, j, k;
+    uint32_t i;
 
     include_name = strdup(output->include_file);
     if (include_name == NULL)
@@ -261,6 +265,7 @@ int output_asm_include(struct output *output)
     {
         struct convert *convert = output->converts[i];
         struct tileset_group *tileset_group = convert->tileset_group;
+        uint32_t j;
 
         for (j = 0; j < convert->nr_images; ++j)
         {
@@ -271,6 +276,8 @@ int output_asm_include(struct output *output)
 
         if (tileset_group != NULL)
         {
+            uint32_t k;
+
             for (k = 0; k < tileset_group->nr_tilesets; ++k)
             {
                 struct tileset *tileset = &tileset_group->tilesets[k];

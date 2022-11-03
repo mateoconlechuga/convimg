@@ -45,14 +45,14 @@ static void swap_pixel(uint32_t *a, uint32_t *b)
     *b = temp;
 }
 
-static void image_flip_y(uint32_t *image, int width, int height)
+static void image_flip_y(uint32_t *data, uint32_t width, uint32_t height)
 {
-    int r;
+    uint32_t r;
 
     for (r = 0; r < height; ++r)
     {
-        uint32_t *row = image + (r * width);
-        int c;
+        uint32_t *row = data + (r * width);
+        uint32_t c;
 
         for (c = 0; c < width / 2; ++c)
         {
@@ -62,39 +62,50 @@ static void image_flip_y(uint32_t *image, int width, int height)
     }
 }
 
-static void image_flip_x(uint32_t *image, int width, int height)
+static void image_flip_x(uint32_t *data, uint32_t width, uint32_t height)
 {
-    int c;
+    uint32_t c;
 
     for (c = 0; c < width; ++c)
     {
-        int r;
+        uint32_t r;
 
         for (r = 0; r < height / 2; ++r)
         {
-            swap_pixel(image + (r * width) + c,
-                       image + (height - 1 - r) * width + c);
+            swap_pixel(data + (r * width) + c,
+                       data + (height - 1 - r) * width + c);
         }
     }
 }
 
-static void image_rotate_90(uint32_t *image, int width, int height)
+static int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height)
 {
-    const size_t size = (size_t)width * (size_t)height;
-    uint32_t *newimage = malloc(size * sizeof(uint32_t));
-    int i, j;
+    uint32_t *new_data;
+    uint32_t data_size;
+    uint32_t i;
+
+    data_size = width * height * sizeof(uint32_t);
+    new_data = malloc(data_size);
+    if (new_data == NULL)
+    {
+        return -1;
+    }
 
     for(i = 0; i < height; ++i)
     {
-        int o = (height - 1 - i) * width;
+        uint32_t o = (height - 1 - i) * width;
+        uint32_t j;
+
         for(j = 0; j < width; ++j)
         {
-            newimage[i + j * height] = image[o + j];
+            new_data[i + j * height] = data[o + j];
         }
     }
 
-    memcpy(image, newimage, size * sizeof(uint32_t));
-    free(newimage);
+    memcpy(data, new_data, data_size);
+    free(new_data);
+
+    return 0;
 }
 
 void image_init(struct image *image, const char *path)
@@ -103,42 +114,64 @@ void image_init(struct image *image, const char *path)
     image->name = strings_basename(path);
     image->path = strdup(path);
     image->data = NULL;
+    image->data_size = 0;
     image->width = 0;
     image->height = 0;
-    image->size = 0;
 
     /* set by convert */
     image->quantize_speed = 1;
     image->dither =  0.0;
-    image->compressed = false;
     image->rlet = false;
     image->rotate = 0;
     image->flip_x = false;
     image->flip_y = false;
-    image->compressed_size = 0;
-    image->transparent_index = -1;
+    image->compressed = false;
+    image->uncompressed_size = 0;
+    image->transparent_index = 0;
 }
 
 int image_load(struct image *image)
 {
-    int width;
-    int height;
-    int channels;
     uint32_t *data;
+    uint32_t width;
+    uint32_t height;
+    uint32_t stride;
+    int w;
+    int h;
+    int c;
 
-    data = (uint32_t*)stbi_load(image->path,
-                                &width,
-                                &height,
-                                &channels,
-                                STBI_rgb_alpha);
+    data = (uint32_t *)stbi_load(image->path,
+                                 &w, &h, &c,
+                                 STBI_rgb_alpha);
     if (data == NULL)
     {
         LOG_ERROR("Could not load image \'%s\'\n", image->path);
-        return -1;
+        goto error;
     }
 
-    image->size = width * height * sizeof(uint32_t);
-    image->compressed = false;
+    if (w <= 0 || h <= 0)
+    {
+        LOG_ERROR("Invalid width/height in image \'%s\'\n", image->path);
+        goto error;
+    }
+
+    /* library output is int, convert to unsigned */
+    width = w;
+    height = h;
+
+    stride = width * sizeof(uint32_t);
+    if (stride / width != sizeof(uint32_t))
+    {
+        LOG_ERROR("Image is too large: \'%s\'\n", image->path);
+        goto error;
+    }
+
+    image->data_size = height * stride;
+    if (image->data_size / height != stride)
+    {
+        LOG_ERROR("Image is too large: \'%s\'\n", image->path);
+        goto error;
+    }
 
     if (image->flip_x)
     {
@@ -159,14 +192,17 @@ int image_load(struct image *image)
         case 0:
             image->width = width;
             image->height = height;
-            image->data = (uint8_t*)data;
+            image->data = (uint8_t *)data;
             break;
 
         case 90:
             image->width = height;
             image->height = width;
-            image_rotate_90(data, width, height);
-            image->data = (uint8_t*)data;
+            if (image_rotate_90(data, width, height))
+            {
+                goto error;
+            }
+            image->data = (uint8_t *)data;
             break;
 
         case 180:
@@ -174,20 +210,27 @@ int image_load(struct image *image)
             image->height = height;
             image_flip_y(data, width, height);
             image_flip_x(data, width, height);
-            image->data = (uint8_t*)data;
+            image->data = (uint8_t *)data;
             break;
 
         case 270:
             image->width = height;
             image->height = width;
-            image_rotate_90(data, width, height);
+            if (image_rotate_90(data, width, height))
+            {
+                goto error;
+            }
             image_flip_y(data, width, height);
             image_flip_x(data, width, height);
-            image->data = (uint8_t*)data;
+            image->data = (uint8_t *)data;
             break;
     }
 
     return 0;
+
+error:
+    free(data);
+    return -1;
 }
 
 void image_free(struct image *image)
@@ -204,44 +247,31 @@ void image_free(struct image *image)
 
 int image_add_width_and_height(struct image *image)
 {
-    if (image == NULL)
-    {
-        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
-        return -1;
-    }
-
-    image->data = realloc(image->data, image->size + WIDTH_HEIGHT_SIZE);
+    image->data = realloc(image->data, image->data_size + WIDTH_HEIGHT_SIZE);
     if (image->data == NULL)
     {
         return -1;
     }
 
-    memmove(image->data + WIDTH_HEIGHT_SIZE, image->data, image->size);
+    memmove(image->data + WIDTH_HEIGHT_SIZE, image->data, image->data_size);
 
     image->data[0] = image->width;
     image->data[1] = image->height;
 
-    image->size += WIDTH_HEIGHT_SIZE;
+    image->data_size += WIDTH_HEIGHT_SIZE;
 
     return 0;
 }
 
-int image_rlet(struct image *image, int transparent_index)
+int image_rlet(struct image *image, uint32_t transparent_index)
 {
     uint8_t *new_data;
-    size_t size;
-    int new_size = 0;
-    int i;
-
-    if (transparent_index < 0)
-    {
-        LOG_ERROR("Transparent color index not specified for RLET mode.\n");
-        return -1;
-    }
+    uint32_t new_size;
+    uint32_t i;
 
     /* multiply by 3 for worst-case encoding */
-    size = image->width * image->height * 3;
-    new_data = malloc(size);
+    new_size = 0;
+    new_data = malloc(image->width * image->height * 3);
     if (new_data == NULL)
     {
         return -1;
@@ -249,12 +279,13 @@ int image_rlet(struct image *image, int transparent_index)
 
     for (i = 0; i < image->height; i++)
     {
-        int offset = i * image->width;
-        int left = image->width;
+        uint32_t offset = i * image->width;
+        uint32_t left = image->width;
 
         while (left)
         {
-            int o, t;
+            uint32_t o;
+            uint32_t t;
 
             t = o = 0;
             while (t < left && transparent_index == image->data[t + offset])
@@ -287,20 +318,19 @@ int image_rlet(struct image *image, int transparent_index)
 
     free(image->data);
     image->data = new_data;
-    image->size = new_size;
+    image->data_size = new_size;
 
     return 0;
 }
 
-int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
+int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
 {
-    int shift;
-    int shift_mult;
-    int inc;
-    int j, k;
-    int new_size;
     uint8_t *new_data;
-    size_t size;
+    uint32_t new_size;
+    uint32_t j;
+    uint8_t shift;
+    uint8_t shift_mult;
+    uint8_t inc;
 
     switch (bpp)
     {
@@ -314,6 +344,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
             shift_mult = 1;
             inc = 8;
             break;
+            
         case BPP_2:
             if (nr_palette_entries > 4)
             {
@@ -324,6 +355,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
             shift_mult = 2;
             inc = 4;
             break;
+
         case BPP_4:
             if (nr_palette_entries > 16)
             {
@@ -334,8 +366,10 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
             shift_mult = 4;
             inc = 2;
             break;
+
         case BPP_8:
             return 0;
+
         default:
             LOG_ERROR("Invalid BPP mode.\n");
             return -1;
@@ -348,17 +382,18 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
         return -1;
     }
 
-    size = image->width * image->height;
-    new_data = malloc(size);
+    new_size = 0;
+    new_data = malloc(image->width * image->height);
     if (new_data == NULL)
     {
         return -1;
     }
 
-    new_size = 0;
-
     for (j = 0; j < image->height; ++j)
     {
+        uint32_t offset = j * image->width;
+        uint32_t k;
+
         for (k = 0; k < image->width; k += inc)
         {
             int cur_inc = inc;
@@ -367,7 +402,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
 
             for (col = 0; col < inc; col++)
             {
-                byte |= image->data[k + (j * image->width) + col] << (--cur_inc * shift_mult);
+                byte |= image->data[k + offset + col] << (--cur_inc * shift_mult);
             }
 
             new_data[new_size] = byte;
@@ -377,16 +412,16 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
 
     free(image->data);
     image->data = new_data;
-    image->size = new_size;
+    image->data_size = new_size;
 
     return 0;
 }
 
-int image_add_offset(struct image *image, int offset)
+int image_add_offset(struct image *image, uint32_t offset)
 {
-    int i;
+    uint32_t i;
 
-    for (i = 0; i < image->height * image->width; ++i)
+    for (i = 0; i < image->data_size; ++i)
     {
         image->data[i] += offset;
     }
@@ -394,27 +429,28 @@ int image_add_offset(struct image *image, int offset)
     return 0;
 }
 
-int image_remove_omits(struct image *image, int *omit_indices, int nr_omit_indices)
+int image_remove_omits(struct image *image, uint8_t *omit_indices, uint32_t nr_omit_indices)
 {
-    int i, j;
-    int new_size = 0;
     uint8_t *new_data;
-    size_t size;
+    uint32_t new_size;
+    uint32_t i;
 
     if (nr_omit_indices == 0)
     {
         return 0;
     }
 
-    size = image->width * image->height;
-    new_data = malloc(size);
+    new_size = 0;
+    new_data = malloc(image->data_size);
     if (new_data == NULL)
     {
         return -1;
     }
 
-    for (i = 0; i < size; ++i)
+    for (i = 0; i < image->data_size; ++i)
     {
+        uint32_t j;
+        
         for (j = 0; j < nr_omit_indices; ++j)
         {
             if (image->data[i] == omit_indices[j])
@@ -432,28 +468,21 @@ nextbyte:
 
     free(image->data);
     image->data = new_data;
-    image->size = new_size;
+    image->data_size = new_size;
 
     return 0;
 }
 
 int image_compress(struct image *image, compress_mode_t mode)
 {
-    size_t size;
-
-    if (image == NULL)
-    {
-        return -1;
-    }
-
-    size = image->width * image->height;
+    size_t size = image->data_size;
 
     if (compress_array(image->data, &size, mode))
     {
         return -1;
     }
 
-    image->compressed_size = size;
+    image->data_size = size;
 
     return 0;
 }
@@ -463,10 +492,10 @@ int image_quantize(struct image *image, const struct palette *palette)
     liq_image *liqimage = NULL;
     liq_result *liqresult = NULL;
     liq_attr *liqattr = NULL;
-    uint8_t *data = NULL;
-    bool bad_alpha = false;
-    size_t size;
-    int i;
+    uint8_t *new_data = NULL;
+    uint32_t new_size;
+    uint32_t i;
+    bool bad_alpha;
 
     liqattr = liq_attr_create();
     if (liqattr == NULL)
@@ -515,25 +544,26 @@ int image_quantize(struct image *image, const struct palette *palette)
 
     liq_set_dithering_level(liqresult, image->dither);
 
-    size = image->width * image->height;
-    data = malloc(size);
-    if (data == NULL)
+    new_size = image->width * image->height;
+    new_data = malloc(new_size);
+    if (new_data == NULL)
     {
-        LOG_ERROR("Failed to allocate \'%s\'\n", image->path);
         liq_result_destroy(liqresult);
         liq_image_destroy(liqimage);
         liq_attr_destroy(liqattr);
         return -1;
     }
 
-    liq_write_remapped_image(liqresult, liqimage, data, size);
+    liq_write_remapped_image(liqresult, liqimage, new_data, new_size);
+
+    bad_alpha = false;
 
     /* loop through each input pixel and insert exact fixed colors */
-    for (i = 0; i < size; ++i)
+    for (i = 0; i < image->width * image->height; ++i)
     {
-        int offset = i * 4;
+        uint32_t offset = i * sizeof(uint32_t);
         uint8_t r, g, b, alpha;
-        int j;
+        uint32_t j;
 
         r = image->data[offset + 0];
         g = image->data[offset + 1];
@@ -543,14 +573,7 @@ int image_quantize(struct image *image, const struct palette *palette)
         /* if alpha == 0, this is a transparent pixel */
         if (alpha == 0)
         {
-            if (image->transparent_index < 0)
-            {
-                LOG_ERROR("Encountered pixel alpha of 0, but `transparent-index` is not set.\n");
-                free(data);
-                return -1;
-            }
-
-            data[i] = image->transparent_index;
+            new_data[i] = image->transparent_index;
             continue;
         }
 
@@ -573,14 +596,14 @@ int image_quantize(struct image *image, const struct palette *palette)
                 g == fixed->orig_color.g &&
                 b == fixed->orig_color.b)
             {
-                data[i] = fixed->index;
+                new_data[i] = fixed->index;
             }
         }
     }
 
     free(image->data);
-    image->data = data;
-    image->size = size;
+    image->data = new_data;
+    image->data_size = new_size;
 
     liq_result_destroy(liqresult);
     liq_image_destroy(liqimage);
@@ -597,12 +620,11 @@ int image_quantize(struct image *image, const struct palette *palette)
 
 int image_colorspace_convert(struct image *image, color_format_t fmt)
 {
-    bool bad_alpha = false;
-    size_t size;
-    size_t new_size;
-    uint8_t *data;
+    uint8_t *new_data;
     uint8_t *dst;
-    int i;
+    uint32_t new_size;
+    bool bad_alpha;
+    uint32_t i;
 
     switch (fmt)
     {
@@ -616,19 +638,19 @@ int image_colorspace_convert(struct image *image, color_format_t fmt)
             return -1;
     }
 
-    data = malloc(new_size);
-    if (data == NULL)
+    new_data = malloc(new_size);
+    if (new_data == NULL)
     {
         return -1;
     }
 
-    dst = data;
-    size = image->width * image->height;
+    dst = new_data;
+    bad_alpha = false;
 
     /* loop through each input pixel and output new format */
-    for (i = 0; i < size; ++i)
+    for (i = 0; i < image->width * image->height; ++i)
     {
-        int offset = i * 4;
+        uint32_t offset = i * sizeof(uint32_t);
         struct color color;
         uint16_t target;
         uint8_t alpha;
@@ -669,8 +691,8 @@ int image_colorspace_convert(struct image *image, color_format_t fmt)
     }
 
     free(image->data);
-    image->data = data;
-    image->size = new_size;
+    image->data = new_data;
+    image->data_size = new_size;
 
     if (bad_alpha)
     {

@@ -37,9 +37,9 @@
 #include <stdio.h>
 #include <errno.h>
 
-static unsigned int appvar_checksum(uint8_t *arr, size_t size)
+static uint32_t appvar_checksum(uint8_t *arr, size_t size)
 {
-    unsigned int checksum = 0;
+    uint32_t checksum = 0;
     size_t i;
 
     for (i = 0; i < size; ++i)
@@ -56,7 +56,7 @@ int appvar_write(struct appvar *a, const char *path)
     static const uint8_t file_header[11] =
         { 0x2A,0x2A,0x54,0x49,0x38,0x33,0x46,0x2A,0x1A,0x0A,0x00 };
     static uint8_t output[APPVAR_MAX_FILE_SIZE];
-    unsigned int checksum;
+    uint32_t checksum;
     FILE *fdv = NULL;
     size_t name_size;
     size_t file_size;

@@ -50,21 +50,21 @@ struct image
     char *name;
     char *path;
     uint8_t *data;
-    int width;
-    int height;
-    int size;
+    uint32_t data_size;
+    uint32_t uncompressed_size;
+    uint32_t width;
+    uint32_t height;
 
     /* set by convert */
-    int quantize_speed;
+    uint32_t transparent_index;
+    uint32_t quantize_speed;
+    uint32_t rotate;
     bool gfx;
-    float dither;
     bool compressed;
     bool rlet;
-    int rotate;
     bool flip_x;
     bool flip_y;
-    int compressed_size;
-    int transparent_index;
+    float dither;
 };
 
 #define WIDTH_HEIGHT_SIZE 2
@@ -73,18 +73,18 @@ void image_init(struct image *image, const char *path);
 
 int image_load(struct image *image);
 
-int image_rlet(struct image *image, int transparent_index);
+int image_rlet(struct image *image, uint32_t transparent_index);
 
 int image_add_width_and_height(struct image *image);
 
-int image_add_offset(struct image *image, int offset);
+int image_add_offset(struct image *image, uint32_t offset);
 
 int image_compress(struct image *image, compress_mode_t mode);
 
-int image_remove_omits(struct image *image, int *omit_indices,
-    int nr_omit_indices);
+int image_remove_omits(struct image *image, uint8_t *omit_indices,
+    uint32_t nr_omit_indices);
 
-int image_set_bpp(struct image *image, bpp_t bpp, int palette_nr_entries);
+int image_set_bpp(struct image *image, bpp_t bpp, uint32_t palette_nr_entries);
 
 int image_quantize(struct image *image, const struct palette *palette);
 

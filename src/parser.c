@@ -75,8 +75,8 @@ static void parse_show_error(const char *problem, yaml_mark_t mark)
 static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
 {
     struct palette *palette;
-    size_t resize;
-    int i;
+    uint32_t resize;
+    uint32_t i;
 
     LOG_DEBUG("Allocating palette: %s\n", (char*)name);
 
@@ -120,7 +120,7 @@ static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
 static struct convert *parser_alloc_convert(struct yaml *yaml, void *name)
 {
     struct convert *convert;
-    size_t resize;
+    uint32_t resize;
 
     LOG_DEBUG("Allocating convert: %s\n", (char*)name);
 
@@ -149,7 +149,7 @@ static struct convert *parser_alloc_convert(struct yaml *yaml, void *name)
 static struct output *parser_alloc_output(struct yaml *yaml, void *type)
 {
     struct output *output;
-    size_t resize;
+    uint32_t resize;
 
     LOG_DEBUG("Allocating output: %s\n", (char*)type);
 
@@ -312,13 +312,12 @@ static int parse_palette_entry(struct palette_entry *entry, yaml_document_t *doc
 static int parse_palette_image(struct palette *palette, const char *path)
 {
     struct image image;
-    int i;
+    uint32_t i;
 
     image_init(&image, path);
 
     if (image_load(&image))
     {
-        LOG_ERROR("Could not load image.\n");
         goto fail;
     }
 
@@ -332,8 +331,8 @@ static int parse_palette_image(struct palette *palette, const char *path)
     {
         struct palette_entry entry;
         uint8_t alpha;
-        int o = i * 4;
-        int j;
+        uint32_t o = i * sizeof(uint32_t);
+        uint32_t j;
 
         memset(&entry, 0, sizeof entry);
 
@@ -586,6 +585,17 @@ static int parse_palette(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
                 }
                 palette->quantize_speed = tmpi;
             }
+            else if (parse_str_cmp("quality", key))
+            {
+                tmpi = strtol(value, NULL, 0);
+                if (tmpi > 10 || tmpi < 1)
+                {
+                    LOG_ERROR("Invalid quantization quality.\n");
+                    parser_show_mark_error(keyn->start_mark);
+                    return -1;
+                }
+                palette->quantize_speed = 11 - tmpi;
+            }
             else if (parse_str_cmp("fixed-entries", key))
             {
                 if (parse_palette_fixed_entries(palette, doc, valuen))
@@ -620,7 +630,15 @@ static int parse_convert_omits(struct convert *convert, yaml_document_t *doc, ya
         yaml_node_t *node = yaml_document_get_node(doc, *item);
         if (node != NULL)
         {
-            int index = strtol((char*)node->data.scalar.value, NULL, 0);
+            long index = strtol((char *)node->data.scalar.value, NULL, 0);
+
+            if (index > 255 || index < 0)
+            {
+                LOG_ERROR("Invalid omit index value %ld\n", index);
+                parser_show_mark_error(node->start_mark);
+                return -1;
+            }
+
             convert->omit_indices[convert->nr_omit_indices] = index;
             convert->nr_omit_indices++;
         }
@@ -935,6 +953,17 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
             }
             convert->quantize_speed = tmpi;
         }
+        else if (parse_str_cmp("quality", key))
+        {
+            tmpi = strtol(value, NULL, 0);
+            if (tmpi > 10 || tmpi < 1)
+            {
+                LOG_ERROR("Invalid quantization quality.\n");
+                parser_show_mark_error(keyn->start_mark);
+                return -1;
+            }
+            convert->quantize_speed = 11 - tmpi;
+        }
         else if (parse_str_cmp("transparent-index", key) ||
                  parse_str_cmp("transparent-color-index", key))
         {
@@ -986,7 +1015,10 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         }
         else if (parse_str_cmp("omit-indices", key))
         {
-            parse_convert_omits(convert, doc, valuen);
+            if (parse_convert_omits(convert, doc, valuen))
+            {
+                return -1;
+            }
         }
         else if (parse_str_cmp("images", key))
         {
@@ -1317,7 +1349,7 @@ static int parse_outputs(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *r
 
 static int parser_validate(struct yaml *yaml)
 {
-    int i;
+    uint32_t i;
 
     for (i = 0; i < yaml->nr_converts; ++i)
     {
@@ -1346,7 +1378,7 @@ static int parser_validate(struct yaml *yaml)
                         convert->name);
                     return -1;
                 }
-                if (convert->transparent_index >= 0)
+                if (convert->transparent_index > 0)
                 {
                     LOG_ERROR("Convert \'%s\' style does not support \'transparent-index\' option.\n",
                         convert->name);
@@ -1503,7 +1535,7 @@ int parser_open(struct yaml *yaml, const char *path)
 
 void parser_close(struct yaml *yaml)
 {
-    int i;
+    uint32_t i;
 
     for (i = 0; i < yaml->nr_outputs; ++i)
     {

@@ -65,10 +65,10 @@ struct output
     char *directory;
     char **convert_names;
     struct convert **converts;
-    int nr_converts;
+    uint32_t nr_converts;
     char **palette_names;
     struct palette **palettes;
-    int nr_palettes;
+    uint32_t nr_palettes;
     output_format_t format;
     const char *constant;
     bool palette_sizes;
@@ -83,11 +83,11 @@ void output_free(struct output *output);
 
 int output_find_palettes(struct output *output,
     struct palette **palettes,
-    int nr_palettes);
+    uint32_t nr_palettes);
 
 int output_find_converts(struct output *output,
     struct convert **converts,
-    int nr_converts);
+    uint32_t nr_converts);
 
 int output_add_convert(struct output *output,
     const char *name);
@@ -97,11 +97,11 @@ int output_add_palette(struct output *output,
 
 int output_converts(struct output *output,
     struct convert **converts,
-    int nr_converts);
+    uint32_t nr_converts);
 
 int output_palettes(struct output *output,
     struct palette **palettes,
-    int nr_palettes);
+    uint32_t nr_palettes);
 
 int output_include(struct output *output);
 

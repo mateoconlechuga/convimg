@@ -27,10 +27,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 CC := gcc
-CFLAGS = -Wall -Wno-unused-but-set-variable -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3 -flto
+CFLAGS = -Wall -Wextra -Wno-unused-but-set-variable -g3 -DNDEBUG -DLOG_BUILD_LEVEL=3
 CFLAGS_LIQ = -Wall -std=c99 -O3 -DNDEBUG -fno-math-errno -funroll-loops -fomit-frame-pointer -Wno-unknown-pragmas -Wno-attributes -flto
 CFLAGS_LIBYAML = -Wall -std=gnu99 -O3 -DYAML_VERSION_MAJOR=1 -DYAML_VERSION_MINOR=0 -DYAML_VERSION_PATCH=0 -DYAML_VERSION_STRING="\"1.0.0\"" -flto
-LDFLAGS = -flto
+LDFLAGS =
 
 BINDIR := ./bin
 OBJDIR := ./obj
@@ -138,11 +138,11 @@ LIBRARIES = m
 all: $(BINDIR)/$(TARGET)
 
 release: $(BINDIR)/$(TARGET)
+	$(Q)$(call STRIP,$@)
 
 $(BINDIR)/$(TARGET): $(OBJECTS)
 	$(Q)$(call MKDIR,$(call NATIVEPATH,$(@D)))
 	$(Q)$(CC) $(LDFLAGS) $(call NATIVEPATH,$^) -o $(call NATIVEPATH,$@) $(addprefix -l, $(LIBRARIES))
-	$(Q)$(call STRIP,$@)
 
 $(OBJDIR)/deps/glob/%.o: $(SRCDIR)/deps/glob/%.c
 	$(Q)$(call MKDIR,$(call NATIVEPATH,$(@D)))

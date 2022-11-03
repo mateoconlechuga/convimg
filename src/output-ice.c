@@ -40,9 +40,9 @@
 #include <errno.h>
 #include <string.h>
 
-static int output_ice_array(unsigned char *data, size_t size, FILE *fd)
+static int output_ice_array(unsigned char *data, uint32_t size, FILE *fd)
 {
-    size_t i;
+    uint32_t i;
 
     fprintf(fd, "\"");
 
@@ -67,8 +67,8 @@ int output_ice_image(struct output *output, struct image *image)
         return -1;
     }
 
-    fprintf(fd, "%s | %d bytes\n", image->name, image->size);
-    output_ice_array(image->data, image->size, fd);
+    fprintf(fd, "%s | %u bytes\n", image->name, image->data_size);
+    output_ice_array(image->data, image->data_size, fd);
 
     fclose(fd);
 
@@ -89,7 +89,7 @@ int output_ice_palette(struct output *output, struct palette *palette)
 {
     unsigned int size;
     FILE *fd;
-    int i;
+    uint32_t i;
 
     fd = fopen(output->include_file, "at");
     if (fd == NULL)

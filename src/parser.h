@@ -50,9 +50,9 @@ struct yaml
     struct palette *cur_palette;
     struct convert *cur_convert;
     struct output *cur_output;
-    int nr_palettes;
-    int nr_converts;
-    int nr_outputs;
+    uint32_t nr_palettes;
+    uint32_t nr_converts;
+    uint32_t nr_outputs;
 };
 
 int parser_open(struct yaml *yaml, const char *path);

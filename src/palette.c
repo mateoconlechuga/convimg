@@ -293,11 +293,10 @@ void palette_sort(struct palette *palette)
 
 int palette_generate_with_images(struct palette *palette)
 {
+    const liq_palette *liqpalette;
     liq_error liqerr;
     liq_attr *attr;
     liq_histogram *hist;
-    const liq_palette *liqpalette;
-    bool need_quantize;
     uint8_t *colors;
     uint32_t colors_size;
     uint32_t max_index;
@@ -313,7 +312,6 @@ int palette_generate_with_images(struct palette *palette)
 
     max_index = 0;
     exact_entries = 0;
-    need_quantize = false;
     hist = NULL;
 
     /* set the total number of palette entries that will be */
@@ -429,9 +427,17 @@ int palette_generate_with_images(struct palette *palette)
 
             if (addcolor)
             {
-                int offset = nr_colors * 4;
+                uint32_t offset = nr_colors * sizeof(uint32_t);
 
                 color_normalize(&color, palette->fmt);
+
+                if (nr_colors > 536870912)
+                {
+                    LOG_ERROR("Too many colors to quantize\n");
+                    free(image->data);
+                    free(colors);
+                    return -1;
+                }
 
                 /* every 1MiB allocate more memory for storing the pixels */
                 if ((nr_colors % 1048576 == 0))
@@ -452,45 +458,43 @@ int palette_generate_with_images(struct palette *palette)
                 nr_colors++;
             }
         }
-        
+
         free(image->data);
-
-        if (nr_colors > 0)
-        {
-            liq_image *liqimage = liq_image_create_rgba(attr,
-                colors, 1, nr_colors, 0);
-            if (liqimage == NULL)
-            {
-                LOG_ERROR("Failed to create palette - image may be too large\n");
-                liq_histogram_destroy(hist);
-                liq_attr_destroy(attr);
-                return -1;
-            }
-
-            liqerr = liq_histogram_add_image(hist, attr, liqimage);
-            if (liqerr != LIQ_OK)
-            {
-                LOG_ERROR("Failed to create palette histogram \'%s\'\n", palette->name);
-                liq_histogram_destroy(hist);
-                liq_attr_destroy(attr);
-                return -1;
-            }
-
-            liq_image_destroy(liqimage);
-            need_quantize = true;
-        }
-
         ++i;
     }
 
-    if (need_quantize == true)
+    if (nr_colors > 0)
     {
         liq_result *liqresult = NULL;
+
+        liq_image *liqimage = liq_image_create_rgba(attr,
+            colors, 1, nr_colors, 0);
+        if (liqimage == NULL)
+        {
+            LOG_ERROR("Failed to create palette - image may be too large\n");
+            liq_histogram_destroy(hist);
+            liq_attr_destroy(attr);
+            return -1;
+        }
+
+        liqerr = liq_histogram_add_image(hist, attr, liqimage);
+        if (liqerr != LIQ_OK)
+        {
+            LOG_ERROR("Failed to create palette histogram.\n");
+            liq_histogram_destroy(hist);
+            liq_image_destroy(liqimage);
+            liq_attr_destroy(attr);
+            free(colors);
+            return -1;
+        }
+
+        liq_image_destroy(liqimage);
+        free(colors);
 
         liqerr = liq_histogram_quantize(hist, attr, &liqresult);
         if (liqerr != LIQ_OK)
         {
-            LOG_ERROR("Failed to generate palette \'%s\'\n", palette->name);
+            LOG_ERROR("Failed to quantize palette.\n");
             liq_histogram_destroy(hist);
             liq_attr_destroy(attr);
             return -1;

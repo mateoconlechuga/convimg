@@ -170,7 +170,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : Another optional boolean field is
                                       : 'pointer-table', which will output
                                       : pointers to each tile.
-                                      : The default is 'true'.
+                                      : Default is 'true'.
 
            transparent-index: <index> : Transparent color index in the palette
                                       : that represents a transparent color.
@@ -194,18 +194,27 @@ This program is used to convert images to other formats, specifically for the TI
                                       : transparent colors, essentially reducing
                                       : the output size if there are many
                                       : transparent pixels.
+                                      : In 'rgb565' and 'bgr565' styles,
+                                      : a palette is not used, but rather colors
+                                      : are converted directly to their RGB
+                                      : representations in 565 color.
+                                      : These two styles may limit the other
+                                      : options (a palette is also not required
+                                      : to be listed in the 'palettes' section).
+                                      : Default is 'normal'
 
            compress: <mode>           : After quantization, images can then
                                       : optionally be compressed.
                                       : Available modes: 'zx0', 'zx7'
                                       : The 'zx7' compression time is faster,
-                                      : however 'zx0' is usually better.
-                                      : The images will then be required to be
-                                      : decompressed before use.
+                                      : however 'zx0' usually has better results.
+                                      : The images are required to be decompressed
+                                      : before use.
 
            width-and-height: <bool>   : Optionally control if the width and
                                       : height should be placed in the converted
                                       : image; the first two bytes respectively.
+                                      : Default is 'true'
 
            flip-x: <bool>             : Flip input images vertically across the
                                       : x-axis
@@ -213,13 +222,13 @@ This program is used to convert images to other formats, specifically for the TI
            flip-y: <bool>             : Flip input images horizontally across the
                                       : y-axis
 
-           rotate: <degrees>          : Rotate input images 0,90,180,270 degrees
+           rotate: <degrees>          : Rotate input images 0, 90, 180, 270 degrees
 
            bpp: <bits-per-pixel>      : Control how many bits per pixel are used
                                       : This also affects the size of the
                                       : generated palette; use with caution.
-                                      : Available options are 1,2,4,8.
-                                      : The default is 8.
+                                      : Available options are 1, 2, 4, 8.
+                                      : Default is '8'.
 
            omit-indices: [<list>]     : Omits the specified palette indices
                                       : from the converted image. May be useful
@@ -260,11 +269,10 @@ This program is used to convert images to other formats, specifically for the TI
                <bool>                 : entry containing the total size in
                                       : bytes of the palette.
                                       : Default is 'false'.
-                                      : Optional parameter, default false.
 
            const: <bool>              : Only applicable to C outputs.
                                       : Adds the 'const' parameter to output types.
-                                      : Optional parameter, default false.
+                                      : Default is 'false'.
 
        AppVars are a special type of output and require a few more options.
        The below options are only available for AppVars, however the above
@@ -277,13 +285,11 @@ This program is used to convert images to other formats, specifically for the TI
                                       : image and palette data. format can be
                                       : 'c', 'ice', 'asm', or 'none'.
                                       : Default is 'none'.
-                                      : Optional parameter.
 
            source-init: <bool>        : Whether to output AppVar initialization
                                       : code for loading and setting up image
                                       : and palette pointers. Default is 'true'
                                       : Only compatible with source-format: 'c'.
-                                      : Optional parameter.
 
            lut-entries: <bool>        : Embeddeds a lookup table (LUT) for
                                       : determining the image offsets in the
@@ -292,12 +298,11 @@ This program is used to convert images to other formats, specifically for the TI
                                       : the LUT entries. Entry sizes are
                                       : controlled via the parameter
                                       : 'lut-entry-size'. Default is 'false'.
-                                      : Optional parameter.
 
            lut-entry-size: <int>      : Controls the size of LUT entries. Can be
                                       : '2' for 2-byte or '3' for 3-byte
-                                      : entries. Default is '3'.
-                                      : Optional parameter.
+                                      : entries.
+                                      : Default is '3'.
 
            compress: <mode>           : Compress AppVar data.
                                       : Available 'mode's: 'zx0', 'zx7'.
@@ -312,7 +317,7 @@ This program is used to convert images to other formats, specifically for the TI
 
            archived: <bool>           : 'true' makes the AppVar archived, while
                                       : 'false' leaves it unarchived.
-                                      : Optional parameter, default false.
+                                      : Default is 'false'.
 
     ----------------------------------------------------------------------------
 
@@ -324,3 +329,4 @@ This program is used to convert images to other formats, specifically for the TI
             libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx0,zx7: (c) 2012-2021 by Einar Saukas.
+

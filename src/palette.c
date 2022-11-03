@@ -298,10 +298,13 @@ int palette_generate_with_images(struct palette *palette)
     liq_histogram *hist;
     const liq_palette *liqpalette;
     bool need_quantize;
+    uint8_t *colors;
+    uint32_t colors_size;
     uint32_t max_index;
     uint32_t exact_entries;
     uint32_t max_entries;
     uint32_t unused;
+    uint32_t nr_colors;
     uint32_t i;
 
     attr = liq_attr_create();
@@ -367,12 +370,15 @@ int palette_generate_with_images(struct palette *palette)
     }
 
     i = 0;
+    colors = NULL;
+    colors_size = 0;
+
+    nr_colors = 0;
 
     /* quantize the images into a palette */
     while (i < palette->nr_images && max_entries > 1)
     {
         struct image *image = &palette->images[i];
-        uint32_t numcolors = 0;
         uint32_t j;
 
         LOG_INFO(" - Reading image \'%s\'\n", image->path);
@@ -423,43 +429,57 @@ int palette_generate_with_images(struct palette *palette)
 
             if (addcolor)
             {
-                int offset = numcolors * 4;
+                int offset = nr_colors * 4;
 
                 color_normalize(&color, palette->fmt);
 
-                image->data[offset + 0] = color.r;
-                image->data[offset + 1] = color.g;
-                image->data[offset + 2] = color.b;
-                image->data[offset + 3] = alpha;
+                /* every 1MiB allocate more memory for storing the pixels */
+                if ((nr_colors % 1048576 == 0))
+                {
+                    colors_size += (1048576 * sizeof(uint32_t));
+                    colors = realloc(colors, colors_size);
+                    if (colors == NULL)
+                    {
+                        return -1;
+                    }
+                }
 
-                numcolors++;
+                colors[offset + 0] = color.r;
+                colors[offset + 1] = color.g;
+                colors[offset + 2] = color.b;
+                colors[offset + 3] = alpha;
+
+                nr_colors++;
             }
         }
+        
+        free(image->data);
 
-        if (numcolors > 0)
+        if (nr_colors > 0)
         {
             liq_image *liqimage = liq_image_create_rgba(attr,
-                image->data,
-                numcolors,
-                1,
-                0);
-
-
-            LOG_INFO("numcolors: %u\n", numcolors);
-
-            liqerr = liq_histogram_add_image(hist, attr, liqimage);
-            if (liqerr != LIQ_OK)
+                colors, 1, nr_colors, 0);
+            if (liqimage == NULL)
             {
-                LOG_ERROR("Failed to add palette histogram \'%s\'\n", palette->name);
+                LOG_ERROR("Failed to create palette - image may be too large\n");
                 liq_histogram_destroy(hist);
                 liq_attr_destroy(attr);
                 return -1;
             }
+
+            liqerr = liq_histogram_add_image(hist, attr, liqimage);
+            if (liqerr != LIQ_OK)
+            {
+                LOG_ERROR("Failed to create palette histogram \'%s\'\n", palette->name);
+                liq_histogram_destroy(hist);
+                liq_attr_destroy(attr);
+                return -1;
+            }
+
             liq_image_destroy(liqimage);
             need_quantize = true;
         }
 
-        free(image->data);
         ++i;
     }
 

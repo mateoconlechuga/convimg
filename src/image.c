@@ -38,8 +38,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "deps/stb/stb_image.h"
 
-#include <math.h>
-
 static void swap_pixel(uint32_t *a, uint32_t *b)
 {
     uint32_t temp = *a;
@@ -379,8 +377,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, int nr_palette_entries)
 
     free(image->data);
     image->data = new_data;
-
-    image->size = (int)ceilf((float)image->width / (float)inc) * image->height;
+    image->size = new_size;
 
     return 0;
 }

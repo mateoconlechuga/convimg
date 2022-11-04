@@ -258,7 +258,7 @@ nextconvert:
 
 int output_find_palettes(struct output *output, struct palette **palettes, uint32_t nr_palettes)
 {
-    uint32_t i;
+    uint32_t i = 0;
 
     if (palettes == NULL || nr_palettes == 0)
     {

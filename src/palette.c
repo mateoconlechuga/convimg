@@ -474,6 +474,7 @@ int palette_generate_with_images(struct palette *palette)
             LOG_ERROR("Failed to create palette - image may be too large\n");
             liq_histogram_destroy(hist);
             liq_attr_destroy(attr);
+            free(colors);
             return -1;
         }
 

@@ -601,13 +601,13 @@ int image_quantize(struct image *image, const struct palette *palette)
         }
     }
 
-    free(image->data);
-    image->data = new_data;
-    image->data_size = new_size;
-
     liq_result_destroy(liqresult);
     liq_image_destroy(liqimage);
     liq_attr_destroy(liqattr);
+
+    free(image->data);
+    image->data = new_data;
+    image->data_size = new_size;
 
     if (bad_alpha)
     {

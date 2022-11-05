@@ -45,7 +45,7 @@ static int output_bin_array(unsigned char *data, uint32_t size, FILE *fdo)
     return ret == 1 ? 0 : 1;
 }
 
-int output_bin_image(struct output *output, struct image *image)
+int output_bin_image(struct output *output, const struct image *image)
 {
     char *source;
     FILE *fds;
@@ -79,7 +79,7 @@ error:
     return -1;
 }
 
-int output_bin_tileset(struct output *output, struct tileset *tileset)
+int output_bin_tileset(struct output *output, const struct tileset *tileset)
 {
     char *source;
     FILE *fds;
@@ -136,7 +136,7 @@ error:
     return -1;
 }
 
-int output_bin_palette(struct output *output, struct palette *palette)
+int output_bin_palette(struct output *output, const struct palette *palette)
 {
     char *source;
     FILE *fds;

@@ -305,7 +305,7 @@ int output_appvar_init(struct output *output)
     return 0;
 }
 
-int output_appvar_image(struct output *output, struct image *image)
+int output_appvar_image(struct output *output, const struct image *image)
 {
     struct appvar *appvar = &output->appvar;
 
@@ -320,7 +320,7 @@ int output_appvar_image(struct output *output, struct image *image)
     return 0;
 }
 
-int output_appvar_tileset(struct output *output, struct tileset *tileset)
+int output_appvar_tileset(struct output *output, const struct tileset *tileset)
 {
     struct appvar *appvar = &output->appvar;
     uint32_t i;
@@ -341,7 +341,7 @@ int output_appvar_tileset(struct output *output, struct tileset *tileset)
     return 0;
 }
 
-int output_appvar_palette(struct output *output, struct palette *palette)
+int output_appvar_palette(struct output *output, const struct palette *palette)
 {
     struct appvar *appvar = &output->appvar;
     uint32_t i;

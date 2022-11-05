@@ -65,7 +65,7 @@ static int output_asm_array(unsigned char *arr, uint32_t size, FILE *fdo)
     return 0;
 }
 
-int output_asm_image(struct output *output, struct image *image)
+int output_asm_image(struct output *output, const struct image *image)
 {
     char *source = NULL;
     FILE *fds = NULL;
@@ -107,7 +107,7 @@ error:
     return -1;
 }
 
-int output_asm_tileset(struct output *output, struct tileset *tileset)
+int output_asm_tileset(struct output *output, const struct tileset *tileset)
 {
     char *source = NULL;
     FILE *fds = NULL;
@@ -163,7 +163,7 @@ error:
     return -1;
 }
 
-int output_asm_palette(struct output *output, struct palette *palette)
+int output_asm_palette(struct output *output, const struct palette *palette)
 {
     char *source = NULL;
     FILE *fds = NULL;
@@ -198,9 +198,9 @@ int output_asm_palette(struct output *output, struct palette *palette)
 
     for (i = 0; i < palette->nr_entries; ++i)
     {
-        struct palette_entry *entry = &palette->entries[i];
-        struct color *color = &entry->color;
-        uint16_t target = entry->target;
+        const struct palette_entry *entry = &palette->entries[i];
+        const struct color *color = &entry->color;
+        const uint16_t target = entry->target;
 
         if (entry->valid)
         {

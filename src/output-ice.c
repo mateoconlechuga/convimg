@@ -56,7 +56,7 @@ static int output_ice_array(unsigned char *data, uint32_t size, FILE *fd)
     return 0;
 }
 
-int output_ice_image(struct output *output, struct image *image)
+int output_ice_image(struct output *output, const struct image *image)
 {
     FILE *fd;
 
@@ -75,17 +75,17 @@ int output_ice_image(struct output *output, struct image *image)
     return 0;
 }
 
-int output_ice_tileset(struct tileset *tileset, char *file)
+int output_ice_tileset(struct output *output, const struct tileset *tileset)
 {
-    LOG_ERROR("Tilesets are not yet supported for ICE output.\n");
+    LOG_ERROR("Tilesets are not supported for ICE output.\n");
 
+    (void)output;
     (void)tileset;
-    (void)file;
 
     return -1;
 }
 
-int output_ice_palette(struct output *output, struct palette *palette)
+int output_ice_palette(struct output *output, const struct palette *palette)
 {
     unsigned int size;
     FILE *fd;

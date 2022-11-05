@@ -64,7 +64,7 @@ static int output_c_array(unsigned char *arr, uint32_t size, FILE *fdo)
     return 0;
 }
 
-int output_c_image(struct output *output, struct image *image)
+int output_c_image(struct output *output, const struct image *image)
 {
     char *header = NULL;
     char *source = NULL;
@@ -168,7 +168,7 @@ error:
     return -1;
 }
 
-int output_c_tileset(struct output *output, struct tileset *tileset)
+int output_c_tileset(struct output *output, const struct tileset *tileset)
 {
     char *header = NULL;
     char *source = NULL;
@@ -360,7 +360,7 @@ error:
     return -1;
 }
 
-int output_c_palette(struct output *output, struct palette *palette)
+int output_c_palette(struct output *output, const struct palette *palette)
 {
     char *header = NULL;
     char *source = NULL;
@@ -425,10 +425,10 @@ int output_c_palette(struct output *output, struct palette *palette)
 
     for (i = 0; i < palette->nr_entries; ++i)
     {
-        struct palette_entry *entry = &palette->entries[i];
-        struct color *color = &entry->color;
-        struct color *origc = &entry->orig_color;
-        uint16_t target = entry->target;
+        const struct palette_entry *entry = &palette->entries[i];
+        const struct color *color = &entry->color;
+        const struct color *origc = &entry->orig_color;
+        const uint16_t target = entry->target;
 
         if (entry->exact)
         {

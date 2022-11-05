@@ -29,7 +29,6 @@
  */
 
 #include "output.h"
-#include "output-formats.h"
 #include "strings.h"
 #include "log.h"
 #include "clean.h"
@@ -38,6 +37,38 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+/* external output formats */
+
+int output_c_init(struct output *output);
+int output_c_image(struct output *output, const struct image *image);
+int output_c_tileset(struct output *output, const struct tileset *tileset);
+int output_c_palette(struct output *output, const struct palette *palette);
+int output_c_include(struct output *output);
+
+int output_asm_init(struct output *output);
+int output_asm_image(struct output *output, const struct image *image);
+int output_asm_tileset(struct output *output, const struct tileset *tileset);
+int output_asm_palette(struct output *output, const struct palette *palette);
+int output_asm_include(struct output *output);
+
+int output_bin_init(struct output *output);
+int output_bin_image(struct output *output, const struct image *image);
+int output_bin_tileset(struct output *output, const struct tileset *tileset);
+int output_bin_palette(struct output *output, const struct palette *palette);
+int output_bin_include(struct output *output);
+
+int output_ice_init(struct output *output);
+int output_ice_image(struct output *output, const struct image *image);
+int output_ice_tileset(struct output *output, const struct tileset *tileset);
+int output_ice_palette(struct output *output, const struct palette *palette);
+int output_ice_include(struct output *output);
+
+int output_appvar_init(struct output *output);
+int output_appvar_image(struct output *output, const struct image *image);
+int output_appvar_tileset(struct output *output, const struct tileset *tileset);
+int output_appvar_palette(struct output *output, const struct palette *palette);
+int output_appvar_include(struct output *output);
 
 struct output *output_alloc(void)
 {

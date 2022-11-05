@@ -37,6 +37,8 @@ extern "C" {
 
 #include <glob.h>
 
+char *strings_dup(const char *str);
+
 /* must pass NULL as final arg */
 char *strings_concat(char const *first, ...);
 

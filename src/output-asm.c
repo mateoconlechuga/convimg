@@ -235,7 +235,7 @@ int output_asm_include(struct output *output)
     FILE *fdi = NULL;
     uint32_t i;
 
-    include_name = strdup(output->include_file);
+    include_name = strings_dup(output->include_file);
     if (include_name == NULL)
     {
         goto error;

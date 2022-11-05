@@ -54,6 +54,7 @@ struct palette *palette_alloc(void)
     palette = malloc(sizeof(struct palette));
     if (palette == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         return NULL;
     }
 
@@ -93,12 +94,18 @@ static int palette_add_image(struct palette *palette, const char *path)
         realloc(palette->images, (palette->nr_images + 1) * sizeof(struct image));
     if (palette->images == NULL)
     {
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
     image = &palette->images[palette->nr_images];
 
-    image->path = strdup(path);
+    image->path = strings_dup(path);
+    if (image->path == NULL)
+    {
+        return -1;
+    }
+
     image->name = strings_basename(path);
     image->data = NULL;
     image->width = 0;
@@ -446,6 +453,7 @@ int palette_generate_with_images(struct palette *palette)
                     colors = realloc(colors, colors_size);
                     if (colors == NULL)
                     {
+                        LOG_ERROR("Out of memory.\n");
                         return -1;
                     }
                 }

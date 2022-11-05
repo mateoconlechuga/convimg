@@ -41,6 +41,7 @@ struct tileset_group *tileset_group_alloc(void)
     tileset_group = malloc(sizeof(struct tileset_group));
     if (tileset_group == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         return NULL;
     }
 
@@ -80,7 +81,7 @@ void tileset_group_free(struct tileset_group *tileset_group)
     {
         return;
     }
-    
+
     for (i = 0; i < tileset_group->nr_tilesets; ++i)
     {
         if (tileset_group->tilesets != NULL)

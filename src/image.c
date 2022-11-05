@@ -88,6 +88,7 @@ static int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height)
     new_data = malloc(data_size);
     if (new_data == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         return -1;
     }
 
@@ -111,8 +112,8 @@ static int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height)
 void image_init(struct image *image, const char *path)
 {
     /* normal intiialization */
+    image->path = strings_dup(path);
     image->name = strings_basename(path);
-    image->path = strdup(path);
     image->data = NULL;
     image->data_size = 0;
     image->width = 0;
@@ -250,6 +251,7 @@ int image_add_width_and_height(struct image *image)
     image->data = realloc(image->data, image->data_size + WIDTH_HEIGHT_SIZE);
     if (image->data == NULL)
     {
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -274,6 +276,7 @@ int image_rlet(struct image *image, uint32_t transparent_index)
     new_data = malloc(image->width * image->height * 3);
     if (new_data == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         return -1;
     }
 
@@ -386,6 +389,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
     new_data = malloc(image->width * image->height);
     if (new_data == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         return -1;
     }
 
@@ -444,6 +448,7 @@ int image_remove_omits(struct image *image, uint8_t *omit_indices, uint32_t nr_o
     new_data = malloc(image->data_size);
     if (new_data == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         return -1;
     }
 
@@ -548,6 +553,7 @@ int image_quantize(struct image *image, const struct palette *palette)
     new_data = malloc(new_size);
     if (new_data == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         liq_result_destroy(liqresult);
         liq_image_destroy(liqimage);
         liq_attr_destroy(liqattr);
@@ -641,6 +647,7 @@ int image_colorspace_convert(struct image *image, color_format_t fmt)
     new_data = malloc(new_size);
     if (new_data == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         return -1;
     }
 

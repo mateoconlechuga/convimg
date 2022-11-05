@@ -42,6 +42,7 @@ struct convert *convert_alloc(void)
     struct convert *convert = malloc(sizeof(struct convert));
     if (convert == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         return NULL;
     }
 
@@ -85,6 +86,7 @@ static int convert_add_image(struct convert *convert, const char *path)
         realloc(convert->images, (convert->nr_images + 1) * sizeof(struct image));
     if (convert->images == NULL)
     {
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -134,6 +136,7 @@ static int convert_add_tileset(struct convert *convert, const char *path)
         realloc(tileset_group->tilesets, (tileset_group->nr_tilesets + 1) * sizeof(struct tileset));
     if (tileset_group->tilesets == NULL)
     {
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -146,7 +149,7 @@ static int convert_add_tileset(struct convert *convert, const char *path)
     tileset->nr_tiles = 0;
 
     image = &tileset->image;
-    image->path = strdup(path);
+    image->path = strings_dup(path);
     image->name = strings_basename(path);
     image->data = NULL;
     image->width = 0;
@@ -430,6 +433,7 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
         tile_data = malloc(tile_data_size);
         if (tile_data == NULL)
         {
+            LOG_ERROR("Out of memory\n");
             return -1;
         }
 
@@ -464,6 +468,7 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
 
         if (convert_image(convert, &tile))
         {
+            free(tile_data);
             return -1;
         }
 
@@ -527,16 +532,14 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         {
             if (image->width > 255)
             {
-                LOG_ERROR("Image \'%s\' width is %d. Maximum width is 255 when using the option \'width-and-height\'.\n",
-                    image->path,
+                LOG_ERROR("Image width is %u. Maximum width is 255 when using the option \'width-and-height\'.\n",
                     image->width);
                 return -1;
             }
 
             if (image->height > 255)
             {
-                LOG_ERROR("Image \'%s\' height is %d. Maximum height is 255 when using the option \'width-and-height\'.\n",
-                    image->path,
+                LOG_ERROR("Image height is %u. Maximum height is 255 when using the option \'width-and-height\'.\n",
                     image->height);
                 return -1;
             }

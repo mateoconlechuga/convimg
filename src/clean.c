@@ -39,11 +39,8 @@
 
 static struct
 {
-    struct
-    {
-        FILE *fd;
-    } clean;
-} global;
+    FILE *fd;
+} clean;
 
 static void clean_run_file(FILE *fd, bool info)
 {
@@ -62,11 +59,8 @@ static void clean_run_file(FILE *fd, bool info)
             LOG_INFO(" - Removing \'%s\'\n", buf);
         }
 
-        if (remove(buf))
-        {
-            LOG_WARNING("Could not remove: %s\n",
-                strerror(errno));
-        }
+        /* ignore return of remove */
+        (void)remove(buf);
     }
 }
 
@@ -74,13 +68,13 @@ static int clean_add_path(const char *path)
 {
     int ret;
 
-    ret = fputs(path, global.clean.fd);
+    ret = fputs(path, clean.fd);
     if (ret < 0)
     {
         return -1;
     }
 
-    ret = fputc('\n', global.clean.fd);
+    ret = fputc('\n', clean.fd);
     if (ret != '\n')
     {
         return -1;
@@ -107,7 +101,7 @@ int clean_begin(const char *yaml_name, uint8_t flags)
         return -1;
     }
 
-    global.clean.fd = NULL;
+    clean.fd = NULL;
 
     fd = fopen(name, "rt");
     if (fd == NULL)
@@ -136,7 +130,7 @@ create:
             goto error;
         }
 
-        global.clean.fd = fd;
+        clean.fd = fd;
     }
 
     free(name);
@@ -150,8 +144,8 @@ error:
 
 void clean_end(void)
 {
-    if (global.clean.fd != NULL)
+    if (clean.fd != NULL)
     {
-        fclose(global.clean.fd);
+        fclose(clean.fd);
     }
 }

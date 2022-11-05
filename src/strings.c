@@ -37,6 +37,23 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+char *strings_dup(const char *str)
+{
+    size_t size;
+    char *copy;
+
+    size = strlen(str) + 1;
+    copy = malloc(size);
+
+    if (copy == NULL)
+    {
+        LOG_ERROR("Out of memory\n");
+        return NULL;
+    }
+
+    return memcpy(copy, str, size);
+}
+
 char *strings_concat(char const *first, ...)
 {
     size_t used;
@@ -59,6 +76,7 @@ char *strings_concat(char const *first, ...)
     char *result = malloc(size);
     if (result == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         va_end(cp_ap);
         return NULL;
     }

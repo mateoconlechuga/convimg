@@ -59,7 +59,7 @@ static int compress_zx7(uint8_t *data, size_t *size)
     free(opt);
     if (compressed_data == NULL)
     {
-        LOG_ERROR("Could not compress zx7.\n");
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -78,6 +78,7 @@ static void compress_zx0_progress(void)
 
 static int compress_zx0(uint8_t *data, size_t *size)
 {
+    zx0_BLOCK *optimal;
     uint8_t *compressed_data;
     int new_size;
     int delta;
@@ -89,12 +90,22 @@ static int compress_zx0(uint8_t *data, size_t *size)
 
     LOG_PRINT("[info] Compressing [");
 
-    compressed_data = zx0_compress(zx0_optimize(data, *size, 0, ZX0_MAX_OFFSET, compress_zx0_progress),
-                                   data, *size, 0, 0, 1, &new_size, &delta);
+    optimal = zx0_optimize(data, *size, 0, ZX0_MAX_OFFSET, compress_zx0_progress);
+    if (optimal == NULL)
+    {
+        LOG_ERROR("Out of memory]\n");
+        zx0_free();
+        return -1;
+    }
+
+    compressed_data = zx0_compress(optimal, data, *size, 0, 0, 1, &new_size, &delta);
+
     LOG_PRINT("]\n");
+
     if (compressed_data == NULL)
     {
-        LOG_ERROR("Could not compress zx0.\n");
+        LOG_ERROR("Out of memory.\n");
+        zx0_free();
         return -1;
     }
 
@@ -102,6 +113,7 @@ static int compress_zx0(uint8_t *data, size_t *size)
     *size = new_size;
 
     free(compressed_data);
+    zx0_free();
 
     return 0;
 }

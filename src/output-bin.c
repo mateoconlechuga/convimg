@@ -196,7 +196,7 @@ int output_bin_include(struct output *output)
         return 0;
     }
 
-    include_name = strdup(output->include_file);
+    include_name = strings_dup(output->include_file);
     if (include_name == NULL)
     {
         goto error;

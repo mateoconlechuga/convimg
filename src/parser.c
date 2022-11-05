@@ -85,6 +85,7 @@ static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
     yaml->palettes = realloc(yaml->palettes, resize);
     if (yaml->palettes == NULL)
     {
+        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -94,7 +95,11 @@ static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
         return NULL;
     }
 
-    palette->name = strdup(name);
+    palette->name = strings_dup(name);
+    if (palette->name == NULL)
+    {
+        return NULL;
+    }
 
     for (i = 0; i < PALETTE_MAX_ENTRIES; ++i)
     {
@@ -129,6 +134,7 @@ static struct convert *parser_alloc_convert(struct yaml *yaml, void *name)
     yaml->converts = realloc(yaml->converts, resize);
     if (yaml->converts == NULL)
     {
+        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -138,7 +144,11 @@ static struct convert *parser_alloc_convert(struct yaml *yaml, void *name)
         return NULL;
     }
 
-    convert->name = strdup(name);
+    convert->name = strings_dup(name);
+    if (convert->name == NULL)
+    {
+        return NULL;
+    }
 
     yaml->converts[yaml->nr_converts] = convert;
     yaml->nr_converts++;
@@ -158,6 +168,7 @@ static struct output *parser_alloc_output(struct yaml *yaml, void *type)
     yaml->outputs = realloc(yaml->outputs, resize);
     if (yaml->outputs == NULL)
     {
+        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -170,17 +181,29 @@ static struct output *parser_alloc_output(struct yaml *yaml, void *type)
     if (parse_str_cmp("c", type))
     {
         output->format = OUTPUT_FORMAT_C;
-        output->include_file = strdup("gfx.h");
+        output->include_file = strings_dup("gfx.h");
+        if (output->include_file == NULL)
+        {
+            return NULL;
+        }
     }
     else if (parse_str_cmp("asm", type))
     {
         output->format = OUTPUT_FORMAT_ASM;
-        output->include_file = strdup("gfx.inc");
+        output->include_file = strings_dup("gfx.inc");
+        if (output->include_file == NULL)
+        {
+            return NULL;
+        }
     }
     else if (parse_str_cmp("ice", type))
     {
         output->format = OUTPUT_FORMAT_ICE;
-        output->include_file = strdup("ice.txt");
+        output->include_file = strings_dup("ice.txt");
+        if (output->include_file == NULL)
+        {
+            return NULL;
+        }
     }
     else if (parse_str_cmp("appvar", type))
     {
@@ -189,7 +212,11 @@ static struct output *parser_alloc_output(struct yaml *yaml, void *type)
     else if (parse_str_cmp("bin", type))
     {
         output->format = OUTPUT_FORMAT_BIN;
-        output->include_file = strdup("gfx.txt");
+        output->include_file = strings_dup("gfx.txt");
+        if (output->include_file == NULL)
+        {
+            return NULL;
+        }
     }
     else
     {
@@ -872,7 +899,11 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
             {
                 free(convert->palette_name);
             }
-            convert->palette_name = strdup(value);
+            convert->palette_name = strings_dup(value);
+            if (convert->palette_name == NULL)
+            {
+                return -1;
+            }
         }
         else if (parse_str_cmp("style", key))
         {
@@ -1132,7 +1163,11 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
             {
                 free(output->include_file);
             }
-            output->include_file = strdup(value);
+            output->include_file = strings_dup(value);
+            if (output->include_file == NULL)
+            {
+                return -1;
+            }
         }
         else if (parse_str_cmp("directory", key))
         {
@@ -1141,7 +1176,7 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
                 free(output->directory);
                 output->directory = NULL;
             }
-            char *tmp = strdup(value);
+            char *tmp = strings_dup(value);
             if (tmp == NULL)
             {
                 return -1;
@@ -1198,7 +1233,11 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
                 {
                     free(output->appvar.name);
                 }
-                output->appvar.name = strdup(value);
+                output->appvar.name = strings_dup(value);
+                if (output->appvar.name == NULL)
+                {
+                    return -1;
+                }
             }
             else if (parse_str_cmp("archived", key))
             {
@@ -1482,10 +1521,14 @@ int parser_open(struct yaml *yaml, const char *path)
     FILE *fd;
     int ret;
 
-    yaml->path = strdup(path);
+    yaml->path = strings_dup(path);
+    if (yaml->path == NULL)
+    {
+        return -1;
+    }
 
     ret = parser_init(yaml);
-    if (ret != 0)
+    if (ret)
     {
         LOG_ERROR("Could not initialize parser.\n");
         return -1;

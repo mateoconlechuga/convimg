@@ -44,12 +44,18 @@ struct output *output_alloc(void)
     struct output *output = malloc(sizeof(struct output));
     if (output == NULL)
     {
+        LOG_ERROR("Out of memory\n");
+        return NULL;
+    }
+
+    output->directory = strings_dup("");
+    if (output->directory == NULL)
+    {
         return NULL;
     }
 
     output->name = NULL;
     output->include_file = NULL;
-    output->directory = strdup("");
     output->convert_names = NULL;
     output->nr_converts = 0;
     output->converts = NULL;
@@ -74,6 +80,7 @@ struct output *output_alloc(void)
 
     if (output->appvar.data == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         free(output);
         return NULL;
     }
@@ -95,10 +102,16 @@ int output_add_convert(struct output *output, const char *name)
         realloc(output->convert_names, (output->nr_converts + 1) * sizeof(char *));
     if (output->convert_names == NULL)
     {
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
-    output->convert_names[output->nr_converts] = strdup(name);
+    output->convert_names[output->nr_converts] = strings_dup(name);
+    if (output->convert_names[output->nr_converts] == NULL)
+    {
+        return -1;
+    }
+
     output->nr_converts++;
 
     LOG_DEBUG("Added output convert: %s\n", name);
@@ -120,10 +133,16 @@ int output_add_palette(struct output *output, const char *name)
         realloc(output->palette_names, (output->nr_palettes + 1) * sizeof(char *));
     if (output->palette_names == NULL)
     {
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
-    output->palette_names[output->nr_palettes] = strdup(name);
+    output->palette_names[output->nr_palettes] = strings_dup(name);
+    if (output->palette_names[output->nr_palettes] == NULL)
+    {
+        return -1;
+    }
+
     output->nr_palettes++;
 
     LOG_DEBUG("Added output palette: %s\n", name);
@@ -229,6 +248,7 @@ int output_find_converts(struct output *output, struct convert **converts, uint3
     output->converts = malloc(output->nr_converts * sizeof(struct convert *));
     if (output->converts == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         return -1;
     }
 
@@ -268,6 +288,7 @@ int output_find_palettes(struct output *output, struct palette **palettes, uint3
     output->palettes = malloc(output->nr_palettes * sizeof(struct palette *));
     if (output->palettes == NULL)
     {
+        LOG_ERROR("Out of memory\n");
         return -1;
     }
 

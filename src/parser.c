@@ -612,6 +612,27 @@ static int parse_palette(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
                 }
                 palette->quantize_speed = tmpi;
             }
+            else if (parse_str_cmp("color-format", key))
+            {
+                if (parse_str_cmp("grgb1555", value))
+                {
+                    palette->color_fmt = COLOR_1555_GRGB;
+                }
+                else if (parse_str_cmp("rgb565", value))
+                {
+                    palette->color_fmt = COLOR_565_RGB;
+                }
+                else if (parse_str_cmp("bgr565", value))
+                {
+                    palette->color_fmt = COLOR_565_BGR;
+                }
+                else
+                {
+                    LOG_ERROR("Invalid \'color-format\' option.\n");
+                    parser_show_mark_error(keyn->start_mark);
+                    return -1;
+                }
+            }
             else if (parse_str_cmp("quality", key))
             {
                 tmpi = strtol(value, NULL, 0);
@@ -919,17 +940,42 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
             {
                 convert->style = CONVERT_STYLE_RLET;
             }
-            else if (parse_str_cmp("rgb565", value))
+            else if (parse_str_cmp("direct", value))
             {
-                convert->style = CONVERT_STYLE_RGB565;
-            }
-            else if (parse_str_cmp("bgr565", value))
-            {
-                convert->style = CONVERT_STYLE_BGR565;
+                convert->style = CONVERT_STYLE_DIRECT;
             }
             else
             {
                 LOG_ERROR("Invalid convert style.\n");
+                parser_show_mark_error(keyn->start_mark);
+                return -1;
+            }
+        }
+        else if (parse_str_cmp("color-format", key))
+        {
+            if (parse_str_cmp("grgb1555", value))
+            {
+                convert->color_fmt = COLOR_1555_GRGB;
+            }
+            else if (parse_str_cmp("rgb565", value))
+            {
+                convert->color_fmt = COLOR_565_RGB;
+            }
+            else if (parse_str_cmp("bgr565", value))
+            {
+                convert->color_fmt = COLOR_565_BGR;
+            }
+            else if (parse_str_cmp("rgb888", value))
+            {
+                convert->color_fmt = COLOR_888_RGB;
+            }
+            else if (parse_str_cmp("bgr888", value))
+            {
+                convert->color_fmt = COLOR_888_BGR;
+            }
+            else
+            {
+                LOG_ERROR("Invalid \'color-format\' option.\n");
                 parser_show_mark_error(keyn->start_mark);
                 return -1;
             }
@@ -1390,15 +1436,53 @@ static int parser_validate(struct yaml *yaml)
 {
     uint32_t i;
 
+    for (i = 0; i < yaml->nr_palettes; ++i)
+    {
+        const char *iname = yaml->palettes[i]->name;
+        uint32_t j;
+
+        for (j = 0; j < yaml->nr_palettes; ++j)
+        {
+            if (j == i)
+            {
+                continue;
+            }
+
+            if (!strcmp(iname, yaml->palettes[j]->name))
+            {
+                LOG_ERROR("Duplicate palette name \'%s\'", iname);
+                return -1;
+            }
+        }
+    }
+
+    for (i = 0; i < yaml->nr_converts; ++i)
+    {
+        const char *iname = yaml->converts[i]->name;
+        uint32_t j;
+
+        for (j = 0; j < yaml->nr_converts; ++j)
+        {
+            if (j == i)
+            {
+                continue;
+            }
+
+            if (!strcmp(iname, yaml->converts[j]->name))
+            {
+                LOG_ERROR("Duplicate convert name \'%s\'", iname);
+                return -1;
+            }
+        }
+    }
+
     for (i = 0; i < yaml->nr_converts; ++i)
     {
         struct convert *convert = yaml->converts[i];
 
         switch (convert->style)
         {
-            case CONVERT_STYLE_BGR565:
-            case CONVERT_STYLE_GBGR1555:
-            case CONVERT_STYLE_RGB565:
+            case CONVERT_STYLE_DIRECT:
                 if (convert->bpp != BPP_8)
                 {
                     LOG_ERROR("Convert \'%s\' style does not support \'bpp\' option.\n",
@@ -1433,6 +1517,12 @@ static int parser_validate(struct yaml *yaml)
                 break;
 
             default:
+                if (convert->color_fmt != COLOR_565_RGB)
+                {
+                    LOG_ERROR("Convert \'%s\' style does not support \'color-format\' option.\n",
+                        convert->name);
+                    return -1;
+                }
                 break;
         }
     }

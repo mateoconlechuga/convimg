@@ -118,7 +118,7 @@ int icon_convert(struct icon *icon)
         data = malloc(size);
         if (data == NULL)
         {
-            LOG_ERROR("Out of memory\n");
+            LOG_ERROR("Out of memory.\n");
             goto fail;
         }
 

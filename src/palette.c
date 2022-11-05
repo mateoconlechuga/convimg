@@ -54,7 +54,7 @@ struct palette *palette_alloc(void)
     palette = malloc(sizeof(struct palette));
     if (palette == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -63,8 +63,7 @@ struct palette *palette_alloc(void)
     palette->max_entries = PALETTE_MAX_ENTRIES;
     palette->nr_entries = 0;
     palette->nr_fixed_entries = 0;
-    palette->bpp = BPP_8;
-    palette->fmt = COLOR_1555_GBGR;
+    palette->color_fmt = COLOR_1555_GRGB;
     palette->quantize_speed = PALETTE_DEFAULT_QUANTIZE_SPEED;
     palette->automatic = false;
     palette->name = NULL;
@@ -192,14 +191,11 @@ void palette_free(struct palette *palette)
 
 void palette_generate_builtin(struct palette *palette,
                               const uint8_t *builtin,
-                              uint32_t nr_entries,
-                              color_format_t fmt)
+                              uint32_t nr_entries)
 {
-    uint32_t i;
-
     palette->nr_entries = nr_entries;
 
-    for (i = 0; i < nr_entries; ++i)
+    for (uint32_t i = 0; i < nr_entries; ++i)
     {
         struct color *color = &palette->entries[i].color;
         uint32_t offset = i * 3;
@@ -208,7 +204,7 @@ void palette_generate_builtin(struct palette *palette,
         color->g = builtin[offset + 1];
         color->b = builtin[offset + 2];
 
-        color_normalize(color, fmt);
+        color_normalize(color, palette->color_fmt);
     }
 }
 
@@ -352,7 +348,7 @@ int palette_generate_with_images(struct palette *palette)
         }
 
         /* normalize the input color */
-        color_normalize(&entry->color, palette->fmt);
+        color_normalize(&entry->color, palette->color_fmt);
 
         {
             const liq_color color = 
@@ -437,7 +433,7 @@ int palette_generate_with_images(struct palette *palette)
             {
                 uint32_t offset = nr_colors * sizeof(uint32_t);
 
-                color_normalize(&color, palette->fmt);
+                color_normalize(&color, palette->color_fmt);
 
                 if (nr_colors > 536870912)
                 {
@@ -521,7 +517,7 @@ int palette_generate_with_images(struct palette *palette)
             color.g = liqpalette->entries[i].g;
             color.b = liqpalette->entries[i].b;
 
-            color_normalize(&color, palette->fmt);
+            color_normalize(&color, palette->color_fmt);
 
             palette->entries[i].color = color;
             palette->entries[i].valid = true;
@@ -585,7 +581,7 @@ int palette_generate_with_images(struct palette *palette)
             continue;
         }
 
-        color_normalize(&fixed_entry->color, palette->fmt);
+        color_normalize(&fixed_entry->color, palette->color_fmt);
 
         /* locate another valid place to store an entry */
         /* if an entry already occupies this location */
@@ -660,16 +656,14 @@ int palette_generate(struct palette *palette, struct convert **converts, uint32_
     {
         palette_generate_builtin(palette,
                                  palette_xlibc,
-                                 PALETTE_MAX_ENTRIES,
-                                 COLOR_1555_GBGR);
+                                 PALETTE_MAX_ENTRIES);
         return 0;
     }
     else if (!strcmp(palette->name, "rgb332"))
     {
         palette_generate_builtin(palette,
                                  palette_rgb332,
-                                 PALETTE_MAX_ENTRIES,
-                                 COLOR_1555_GBGR);
+                                 PALETTE_MAX_ENTRIES);
         return 0;
     }
 
@@ -715,7 +709,7 @@ int palette_generate(struct palette *palette, struct convert **converts, uint32_
         {
             struct palette_entry *entry = &palette->fixed_entries[i];
 
-            color_normalize(&entry->color, palette->fmt);
+            color_normalize(&entry->color, palette->color_fmt);
 
             palette->entries[entry->index] = *entry;
             palette->entries[entry->index].valid = true;
@@ -740,10 +734,10 @@ int palette_generate(struct palette *palette, struct convert **converts, uint32_
         /* convert the entries into the target format */
         if (entry->valid)
         {
-            switch (palette->fmt)
+            switch (palette->color_fmt)
             {
-                case COLOR_1555_GBGR:
-                    entry->target = color_to_1555_gbgr(&entry->color);
+                case COLOR_1555_GRGB:
+                    entry->target = color_to_1555_grgb(&entry->color);
                     break;
 
                 case COLOR_565_BGR:

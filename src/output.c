@@ -44,7 +44,7 @@ struct output *output_alloc(void)
     struct output *output = malloc(sizeof(struct output));
     if (output == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -55,7 +55,6 @@ struct output *output_alloc(void)
         return NULL;
     }
 
-    output->name = NULL;
     output->include_file = NULL;
     output->convert_names = NULL;
     output->nr_converts = 0;
@@ -81,7 +80,7 @@ struct output *output_alloc(void)
 
     if (output->appvar.data == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         free(output);
         return NULL;
     }
@@ -196,9 +195,6 @@ void output_free(struct output *output)
     free(output->include_file);
     output->include_file = NULL;
 
-    free(output->name);
-    output->name = NULL;
-
     free(output->directory);
     output->directory = NULL;
 
@@ -249,7 +245,7 @@ int output_find_converts(struct output *output, struct convert **converts, uint3
     output->converts = malloc(output->nr_converts * sizeof(struct convert *));
     if (output->converts == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -289,7 +285,7 @@ int output_find_palettes(struct output *output, struct palette **palettes, uint3
     output->palettes = malloc(output->nr_palettes * sizeof(struct palette *));
     if (output->palettes == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 

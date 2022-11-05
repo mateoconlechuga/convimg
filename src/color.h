@@ -39,9 +39,11 @@ extern "C" {
 
 typedef enum
 {
-    COLOR_1555_GBGR,
-    COLOR_565_BGR,
+    COLOR_1555_GRGB,
     COLOR_565_RGB,
+    COLOR_565_BGR,
+    COLOR_888_RGB,
+    COLOR_888_BGR,
 } color_format_t;
 
 struct color
@@ -55,7 +57,7 @@ uint16_t color_to_565_rgb(const struct color *color);
 
 uint16_t color_to_565_bgr(const struct color *color);
 
-uint16_t color_to_1555_gbgr(const struct color *color);
+uint16_t color_to_1555_grgb(const struct color *color);
 
 void color_normalize(struct color *color, color_format_t fmt);
 

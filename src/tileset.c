@@ -41,7 +41,7 @@ struct tileset_group *tileset_group_alloc(void)
     tileset_group = malloc(sizeof(struct tileset_group));
     if (tileset_group == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 

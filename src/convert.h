@@ -46,9 +46,7 @@ typedef enum
 {
     CONVERT_STYLE_PALETTE,
     CONVERT_STYLE_RLET,
-    CONVERT_STYLE_RGB565,
-    CONVERT_STYLE_BGR565,
-    CONVERT_STYLE_GBGR1555,
+    CONVERT_STYLE_DIRECT,
 } convert_style_t;
 
 struct convert
@@ -65,6 +63,7 @@ struct convert
     struct tileset_group *tileset_group;
     compress_mode_t compress;
     convert_style_t style;
+    color_format_t color_fmt;
     uint32_t quantize_speed;
     float dither;
     uint32_t rotate;

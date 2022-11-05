@@ -5,22 +5,21 @@ This program is used to convert images to other formats, specifically for the TI
 ## Command Line Help
 
     Usage:
-        convimg [options] -i <yaml file>
-
-    Required options:
-        -i, --input <yaml file>  Input file, format is described below.
+        convimg [options]
 
     Optional options:
-        --icon <file>            Create an icon for use by shell.
-        --icon-description <txt> Specify icon/program description.
-        --icon-format <fmt>      Specify icon format, 'ice' or 'asm'.
-        --icon-output <output>   Specify icon output filename.
+        -i, --input <yaml file>  Input file, format is described below.
         -n, --new                Create a new template YAML file.
         -h, --help               Show this screen.
         -v, --version            Show program version.
         -c, --clean              Deletes files listed in 'convimg.out' and exits.
-        -l, --log-level <level>  Set program logging level.
+        -l, --log-level <level>  Set program logging level:
                                  0=none, 1=error, 2=warning, 3=normal
+    Optional icon options:
+        --icon <file>            Create an icon for use by shell.
+        --icon-description <txt> Specify icon/program description.
+        --icon-format <fmt>      Specify icon format, 'ice' or 'asm'.
+        --icon-output <output>   Specify icon output filename.
 
     YAML File Format:
 
@@ -55,10 +54,12 @@ This program is used to convert images to other formats, specifically for the TI
                   - myimages              : Name of each convert section
 
     To create the above template, use the '--new' command line option.
+    By default 'convimg.yaml' in the same directory the program is executed
+    will be used for conversion - this can be overriden with the -i flag.
     The following describes each section of the YAML file in more detail, and
     the available options for conversion.
 
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
 
     palettes:
         The YAML palettes section constists of a list of different palettes to be
@@ -104,7 +105,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : index is 0 and increments by 1 moving
                                       : from left to right.
 
-           quality: <value>           : Controls the quality of the palette generated.
+           quality: <value>           : Sets the quality of the generated palette.
                                       : Value range is 1-10, where 1 is the worst
                                       : and 10 is the best. Lower quality may use
                                       : less palette entries.
@@ -122,7 +123,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : twice. Note that common "globbing"
                                       : patterns can be used, such as '*'.
 
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
 
     converts:
         The YAML converts section constists of a list of different "groups" of
@@ -196,22 +197,23 @@ This program is used to convert images to other formats, specifically for the TI
                                       : transparent colors, essentially reducing
                                       : the output size if there are many
                                       : transparent pixels.
-                                      : In 'rgb565' and 'bgr565' styles,
-                                      : a palette is not used, but rather colors
-                                      : are converted directly to their RGB
-                                      : representations in 565 color.
-                                      : These two styles may limit the other
-                                      : options (a palette is also not required
-                                      : to be listed in the 'palettes' section).
-                                      : Default is 'palette'
+                                      : In 'direct' mode, the color format
+                                      : defined by the 'color-format' option
+                                      : converts the input image colors to the
+                                      : desired format. This may prevent some
+                                      : palette-specific options from being used.
+                                      : Default is 'palette'.
 
-           compress: <mode>           : After quantization, images can then
-                                      : optionally be compressed.
-                                      : Available modes: 'zx0', 'zx7'
-                                      : The 'zx7' compression time is faster,
+           color-format: <format>     : In direct style mode, sets the colorspace
+                                      : for the converted pixels. The available
+                                      : options are 'rgb565', 'bgr565', 'rgb888',
+                                      : 'bgr888', and 'rgb1555'.
+                                      : Default is 'rgb565'.
+
+           compress: <mode>           : Images can be optionally compressed after
+                                      : conversion using modes 'zx0' or 'zx7'.
+                                      : The 'zx7' compression time is much faster,
                                       : however 'zx0' usually has better results.
-                                      : The images are required to be decompressed
-                                      : before use.
 
            width-and-height: <bool>   : Optionally control if the width and
                                       : height should be placed in the converted
@@ -226,10 +228,13 @@ This program is used to convert images to other formats, specifically for the TI
 
            rotate: <degrees>          : Rotate input images 0, 90, 180, 270 degrees
 
-           bpp: <bits-per-pixel>      : Control how many bits per pixel are used
-                                      : This also affects the size of the
-                                      : generated palette; use with caution.
+           bpp: <bits-per-pixel>      : Map input pixels to number of output bits.
                                       : Available options are 1, 2, 4, 8.
+                                      : For example, a value of 2 means that 1 pixel
+                                      : in the input image maps to 2 bits of output.
+                                      : The palette option 'max-entries' should be
+                                      : used to limit the palette size for this
+                                      : option to ensure correct quantization.
                                       : Default is '8'.
 
            omit-indices: [<list>]     : Omits the specified palette indices
@@ -237,7 +242,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : by a custom drawing routine. A comma
                                       : separated list in [] should be provided.
 
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
 
     outputs:
         The YAML file outputs section is a list of different "groups" of outputs,
@@ -302,8 +307,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : 'lut-entry-size'. Default is 'false'.
 
            lut-entry-size: <int>      : Controls the size of LUT entries. Can be
-                                      : '2' for 2-byte or '3' for 3-byte
-                                      : entries.
+                                      : '2' for 2-byte or '3' for 3-byte entries.
                                       : Default is '3'.
 
            compress: <mode>           : Compress AppVar data.
@@ -321,7 +325,7 @@ This program is used to convert images to other formats, specifically for the TI
                                       : 'false' leaves it unarchived.
                                       : Default is 'false'.
 
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
 
     Credits:
         (c) 2017-2022 by Matt "MateoConLechuga" Waltz.
@@ -331,4 +335,3 @@ This program is used to convert images to other formats, specifically for the TI
             libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx0,zx7: (c) 2012-2021 by Einar Saukas.
-

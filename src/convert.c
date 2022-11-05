@@ -42,7 +42,7 @@ struct convert *convert_alloc(void)
     struct convert *convert = malloc(sizeof(struct convert));
     if (convert == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -57,6 +57,7 @@ struct convert *convert_alloc(void)
     convert->add_width_height = true;
     convert->transparent_index = 0;
     convert->bpp = BPP_8;
+    convert->color_fmt = COLOR_565_RGB;
     convert->name = NULL;
     convert->palette_name = NULL;
     convert->quantize_speed = CONVERT_DEFAULT_QUANTIZE_SPEED;
@@ -359,27 +360,7 @@ static int convert_image(struct convert *convert, struct image *image)
     }
     else
     {
-        color_format_t fmt;
-
-        switch (convert->style)
-        {
-            case CONVERT_STYLE_RGB565:
-                fmt = COLOR_565_RGB;
-                break;
-
-            case CONVERT_STYLE_BGR565:
-                fmt = COLOR_565_BGR;
-                break;
-
-            case CONVERT_STYLE_GBGR1555:
-                fmt = COLOR_1555_GBGR;
-                break;
-
-            default:
-                return -1;
-        }
-
-        if (image_colorspace_convert(image, fmt))
+        if (image_direct_convert(image, convert->color_fmt))
         {
             return -1;
         }
@@ -433,7 +414,7 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
         tile_data = malloc(tile_data_size);
         if (tile_data == NULL)
         {
-            LOG_ERROR("Out of memory\n");
+            LOG_ERROR("Out of memory.\n");
             return -1;
         }
 

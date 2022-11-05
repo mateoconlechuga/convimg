@@ -88,7 +88,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t palette_nr_entries);
 
 int image_quantize(struct image *image, const struct palette *palette);
 
-int image_colorspace_convert(struct image *image, color_format_t fmt);
+int image_direct_convert(struct image *image, color_format_t fmt);
 
 void image_free(struct image *image);
 

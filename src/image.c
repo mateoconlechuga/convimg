@@ -88,7 +88,7 @@ static int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height)
     new_data = malloc(data_size);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -276,7 +276,7 @@ int image_rlet(struct image *image, uint32_t transparent_index)
     new_data = malloc(image->width * image->height * 3);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -385,7 +385,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
     new_data = malloc(image->width * image->height);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -444,7 +444,7 @@ int image_remove_omits(struct image *image, uint8_t *omit_indices, uint32_t nr_o
     new_data = malloc(image->data_size);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -549,7 +549,7 @@ int image_quantize(struct image *image, const struct palette *palette)
     new_data = malloc(new_size);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         liq_result_destroy(liqresult);
         liq_image_destroy(liqimage);
         liq_attr_destroy(liqattr);
@@ -620,7 +620,7 @@ int image_quantize(struct image *image, const struct palette *palette)
     return 0;
 }
 
-int image_colorspace_convert(struct image *image, color_format_t fmt)
+int image_direct_convert(struct image *image, color_format_t fmt)
 {
     uint8_t *new_data;
     uint8_t *dst;
@@ -630,10 +630,15 @@ int image_colorspace_convert(struct image *image, color_format_t fmt)
 
     switch (fmt)
     {
-        case COLOR_1555_GBGR:
+        case COLOR_1555_GRGB:
         case COLOR_565_RGB:
         case COLOR_565_BGR:
-            new_size = image->width * image->height * sizeof(uint16_t);
+            new_size = image->width * image->height * 2;
+            break;
+
+        case COLOR_888_RGB:
+        case COLOR_888_BGR:
+            new_size = image->width * image->height * 3;
             break;
 
         default:
@@ -643,7 +648,7 @@ int image_colorspace_convert(struct image *image, color_format_t fmt)
     new_data = malloc(new_size);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -655,7 +660,7 @@ int image_colorspace_convert(struct image *image, color_format_t fmt)
     {
         uint32_t offset = i * sizeof(uint32_t);
         struct color color;
-        uint16_t target;
+        uint32_t target;
         uint8_t alpha;
 
         color.r = image->data[offset + 0];
@@ -672,25 +677,39 @@ int image_colorspace_convert(struct image *image, color_format_t fmt)
         /* convert the color and store to the new data array */
         switch (fmt)
         {
-            case COLOR_1555_GBGR:
-                target = color_to_1555_gbgr(&color);
+            case COLOR_1555_GRGB:
+                target = color_to_1555_grgb(&color);
+                *dst++ = target & 255;
+                *dst++ = (target >> 8) & 255;
                 break;
 
             case COLOR_565_RGB:
                 target = color_to_565_rgb(&color);
+                *dst++ = target & 255;
+                *dst++ = (target >> 8) & 255;
                 break;
             
             case COLOR_565_BGR:
                 target = color_to_565_bgr(&color);
+                *dst++ = target & 255;
+                *dst++ = (target >> 8) & 255;
+                break;
+
+            case COLOR_888_BGR:
+                *dst++ = color.r;
+                *dst++ = color.g;
+                *dst++ = color.b;
+                break;
+
+            case COLOR_888_RGB:
+                *dst++ = color.b;
+                *dst++ = color.g;
+                *dst++ = color.r;
                 break;
 
             default:
-                target = 0;
                 break;
         }
-
-        *dst++ = target & 255;
-        *dst++ = (target >> 8) & 255;
     }
 
     free(image->data);
@@ -699,7 +718,7 @@ int image_colorspace_convert(struct image *image, color_format_t fmt)
 
     if (bad_alpha)
     {
-        LOG_WARNING("Image has pixels with an alpha not 0 or 255.\n");
+        LOG_WARNING("Image has pixels with a transparent alpha channel.\n");
         LOG_WARNING("This may result in incorrect color conversion.\n");
     }
 

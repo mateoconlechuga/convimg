@@ -47,7 +47,7 @@ char *strings_dup(const char *str)
 
     if (copy == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -76,7 +76,7 @@ char *strings_concat(char const *first, ...)
     char *result = malloc(size);
     if (result == NULL)
     {
-        LOG_ERROR("Out of memory\n");
+        LOG_ERROR("Out of memory.\n");
         va_end(cp_ap);
         return NULL;
     }

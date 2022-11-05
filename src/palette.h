@@ -71,8 +71,7 @@ struct palette
     uint32_t quantize_speed;
     struct palette_entry entries[PALETTE_MAX_ENTRIES];
     struct palette_entry fixed_entries[PALETTE_MAX_ENTRIES];
-    color_format_t fmt;
-    bpp_t bpp;
+    color_format_t color_fmt;
     bool automatic;
 };
 

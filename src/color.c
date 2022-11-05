@@ -33,7 +33,7 @@
 
 #include <stdbool.h>
 
-uint16_t color_to_565_rgb(const struct color *color)
+uint16_t color_to_565_bgr(const struct color *color)
 {
     uint8_t r5 = round((int)color->r * 31.0 / 255.0);
     uint8_t g6 = round((int)color->g * 63.0 / 255.0);
@@ -42,7 +42,7 @@ uint16_t color_to_565_rgb(const struct color *color)
     return (r5 << 11) | (g6 << 5) | b5;
 }
 
-uint16_t color_to_565_bgr(const struct color *color)
+uint16_t color_to_565_rgb(const struct color *color)
 {
     uint8_t r5 = round((int)color->r * 31.0 / 255.0);
     uint8_t g6 = round((int)color->g * 63.0 / 255.0);

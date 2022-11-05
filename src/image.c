@@ -331,7 +331,6 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
     uint8_t *new_data;
     uint32_t new_size;
     uint32_t j;
-    uint8_t shift;
     uint8_t shift_mult;
     uint8_t inc;
 
@@ -343,7 +342,6 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
                 LOG_ERROR("Palette has too many entries for BPP mode. (max 2)\n");
                 return -1;
             }
-            shift = 3;
             shift_mult = 1;
             inc = 8;
             break;
@@ -354,7 +352,6 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
                 LOG_ERROR("Palette has too many entries for BPP mode. (max 4)\n");
                 return -1;
             }
-            shift = 2;
             shift_mult = 2;
             inc = 4;
             break;
@@ -365,7 +362,6 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
                 LOG_ERROR("Palette has too many entries for BPP mode. (max 16)\n");
                 return -1;
             }
-            shift = 1;
             shift_mult = 4;
             inc = 2;
             break;

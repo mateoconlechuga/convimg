@@ -51,6 +51,7 @@ struct output *output_alloc(void)
     output->directory = strings_dup("");
     if (output->directory == NULL)
     {
+        free(output);
         return NULL;
     }
 

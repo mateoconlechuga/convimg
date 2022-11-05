@@ -56,7 +56,7 @@ struct image
     uint32_t height;
 
     /* set by convert */
-    uint32_t transparent_index;
+    uint8_t transparent_index;
     uint32_t quantize_speed;
     uint32_t rotate;
     bool gfx;
@@ -73,11 +73,11 @@ void image_init(struct image *image, const char *path);
 
 int image_load(struct image *image);
 
-int image_rlet(struct image *image, uint32_t transparent_index);
+int image_rlet(struct image *image, uint8_t transparent_index);
 
 int image_add_width_and_height(struct image *image);
 
-int image_add_offset(struct image *image, uint32_t offset);
+int image_add_offset(struct image *image, uint8_t offset);
 
 int image_compress(struct image *image, compress_mode_t mode);
 

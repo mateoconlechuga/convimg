@@ -60,7 +60,6 @@ typedef enum
 
 struct output
 {
-    char *name;
     char *include_file;
     char *directory;
     char **convert_names;
@@ -81,31 +80,17 @@ struct output *output_alloc(void);
 
 void output_free(struct output *output);
 
-int output_find_palettes(struct output *output,
-    struct palette **palettes,
-    uint32_t nr_palettes);
-
-int output_find_converts(struct output *output,
-    struct convert **converts,
-    uint32_t nr_converts);
-
-int output_add_convert(struct output *output,
+int output_add_convert_name(struct output *output,
     const char *name);
 
-int output_add_palette(struct output *output,
+int output_add_palette_name(struct output *output,
     const char *name);
 
-int output_converts(struct output *output,
+int output_generate(struct output *output,
+    struct palette **palettes,
+    uint32_t nr_palettes,
     struct convert **converts,
     uint32_t nr_converts);
-
-int output_palettes(struct output *output,
-    struct palette **palettes,
-    uint32_t nr_palettes);
-
-int output_include(struct output *output);
-
-int output_init(struct output *output);
 
 #ifdef __cplusplus
 }

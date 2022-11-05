@@ -54,10 +54,10 @@ struct convert
     char *name;
     char *palette_name;
     struct palette *palette;
-    uint32_t palette_offset;
+    uint8_t palette_offset;
     uint8_t omit_indices[PALETTE_MAX_ENTRIES];
     uint32_t nr_omit_indices;
-    uint32_t transparent_index;
+    uint8_t transparent_index;
     struct image *images;
     uint32_t nr_images;
     struct tileset_group *tileset_group;
@@ -83,7 +83,7 @@ int convert_add_image_path(struct convert *convert, const char *path);
 
 int convert_add_tileset_path(struct convert *convert, const char *path);
 
-int convert_convert(struct convert *convert, struct palette **palettes, int nr_palettes);
+int convert_generate(struct convert *convert, struct palette **palettes, uint32_t nr_palettes);
 
 #ifdef __cplusplus
 }

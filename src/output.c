@@ -119,7 +119,7 @@ struct output *output_alloc(void)
     return output;
 }
 
-int output_add_convert(struct output *output, const char *name)
+int output_add_convert_name(struct output *output, const char *name)
 {
     if (output == NULL ||
         name == NULL ||
@@ -150,7 +150,7 @@ int output_add_convert(struct output *output, const char *name)
     return 0;
 }
 
-int output_add_palette(struct output *output, const char *name)
+int output_add_palette_name(struct output *output, const char *name)
 {
     if (output == NULL ||
         name == NULL ||
@@ -233,7 +233,7 @@ void output_free(struct output *output)
     output->nr_palettes = 0;
 }
 
-int output_init(struct output *output)
+static int output_init(struct output *output)
 {
     if (output->nr_converts == 0 && output->nr_palettes == 0)
     {
@@ -264,7 +264,7 @@ int output_init(struct output *output)
     return -1;
 }
 
-int output_find_converts(struct output *output, struct convert **converts, uint32_t nr_converts)
+static int output_find_converts(struct output *output, struct convert **converts, uint32_t nr_converts)
 {
     uint32_t i;
 
@@ -304,7 +304,7 @@ nextconvert:
     return 0;
 }
 
-int output_find_palettes(struct output *output, struct palette **palettes, uint32_t nr_palettes)
+static int output_find_palettes(struct output *output, struct palette **palettes, uint32_t nr_palettes)
 {
     uint32_t i = 0;
 
@@ -345,7 +345,7 @@ nextpalette:
     return 0;
 }
 
-int output_converts(struct output *output, struct convert **converts, uint32_t nr_converts)
+static int output_converts(struct output *output, struct convert **converts, uint32_t nr_converts)
 {
     uint32_t i;
     int ret;
@@ -445,7 +445,7 @@ int output_converts(struct output *output, struct convert **converts, uint32_t n
     return 0;
 }
 
-int output_palettes(struct output *output, struct palette **palettes, uint32_t nr_palettes)
+static int output_palettes(struct output *output, struct palette **palettes, uint32_t nr_palettes)
 {
     uint32_t i;
     int ret;
@@ -498,7 +498,7 @@ int output_palettes(struct output *output, struct palette **palettes, uint32_t n
     return 0;
 }
 
-int output_include(struct output *output)
+static int output_include(struct output *output)
 {
     if (output->nr_palettes == 0 && output->nr_converts == 0)
     {
@@ -527,4 +527,58 @@ int output_include(struct output *output)
     }
 
     return -1;
+}
+
+int output_generate(struct output *output,
+                    struct palette **palettes,
+                    uint32_t nr_palettes,
+                    struct convert **converts,
+                    uint32_t nr_converts)
+{
+    if (output_find_palettes(output, palettes, nr_palettes))
+    {
+        return -1;
+    }
+
+    if (output_find_converts(output, converts, nr_converts))
+    {
+        return -1;
+    }
+
+    if (output_init(output))
+    {
+        return -1;
+    }
+
+    if (output->order == OUTPUT_PALETTES_FIRST)
+    {
+        if (output_palettes(output, palettes, nr_palettes))
+        {
+            return -1;
+        }
+
+        if (output_converts(output, converts, nr_converts))
+        {
+            return -1;
+        }
+    }
+    else
+    {
+        if (output_converts(output, converts, nr_converts))
+        {
+            return -1;
+        }
+
+        if (output_palettes(output, palettes, nr_palettes))
+        {
+            return -1;
+        }
+    }
+
+    if (output_include(output))
+    {
+        return -1;
+    }
+
+    return 0;
 }

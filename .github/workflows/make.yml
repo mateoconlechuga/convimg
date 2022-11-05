@@ -24,7 +24,7 @@ jobs:
     runs-on: ${{matrix.runs-on}}-latest
     steps:
     - name: Checkout project
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
       with:
         submodules: true
         fetch-depth: 1
@@ -47,7 +47,7 @@ jobs:
     if: "contains(github.event.head_commit.message, 'coverity')"
     steps:
       - name: Checkout project
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
         with:
           submodules: true
           fetch-depth: 1
@@ -77,3 +77,35 @@ jobs:
             https://scan.coverity.com/builds?project=mateoconlechuga%2Fconvimg
         env:
           TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+        submodules: true
+        fetch-depth: 1
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: cpp
+        
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:${{matrix.language}}"

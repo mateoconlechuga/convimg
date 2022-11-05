@@ -52,8 +52,7 @@ int icon_convert(struct icon *icon)
 
     if (icon->image_file != NULL)
     {
-        size_t size;
-        uint32_t i;
+        uint32_t size;
 
         has_icon = true;
 
@@ -101,14 +100,14 @@ int icon_convert(struct icon *icon)
             goto fail;
         }
 
-        for (i = 0; i < 256; ++i)
+        for (uint32_t i = 0; i < 256; ++i)
         {
-            uint32_t o = i * 3;
+            const uint32_t offset = i * 3;
             liq_color liqcolor;
 
-            liqcolor.r = icon_palette[o + 0];
-            liqcolor.g = icon_palette[o + 1];
-            liqcolor.b = icon_palette[o + 2];
+            liqcolor.r = icon_palette[offset + 0];
+            liqcolor.g = icon_palette[offset + 1];
+            liqcolor.b = icon_palette[offset + 2];
             liqcolor.a = 255;
 
             liq_image_add_fixed_color(liqimage, liqcolor);
@@ -148,13 +147,11 @@ int icon_convert(struct icon *icon)
             fprintf(fd, "\tjp\t___prgm_init\n");
             if (has_icon)
             {
-                uint32_t y;
-
                 fprintf(fd, "\tdb\t$01\n");
                 fprintf(fd, "\tpublic ___icon\n");
                 fprintf(fd, "___icon:\n");
                 fprintf(fd, "\tdb\t$%02X, $%02X", image.width, image.height);
-                for (y = 0; y < image.height; y++)
+                for (uint32_t y = 0; y < image.height; y++)
                 {
                     uint32_t offset = y * image.width;
                     uint32_t x;
@@ -197,10 +194,8 @@ int icon_convert(struct icon *icon)
         case ICON_FORMAT_ICE:
             if (has_icon)
             {
-                uint32_t y;
-
                 fprintf(fd, "\"01%02X%02X", image.width, image.height);
-                for (y = 0; y < image.height; y++)
+                for (uint32_t y = 0; y < image.height; y++)
                 {
                     uint32_t offset = y * image.width;
                     uint32_t x;

@@ -171,7 +171,6 @@ int convert_add_image_path(struct convert *convert, const char *path)
     static glob_t globbuf;
     char **paths = NULL;
     char *realPath;
-    int i;
     int len;
 
     if (convert == NULL || path == NULL)
@@ -196,7 +195,7 @@ int convert_add_image_path(struct convert *convert, const char *path)
         return -1;
     }
 
-    for (i = 0; i < len; ++i)
+    for (int i = 0; i < len; ++i)
     {
         convert_add_image(convert, paths[i]);
     }
@@ -211,8 +210,7 @@ int convert_add_tileset_path(struct convert *convert, const char *path)
 {
     static glob_t globbuf;
     char **paths = NULL;
-    char *realPath;
-    int i;
+    char *real_path;
     int len;
 
     if (convert == NULL || path == NULL)
@@ -220,8 +218,8 @@ int convert_add_tileset_path(struct convert *convert, const char *path)
         return -1;
     }
 
-    realPath = strings_find_images(path, &globbuf);
-    if (realPath == NULL)
+    real_path = strings_find_images(path, &globbuf);
+    if (real_path == NULL)
     {
         return -1;
     }
@@ -231,33 +229,31 @@ int convert_add_tileset_path(struct convert *convert, const char *path)
 
     if (len == 0)
     {
-        LOG_ERROR("Could not find file(s): \'%s\'\n", realPath);
+        LOG_ERROR("Could not find file(s): \'%s\'\n", real_path);
         globfree(&globbuf);
-        free(realPath);
+        free(real_path);
         return -1;
     }
 
-    for (i = 0; i < len; ++i)
+    for (int i = 0; i < len; ++i)
     {
         convert_add_tileset(convert, paths[i]);
     }
 
     globfree(&globbuf);
-    free(realPath);
+    free(real_path);
 
     return 0;
 }
 
 void convert_free(struct convert *convert)
 {
-    uint32_t i;
-
     if (convert == NULL)
     {
         return;
     }
 
-    for (i = 0; i < convert->nr_images; ++i)
+    for (uint32_t i = 0; i < convert->nr_images; ++i)
     {
         image_free(&convert->images[i]);
     }
@@ -276,10 +272,8 @@ void convert_free(struct convert *convert)
     convert->palette_name = NULL;
 }
 
-int convert_find_palette(struct convert *convert, struct palette **palettes, int nr_palettes)
+static int convert_find_palette(struct convert *convert, struct palette **palettes, uint32_t nr_palettes)
 {
-    int i;
-
     if (convert == NULL)
     {
         LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
@@ -291,7 +285,7 @@ int convert_find_palette(struct convert *convert, struct palette **palettes, int
         goto error;
     }
 
-    for (i = 0; i < nr_palettes; ++i)
+    for (uint32_t i = 0; i < nr_palettes; ++i)
     {
         if (!strcmp(convert->palette_name, palettes[i]->name))
         {
@@ -389,9 +383,8 @@ static int convert_image(struct convert *convert, struct image *image)
     return 0;
 }
 
-int convert_tileset(struct convert *convert, struct tileset *tileset)
+static int convert_tileset(struct convert *convert, struct tileset *tileset)
 {
-    uint32_t i;
     uint32_t x;
     uint32_t y;
 
@@ -401,7 +394,7 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
     y = 0;
     x = 0;
 
-    for (i = 0; i < tileset->nr_tiles; ++i)
+    for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
     {
         uint32_t tile_dim = tileset->tile_width * tileset->tile_height;
         uint32_t tile_data_size = tile_dim * sizeof(uint32_t);
@@ -409,7 +402,6 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
         uint32_t image_stride = tileset->image.width * sizeof(uint32_t);
         uint8_t *tile_data;
         uint8_t *dst;
-        uint32_t j;
 
         tile_data = malloc(tile_data_size);
         if (tile_data == NULL)
@@ -430,7 +422,7 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
 
         dst = tile_data;
 
-        for (j = 0; j < tile.height; ++j)
+        for (uint32_t j = 0; j < tile.height; ++j)
         {
             uint32_t o = (j * image_stride) + y;
 
@@ -460,10 +452,8 @@ int convert_tileset(struct convert *convert, struct tileset *tileset)
     return 0;
 }
 
-int convert_convert(struct convert *convert, struct palette **palettes, int nr_palettes)
+int convert_generate(struct convert *convert, struct palette **palettes, uint32_t nr_palettes)
 {
-    uint32_t i;
-
     if (convert == NULL)
     {
         return -1;
@@ -482,7 +472,7 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
         }
     }
 
-    for (i = 0; i < convert->nr_images; ++i)
+    for (uint32_t i = 0; i < convert->nr_images; ++i)
     {
         struct image *image = &convert->images[i];
         
@@ -535,11 +525,10 @@ int convert_convert(struct convert *convert, struct palette **palettes, int nr_p
     if (convert->tileset_group != NULL)
     {
         struct tileset_group *tileset_group = convert->tileset_group;
-        uint32_t j;
 
         LOG_INFO("Converting tilesets for \'%s\'\n", convert->name);
 
-        for (j = 0; j < tileset_group->nr_tilesets; ++j)
+        for (uint32_t j = 0; j < tileset_group->nr_tilesets; ++j)
         {
             struct tileset *tileset = &tileset_group->tilesets[j];
             struct image *image = &tileset->image;

@@ -47,14 +47,11 @@ static void swap_pixel(uint32_t *a, uint32_t *b)
 
 static void image_flip_y(uint32_t *data, uint32_t width, uint32_t height)
 {
-    uint32_t r;
-
-    for (r = 0; r < height; ++r)
+    for (uint32_t r = 0; r < height; ++r)
     {
         uint32_t *row = data + (r * width);
-        uint32_t c;
 
-        for (c = 0; c < width / 2; ++c)
+        for (uint32_t c = 0; c < width / 2; ++c)
         {
             swap_pixel(row + c,
                        row + width - c - 1);
@@ -64,13 +61,9 @@ static void image_flip_y(uint32_t *data, uint32_t width, uint32_t height)
 
 static void image_flip_x(uint32_t *data, uint32_t width, uint32_t height)
 {
-    uint32_t c;
-
-    for (c = 0; c < width; ++c)
+    for (uint32_t c = 0; c < width; ++c)
     {
-        uint32_t r;
-
-        for (r = 0; r < height / 2; ++r)
+        for (uint32_t r = 0; r < height / 2; ++r)
         {
             swap_pixel(data + (r * width) + c,
                        data + (height - 1 - r) * width + c);
@@ -82,7 +75,6 @@ static int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height)
 {
     uint32_t *new_data;
     uint32_t data_size;
-    uint32_t i;
 
     data_size = width * height * sizeof(uint32_t);
     new_data = malloc(data_size);
@@ -92,12 +84,11 @@ static int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height)
         return -1;
     }
 
-    for(i = 0; i < height; ++i)
+    for(uint32_t i = 0; i < height; ++i)
     {
         uint32_t o = (height - 1 - i) * width;
-        uint32_t j;
 
-        for(j = 0; j < width; ++j)
+        for(uint32_t j = 0; j < width; ++j)
         {
             new_data[i + j * height] = data[o + j];
         }
@@ -136,7 +127,6 @@ int image_load(struct image *image)
     uint32_t *data;
     uint32_t width;
     uint32_t height;
-    uint32_t stride;
     int w;
     int h;
     int c;
@@ -160,17 +150,15 @@ int image_load(struct image *image)
     width = w;
     height = h;
 
-    stride = width * sizeof(uint32_t);
-    if (stride / width != sizeof(uint32_t))
+    if (width > 16384)
     {
-        LOG_ERROR("Image is too large: \'%s\'\n", image->path);
+        LOG_ERROR("Image \'%s\' width is out of range (max 16384).\n", image->path);
         goto error;
     }
 
-    image->data_size = height * stride;
-    if (image->data_size / height != stride)
+    if (height > 16384)
     {
-        LOG_ERROR("Image is too large: \'%s\'\n", image->path);
+        LOG_ERROR("Image \'%s\' height is out of range (max 16384).\n", image->path);
         goto error;
     }
 
@@ -187,9 +175,10 @@ int image_load(struct image *image)
     switch (image->rotate)
     {
         default:
-            LOG_WARNING("Invalid image rotation \'%d\' -- using 0 degrees.\n",
+            LOG_ERROR("Invalid image rotation \'%d\'.\n",
                 image->rotate);
-            /* fall through */
+            goto error;
+
         case 0:
             image->width = width;
             image->height = height;
@@ -265,11 +254,10 @@ int image_add_width_and_height(struct image *image)
     return 0;
 }
 
-int image_rlet(struct image *image, uint32_t transparent_index)
+int image_rlet(struct image *image, uint8_t transparent_index)
 {
     uint8_t *new_data;
     uint32_t new_size;
-    uint32_t i;
 
     /* multiply by 3 for worst-case encoding */
     new_size = 0;
@@ -280,7 +268,7 @@ int image_rlet(struct image *image, uint32_t transparent_index)
         return -1;
     }
 
-    for (i = 0; i < image->height; i++)
+    for (uint32_t i = 0; i < image->height; i++)
     {
         uint32_t offset = i * image->width;
         uint32_t left = image->width;
@@ -330,7 +318,6 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
 {
     uint8_t *new_data;
     uint32_t new_size;
-    uint32_t j;
     uint8_t shift_mult;
     uint8_t inc;
 
@@ -389,15 +376,14 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
         return -1;
     }
 
-    for (j = 0; j < image->height; ++j)
+    for (uint32_t j = 0; j < image->height; ++j)
     {
         uint32_t offset = j * image->width;
-        uint32_t k;
 
-        for (k = 0; k < image->width; k += inc)
+        for (uint32_t k = 0; k < image->width; k += inc)
         {
-            int cur_inc = inc;
-            int col;
+            uint8_t cur_inc = inc;
+            uint8_t col;
             uint8_t byte = 0;
 
             for (col = 0; col < inc; col++)
@@ -417,11 +403,9 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
     return 0;
 }
 
-int image_add_offset(struct image *image, uint32_t offset)
+int image_add_offset(struct image *image, uint8_t offset)
 {
-    uint32_t i;
-
-    for (i = 0; i < image->data_size; ++i)
+    for (uint32_t i = 0; i < image->data_size; ++i)
     {
         image->data[i] += offset;
     }
@@ -433,7 +417,6 @@ int image_remove_omits(struct image *image, uint8_t *omit_indices, uint32_t nr_o
 {
     uint8_t *new_data;
     uint32_t new_size;
-    uint32_t i;
 
     if (nr_omit_indices == 0)
     {
@@ -448,11 +431,9 @@ int image_remove_omits(struct image *image, uint8_t *omit_indices, uint32_t nr_o
         return -1;
     }
 
-    for (i = 0; i < image->data_size; ++i)
-    {
-        uint32_t j;
-        
-        for (j = 0; j < nr_omit_indices; ++j)
+    for (uint32_t i = 0; i < image->data_size; ++i)
+    {        
+        for (uint32_t j = 0; j < nr_omit_indices; ++j)
         {
             if (image->data[i] == omit_indices[j])
             {
@@ -495,7 +476,6 @@ int image_quantize(struct image *image, const struct palette *palette)
     liq_attr *liqattr = NULL;
     uint8_t *new_data = NULL;
     uint32_t new_size;
-    uint32_t i;
     bool bad_alpha;
 
     liqattr = liq_attr_create();
@@ -519,7 +499,7 @@ int image_quantize(struct image *image, const struct palette *palette)
         return -1;
     }
 
-    for (i = 0; i < palette->nr_entries; ++i)
+    for (uint32_t i = 0; i < palette->nr_entries; ++i)
     {
         const struct color *c = &palette->entries[i].color;
         liq_color color =
@@ -561,31 +541,28 @@ int image_quantize(struct image *image, const struct palette *palette)
     bad_alpha = false;
 
     /* loop through each input pixel and insert exact fixed colors */
-    for (i = 0; i < image->width * image->height; ++i)
+    for (uint32_t i = 0; i < image->width * image->height; ++i)
     {
         uint32_t offset = i * sizeof(uint32_t);
-        uint8_t r, g, b, alpha;
-        uint32_t j;
-
-        r = image->data[offset + 0];
-        g = image->data[offset + 1];
-        b = image->data[offset + 2];
-        alpha = image->data[offset + 3];
+        uint8_t r = image->data[offset + 0];
+        uint8_t g = image->data[offset + 1];
+        uint8_t b = image->data[offset + 2];
+        uint8_t a = image->data[offset + 3];
 
         /* if alpha == 0, this is a transparent pixel */
-        if (alpha == 0)
+        if (a == 0)
         {
             new_data[i] = image->transparent_index;
             continue;
         }
 
         /* otherwise, the user might get bad colors */
-        if (alpha != 255)
+        if (a != 255)
         {
             bad_alpha = true;
         }
 
-        for (j = 0; j < palette->nr_fixed_entries; ++j)
+        for (uint32_t j = 0; j < palette->nr_fixed_entries; ++j)
         {
             const struct palette_entry *fixed = &palette->fixed_entries[j];
 
@@ -622,11 +599,10 @@ int image_quantize(struct image *image, const struct palette *palette)
 
 int image_direct_convert(struct image *image, color_format_t fmt)
 {
+    bool bad_alpha;
     uint8_t *new_data;
     uint8_t *dst;
     uint32_t new_size;
-    bool bad_alpha;
-    uint32_t i;
 
     switch (fmt)
     {
@@ -656,11 +632,11 @@ int image_direct_convert(struct image *image, color_format_t fmt)
     bad_alpha = false;
 
     /* loop through each input pixel and output new format */
-    for (i = 0; i < image->width * image->height; ++i)
+    for (uint32_t i = 0; i < image->width * image->height; ++i)
     {
         uint32_t offset = i * sizeof(uint32_t);
         struct color color;
-        uint32_t target;
+        uint16_t target;
         uint8_t alpha;
 
         color.r = image->data[offset + 0];

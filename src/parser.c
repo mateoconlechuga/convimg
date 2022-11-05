@@ -1131,7 +1131,7 @@ static int parse_output_palettes(struct output *output, yaml_document_t *doc, ya
         if (node != NULL)
         {
             char *name = (char*)node->data.scalar.value;
-            if (output_add_palette(output, strings_trim(name)) != 0)
+            if (output_add_palette_name(output, strings_trim(name)) != 0)
             {
                 return -1;
             }
@@ -1150,7 +1150,7 @@ static int parse_output_converts(struct output *output, yaml_document_t *doc, ya
         if (node != NULL)
         {
             char *name = (char*)node->data.scalar.value;
-            if (output_add_convert(output, strings_trim(name)) != 0)
+            if (output_add_convert_name(output, strings_trim(name)) != 0)
             {
                 return -1;
             }

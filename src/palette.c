@@ -248,19 +248,17 @@ int palette_automatic_build(struct palette *palette, struct convert **converts, 
 
 void palette_sort(struct palette *palette)
 {
-    uint32_t i;
-
-    for (i = 0; i < palette->nr_entries; ++i)
+iterate:
+    for (uint32_t i = 0; i < palette->nr_entries; ++i)
     {
         struct palette_entry *e1 = &palette->entries[i];
-        uint32_t j;
 
         if (!e1->valid || e1->fixed)
         {
             continue;
         }
 
-        for (j = i + 1; j < palette->nr_entries; ++j)
+        for (uint32_t j = i + 1; j < palette->nr_entries; ++j)
         {
             struct palette_entry *e2 = &palette->entries[j];
             uint8_t r1, r2;
@@ -287,8 +285,7 @@ void palette_sort(struct palette *palette)
                 struct palette_entry tmp = *e1;
                 *e1 = *e2;
                 *e2 = tmp;
-                i = -1;
-                break;
+                goto iterate;
             }
         }
     }

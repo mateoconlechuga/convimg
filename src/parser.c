@@ -876,7 +876,6 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         yaml_node_t *valuen = yaml_document_get_node(doc, pair->value);
         char *key;
         char *value;
-        int tmpf;
         int tmpi;
 
         if (keyn == NULL || valuen == NULL)
@@ -990,7 +989,7 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         }
         else if (parse_str_cmp("dither", key))
         {
-            tmpf = strtof(value, NULL);
+            float tmpf = strtof(value, NULL);
             if (tmpf > 1 || tmpf < 0)
             {
                 LOG_ERROR("Invalid dither value.\n");
@@ -1001,7 +1000,7 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         }
         else if (parse_str_cmp("rotate", key))
         {
-            tmpi = strtof(value, NULL);
+            tmpi = strtol(value, 0, NULL);
             if (tmpi != 0 && tmpi != 90 && tmpi != 180 && tmpi != 270)
             {
                 LOG_ERROR("Invalid rotate parameter, must be 0, 90, 180, or 270.\n");
@@ -1471,50 +1470,47 @@ static int parser_validate(struct yaml *yaml)
     {
         struct convert *convert = yaml->converts[i];
 
-        switch (convert->style)
+        if (convert->style == CONVERT_STYLE_DIRECT)
         {
-            case CONVERT_STYLE_DIRECT:
-                if (convert->bpp != BPP_8)
-                {
-                    LOG_ERROR("Convert \'%s\' style does not support \'bpp\' option.\n",
-                        convert->name);
-                    return -1;
-                }
-                if (convert->palette_name != NULL)
-                {
-                    LOG_ERROR("Convert \'%s\' style does not support \'palette\' option.\n",
-                        convert->name);
-                    return -1;
-                }
-                if (convert->nr_omit_indices)
-                {
-                    LOG_ERROR("Convert \'%s\' style does not support \'omit-indices\' option.\n",
-                        convert->name);
-                    return -1;
-                }
-                if (convert->transparent_index > 0)
-                {
-                    LOG_ERROR("Convert \'%s\' style does not support \'transparent-index\' option.\n",
-                        convert->name);
-                    return -1;
-                }
-                if (convert->palette_offset != 0)
-                {
-                    LOG_ERROR("Convert \'%s\' style does not support \'palette-offset\' option.\n",
-                        convert->name);
-                    return -1;
-                }
-                convert->bpp = BPP_16;
-                break;
-
-            default:
-                if (convert->color_fmt != COLOR_565_RGB)
-                {
-                    LOG_ERROR("Convert \'%s\' style does not support \'color-format\' option.\n",
-                        convert->name);
-                    return -1;
-                }
-                break;
+            if (convert->bpp != BPP_8)
+            {
+                LOG_ERROR("Convert \'%s\' style does not support \'bpp\' option.\n",
+                    convert->name);
+                return -1;
+            }
+            if (convert->palette_name != NULL)
+            {
+                LOG_ERROR("Convert \'%s\' style does not support \'palette\' option.\n",
+                    convert->name);
+                return -1;
+            }
+            if (convert->nr_omit_indices)
+            {
+                LOG_ERROR("Convert \'%s\' style does not support \'omit-indices\' option.\n",
+                    convert->name);
+                return -1;
+            }
+            if (convert->transparent_index > 0)
+            {
+                LOG_ERROR("Convert \'%s\' style does not support \'transparent-index\' option.\n",
+                    convert->name);
+                return -1;
+            }
+            if (convert->palette_offset != 0)
+            {
+                LOG_ERROR("Convert \'%s\' style does not support \'palette-offset\' option.\n",
+                    convert->name);
+                return -1;
+            }
+        }
+        else
+        {
+            if (convert->color_fmt != COLOR_565_RGB)
+            {
+                LOG_ERROR("Convert \'%s\' style does not support \'color-format\' option.\n",
+                    convert->name);
+                return -1;
+            }
         }
     }
 

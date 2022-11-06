@@ -4,5 +4,3 @@ queries:
   - uses: security-and-quality
 paths:
   - src
-paths-ignore:
-  - src/deps

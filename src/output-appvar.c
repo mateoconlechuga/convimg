@@ -85,7 +85,6 @@ int output_appvar_init(struct output *output)
 {
     struct appvar *appvar = &output->appvar;
     uint32_t nr_entries;
-    uint32_t i, j, k, l;
     uint32_t offset;
     uint32_t index;
 
@@ -108,30 +107,30 @@ int output_appvar_init(struct output *output)
 
     nr_entries = 0;
 
-    for (i = 0; i < output->nr_palettes; ++i)
+    for (uint32_t i = 0; i < output->nr_palettes; ++i)
     {
         nr_entries++;
     }
 
-    for (i = 0; i < output->nr_converts; ++i)
+    for (uint32_t i = 0; i < output->nr_converts; ++i)
     {
         struct convert *convert = output->converts[i];
         struct tileset_group *tileset_group = convert->tileset_group;
 
-        for (j = 0; j < convert->nr_images; ++j)
+        for (uint32_t j = 0; j < convert->nr_images; ++j)
         {
             nr_entries++;
         }
 
         if (tileset_group != NULL)
         {
-            for (k = 0; k < tileset_group->nr_tilesets; ++k)
+            for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
             {
                 struct tileset *tileset = &tileset_group->tilesets[k];
 
                 nr_entries++;
 
-                for (l = 0; l < tileset->nr_tiles; l++)
+                for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                 {
                     nr_entries++;
                 }
@@ -162,7 +161,7 @@ int output_appvar_init(struct output *output)
 
     if (output->order == OUTPUT_PALETTES_FIRST)
     {
-        for (i = 0; i < output->nr_palettes; ++i)
+        for (uint32_t i = 0; i < output->nr_palettes; ++i)
         {
             appvar_insert_entry(appvar, index, offset);
 
@@ -171,12 +170,12 @@ int output_appvar_init(struct output *output)
             index++;
         }
 
-        for (i = 0; i < output->nr_converts; ++i)
+        for (uint32_t i = 0; i < output->nr_converts; ++i)
         {
             struct convert *convert = output->converts[i];
             struct tileset_group *tileset_group = convert->tileset_group;
 
-            for (j = 0; j < convert->nr_images; ++j)
+            for (uint32_t j = 0; j < convert->nr_images; ++j)
             {
                 appvar_insert_entry(appvar, index, offset);
 
@@ -187,14 +186,14 @@ int output_appvar_init(struct output *output)
 
             if (tileset_group != NULL)
             {
-                for (k = 0; k < tileset_group->nr_tilesets; ++k)
+                for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
                 {
                     struct tileset *tileset = &tileset_group->tilesets[k];
                     int tileset_offset = 0;
 
                     appvar_insert_entry(appvar, index, offset);
 
-                    for (l = 0; l < tileset->nr_tiles; l++)
+                    for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                     {
                         tileset_offset += tileset->tiles[l].data_size;
                     }
@@ -206,19 +205,19 @@ int output_appvar_init(struct output *output)
             }
         }
 
-        for (i = 0; i < output->nr_converts; ++i)
+        for (uint32_t i = 0; i < output->nr_converts; ++i)
         {
             struct convert *convert = output->converts[i];
             struct tileset_group *tileset_group = convert->tileset_group;
 
             if (tileset_group != NULL)
             {
-                for (k = 0; k < tileset_group->nr_tilesets; ++k)
+                for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
                 {
                     struct tileset *tileset = &tileset_group->tilesets[k];
                     int tileset_offset = 0;
 
-                    for (l = 0; l < tileset->nr_tiles; l++)
+                    for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                     {
                         appvar_insert_entry(appvar, index, tileset_offset);
 
@@ -232,12 +231,12 @@ int output_appvar_init(struct output *output)
     }
     else
     {
-        for (i = 0; i < output->nr_converts; ++i)
+        for (uint32_t i = 0; i < output->nr_converts; ++i)
         {
             struct convert *convert = output->converts[i];
             struct tileset_group *tileset_group = convert->tileset_group;
 
-            for (j = 0; j < convert->nr_images; ++j)
+            for (uint32_t j = 0; j < convert->nr_images; ++j)
             {
                 appvar_insert_entry(appvar, index, offset);
 
@@ -248,14 +247,14 @@ int output_appvar_init(struct output *output)
 
             if (tileset_group != NULL)
             {
-                for (k = 0; k < tileset_group->nr_tilesets; ++k)
+                for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
                 {
                     struct tileset *tileset = &tileset_group->tilesets[k];
                     uint32_t tileset_offset = 0;
 
                     appvar_insert_entry(appvar, index, offset);
 
-                    for (l = 0; l < tileset->nr_tiles; l++)
+                    for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                     {
                         tileset_offset += tileset->tiles[l].data_size;
                     }
@@ -266,19 +265,20 @@ int output_appvar_init(struct output *output)
                 }
             }
         }
-        for (i = 0; i < output->nr_converts; ++i)
+
+        for (uint32_t i = 0; i < output->nr_converts; ++i)
         {
             struct convert *convert = output->converts[i];
             struct tileset_group *tileset_group = convert->tileset_group;
 
             if (tileset_group != NULL)
             {
-                for (k = 0; k < tileset_group->nr_tilesets; ++k)
+                for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
                 {
                     struct tileset *tileset = &tileset_group->tilesets[k];
                     uint32_t tileset_offset = 0;
 
-                    for (l = 0; l < tileset->nr_tiles; l++)
+                    for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                     {
                         appvar_insert_entry(appvar, index, tileset_offset);
 
@@ -290,7 +290,7 @@ int output_appvar_init(struct output *output)
             }
         }
 
-        for (i = 0; i < output->nr_palettes; ++i)
+        for (uint32_t i = 0; i < output->nr_palettes; ++i)
         {
             appvar_insert_entry(appvar, index, offset);
 
@@ -323,9 +323,8 @@ int output_appvar_image(struct output *output, const struct image *image)
 int output_appvar_tileset(struct output *output, const struct tileset *tileset)
 {
     struct appvar *appvar = &output->appvar;
-    uint32_t i;
 
-    for (i = 0; i < tileset->nr_tiles; ++i)
+    for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
     {
         struct tileset_tile *tile = &tileset->tiles[i];
 
@@ -344,7 +343,6 @@ int output_appvar_tileset(struct output *output, const struct tileset *tileset)
 int output_appvar_palette(struct output *output, const struct palette *palette)
 {
     struct appvar *appvar = &output->appvar;
-    uint32_t i;
 
     if (output->palette_sizes)
     {
@@ -361,7 +359,7 @@ int output_appvar_palette(struct output *output, const struct palette *palette)
         appvar->size++;
     }
 
-    for (i = 0; i < palette->nr_entries; ++i)
+    for (uint32_t i = 0; i < palette->nr_entries; ++i)
     {
         uint16_t target = palette->entries[i].target;
 
@@ -379,19 +377,17 @@ int output_appvar_palette(struct output *output, const struct palette *palette)
     return 0;
 }
 
-static void output_appvar_c_include_file_palettes(struct output *output, FILE *fdh, int *index)
+static void output_appvar_c_include_file_palettes(struct output *output, FILE *fdh, uint32_t *index)
 {
-    uint32_t i;
-
-    for (i = 0; i < output->nr_palettes; ++i)
+    for (uint32_t i = 0; i < output->nr_palettes; ++i)
     {
         struct palette *palette = output->palettes[i];
         uint32_t size = palette->nr_entries * sizeof(uint16_t);
 
-        fprintf(fdh, "#define sizeof_%s %d\n",
+        fprintf(fdh, "#define sizeof_%s %u\n",
             palette->name,
             size);
-        fprintf(fdh, "#define %s (%s_appvar[%d])\n",
+        fprintf(fdh, "#define %s (%s_appvar[%u])\n",
             palette->name,
             output->appvar.name,
             *index);
@@ -400,21 +396,17 @@ static void output_appvar_c_include_file_palettes(struct output *output, FILE *f
     }
 }
 
-static void output_appvar_c_include_file_converts(struct output *output, FILE *fdh, int *index)
+static void output_appvar_c_include_file_converts(struct output *output, FILE *fdh, uint32_t *index)
 {
-    uint32_t i;
-
-    for (i = 0; i < output->nr_converts; ++i)
+    for (uint32_t i = 0; i < output->nr_converts; ++i)
     {
-        uint32_t j;
-
         struct convert *convert = output->converts[i];
         struct tileset_group *tileset_group = convert->tileset_group;
 
         fprintf(fdh, "#define %s_palette_offset %u\n",
             convert->name, convert->palette_offset);
 
-        for (j = 0; j < convert->nr_images; ++j)
+        for (uint32_t j = 0; j < convert->nr_images; ++j)
         {
             struct image *image = &convert->images[j];
 
@@ -427,20 +419,20 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
 
             if (image->compressed)
             {
-                fprintf(fdh, "#define %s_%s_%s_compressed_index %d\n",
+                fprintf(fdh, "#define %s_%s_%s_compressed_index %u\n",
                     output->appvar.name,
                     convert->name,
                     image->name,
                     *index);
 
-                fprintf(fdh, "#define %s_compressed %s_appvar[%d]\n",
+                fprintf(fdh, "#define %s_compressed %s_appvar[%u]\n",
                     image->name,
                     output->appvar.name,
                     *index);
             }
             else
             {
-                fprintf(fdh, "#define %s_%s_%s_index %d\n",
+                fprintf(fdh, "#define %s_%s_%s_index %u\n",
                     output->appvar.name,
                     convert->name,
                     image->name,
@@ -448,7 +440,7 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
 
                 if (image->gfx)
                 {
-                    fprintf(fdh, "#define %s ((%s*)%s_appvar[%d])\n",
+                    fprintf(fdh, "#define %s ((%s*)%s_appvar[%u])\n",
                         image->name,
                         image->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
                         output->appvar.name,
@@ -461,12 +453,9 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
 
         if (tileset_group != NULL)
         {
-            uint32_t k;
-
-            for (k = 0; k < tileset_group->nr_tilesets; ++k)
+            for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
             {
                 struct tileset *tileset = &tileset_group->tilesets[k];
-                uint32_t l;
 
                 tileset->appvar_index = *index;
 
@@ -489,7 +478,7 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
                     fprintf(fdh, "extern unsigned char *%s_tiles_compressed[%u];\n",
                         tileset->image.name,
                         tileset->nr_tiles);
-                    for (l = 0; l < tileset->nr_tiles; l++)
+                    for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                     {
                         fprintf(fdh, "#define %s_tile_%u_compressed %s_tiles_compressed[%u]\n",
                         tileset->image.name,
@@ -500,7 +489,7 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
                 }
                 else
                 {
-                    fprintf(fdh, "#define %s %s_appvar[%d]\n",
+                    fprintf(fdh, "#define %s %s_appvar[%u]\n",
                         tileset->image.name,
                         output->appvar.name,
                         *index);
@@ -518,7 +507,7 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
                             tileset->image.rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
                             tileset->image.name);
 
-                        for (l = 0; l < tileset->nr_tiles; l++)
+                        for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                         {
                             fprintf(fdh, "#define %s_tile_%u ((%s*)%s_tiles_data[%u])\n",
                             tileset->image.name,
@@ -530,7 +519,7 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
                     }
                     else
                     {
-                        for (l = 0; l < tileset->nr_tiles; l++)
+                        for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                         {
                             fprintf(fdh, "#define %s_tile_%u_data %s_tiles_data[%u]\n",
                             tileset->image.name,
@@ -550,7 +539,7 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
 void output_appvar_c_include_file(struct output *output, FILE *fdh)
 {
     struct appvar *appvar = &output->appvar;
-    int index = 0;
+    uint32_t index = 0;
 
     fprintf(fdh, "#ifndef %s_appvar_include_file\n", appvar->name);
     fprintf(fdh, "#define %s_appvar_include_file\n", appvar->name);
@@ -607,7 +596,6 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
 {
     struct appvar *appvar = &output->appvar;
     uint32_t offset = appvar->data_offset;
-    uint32_t i, k, l;
 
     fprintf(fds, "#include \"%s\"\n", output->include_file);
     if (appvar->compress == COMPRESS_NONE)
@@ -625,8 +613,8 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
             appvar->name,
             appvar->nr_entries);
 
-        // global appvar mapping
-        for (i = 0; i < output->nr_palettes; ++i)
+        /* global appvar mapping */
+        for (uint32_t i = 0; i < output->nr_palettes; ++i)
         {
             struct palette *palette = output->palettes[i];
 
@@ -636,13 +624,12 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
             offset += palette->nr_entries * 2;
         }
 
-        for (i = 0; i < output->nr_converts; ++i)
+        for (uint32_t i = 0; i < output->nr_converts; ++i)
         {
             struct convert *convert = output->converts[i];
             struct tileset_group *tileset_group = convert->tileset_group;
-            uint32_t j;
 
-            for (j = 0; j < convert->nr_images; ++j)
+            for (uint32_t j = 0; j < convert->nr_images; ++j)
             {
                 fprintf(fds, "    (unsigned char*)%u,\n",
                     offset);
@@ -652,12 +639,12 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
 
             if (tileset_group != NULL)
             {
-                for (k = 0; k < tileset_group->nr_tilesets; ++k)
+                for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
                 {
                     struct tileset *tileset = &tileset_group->tilesets[k];
                     int tileset_offset = 0;
 
-                    for (l = 0; l < tileset->nr_tiles; l++)
+                    for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                     {
                         tileset_offset += tileset->tiles[l].data_size;
                     }
@@ -679,20 +666,20 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
             appvar->nr_entries);
     }
 
-    for (i = 0; i < output->nr_converts; ++i)
+    for (uint32_t i = 0; i < output->nr_converts; ++i)
     {
         struct convert *convert = output->converts[i];
         struct tileset_group *tileset_group = convert->tileset_group;
 
         if (tileset_group != NULL)
         {
-            for (k = 0; k < tileset_group->nr_tilesets; ++k)
+            for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
             {
                 struct tileset *tileset = &tileset_group->tilesets[k];
 
                 if (appvar->lut == false)
                 {
-                    int tileset_offset = 0;
+                    uint32_t tileset_offset = 0;
 
                     if (tileset->compressed)
                     {
@@ -707,7 +694,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                             tileset->nr_tiles);
                     }
 
-                    for (l = 0; l < tileset->nr_tiles; l++)
+                    for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                     {
                         fprintf(fds, "    (unsigned char*)%u,\n",
                             tileset_offset);
@@ -740,7 +727,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
     {
         bool has_tilesets = false;
 
-        for (i = 0; i < output->nr_converts; ++i)
+        for (uint32_t i = 0; i < output->nr_converts; ++i)
         {
             if (output->converts[i]->tileset_group != NULL)
             {
@@ -781,20 +768,20 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                 fprintf(fds, "    ti_Close(appvar);\n\n");
             }
 
-            for (i = 0; i < output->nr_converts; ++i)
+            for (uint32_t i = 0; i < output->nr_converts; ++i)
             {
                 struct convert *convert = output->converts[i];
                 struct tileset_group *tileset_group = convert->tileset_group;
 
                 if (tileset_group != NULL)
                 {
-                    for (k = 0; k < tileset_group->nr_tilesets; ++k)
+                    for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
                     {
                         struct tileset *tileset = &tileset_group->tilesets[k];
 
                         if (tileset->compressed)
                         {
-                            fprintf(fds, "    data = (unsigned int)%s_appvar[%d] - (unsigned int)%s_tiles_compressed[0];\n",
+                            fprintf(fds, "    data = (unsigned int)%s_appvar[%u] - (unsigned int)%s_tiles_compressed[0];\n",
                                 appvar->name,
                                 tileset->appvar_index,
                                 tileset->image.name);
@@ -908,14 +895,14 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
                 fprintf(fds, "    ti_Close(appvar);\n\n");
             }
 
-            for (i = 0; i < output->nr_converts; ++i)
+            for (uint32_t i = 0; i < output->nr_converts; ++i)
             {
                 struct convert *convert = output->converts[i];
                 struct tileset_group *tileset_group = convert->tileset_group;
 
                 if (tileset_group != NULL)
                 {
-                    for (k = 0; k < tileset_group->nr_tilesets; ++k)
+                    for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
                     {
                         struct tileset *tileset = &tileset_group->tilesets[k];
 
@@ -954,15 +941,12 @@ void output_appvar_asm_include_file(struct output *output, FILE *fdh)
     uint32_t offset = appvar->data_offset;
     uint32_t nr_entries = 0;
     bool order = output->order;
-    uint32_t o;
 
-    for (o = 0; o < 2; ++o)
+    for (uint32_t o = 0; o < 2; ++o)
     {
-        uint32_t i;
-
         if (order == OUTPUT_PALETTES_FIRST)
         {
-            for (i = 0; i < output->nr_palettes; ++i)
+            for (uint32_t i = 0; i < output->nr_palettes; ++i)
             {
                 struct palette *palette = output->palettes[i];
                 uint32_t size = palette->nr_entries * sizeof(uint16_t);
@@ -984,18 +968,17 @@ void output_appvar_asm_include_file(struct output *output, FILE *fdh)
         }
         else
         {
-            for (i = 0; i < output->nr_converts; ++i)
+            for (uint32_t i = 0; i < output->nr_converts; ++i)
             {
                 struct convert *convert = output->converts[i];
                 struct tileset_group *tileset_group = convert->tileset_group;
-                uint32_t j;
 
                 fprintf(fdh, "%s_%s_palette_offset := %u\n",
                     output->appvar.name,
                     convert->name,
                     convert->palette_offset);
 
-                for (j = 0; j < convert->nr_images; ++j)
+                for (uint32_t j = 0; j < convert->nr_images; ++j)
                 {
                     struct image *image = &convert->images[j];
 
@@ -1034,13 +1017,10 @@ void output_appvar_asm_include_file(struct output *output, FILE *fdh)
 
                 if (tileset_group != NULL)
                 {
-                    uint32_t k;
-
-                    for (k = 0; k < tileset_group->nr_tilesets; ++k)
+                    for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
                     {
                         struct tileset *tileset = &tileset_group->tilesets[k];
                         uint32_t tileset_offset = 0;
-                        uint32_t l;
 
                         tileset->appvar_index = nr_entries;
 
@@ -1066,7 +1046,7 @@ void output_appvar_asm_include_file(struct output *output, FILE *fdh)
                             tileset->compressed ? "_compressed_" : "_",
                             offset);
 
-                        for (l = 0; l < tileset->nr_tiles; l++)
+                        for (uint32_t l = 0; l < tileset->nr_tiles; l++)
                         {
                             tileset_offset += tileset->tiles[l].data_size;
 
@@ -1191,10 +1171,7 @@ int output_appvar_include(struct output *output)
             break;
         }
 
-        case APPVAR_SOURCE_ICE:
-            break;
-
-        case APPVAR_SOURCE_NONE:
+        default:
             break;
     }
 

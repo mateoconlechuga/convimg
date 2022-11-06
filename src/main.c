@@ -43,7 +43,7 @@ static int process_yaml(struct yaml *yaml)
         return -1;
     }
 
-    for (size_t i = 0; i < yaml->nr_palettes; ++i)
+    for (uint32_t i = 0; i < yaml->nr_palettes; ++i)
     {
         if (palette_generate(
             yaml->palettes[i],
@@ -54,7 +54,7 @@ static int process_yaml(struct yaml *yaml)
         }
     }
 
-    for (size_t i = 0; i < yaml->nr_converts; ++i)
+    for (uint32_t i = 0; i < yaml->nr_converts; ++i)
     {
         if (convert_generate(
             yaml->converts[i],
@@ -65,7 +65,7 @@ static int process_yaml(struct yaml *yaml)
         }
     }
 
-    for (size_t i = 0; i < yaml->nr_outputs; ++i)
+    for (uint32_t i = 0; i < yaml->nr_outputs; ++i)
     {
         if (output_generate(
             yaml->outputs[i],

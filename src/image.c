@@ -76,7 +76,7 @@ static int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height)
     uint32_t *new_data;
     uint32_t data_size;
 
-    data_size = width * height * sizeof(uint32_t);
+    data_size = width * height * 4;
     new_data = malloc(data_size);
     if (new_data == NULL)
     {
@@ -260,13 +260,15 @@ int image_rlet(struct image *image, uint8_t transparent_index)
     uint32_t new_size;
 
     /* multiply by 3 for worst-case encoding */
-    new_size = 0;
-    new_data = malloc(image->width * image->height * 3);
+    new_size = image->width * image->height * 3;
+    new_data = malloc(new_size);
     if (new_data == NULL)
     {
         LOG_ERROR("Out of memory.\n");
         return -1;
     }
+
+    new_size = 0;
 
     for (uint32_t i = 0; i < image->height; i++)
     {
@@ -543,7 +545,7 @@ int image_quantize(struct image *image, const struct palette *palette)
     /* loop through each input pixel and insert exact fixed colors */
     for (uint32_t i = 0; i < image->width * image->height; ++i)
     {
-        uint32_t offset = i * sizeof(uint32_t);
+        uint32_t offset = i * 4;
         uint8_t r = image->data[offset + 0];
         uint8_t g = image->data[offset + 1];
         uint8_t b = image->data[offset + 2];
@@ -634,7 +636,7 @@ int image_direct_convert(struct image *image, color_format_t fmt)
     /* loop through each input pixel and output new format */
     for (uint32_t i = 0; i < image->width * image->height; ++i)
     {
-        uint32_t offset = i * sizeof(uint32_t);
+        uint32_t offset = i * 4;
         struct color color;
         uint16_t target;
         uint8_t alpha;

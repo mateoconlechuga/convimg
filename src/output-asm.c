@@ -85,12 +85,12 @@ int output_asm_image(struct output *output, const struct image *image)
         goto error;
     }
 
-    fprintf(fds, "%s_width := %d\n", image->name, image->width);
-    fprintf(fds, "%s_height := %d\n", image->name, image->height);
-    fprintf(fds, "%s_size := %d\n", image->name, image->uncompressed_size);
+    fprintf(fds, "%s_width := %u\n", image->name, image->width);
+    fprintf(fds, "%s_height := %u\n", image->name, image->height);
+    fprintf(fds, "%s_size := %u\n", image->name, image->uncompressed_size);
     if (image->compressed)
     {
-        fprintf(fds, "%s_compressed_size := %d\n", image->name, image->data_size);
+        fprintf(fds, "%s_compressed_size := %u\n", image->name, image->data_size);
     }
     fprintf(fds, "%s:\n\tdb\t", image->name);
 
@@ -111,7 +111,6 @@ int output_asm_tileset(struct output *output, const struct tileset *tileset)
 {
     char *source = NULL;
     FILE *fds = NULL;
-    uint32_t i;
 
     source = strings_concat(output->directory, tileset->image.name, ".asm", NULL);
     if (source == NULL)
@@ -128,15 +127,15 @@ int output_asm_tileset(struct output *output, const struct tileset *tileset)
         goto error;
     }
 
-    fprintf(fds, "%s_num_tiles := %d\n",
+    fprintf(fds, "%s_num_tiles := %u\n",
         tileset->image.name,
         tileset->nr_tiles);
 
-    for (i = 0; i < tileset->nr_tiles; ++i)
+    for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
     {
         struct tileset_tile *tile = &tileset->tiles[i];
 
-        fprintf(fds, "%s_tile_%d:\n\tdb\t", tileset->image.name, i);
+        fprintf(fds, "%s_tile_%u:\n\tdb\t", tileset->image.name, i);
 
         output_asm_array(tile->data, tile->data_size, fds);
     }
@@ -145,9 +144,9 @@ int output_asm_tileset(struct output *output, const struct tileset *tileset)
     {
         fprintf(fds, "%s_tiles:\n", tileset->image.name);
 
-        for (i = 0; i < tileset->nr_tiles; ++i)
+        for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
         {
-            fprintf(fds, "\tdl\t%s_tile_%d\n",
+            fprintf(fds, "\tdl\t%s_tile_%u\n",
                 tileset->image.name,
                 i);
         }
@@ -185,13 +184,13 @@ int output_asm_palette(struct output *output, const struct palette *palette)
         goto error;
     }
 
-    size = palette->nr_entries * 2;
+    size = palette->nr_entries * sizeof(uint16_t);
 
-    fprintf(fds, "sizeof_%s := %d\n", palette->name, size);
+    fprintf(fds, "sizeof_%s := %u\n", palette->name, size);
 
     if (output->palette_sizes)
     {
-        fprintf(fds, "\tdw\t%d\n", size);
+        fprintf(fds, "\tdw\t%u\n", size);
     }
 
     fprintf(fds, "%s:\n", palette->name);

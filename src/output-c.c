@@ -99,14 +99,14 @@ int output_c_image(struct output *output, const struct image *image)
     fprintf(fdh, "extern \"C\" {\n");
     fprintf(fdh, "#endif\n");
     fprintf(fdh, "\n");
-    fprintf(fdh, "#define %s_width %d\n", image->name, image->width);
-    fprintf(fdh, "#define %s_height %d\n", image->name, image->height);
-    fprintf(fdh, "#define %s_size %d\n", image->name, image->uncompressed_size);
+    fprintf(fdh, "#define %s_width %u\n", image->name, image->width);
+    fprintf(fdh, "#define %s_height %u\n", image->name, image->height);
+    fprintf(fdh, "#define %s_size %u\n", image->name, image->uncompressed_size);
 
     if (image->compressed)
     {
-        fprintf(fdh, "#define %s_compressed_size %d\n", image->name, image->data_size);
-        fprintf(fdh, "extern %sunsigned char %s_compressed[%d];\n",
+        fprintf(fdh, "#define %s_compressed_size %u\n", image->name, image->data_size);
+        fprintf(fdh, "extern %sunsigned char %s_compressed[%u];\n",
             output->constant, image->name, image->data_size);
     }
     else
@@ -120,7 +120,7 @@ int output_c_image(struct output *output, const struct image *image)
                 image->name);
         }
 
-        fprintf(fdh, "extern %sunsigned char %s_data[%d];\n",
+        fprintf(fdh, "extern %sunsigned char %s_data[%u];\n",
             output->constant, image->name, image->data_size);
     }
 
@@ -399,7 +399,7 @@ int output_c_palette(struct output *output, const struct palette *palette)
     fprintf(fdh, "extern \"C\" {\n");
     fprintf(fdh, "#endif\n");
     fprintf(fdh, "\n");
-    fprintf(fdh, "#define sizeof_%s %d\n", palette->name, size);
+    fprintf(fdh, "#define sizeof_%s %u\n", palette->name, size);
     fprintf(fdh, "extern %sunsigned char %s[%u];\n",
         output->constant, palette->name, size);
     fprintf(fdh, "\n");

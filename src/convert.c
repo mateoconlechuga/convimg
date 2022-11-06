@@ -441,7 +441,7 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
 
         if (convert_image(convert, &tile))
         {
-            free(tile_data);
+            free(tile.data);
             return -1;
         }
 

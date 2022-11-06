@@ -56,56 +56,36 @@ char *strings_dup(const char *str)
 
 char *strings_concat(char const *first, ...)
 {
-    size_t used;
-    size_t size;
-    size_t len;
+    if (first == NULL)
+    {
+        return NULL;
+    }
 
     va_list ap;
     va_start(ap, first);
+    char *result = NULL;
+    size_t size = 0;
 
-    va_list cp_ap;
-    va_copy(cp_ap, ap); // copy for future use
-
-    size = 1; // need the size of the future string
     for (char const *ptr = first; ptr != NULL; ptr = va_arg(ap, char const *))
     {
-        size += strlen(ptr);
-    }
-    va_end(ap);
+        size_t len = strlen(ptr);
 
-    char *result = malloc(size);
-    if (result == NULL)
-    {
-        LOG_ERROR("Out of memory.\n");
-        va_end(cp_ap);
-        return NULL;
-    }
-
-    used = 0;
-    for (char const *ptr = first; ptr != NULL; ptr = va_arg(cp_ap, char const *))
-    {
-        len = strlen(ptr);
-
-        if (size < used || size - used < len)
+        /* +1 for null terminator */
+        char *result = realloc(result, size + len + 1);
+        if (result == NULL)
         {
-            free(result);
-            va_end(cp_ap);
+            LOG_ERROR("Out of memory.\n");
+            va_end(ap);
             return NULL;
         }
 
-        memcpy(result + used, ptr, len);
-        used += len;
+        memcpy(result + size, ptr, len);
+        size += len;
     }
+    
+    va_end(ap);
 
-    va_end(cp_ap);
-
-    if (size < used || size - used != 1)
-    {
-        free(result);
-        return NULL;
-    }
-
-    result[used] = '\0';
+    result[size] = '\0';
 
     return result;
 }

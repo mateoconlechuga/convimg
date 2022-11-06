@@ -95,6 +95,9 @@ static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
         return NULL;
     }
 
+    yaml->palettes[yaml->nr_palettes] = palette;
+    yaml->nr_palettes++;
+
     palette->name = strings_dup(name);
     if (palette->name == NULL)
     {
@@ -115,9 +118,6 @@ static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
         entry->orig_color.g = 0;
         entry->orig_color.b = 0;
     }
-
-    yaml->palettes[yaml->nr_palettes] = palette;
-    yaml->nr_palettes++;
 
     return palette;
 }
@@ -144,20 +144,21 @@ static struct convert *parser_alloc_convert(struct yaml *yaml, void *name)
         return NULL;
     }
 
+    yaml->converts[yaml->nr_converts] = convert;
+    yaml->nr_converts++;
+
     convert->name = strings_dup(name);
     if (convert->name == NULL)
     {
         return NULL;
     }
 
-    yaml->converts[yaml->nr_converts] = convert;
-    yaml->nr_converts++;
-
     return convert;
 }
 
 static struct output *parser_alloc_output(struct yaml *yaml, void *type)
 {
+    const char *include_file;
     struct output *output;
     uint32_t resize;
 
@@ -178,55 +179,45 @@ static struct output *parser_alloc_output(struct yaml *yaml, void *type)
         return NULL;
     }
 
+    yaml->outputs[yaml->nr_outputs] = output;
+    yaml->nr_outputs++;
+
     if (parse_str_cmp("c", type))
     {
         output->format = OUTPUT_FORMAT_C;
-        output->include_file = strings_dup("gfx.h");
-        if (output->include_file == NULL)
-        {
-            return NULL;
-        }
+        include_file = "gfx.h";
     }
     else if (parse_str_cmp("asm", type))
     {
         output->format = OUTPUT_FORMAT_ASM;
-        output->include_file = strings_dup("gfx.inc");
-        if (output->include_file == NULL)
-        {
-            return NULL;
-        }
+        include_file = "gfx.inc";
     }
     else if (parse_str_cmp("ice", type))
     {
         output->format = OUTPUT_FORMAT_ICE;
-        output->include_file = strings_dup("ice.txt");
-        if (output->include_file == NULL)
-        {
-            return NULL;
-        }
+        include_file = "ice.txt";
     }
     else if (parse_str_cmp("appvar", type))
     {
         output->format = OUTPUT_FORMAT_APPVAR;
+        include_file = "gfx.h";
     }
     else if (parse_str_cmp("bin", type))
     {
         output->format = OUTPUT_FORMAT_BIN;
-        output->include_file = strings_dup("gfx.txt");
-        if (output->include_file == NULL)
-        {
-            return NULL;
-        }
+        include_file = "gfx.txt";
     }
     else
     {
         LOG_ERROR("Unknown output type.\n");
-        free(output);
         return NULL;
     }
 
-    yaml->outputs[yaml->nr_outputs] = output;
-    yaml->nr_outputs++;
+    output->include_file = strings_dup(include_file);
+    if (output->include_file == NULL)
+    {
+        return NULL;
+    }
 
     return output;
 }

@@ -63,8 +63,7 @@ int appvar_write(struct appvar *a, const char *path)
     size_t data_size;
     size_t varb_size;
     size_t var_size;
-    size_t size;
-    int write_error;
+    int write_error = -1;
 
     LOG_INFO(" - Writing \'%s\'\n", path);
 
@@ -72,21 +71,21 @@ int appvar_write(struct appvar *a, const char *path)
     if (fdv == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
-        return -1;
+        goto error;
     }
 
     memset(output, 0, sizeof output);
 
-    size = a->size;
-
     if (a->compress != COMPRESS_NONE)
     {
+        size_t size = a->size;
+
         LOG_INFO("    - Size before compression: %u bytes\n", (unsigned int)a->size);
 
         if (compress_array(a->data, &size, a->compress))
         {
             LOG_ERROR("Failed to compress data for AppVar \'%s\'.\n", a->name);
-            return -1;
+            goto error;
         }
 
         a->size = size;
@@ -97,7 +96,7 @@ int appvar_write(struct appvar *a, const char *path)
     if (a->size > APPVAR_MAX_DATA_SIZE)
     {
         LOG_ERROR("Too much data for AppVar \'%s\'.\n", a->name);
-        return -1;
+        goto error;
     }
 
     file_size = a->size + APPVAR_DATA_POS + APPVAR_CHECKSUM_LEN;
@@ -141,7 +140,12 @@ int appvar_write(struct appvar *a, const char *path)
         }
     }
 
-    fclose(fdv);
+error:
+
+    if (fdv != NULL)
+    {
+        fclose(fdv);
+    }
 
     return write_error;
 }

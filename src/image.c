@@ -370,13 +370,15 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
         return -1;
     }
 
-    new_size = 0;
-    new_data = malloc(image->width * image->height);
+    new_size = image->width * image->height;
+    new_data = malloc(new_size);
     if (new_data == NULL)
     {
         LOG_ERROR("Out of memory.\n");
         return -1;
     }
+
+    new_size = 0;
 
     for (uint32_t j = 0; j < image->height; ++j)
     {

@@ -63,7 +63,7 @@ int output_ice_image(struct output *output, const struct image *image)
     fd = fopen(output->include_file, "at");
     if (fd == NULL)
     {
-        LOG_ERROR("Could not open file: %s\n", strerror(errno));
+        LOG_ERROR("Could not open: %s\n", strerror(errno));
         return -1;
     }
 
@@ -94,7 +94,7 @@ int output_ice_palette(struct output *output, const struct palette *palette)
     fd = fopen(output->include_file, "at");
     if (fd == NULL)
     {
-        LOG_ERROR("Could not open file: %s\n", strerror(errno));
+        LOG_ERROR("Could not open: %s\n", strerror(errno));
         return -1;
     }
 
@@ -125,7 +125,7 @@ int output_ice_include(struct output *output)
     fd = clean_fopen(output->include_file, "rt");
     if (fd == NULL)
     {
-        LOG_ERROR("Could not open file: %s\n", strerror(errno));
+        LOG_ERROR("Could not open: %s\n", strerror(errno));
         return -1;
     }
 
@@ -138,7 +138,11 @@ int output_ice_include(struct output *output)
 
 int output_ice_init(struct output *output)
 {
-    remove(output->include_file);
+    if (remove(output->include_file))
+    {
+        LOG_WARNING("Could not remove \'%s\'.\n",
+            output->include_file);
+    }
 
     return 0;
 }

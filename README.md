@@ -1,6 +1,7 @@
-# convimg [![Windows/Linux/MacOS](https://github.com/mateoconlechuga/convimg/actions/workflows/make.yml/badge.svg)](https://github.com/mateoconlechuga/convimg/actions/workflows/make.yml) [![Coverity Scan](https://scan.coverity.com/projects/23542/badge.svg)](https://scan.coverity.com/projects/mateoconlechuga-convimg) [![Language Grade](https://img.shields.io/lgtm/grade/cpp/g/mateoconlechuga/convimg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mateoconlechuga/convimg/context:cpp)
+# convimg [![Windows/Linux/MacOS](https://github.com/mateoconlechuga/convimg/actions/workflows/make.yml/badge.svg)](https://github.com/mateoconlechuga/convimg/actions/workflows/make.yml) [![Coverity Scan](https://scan.coverity.com/projects/23542/badge.svg)](https://scan.coverity.com/projects/mateoconlechuga-convimg)
 
-This program is used to convert images to other formats, specifically for the TI84+CE and related calculators.
+This program is used to convert images to particular color formats and source includes.
+It primarily is used for the TI-84+CE and related calculator series, however can be used as a standalone program.
 
 ## Command Line Help
 

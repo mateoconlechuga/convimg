@@ -1000,7 +1000,7 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         }
         else if (parse_str_cmp("rotate", key))
         {
-            tmpi = strtol(value, 0, NULL);
+            tmpi = strtol(value, NULL, 10);
             if (tmpi != 0 && tmpi != 90 && tmpi != 180 && tmpi != 270)
             {
                 LOG_ERROR("Invalid rotate parameter, must be 0, 90, 180, or 270.\n");
@@ -1011,7 +1011,7 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         }
         else if (parse_str_cmp("speed", key))
         {
-            tmpi = strtol(value, NULL, 0);
+            tmpi = strtol(value, NULL, 10);
             if (tmpi > 10 || tmpi < 1)
             {
                 LOG_ERROR("Invalid quantization speed.\n");
@@ -1022,7 +1022,7 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         }
         else if (parse_str_cmp("quality", key))
         {
-            tmpi = strtol(value, NULL, 0);
+            tmpi = strtol(value, NULL, 10);
             if (tmpi > 10 || tmpi < 1)
             {
                 LOG_ERROR("Invalid quantization quality.\n");

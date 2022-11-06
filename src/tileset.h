@@ -78,6 +78,8 @@ struct tileset_group
 
 struct tileset_group *tileset_group_alloc(void);
 
+int tileset_alloc_tiles(struct tileset *tileset);
+
 void tileset_free(struct tileset *tileset);
 
 void tileset_group_free(struct tileset_group *tileset_group);

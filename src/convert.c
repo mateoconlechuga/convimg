@@ -121,9 +121,9 @@ struct tileset_group *convert_alloc_tileset_group(struct convert *convert)
 
 static int convert_add_tileset(struct convert *convert, const char *path)
 {
-    struct image *image;
     struct tileset_group *tileset_group;
     struct tileset *tileset;
+    struct image *image;
 
     if (convert == NULL || path == NULL)
     {
@@ -142,6 +142,7 @@ static int convert_add_tileset(struct convert *convert, const char *path)
     }
 
     tileset = &tileset_group->tilesets[tileset_group->nr_tilesets];
+    tileset_group->nr_tilesets++;
 
     tileset->tile_height = tileset_group->tile_height;
     tileset->tile_width = tileset_group->tile_width;
@@ -160,8 +161,6 @@ static int convert_add_tileset(struct convert *convert, const char *path)
     image->rotate = 0;
     image->flip_x = false;
     image->flip_y = false;
-
-    tileset_group->nr_tilesets++;
 
     return 0;
 }
@@ -387,6 +386,27 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
 {
     uint32_t x;
     uint32_t y;
+
+    if (tileset->image.width % tileset->tile_width)
+    {
+        LOG_ERROR("Image dimensions do not support tile width.\n");
+        return -1;
+    }
+
+    if (tileset->image.height % tileset->tile_height)
+    {
+        LOG_ERROR("Image dimensions do not support tile height.\n");
+        return -1;
+    }
+
+    tileset->nr_tiles =
+        (tileset->image.width / tileset->tile_width) *
+        (tileset->image.height / tileset->tile_height);
+
+    if (tileset_alloc_tiles(tileset))
+    {
+        return -1;
+    }
 
     tileset->rlet = convert->style == CONVERT_STYLE_RLET;
     tileset->compressed = convert->compress != COMPRESS_NONE;

@@ -56,9 +56,7 @@ struct tileset_group *tileset_group_alloc(void)
 
 void tileset_free(struct tileset *tileset)
 {
-    uint32_t i;
-
-    for (i = 0; i < tileset->nr_tiles; ++i)
+    for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
     {
         if (tileset->tiles != NULL)
         {
@@ -73,16 +71,33 @@ void tileset_free(struct tileset *tileset)
     image_free(&tileset->image);
 }
 
+int tileset_alloc_tiles(struct tileset *tileset)
+{
+    tileset->tiles =
+        malloc(tileset->nr_tiles * sizeof(struct tileset_tile));
+    if (tileset->tiles == NULL)
+    {
+        LOG_ERROR("Out of memory.\n");
+        return -1;
+    }
+
+    for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
+    {
+        tileset->tiles[i].data_size = 0;
+        tileset->tiles[i].data = NULL;
+    }
+
+    return 0;
+}
+
 void tileset_group_free(struct tileset_group *tileset_group)
 {
-    uint32_t i;
-
     if (tileset_group == NULL)
     {
         return;
     }
 
-    for (i = 0; i < tileset_group->nr_tilesets; ++i)
+    for (uint32_t i = 0; i < tileset_group->nr_tilesets; ++i)
     {
         if (tileset_group->tilesets != NULL)
         {

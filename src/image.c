@@ -136,13 +136,13 @@ int image_load(struct image *image)
                                  STBI_rgb_alpha);
     if (data == NULL)
     {
-        LOG_ERROR("Could not load image \'%s\'\n", image->path);
+        LOG_ERROR("Could not load image \'%s\'.\n", image->path);
         goto error;
     }
 
-    if (w <= 0 || h <= 0)
+    if (w <= 0 || h <= 0 || w > STBI_MAX_DIMENSIONS || h > STBI_MAX_DIMENSIONS)
     {
-        LOG_ERROR("Invalid width/height in image \'%s\'\n", image->path);
+        LOG_ERROR("Image \'%s\' is too large.\n", image->path);
         goto error;
     }
 
@@ -150,17 +150,8 @@ int image_load(struct image *image)
     width = w;
     height = h;
 
-    if (width > 16384)
-    {
-        LOG_ERROR("Image \'%s\' width is out of range (max 16384).\n", image->path);
-        goto error;
-    }
-
-    if (height > 16384)
-    {
-        LOG_ERROR("Image \'%s\' height is out of range (max 16384).\n", image->path);
-        goto error;
-    }
+    /* converted nothing, so no data size yet */
+    image->data_size = 0;
 
     if (image->flip_x)
     {

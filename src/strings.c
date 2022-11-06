@@ -71,7 +71,7 @@ char *strings_concat(char const *first, ...)
         size_t len = strlen(ptr);
 
         /* +1 for null terminator */
-        char *result = realloc(result, size + len + 1);
+        result = realloc(result, size + len + 1);
         if (result == NULL)
         {
             LOG_ERROR("Out of memory.\n");

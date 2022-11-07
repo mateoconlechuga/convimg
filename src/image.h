@@ -81,8 +81,7 @@ int image_add_offset(struct image *image, uint8_t offset);
 
 int image_compress(struct image *image, compress_mode_t mode);
 
-int image_remove_omits(struct image *image, uint8_t *omit_indices,
-    uint32_t nr_omit_indices);
+int image_remove_omits(struct image *image, const uint8_t *omit_indices, uint32_t nr_omit_indices);
 
 int image_set_bpp(struct image *image, bpp_t bpp, uint32_t palette_nr_entries);
 

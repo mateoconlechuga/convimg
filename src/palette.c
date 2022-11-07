@@ -95,11 +95,8 @@ static int palette_add_image(struct palette *palette, const char *path)
         return -1;
     }
 
-    image->path = strings_dup(path);
-    if (image->path == NULL)
-    {
-        return -1;
-    }
+    image = &palette->images[palette->nr_images];
+    palette->nr_images++;
 
     image->name = strings_basename(path);
     image->data = NULL;
@@ -110,8 +107,11 @@ static int palette_add_image(struct palette *palette, const char *path)
     image->flip_y = false;
     image->rlet = false;
 
-    image = &palette->images[palette->nr_images];
-    palette->nr_images++;
+    image->path = strings_dup(path);
+    if (image->path == NULL)
+    {
+        return -1;
+    }
 
     LOG_DEBUG("Adding image: %s [%s]\n", image->path, image->name);
 
@@ -314,7 +314,7 @@ int palette_generate_with_images(struct palette *palette)
 
     max_entries = palette->max_entries - exact_entries;
 
-    LOG_DEBUG("Available quantization colors: %d\n", max_entries);
+    LOG_DEBUG("Available quantization colors: %u\n", max_entries);
 
     liq_set_max_colors(attr, max_entries);
 
@@ -410,7 +410,7 @@ int palette_generate_with_images(struct palette *palette)
 
             if (add_color)
             {
-                uint32_t offset = nr_colors * sizeof(uint32_t);
+                uint32_t index = nr_colors * sizeof(uint32_t);
 
                 color_normalize(&color, palette->color_fmt);
 
@@ -432,10 +432,10 @@ int palette_generate_with_images(struct palette *palette)
                     }
                 }
 
-                colors[offset + 0] = color.r;
-                colors[offset + 1] = color.g;
-                colors[offset + 2] = color.b;
-                colors[offset + 3] = alpha;
+                colors[index + 0] = color.r;
+                colors[index + 1] = color.g;
+                colors[index + 2] = color.b;
+                colors[index + 3] = alpha;
 
                 nr_colors++;
             }
@@ -614,7 +614,7 @@ int palette_generate_with_images(struct palette *palette)
     /* everything up (hashmaps!) */
     palette_sort(palette);
 
-    LOG_INFO("Generated palette \'%s\' with %d colors (%d unused)\n",
+    LOG_INFO("Generated palette \'%s\' with %u colors (%u unused)\n",
             palette->name, palette->nr_entries,
             PALETTE_MAX_ENTRIES - palette->nr_entries + unused);
 
@@ -696,7 +696,7 @@ int palette_generate(struct palette *palette, struct convert **converts, uint32_
 
         palette->nr_entries = nr_entries;
 
-        LOG_INFO("Generated palette \'%s\' with %d colors (%d unused)\n",
+        LOG_INFO("Generated palette \'%s\' with %u colors (%u unused)\n",
                 palette->name, palette->nr_entries,
                 PALETTE_MAX_ENTRIES - palette->nr_entries + palette->nr_fixed_entries);
     }

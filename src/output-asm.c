@@ -167,7 +167,6 @@ int output_asm_palette(struct output *output, const struct palette *palette)
     char *source = NULL;
     FILE *fds = NULL;
     uint32_t size;
-    uint32_t i;
 
     source = strings_concat(output->directory, palette->name, ".asm", 0);
     if (source == NULL)
@@ -195,7 +194,7 @@ int output_asm_palette(struct output *output, const struct palette *palette)
 
     fprintf(fds, "%s:\n", palette->name);
 
-    for (i = 0; i < palette->nr_entries; ++i)
+    for (uint32_t i = 0; i < palette->nr_entries; ++i)
     {
         const struct palette_entry *entry = &palette->entries[i];
         const struct color *color = &entry->color;
@@ -203,7 +202,7 @@ int output_asm_palette(struct output *output, const struct palette *palette)
 
         if (entry->valid)
         {
-            fprintf(fds, "\tdw\t$%04x ; %3d: rgb(%3d, %3d, %3d)\n",
+            fprintf(fds, "\tdw\t$%04x ; %3u: rgb(%3u, %3u, %3u)\n",
                     target,
                     i,
                     color->r,
@@ -212,7 +211,7 @@ int output_asm_palette(struct output *output, const struct palette *palette)
         }
         else
         {
-            fprintf(fds, "\tdw\t$0000 ; %3d: unused\n", i);
+            fprintf(fds, "\tdw\t$0000 ; %3u: unused\n", i);
         }
     }
 
@@ -231,7 +230,7 @@ int output_asm_include(struct output *output)
 {
     char *include_name = NULL;
     char *tmp = NULL;
-    FILE *fdi = NULL;
+    FILE *fd = NULL;
 
     include_name = strings_dup(output->include_file);
     if (include_name == NULL)
@@ -247,8 +246,8 @@ int output_asm_include(struct output *output)
 
     LOG_INFO(" - Writing \'%s\'\n", output->include_file);
 
-    fdi = clean_fopen(output->include_file, "wt");
-    if (fdi == NULL)
+    fd = clean_fopen(output->include_file, "wt");
+    if (fd == NULL)
     {
         LOG_ERROR("Could not open file: %s\n", strerror(errno));
         goto error;
@@ -256,7 +255,7 @@ int output_asm_include(struct output *output)
 
     for (uint32_t i = 0; i < output->nr_palettes; ++i)
     {
-        fprintf(fdi, "include \'%s.asm\'\n", output->palettes[i]->name);
+        fprintf(fd, "include \'%s.asm\'\n", output->palettes[i]->name);
     }
 
     for (uint32_t i = 0; i < output->nr_converts; ++i)
@@ -267,18 +266,18 @@ int output_asm_include(struct output *output)
         {
             const struct image *image = &convert->images[j];
 
-            fprintf(fdi, "include \'%s.asm\'\n", image->name);
+            fprintf(fd, "include \'%s.asm\'\n", image->name);
         }
 
         for (uint32_t k = 0; k < convert->nr_tilesets; ++k)
         {
             const struct tileset *tileset = &convert->tilesets[k];
 
-            fprintf(fdi, "include \'%s.asm\'\n", tileset->image.name);
+            fprintf(fd, "include \'%s.asm\'\n", tileset->image.name);
         }
     }
 
-    fclose(fdi);
+    fclose(fd);
 
     free(include_name);
 

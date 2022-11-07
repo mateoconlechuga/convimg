@@ -166,7 +166,7 @@ int image_load(struct image *image)
     switch (image->rotate)
     {
         default:
-            LOG_ERROR("Invalid image rotation \'%d\'.\n",
+            LOG_ERROR("Invalid image rotation \'%u\'.\n",
                 image->rotate);
             goto error;
 
@@ -404,7 +404,7 @@ int image_add_offset(struct image *image, uint8_t offset)
     return 0;
 }
 
-int image_remove_omits(struct image *image, uint8_t *omit_indices, uint32_t nr_omit_indices)
+int image_remove_omits(struct image *image, const uint8_t *omit_indices, uint32_t nr_omit_indices)
 {
     uint8_t *new_data;
     uint32_t new_size;

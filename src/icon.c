@@ -66,7 +66,7 @@ int icon_convert(struct icon *icon)
 
         if (image.width > 255)
         {
-            LOG_ERROR("Icon \'%s\' width is %d. "
+            LOG_ERROR("Icon \'%s\' width is %u. "
                       "Maximum supported is 255.\n",
                 image.path,
                 image.width);
@@ -75,7 +75,7 @@ int icon_convert(struct icon *icon)
 
         if (image.height > 255)
         {
-            LOG_ERROR("Icon \'%s\' height is %d. "
+            LOG_ERROR("Icon \'%s\' height is %u. "
                       "Maximum supported is 255.\n",
                 image.path,
                 image.height);

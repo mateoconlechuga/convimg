@@ -35,28 +35,30 @@
 
 void *memory_alloc(size_t size)
 {
-    void *ret = malloc(size);
-    
-    if (ret == NULL)
+    void *mem = malloc(size);
+
+    if (mem == NULL)
     {
         LOG_ERROR("Out of memory.\n");
+        return NULL;
     }
 
-    return ret;
+    return mem;
 }
 
 void *memory_realloc(void *ptr, size_t size)
 {
-    void *ret = realloc(ptr, size);
+    void *mem = realloc(ptr, size);
 
     /* normal realloc doesn't free on failure */
-    if (ret == NULL)
+    if (mem == NULL)
     {
         LOG_ERROR("Out of memory.\n");
         free(ptr);
+        return NULL;
     }
 
-    return ret;
+    return mem;
 }
 
 void *memory_realloc_array(void *ptr, size_t nelem, size_t elsize)
@@ -65,6 +67,8 @@ void *memory_realloc_array(void *ptr, size_t nelem, size_t elsize)
 
     if (__builtin_mul_overflow(nelem, elsize, &bytes))
     {
+        LOG_ERROR("Out of memory.\n");
+        free(ptr);
         return NULL;
     }
 

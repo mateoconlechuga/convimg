@@ -30,6 +30,7 @@
 
 #include "parser.h"
 #include "strings.h"
+#include "memory.h"
 #include "log.h"
 
 #include "deps/libyaml/include/yaml.h"
@@ -75,17 +76,12 @@ static void parse_show_error(const char *problem, yaml_mark_t mark)
 static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
 {
     struct palette *palette;
-    uint32_t resize;
-    uint32_t i;
 
     LOG_DEBUG("Allocating palette: %s\n", (char*)name);
 
-    resize = (yaml->nr_palettes + 1) * sizeof(struct palette *);
-
-    yaml->palettes = realloc(yaml->palettes, resize);
+    yaml->palettes = memory_realloc_array(yaml->palettes, yaml->nr_palettes + 1, sizeof(struct palette *));
     if (yaml->palettes == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -104,7 +100,7 @@ static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
         return NULL;
     }
 
-    for (i = 0; i < PALETTE_MAX_ENTRIES; ++i)
+    for (uint32_t i = 0; i < PALETTE_MAX_ENTRIES; ++i)
     {
         struct palette_entry *entry = &palette->entries[i];
 
@@ -125,16 +121,12 @@ static struct palette *parser_alloc_palette(struct yaml *yaml, void *name)
 static struct convert *parser_alloc_convert(struct yaml *yaml, void *name)
 {
     struct convert *convert;
-    uint32_t resize;
 
     LOG_DEBUG("Allocating convert: %s\n", (char*)name);
 
-    resize = (yaml->nr_converts + 1) * sizeof(struct convert *);
-
-    yaml->converts = realloc(yaml->converts, resize);
+    yaml->converts = memory_realloc_array(yaml->converts, yaml->nr_converts + 1, sizeof(struct convert *));
     if (yaml->converts == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -160,16 +152,12 @@ static struct output *parser_alloc_output(struct yaml *yaml, void *type)
 {
     const char *include_file;
     struct output *output;
-    uint32_t resize;
 
     LOG_DEBUG("Allocating output: %s\n", (char*)type);
 
-    resize = (yaml->nr_outputs + 1) * sizeof(struct output *);
-
-    yaml->outputs = realloc(yaml->outputs, resize);
+    yaml->outputs = memory_realloc_array(yaml->outputs, yaml->nr_outputs + 1, sizeof(struct output *));
     if (yaml->outputs == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -788,19 +776,12 @@ static int parse_convert_tilesets_images(struct convert *convert, yaml_document_
 
 static int parse_convert_tilesets(struct convert *convert, yaml_document_t *doc, yaml_node_t *root)
 {
-    struct tileset_group *group = NULL;
     yaml_node_pair_t *pair;
 
     if (root->type != YAML_MAPPING_NODE)
     {
         LOG_ERROR("Unknown tileset options.\n");
         parser_show_mark_error(root->start_mark);
-        return -1;
-    }
-
-    group = convert_alloc_tileset_group(convert);
-    if (group == NULL)
-    {
         return -1;
     }
 
@@ -829,7 +810,7 @@ static int parse_convert_tilesets(struct convert *convert, yaml_document_t *doc,
                 parser_show_mark_error(keyn->start_mark);
                 return -1;
             }
-            group->tile_width = tmpi;
+            convert->tile_width = tmpi;
         }
         else if (parse_str_cmp("tile-height", key))
         {
@@ -840,11 +821,11 @@ static int parse_convert_tilesets(struct convert *convert, yaml_document_t *doc,
                 parser_show_mark_error(keyn->start_mark);
                 return -1;
             }
-            group->tile_height = tmpi;
+            convert->tile_height = tmpi;
         }
         else if (parse_str_cmp("pointer-table", key))
         {
-            group->p_table = parse_str_bool(value);
+            convert->p_table = parse_str_bool(value);
         }
         else if (parse_str_cmp("images", key))
         {
@@ -1219,7 +1200,7 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
             }
             if (*tmp && tmp[strlen(tmp) - 1] != '/')
             {
-                output->directory = strings_concat(tmp, "/", NULL);
+                output->directory = strings_concat(tmp, "/", 0);
                 free(tmp);
             }
             else
@@ -1352,16 +1333,19 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
                     return -1;
                 }
 
-                header = malloc(valuelen);
+                header = memory_alloc(valuelen);
                 if (header == NULL)
                 {
                     return -1;
                 }
 
-                header_size = strings_utf8_to_iso8859_1(value,
-                    valuelen,
-                    header,
-                    valuelen);
+                header_size =
+                    strings_utf8_to_iso8859_1(value, valuelen, header, valuelen);
+                if (header_size <= 0)
+                {
+                    return -1;
+                }
+
                 output->appvar.header = header;
                 output->appvar.header_size = header_size;
             }
@@ -1521,7 +1505,7 @@ static int parser_validate(struct yaml *yaml)
         if (output->directory != NULL && output->include_file != NULL)
         {
             char *include_file =
-                strings_concat(output->directory, output->include_file, NULL);
+                strings_concat(output->directory, output->include_file, 0);
 
             if (include_file == NULL)
             {

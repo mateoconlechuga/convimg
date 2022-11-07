@@ -46,6 +46,7 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(SRCDIR)/image.c \
           $(SRCDIR)/log.c \
           $(SRCDIR)/main.c \
+          $(SRCDIR)/memory.c \
           $(SRCDIR)/options.c \
           $(SRCDIR)/output-appvar.c \
           $(SRCDIR)/output-asm.c \

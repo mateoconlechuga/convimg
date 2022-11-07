@@ -30,8 +30,9 @@
 
 #include "image.h"
 #include "palette.h"
-#include "log.h"
 #include "strings.h"
+#include "memory.h"
+#include "log.h"
 
 #include "deps/libimagequant/libimagequant.h"
 
@@ -77,10 +78,9 @@ static int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height)
     uint32_t data_size;
 
     data_size = width * height * 4;
-    new_data = malloc(data_size);
+    new_data = memory_alloc(data_size);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -228,10 +228,9 @@ void image_free(struct image *image)
 
 int image_add_width_and_height(struct image *image)
 {
-    image->data = realloc(image->data, image->data_size + WIDTH_HEIGHT_SIZE);
+    image->data = memory_realloc(image->data, image->data_size + WIDTH_HEIGHT_SIZE);
     if (image->data == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -252,10 +251,9 @@ int image_rlet(struct image *image, uint8_t transparent_index)
 
     /* multiply by 3 for worst-case encoding */
     new_size = image->width * image->height * 3;
-    new_data = malloc(new_size);
+    new_data = memory_alloc(new_size);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -361,11 +359,9 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
         return -1;
     }
 
-    new_size = image->width * image->height;
-    new_data = malloc(new_size);
+    new_data = memory_realloc_array(NULL, image->width, image->height);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -419,10 +415,9 @@ int image_remove_omits(struct image *image, uint8_t *omit_indices, uint32_t nr_o
     }
 
     new_size = 0;
-    new_data = malloc(image->data_size);
+    new_data = memory_alloc(image->data_size);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -521,10 +516,9 @@ int image_quantize(struct image *image, const struct palette *palette)
     liq_set_dithering_level(liqresult, image->dither);
 
     new_size = image->width * image->height;
-    new_data = malloc(new_size);
+    new_data = memory_alloc(new_size);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         liq_result_destroy(liqresult);
         liq_image_destroy(liqimage);
         liq_attr_destroy(liqattr);
@@ -616,10 +610,9 @@ int image_direct_convert(struct image *image, color_format_t fmt)
             return -1;
     }
 
-    new_data = malloc(new_size);
+    new_data = memory_alloc(new_size);
     if (new_data == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 

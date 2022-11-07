@@ -95,7 +95,7 @@ int clean_begin(const char *yaml_name, uint8_t flags)
     char *name;
     FILE *fd;
 
-    name = strings_concat(yaml_name, ".lst", NULL);
+    name = strings_concat(yaml_name, ".lst", 0);
     if (name == NULL)
     {
         return -1;

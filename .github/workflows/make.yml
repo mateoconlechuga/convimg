@@ -1,4 +1,4 @@
-name: Windows/Linux/MacOS
+name: build
 
 on:
   push:
@@ -110,3 +110,20 @@ jobs:
       uses: github/codeql-action/analyze@v2
       with:
         category: "/language:${{matrix.language}}"
+
+  codiga-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check code meets quality standards
+      id: codiga
+      uses: codiga/github-action@master
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        codiga_api_token: ${{ secrets.CODIGA_API_TOKEN }}
+        min_quality_grade: 'WARNING'
+        min_quality_score: '50'
+        max_defects_rate: '0.2'
+        max_complex_functions_rate: '0.0001'
+        max_long_functions_rate: '1.0000'
+        project_name: 'github-action-example'
+        max_timeout_sec: '600'

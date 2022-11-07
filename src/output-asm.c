@@ -70,7 +70,7 @@ int output_asm_image(struct output *output, const struct image *image)
     char *source = NULL;
     FILE *fds = NULL;
 
-    source = strings_concat(output->directory, image->name, ".asm", NULL);
+    source = strings_concat(output->directory, image->name, ".asm", 0);
     if (source == NULL)
     {
         goto error;
@@ -112,7 +112,7 @@ int output_asm_tileset(struct output *output, const struct tileset *tileset)
     char *source = NULL;
     FILE *fds = NULL;
 
-    source = strings_concat(output->directory, tileset->image.name, ".asm", NULL);
+    source = strings_concat(output->directory, tileset->image.name, ".asm", 0);
     if (source == NULL)
     {
         goto error;
@@ -169,7 +169,7 @@ int output_asm_palette(struct output *output, const struct palette *palette)
     uint32_t size;
     uint32_t i;
 
-    source = strings_concat(output->directory, palette->name, ".asm", NULL);
+    source = strings_concat(output->directory, palette->name, ".asm", 0);
     if (source == NULL)
     {
         goto error;
@@ -232,7 +232,6 @@ int output_asm_include(struct output *output)
     char *include_name = NULL;
     char *tmp = NULL;
     FILE *fdi = NULL;
-    uint32_t i;
 
     include_name = strings_dup(output->include_file);
     if (include_name == NULL)
@@ -255,34 +254,27 @@ int output_asm_include(struct output *output)
         goto error;
     }
 
-    for (i = 0; i < output->nr_palettes; ++i)
+    for (uint32_t i = 0; i < output->nr_palettes; ++i)
     {
         fprintf(fdi, "include \'%s.asm\'\n", output->palettes[i]->name);
     }
 
-    for (i = 0; i < output->nr_converts; ++i)
+    for (uint32_t i = 0; i < output->nr_converts; ++i)
     {
-        struct convert *convert = output->converts[i];
-        struct tileset_group *tileset_group = convert->tileset_group;
-        uint32_t j;
+        const struct convert *convert = output->converts[i];
 
-        for (j = 0; j < convert->nr_images; ++j)
+        for (uint32_t j = 0; j < convert->nr_images; ++j)
         {
-            struct image *image = &convert->images[j];
+            const struct image *image = &convert->images[j];
 
             fprintf(fdi, "include \'%s.asm\'\n", image->name);
         }
 
-        if (tileset_group != NULL)
+        for (uint32_t k = 0; k < convert->nr_tilesets; ++k)
         {
-            uint32_t k;
+            const struct tileset *tileset = &convert->tilesets[k];
 
-            for (k = 0; k < tileset_group->nr_tilesets; ++k)
-            {
-                struct tileset *tileset = &tileset_group->tilesets[k];
-
-                fprintf(fdi, "include \'%s.asm\'\n", tileset->image.name);
-            }
+            fprintf(fdi, "include \'%s.asm\'\n", tileset->image.name);
         }
     }
 

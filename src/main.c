@@ -37,12 +37,6 @@
 
 static int process_yaml(struct yaml *yaml)
 {
-    if (yaml->nr_outputs == 0)
-    {
-        LOG_ERROR("No output rules found; exiting.\n");
-        return -1;
-    }
-
     for (uint32_t i = 0; i < yaml->nr_palettes; ++i)
     {
         if (palette_generate(

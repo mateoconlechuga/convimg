@@ -31,6 +31,7 @@
 #include "convert.h"
 #include "strings.h"
 #include "compress.h"
+#include "memory.h"
 #include "tileset.h"
 #include "log.h"
 
@@ -39,10 +40,9 @@
 
 struct convert *convert_alloc(void)
 {
-    struct convert *convert = malloc(sizeof(struct convert));
+    struct convert *convert = memory_alloc(sizeof(struct convert));
     if (convert == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -51,7 +51,6 @@ struct convert *convert_alloc(void)
     convert->compress = COMPRESS_NONE;
     convert->palette = NULL;
     convert->palette_offset = 0;
-    convert->tileset_group = NULL;
     convert->style = CONVERT_STYLE_PALETTE;
     convert->nr_omit_indices = 0;
     convert->add_width_height = true;
@@ -65,6 +64,11 @@ struct convert *convert_alloc(void)
     convert->rotate = 0;
     convert->flip_x = false;
     convert->flip_y = false;
+    convert->tilesets = NULL;
+    convert->nr_tilesets = 0;
+    convert->tile_height = 16;
+    convert->tile_width = 16;
+    convert->p_table = true;
 
     return convert;
 }
@@ -83,11 +87,9 @@ static int convert_add_image(struct convert *convert, const char *path)
         return -1;
     }
 
-    convert->images =
-        realloc(convert->images, (convert->nr_images + 1) * sizeof(struct image));
+    convert->images = memory_realloc_array(convert->images, convert->nr_images + 1, sizeof(struct image));
     if (convert->images == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -102,26 +104,8 @@ static int convert_add_image(struct convert *convert, const char *path)
     return 0;
 }
 
-struct tileset_group *convert_alloc_tileset_group(struct convert *convert)
-{
-    struct tileset_group *tmp;
-
-    LOG_DEBUG("Allocating convert tileset group...\n");
-
-    tmp = tileset_group_alloc();
-    if (tmp == NULL)
-    {
-        return NULL;
-    }
-
-    convert->tileset_group = tmp;
-
-    return tmp;
-}
-
 static int convert_add_tileset(struct convert *convert, const char *path)
 {
-    struct tileset_group *tileset_group;
     struct tileset *tileset;
     struct image *image;
 
@@ -131,22 +115,15 @@ static int convert_add_tileset(struct convert *convert, const char *path)
         return -1;
     }
 
-    tileset_group = convert->tileset_group;
-
-    tileset_group->tilesets =
-        realloc(tileset_group->tilesets, (tileset_group->nr_tilesets + 1) * sizeof(struct tileset));
-    if (tileset_group->tilesets == NULL)
+    convert->tilesets = memory_realloc_array(convert->tilesets, convert->nr_tilesets + 1, sizeof(struct tileset));
+    if (convert->tilesets == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
-    tileset = &tileset_group->tilesets[tileset_group->nr_tilesets];
-    tileset_group->nr_tilesets++;
+    tileset = &convert->tilesets[convert->nr_tilesets];
+    convert->nr_tilesets++;
 
-    tileset->tile_height = tileset_group->tile_height;
-    tileset->tile_width = tileset_group->tile_width;
-    tileset->p_table = tileset_group->p_table;
     tileset->tiles = NULL;
     tileset->nr_tiles = 0;
 
@@ -256,10 +233,13 @@ void convert_free(struct convert *convert)
     {
         image_free(&convert->images[i]);
     }
+    convert->nr_images = 0;
 
-    tileset_group_free(convert->tileset_group);
-    free(convert->tileset_group);
-    convert->tileset_group = NULL;
+    for (uint32_t i = 0; i < convert->nr_tilesets; ++i)
+    {
+        tileset_free_tiles(&convert->tilesets[i]);
+    }
+    convert->nr_tilesets = 0;
 
     free(convert->images);
     convert->images = NULL;
@@ -273,12 +253,6 @@ void convert_free(struct convert *convert)
 
 static int convert_find_palette(struct convert *convert, struct palette **palettes, uint32_t nr_palettes)
 {
-    if (convert == NULL)
-    {
-        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
-        return -1;
-    }
-
     if (palettes == NULL || convert->palette_name == NULL)
     {
         goto error;
@@ -384,6 +358,7 @@ static int convert_image(struct convert *convert, struct image *image)
 
 static int convert_tileset(struct convert *convert, struct tileset *tileset)
 {
+    uint32_t nr_tiles;
     uint32_t x;
     uint32_t y;
 
@@ -399,11 +374,11 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
         return -1;
     }
 
-    tileset->nr_tiles =
+    nr_tiles =
         (tileset->image.width / tileset->tile_width) *
         (tileset->image.height / tileset->tile_height);
 
-    if (tileset_alloc_tiles(tileset))
+    if (tileset_alloc_tiles(tileset, nr_tiles))
     {
         return -1;
     }
@@ -414,7 +389,7 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
     y = 0;
     x = 0;
 
-    for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
+    for (uint32_t i = 0; i < nr_tiles; ++i)
     {
         uint32_t tile_dim = tileset->tile_width * tileset->tile_height;
         uint32_t tile_data_size = tile_dim * sizeof(uint32_t);
@@ -423,10 +398,9 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
         uint8_t *tile_data;
         uint8_t *dst;
 
-        tile_data = malloc(tile_data_size);
+        tile_data = memory_alloc(tile_data_size);
         if (tile_data == NULL)
         {
-            LOG_ERROR("Out of memory.\n");
             return -1;
         }
 
@@ -474,15 +448,14 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
 
 int convert_generate(struct convert *convert, struct palette **palettes, uint32_t nr_palettes)
 {
-    if (convert == NULL)
+    if (convert->nr_images == 0 || convert->nr_tilesets == 0)
     {
-        return -1;
+        LOG_WARNING("No images or tilesets in convert \'%s\'\n",
+            convert->name);
+        return 0;
     }
 
-    if (convert->nr_images > 0 || convert->tileset_group != NULL)
-    {
-        LOG_INFO("Generating convert \'%s\'\n", convert->name);
-    }
+    LOG_INFO("Generating convert \'%s\'\n", convert->name);
 
     if (convert_is_palette_style(convert))
     {
@@ -496,7 +469,7 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
     {
         struct image *image = &convert->images[i];
         
-        /* assign values to image based on convert flags */
+        /* assign image constants from convert */
         image->quantize_speed = convert->quantize_speed;
         image->dither = convert->dither;
         image->rotate = convert->rotate;
@@ -511,8 +484,7 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
             image->gfx = true;
         }
 
-        LOG_INFO(" - Reading image \'%s\'\n",
-                 image->path);
+        LOG_INFO(" - Reading image \'%s\'\n", image->path);
 
         if (image_load(image))
         {
@@ -523,14 +495,16 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         {
             if (image->width > 255)
             {
-                LOG_ERROR("Image width is %u. Maximum width is 255 when using the option \'width-and-height\'.\n",
+                LOG_ERROR("Image width is %u. "
+                    "Maximum width is 255 when using the option \'width-and-height\'.\n",
                     image->width);
                 return -1;
             }
 
             if (image->height > 255)
             {
-                LOG_ERROR("Image height is %u. Maximum height is 255 when using the option \'width-and-height\'.\n",
+                LOG_ERROR("Image height is %u. "
+                    "Maximum height is 255 when using the option \'width-and-height\'.\n",
                     image->height);
                 return -1;
             }
@@ -542,44 +516,41 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         }
     }
 
-    if (convert->tileset_group != NULL)
+    for (uint32_t j = 0; j < convert->nr_tilesets; ++j)
     {
-        struct tileset_group *tileset_group = convert->tileset_group;
+        struct tileset *tileset = &convert->tilesets[j];
+        struct image *image = &tileset->image;
 
-        LOG_INFO("Converting tilesets for \'%s\'\n", convert->name);
+        /* assign tileset constants from convert */
+        tileset->tile_height = convert->tile_height;
+        tileset->tile_width = convert->tile_width;
+        tileset->p_table = convert->p_table;
 
-        for (uint32_t j = 0; j < tileset_group->nr_tilesets; ++j)
+        /* assign image constants from convert */
+        image->quantize_speed = convert->quantize_speed;
+        image->dither = convert->dither;
+        image->rotate = convert->rotate;
+        image->flip_x = convert->flip_x;
+        image->flip_y = convert->flip_y;
+        image->transparent_index = convert->transparent_index;
+        image->rlet = convert->style == CONVERT_STYLE_RLET;
+
+        image->gfx = false;
+        if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)
         {
-            struct tileset *tileset = &tileset_group->tilesets[j];
-            struct image *image = &tileset->image;
+            image->gfx = true;
+        }
 
-            /* assign values to image based on convert flags */
-            image->quantize_speed = convert->quantize_speed;
-            image->dither = convert->dither;
-            image->rotate = convert->rotate;
-            image->flip_x = convert->flip_x;
-            image->flip_y = convert->flip_y;
-            image->transparent_index = convert->transparent_index;
-            image->rlet = convert->style == CONVERT_STYLE_RLET;
+        LOG_INFO(" - Reading tileset \'%s\'\n", image->path);
 
-            image->gfx = false;
-            if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)
-            {
-                image->gfx = true;
-            }
+        if (image_load(image))
+        {
+            return -1;
+        }
 
-            LOG_INFO(" - Reading tileset \'%s\'\n",
-                image->path);
-
-            if (image_load(image))
-            {
-                return -1;
-            }
-
-            if (convert_tileset(convert, tileset))
-            {
-                return -1;
-            }
+        if (convert_tileset(convert, tileset))
+        {
+            return -1;
         }
     }
 

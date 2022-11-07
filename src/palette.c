@@ -30,6 +30,7 @@
 
 #include "palette.h"
 #include "convert.h"
+#include "memory.h"
 #include "strings.h"
 #include "image.h"
 #include "log.h"
@@ -51,10 +52,9 @@ struct palette *palette_alloc(void)
     struct palette *palette = NULL;
     unsigned int i;
 
-    palette = malloc(sizeof(struct palette));
+    palette = memory_alloc(sizeof(struct palette));
     if (palette == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -89,15 +89,11 @@ static int palette_add_image(struct palette *palette, const char *path)
         return -1;
     }
 
-    palette->images =
-        realloc(palette->images, (palette->nr_images + 1) * sizeof(struct image));
+    palette->images = memory_realloc_array(palette->images, palette->nr_images + 1, sizeof(struct image));
     if (palette->images == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
-
-    image = &palette->images[palette->nr_images];
 
     image->path = strings_dup(path);
     if (image->path == NULL)
@@ -114,6 +110,7 @@ static int palette_add_image(struct palette *palette, const char *path)
     image->flip_y = false;
     image->rlet = false;
 
+    image = &palette->images[palette->nr_images];
     palette->nr_images++;
 
     LOG_DEBUG("Adding image: %s [%s]\n", image->path, image->name);
@@ -126,7 +123,6 @@ int pallete_add_path(struct palette *palette, const char *path)
     static glob_t globbuf;
     char **paths = NULL;
     char *real_path;
-    size_t i;
     size_t len;
 
     if (palette == NULL || path == NULL)
@@ -151,7 +147,7 @@ int pallete_add_path(struct palette *palette, const char *path)
         return -1;
     }
 
-    for (i = 0; i < len; ++i)
+    for (size_t i = 0; i < len; ++i)
     {
         palette_add_image(palette, paths[i]);
     }
@@ -164,14 +160,12 @@ int pallete_add_path(struct palette *palette, const char *path)
 
 void palette_free(struct palette *palette)
 {
-    uint32_t i;
-
     if (palette == NULL)
     {
         return;
     }
 
-    for (i = 0; i < palette->nr_images; ++i)
+    for (uint32_t i = 0; i < palette->nr_images; ++i)
     {
         struct image *image = &palette->images[i];
 
@@ -193,12 +187,10 @@ void palette_generate_builtin(struct palette *palette,
                               const uint8_t *builtin,
                               uint32_t nr_entries)
 {
-    palette->nr_entries = nr_entries;
-
     for (uint32_t i = 0; i < nr_entries; ++i)
     {
         struct color *color = &palette->entries[i].color;
-        uint32_t offset = i * 3;
+        const uint32_t offset = i * 3;
 
         color->r = builtin[offset + 0];
         color->g = builtin[offset + 1];
@@ -206,24 +198,23 @@ void palette_generate_builtin(struct palette *palette,
 
         color_normalize(color, palette->color_fmt);
     }
+
+    palette->nr_entries = nr_entries;
 }
 
 /* in automatic mode, read the images from the converts using the palette. */
 int palette_automatic_build(struct palette *palette, struct convert **converts, uint32_t nr_converts)
 {
-    uint32_t i;
-
-    for (i = 0; i < nr_converts; ++i)
+    for (uint32_t i = 0; i < nr_converts; ++i)
     {
-        struct tileset_group *tileset_group = converts[i]->tileset_group;
-        uint32_t j;
+        const struct convert *convert = converts[i];
 
         if (strcmp(palette->name, converts[i]->palette_name))
         {
             continue;
         }
 
-        for (j = 0; j < converts[i]->nr_images; ++j)
+        for (uint32_t j = 0; j < converts[i]->nr_images; ++j)
         {
             if (palette_add_image(palette, converts[i]->images[j].path))
             {
@@ -231,14 +222,11 @@ int palette_automatic_build(struct palette *palette, struct convert **converts, 
             }
         }
 
-        if (tileset_group != NULL)
+        for (uint32_t j = 0; j < convert->nr_tilesets; ++j)
         {
-            for (j = 0; j < tileset_group->nr_tilesets; ++j)
+            if (palette_add_image(palette, convert->tilesets[j].image.path))
             {
-                if (palette_add_image(palette, tileset_group->tilesets[j].image.path))
-                {
-                    return -1;
-                }
+                return -1;
             }
         }
     }
@@ -298,14 +286,12 @@ int palette_generate_with_images(struct palette *palette)
     liq_attr *attr;
     liq_histogram *hist;
     uint8_t *colors;
-    uint32_t colors_size;
     uint32_t max_index;
     uint32_t exact_entries;
     uint32_t max_entries;
     uint32_t unused;
     uint32_t nr_colors;
-    uint32_t i;
-
+    
     attr = liq_attr_create();
 
     liq_set_speed(attr, palette->quantize_speed);
@@ -316,7 +302,7 @@ int palette_generate_with_images(struct palette *palette)
 
     /* set the total number of palette entries that will be */
     /* quantized against (exclude exact entries) */
-    for (i = 0; i < palette->nr_fixed_entries; ++i)
+    for (uint32_t i = 0; i < palette->nr_fixed_entries; ++i)
     {
         struct palette_entry *entry = &palette->fixed_entries[i];
 
@@ -334,7 +320,7 @@ int palette_generate_with_images(struct palette *palette)
 
     hist = liq_histogram_create(attr);
 
-    for (i = 0; i < palette->nr_fixed_entries; ++i)
+    for (uint32_t i = 0; i < palette->nr_fixed_entries; ++i)
     {
         struct palette_entry *entry = &palette->fixed_entries[i];
 
@@ -367,17 +353,13 @@ int palette_generate_with_images(struct palette *palette)
         }
     }
 
-    i = 0;
     colors = NULL;
-    colors_size = 0;
-
     nr_colors = 0;
 
     /* quantize the images into a palette */
-    while (i < palette->nr_images && max_entries > 1)
+    for (uint32_t i = 0; i < palette->nr_images; ++i)
     {
         struct image *image = &palette->images[i];
-        uint32_t j;
 
         LOG_INFO(" - Reading image \'%s\'\n", image->path);
 
@@ -391,19 +373,17 @@ int palette_generate_with_images(struct palette *palette)
 
         /* only add colors of the image that aren't fixed colors */
         /* exact matched pixels shouldn't even contribute to quantization */
-        for (j = 0; j < image->width * image->height; ++j)
+        for (uint32_t j = 0; j < image->width * image->height; ++j)
         {
-            bool addcolor = true;
-            uint8_t alpha;
-            uint32_t o = j * 4;
-            uint32_t k;
-
+            const uint32_t offset = j * 4;
             struct color color;
+            bool add_color;
+            uint8_t alpha;
 
-            color.r = image->data[o + 0];
-            color.g = image->data[o + 1];
-            color.b = image->data[o + 2];
-            alpha = image->data[o + 3];
+            color.r = image->data[offset + 0];
+            color.g = image->data[offset + 1];
+            color.b = image->data[offset + 2];
+            alpha = image->data[offset + 3];
 
             /* don't add transparent pixels to palette */
             if (alpha == 0)
@@ -411,7 +391,9 @@ int palette_generate_with_images(struct palette *palette)
                 continue;
             }
 
-            for (k = 0; k < palette->nr_fixed_entries; ++k)
+            add_color = true;
+
+            for (uint32_t k = 0; k < palette->nr_fixed_entries; ++k)
             {
                 struct palette_entry *entry = &palette->fixed_entries[k];
                 struct color fixed = entry->color;
@@ -421,12 +403,12 @@ int palette_generate_with_images(struct palette *palette)
                     color.g == fixed.g &&
                     color.b == fixed.b)
                 {
-                    addcolor = false;
+                    add_color = false;
                     break;
                 }
             }
 
-            if (addcolor)
+            if (add_color)
             {
                 uint32_t offset = nr_colors * sizeof(uint32_t);
 
@@ -443,11 +425,9 @@ int palette_generate_with_images(struct palette *palette)
                 /* every 1MiB allocate more memory for storing the pixels */
                 if ((nr_colors % 1048576 == 0))
                 {
-                    colors_size += (1048576 * sizeof(uint32_t));
-                    colors = realloc(colors, colors_size);
+                    colors = memory_realloc_array(colors, 1048576, sizeof(uint32_t));
                     if (colors == NULL)
                     {
-                        LOG_ERROR("Out of memory.\n");
                         return -1;
                     }
                 }
@@ -506,7 +486,7 @@ int palette_generate_with_images(struct palette *palette)
         liqpalette = liq_get_palette(liqresult);
 
         /* store the quantized palette */
-        for (i = 0; i < liqpalette->count; ++i)
+        for (uint32_t i = 0; i < liqpalette->count; ++i)
         {
             struct color color;
 
@@ -528,17 +508,16 @@ int palette_generate_with_images(struct palette *palette)
 
         /* find the non-exact fixed colors in the quantized palette */
         /* and move them to the correct index */
-        for (i = 0; i < palette->nr_fixed_entries; ++i)
+        for (uint32_t i = 0; i < palette->nr_fixed_entries; ++i)
         {
             struct palette_entry *fixed_entry = &palette->fixed_entries[i];
-            uint32_t j;
 
             if (fixed_entry->exact)
             {
                 continue;
             }
 
-            for (j = 0; j < liqpalette->count; ++j)
+            for (uint32_t j = 0; j < liqpalette->count; ++j)
             {
                 struct palette_entry *entry = &palette->entries[j];
 
@@ -570,7 +549,7 @@ int palette_generate_with_images(struct palette *palette)
 
     /* add exact fixed colors to the palette */
     /* they are just place holders (will be removed in the quantized image) */
-    for (i = 0; i < palette->nr_fixed_entries; ++i)
+    for (uint32_t i = 0; i < palette->nr_fixed_entries; ++i)
     {
         struct palette_entry *fixed_entry = &palette->fixed_entries[i];
         if (!fixed_entry->exact)
@@ -623,7 +602,7 @@ int palette_generate_with_images(struct palette *palette)
 
     palette->nr_entries = max_index + 1;
 
-    for (i = unused = 0; i < palette->nr_entries; ++i)
+    for (uint32_t i = unused = 0; i < palette->nr_entries; ++i)
     {
         if (!palette->entries[i].valid)
         {
@@ -647,8 +626,6 @@ int palette_generate_with_images(struct palette *palette)
 
 int palette_generate(struct palette *palette, struct convert **converts, uint32_t nr_converts)
 {
-    uint32_t i;
-
     if (!strcmp(palette->name, "xlibc"))
     {
         palette_generate_builtin(palette,
@@ -702,7 +679,7 @@ int palette_generate(struct palette *palette, struct convert **converts, uint32_
             return -1;
         }
 
-        for (i = 0; i < palette->nr_fixed_entries; ++i)
+        for (uint32_t i = 0; i < palette->nr_fixed_entries; ++i)
         {
             struct palette_entry *entry = &palette->fixed_entries[i];
 
@@ -724,7 +701,7 @@ int palette_generate(struct palette *palette, struct convert **converts, uint32_
                 PALETTE_MAX_ENTRIES - palette->nr_entries + palette->nr_fixed_entries);
     }
 
-    for (i = 0; i < palette->nr_entries; ++i)
+    for (uint32_t i = 0; i < palette->nr_entries; ++i)
     {
         struct palette_entry *entry = &palette->entries[i];
 

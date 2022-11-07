@@ -39,7 +39,7 @@ extern "C" {
 
 char *strings_dup(const char *str);
 
-/* must pass NULL as final arg */
+/* must pass 0 as final arg */
 char *strings_concat(char const *first, ...);
 
 char *strings_find_images(const char *fullPath, glob_t *globbuf);

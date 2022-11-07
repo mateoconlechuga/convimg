@@ -30,8 +30,9 @@
 
 #include "output.h"
 #include "strings.h"
-#include "log.h"
+#include "memory.h"
 #include "clean.h"
+#include "log.h"
 
 #include <errno.h>
 
@@ -72,20 +73,13 @@ int output_appvar_include(struct output *output);
 
 struct output *output_alloc(void)
 {
-    struct output *output = malloc(sizeof(struct output));
+    struct output *output = memory_alloc(sizeof(struct output));
     if (output == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
-    output->directory = strings_dup("");
-    if (output->directory == NULL)
-    {
-        free(output);
-        return NULL;
-    }
-
+    output->directory = NULL;
     output->include_file = NULL;
     output->convert_names = NULL;
     output->nr_converts = 0;
@@ -107,33 +101,33 @@ struct output *output_alloc(void)
     output->appvar.header = NULL;
     output->appvar.header_size = 0;
     output->appvar.entry_size = 3;
-    output->appvar.data = malloc(APPVAR_MAX_BEFORE_COMPRESSION_SIZE);
+    output->appvar.data = NULL;
 
+    output->directory = strings_dup("");
+    if (output->directory == NULL)
+    {
+        goto error;
+    }
+
+    output->appvar.data = memory_alloc(APPVAR_MAX_BEFORE_COMPRESSION_SIZE);
     if (output->appvar.data == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
-        free(output);
-        return NULL;
+        goto error;
     }
 
     return output;
+
+error:
+    free(output);
+    output = NULL;
+    return NULL;
 }
 
 int output_add_convert_name(struct output *output, const char *name)
 {
-    if (output == NULL ||
-        name == NULL ||
-        output->format == OUTPUT_FORMAT_INVALID)
-    {
-        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
-        return -1;
-    }
-
-    output->convert_names =
-        realloc(output->convert_names, (output->nr_converts + 1) * sizeof(char *));
+    output->convert_names = memory_realloc_array(output->convert_names, output->nr_converts + 1, sizeof(char *));
     if (output->convert_names == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -152,19 +146,9 @@ int output_add_convert_name(struct output *output, const char *name)
 
 int output_add_palette_name(struct output *output, const char *name)
 {
-    if (output == NULL ||
-        name == NULL ||
-        output->format == OUTPUT_FORMAT_INVALID)
-    {
-        LOG_ERROR("Invalid param in \'%s\'. Please contact the developer.\n", __func__);
-        return -1;
-    }
-
-    output->palette_names =
-        realloc(output->palette_names, (output->nr_palettes + 1) * sizeof(char *));
+    output->palette_names = memory_realloc_array(output->palette_names, output->nr_palettes + 1, sizeof(char *));
     if (output->palette_names == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
@@ -183,24 +167,24 @@ int output_add_palette_name(struct output *output, const char *name)
 
 void output_free(struct output *output)
 {
-    uint32_t i;
-
     if (output == NULL)
     {
         return;
     }
 
-    for (i = 0; i < output->nr_converts; ++i)
+    for (uint32_t i = 0; i < output->nr_converts; ++i)
     {
         free(output->convert_names[i]);
         output->convert_names[i] = NULL;
     }
+    output->nr_converts = 0;
 
-    for (i = 0; i < output->nr_palettes; ++i)
+    for (uint32_t i = 0; i < output->nr_palettes; ++i)
     {
         free(output->palette_names[i]);
         output->palette_names[i] = NULL;
     }
+    output->nr_palettes = 0;
 
     free(output->convert_names);
     output->convert_names = NULL;
@@ -228,9 +212,6 @@ void output_free(struct output *output)
 
     free(output->directory);
     output->directory = NULL;
-
-    output->nr_converts = 0;
-    output->nr_palettes = 0;
 }
 
 static int output_init(struct output *output)
@@ -266,25 +247,20 @@ static int output_init(struct output *output)
 
 static int output_find_converts(struct output *output, struct convert **converts, uint32_t nr_converts)
 {
-    uint32_t i;
-
     if (converts == NULL || nr_converts == 0)
     {
         return 0;
     }
 
-    output->converts = malloc(output->nr_converts * sizeof(struct convert *));
+    output->converts = memory_realloc_array(NULL, output->nr_converts, sizeof(struct convert *));
     if (output->converts == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
-    for (i = 0; i < output->nr_converts; ++i)
+    for (uint32_t i = 0; i < output->nr_converts; ++i)
     {
-        uint32_t j;
-
-        for (j = 0; j < nr_converts; ++j)
+        for (uint32_t j = 0; j < nr_converts; ++j)
         {
             if (strcmp(output->convert_names[i], converts[j]->name) == 0)
             {
@@ -306,25 +282,20 @@ nextconvert:
 
 static int output_find_palettes(struct output *output, struct palette **palettes, uint32_t nr_palettes)
 {
-    uint32_t i = 0;
-
     if (palettes == NULL || nr_palettes == 0)
     {
         goto nopalette;
     }
 
-    output->palettes = malloc(output->nr_palettes * sizeof(struct palette *));
+    output->palettes = memory_realloc_array(NULL, output->nr_palettes, sizeof(struct palette *));
     if (output->palettes == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
-    for (i = 0; i < output->nr_palettes; ++i)
+    for (uint32_t i = 0; i < output->nr_palettes; ++i)
     {
-        uint32_t j;
-
-        for (j = 0; j < nr_palettes; ++j)
+        for (uint32_t j = 0; j < nr_palettes; ++j)
         {
             if (strcmp(output->palette_names[i], palettes[j]->name) == 0)
             {
@@ -345,157 +316,76 @@ nextpalette:
     return 0;
 }
 
-static int output_converts(struct output *output, struct convert **converts, uint32_t nr_converts)
+static int output_image(struct output *output, const struct image *image)
 {
-    uint32_t i;
-    int ret;
-
-    if (converts == NULL || nr_converts == 0)
+    switch (output->format)
     {
-        return 0;
+        case OUTPUT_FORMAT_C:
+            return output_c_image(output, image);
+
+        case OUTPUT_FORMAT_ASM:
+            return output_asm_image(output, image);
+
+        case OUTPUT_FORMAT_ICE:
+            return output_ice_image(output, image);
+
+        case OUTPUT_FORMAT_APPVAR:
+            return output_appvar_image(output, image);
+
+        case OUTPUT_FORMAT_BIN:
+            return output_bin_image(output, image);
+
+        default:
+            return -1;
     }
-
-    for (i = 0; i < output->nr_converts; ++i)
-    {
-        struct convert *convert = output->converts[i];
-        struct tileset_group *group = convert->tileset_group;
-        uint32_t j;
-
-        LOG_INFO("Generating output for convert \'%s\'\n",
-            convert->name);
-
-        for (j = 0; j < convert->nr_images; ++j)
-        {
-            struct image *image = &convert->images[j];
-
-            switch (output->format)
-            {
-                case OUTPUT_FORMAT_C:
-                    ret = output_c_image(output, image);
-                    break;
-
-                case OUTPUT_FORMAT_ASM:
-                    ret = output_asm_image(output, image);
-                    break;
-
-                case OUTPUT_FORMAT_ICE:
-                    ret = output_ice_image(output, image);
-                    break;
-
-                case OUTPUT_FORMAT_APPVAR:
-                    ret = output_appvar_image(output, image);
-                    break;
-
-                case OUTPUT_FORMAT_BIN:
-                    ret = output_bin_image(output, image);
-                    break;
-
-                default:
-                    ret = -1;
-                    break;
-            }
-
-            if (ret)
-            {
-                return -1;
-            }
-        }
-
-        if (group != NULL)
-        {
-            for (j = 0; j < group->nr_tilesets; ++j)
-            {
-                struct tileset *tileset = &group->tilesets[j];
-
-                switch (output->format)
-                {
-                    case OUTPUT_FORMAT_C:
-                        ret = output_c_tileset(output, tileset);
-                        break;
-
-                    case OUTPUT_FORMAT_ASM:
-                        ret = output_asm_tileset(output, tileset);
-                        break;
-
-                    case OUTPUT_FORMAT_BIN:
-                        ret = output_bin_tileset(output, tileset);
-                        break;
-
-                    case OUTPUT_FORMAT_ICE:
-                        ret = output_ice_tileset(output, tileset);
-                        break;
-
-                    case OUTPUT_FORMAT_APPVAR:
-                        ret = output_appvar_tileset(output, tileset);
-                        break;
-
-                    default:
-                        ret = -1;
-                        break;
-                }
-
-                if (ret)
-                {
-                    return -1;
-                }
-            }
-        }
-    }
-
-    return 0;
 }
 
-static int output_palettes(struct output *output, struct palette **palettes, uint32_t nr_palettes)
+static int output_tileset(struct output *output, const struct tileset *tileset)
 {
-    uint32_t i;
-    int ret;
-
-    if (palettes == NULL || nr_palettes == 0)
+    switch (output->format)
     {
-        return 0;
-    }
+        case OUTPUT_FORMAT_C:
+            return output_c_tileset(output, tileset);
 
-    for (i = 0; i < output->nr_palettes; ++i)
-    {
-        struct palette *palette = output->palettes[i];
+        case OUTPUT_FORMAT_ASM:
+            return output_asm_tileset(output, tileset);
 
-        LOG_INFO("Generating output for palette \'%s\'\n",
-            palette->name);
+        case OUTPUT_FORMAT_BIN:
+            return output_bin_tileset(output, tileset);
 
-        switch (output->format)
-        {
-            case OUTPUT_FORMAT_C:
-                ret = output_c_palette(output, palette);
-                break;
+        case OUTPUT_FORMAT_ICE:
+            return output_ice_tileset(output, tileset);
 
-            case OUTPUT_FORMAT_ASM:
-                ret = output_asm_palette(output, palette);
-                break;
+        case OUTPUT_FORMAT_APPVAR:
+            return output_appvar_tileset(output, tileset);
 
-            case OUTPUT_FORMAT_BIN:
-                ret = output_bin_palette(output, palette);
-                break;
-
-            case OUTPUT_FORMAT_ICE:
-                ret = output_ice_palette(output, palette);
-                break;
-
-            case OUTPUT_FORMAT_APPVAR:
-                ret = output_appvar_palette(output, palette);
-                break;
-
-            default:
-                ret = -1;
-                break;
-        }
-
-        if (ret)
-        {
+        default:
             return -1;
-        }
     }
+}
 
-    return 0;
+static int output_palette(struct output *output, const struct palette *palette)
+{
+    switch (output->format)
+    {
+        case OUTPUT_FORMAT_C:
+            return output_c_palette(output, palette);
+
+        case OUTPUT_FORMAT_ASM:
+            return output_asm_palette(output, palette);
+
+        case OUTPUT_FORMAT_BIN:
+            return output_bin_palette(output, palette);
+
+        case OUTPUT_FORMAT_ICE:
+            return output_ice_palette(output, palette);
+
+        case OUTPUT_FORMAT_APPVAR:
+            return output_appvar_palette(output, palette);
+
+        default:
+            return -1;
+    }
 }
 
 static int output_include(struct output *output)
@@ -523,10 +413,59 @@ static int output_include(struct output *output)
             return output_appvar_include(output);
 
         default:
-            break;
+            return -1;
+    }
+}
+
+static int output_converts(struct output *output)
+{
+    for (uint32_t i = 0; i < output->nr_converts; ++i)
+    {
+        struct convert *convert = output->converts[i];
+
+        LOG_INFO("Generating output for convert \'%s\'\n",
+            convert->name);
+
+        for (uint32_t j = 0; j < convert->nr_images; ++j)
+        {
+            const struct image *image = &convert->images[j];
+
+            if (output_image(output, image))
+            {
+                return -1;
+            }
+        }
+
+        for (uint32_t j = 0; j < convert->nr_tilesets; ++j)
+        {
+            const struct tileset *tileset = &convert->tilesets[j];
+
+            if (output_tileset(output, tileset))
+            {
+                return -1;
+            }
+        }
     }
 
-    return -1;
+    return 0;
+}
+
+static int output_palettes(struct output *output)
+{
+    for (uint32_t i = 0; i < output->nr_palettes; ++i)
+    {
+        const struct palette *palette = output->palettes[i];
+
+        LOG_INFO("Generating output for palette \'%s\'\n",
+            palette->name);
+
+        if (output_palette(output, palette))
+        {
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 int output_generate(struct output *output,
@@ -552,24 +491,24 @@ int output_generate(struct output *output,
 
     if (output->order == OUTPUT_PALETTES_FIRST)
     {
-        if (output_palettes(output, palettes, nr_palettes))
+        if (output_palettes(output))
         {
             return -1;
         }
 
-        if (output_converts(output, converts, nr_converts))
+        if (output_converts(output))
         {
             return -1;
         }
     }
     else
     {
-        if (output_converts(output, converts, nr_converts))
+        if (output_converts(output))
         {
             return -1;
         }
 
-        if (output_palettes(output, palettes, nr_palettes))
+        if (output_palettes(output))
         {
             return -1;
         }

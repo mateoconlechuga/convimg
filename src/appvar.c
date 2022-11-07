@@ -37,7 +37,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-static uint32_t appvar_checksum(uint8_t *arr, size_t size)
+static uint32_t appvar_checksum(const uint8_t *arr, size_t size)
 {
     uint32_t checksum = 0;
     size_t i;

@@ -53,14 +53,18 @@ struct convert
 {
     char *name;
     char *palette_name;
-    struct palette *palette;
+    const struct palette *palette;
     uint8_t palette_offset;
     uint8_t omit_indices[PALETTE_MAX_ENTRIES];
     uint32_t nr_omit_indices;
     uint8_t transparent_index;
     struct image *images;
     uint32_t nr_images;
-    struct tileset_group *tileset_group;
+    struct tileset *tilesets;
+    uint32_t nr_tilesets;
+    uint32_t tile_height;
+    uint32_t tile_width;
+    bool p_table;
     compress_mode_t compress;
     convert_style_t style;
     color_format_t color_fmt;
@@ -75,15 +79,13 @@ struct convert
 
 struct convert *convert_alloc(void);
 
-void convert_free(struct convert *convert);
-
-struct tileset_group *convert_alloc_tileset_group(struct convert *convert);
-
 int convert_add_image_path(struct convert *convert, const char *path);
 
 int convert_add_tileset_path(struct convert *convert, const char *path);
 
 int convert_generate(struct convert *convert, struct palette **palettes, uint32_t nr_palettes);
+
+void convert_free(struct convert *convert);
 
 #ifdef __cplusplus
 }

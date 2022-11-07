@@ -69,13 +69,13 @@ int output_c_image(struct output *output, const struct image *image)
     FILE *fdh;
     FILE *fds;
 
-    header = strings_concat(output->directory, image->name, ".h", NULL);
+    header = strings_concat(output->directory, image->name, ".h", 0);
     if (header == NULL)
     {
         goto error;
     }
 
-    source = strings_concat(output->directory, image->name, ".c", NULL);
+    source = strings_concat(output->directory, image->name, ".c", 0);
     if (source == NULL)
     {
         goto error;
@@ -173,13 +173,13 @@ int output_c_tileset(struct output *output, const struct tileset *tileset)
     FILE *fdh;
     FILE *fds;
 
-    header = strings_concat(output->directory, tileset->image.name, ".h", NULL);
+    header = strings_concat(output->directory, tileset->image.name, ".h", 0);
     if (header == NULL)
     {
         goto error;
     }
 
-    source = strings_concat(output->directory, tileset->image.name, ".c", NULL);
+    source = strings_concat(output->directory, tileset->image.name, ".c", 0);
     if (source == NULL)
     {
         goto error;
@@ -204,7 +204,7 @@ int output_c_tileset(struct output *output, const struct tileset *tileset)
 
     for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
     {
-        struct tileset_tile *tile = &tileset->tiles[i];
+        const struct tileset_tile *tile = &tileset->tiles[i];
 
         if (tileset->compressed)
         {
@@ -286,7 +286,7 @@ int output_c_tileset(struct output *output, const struct tileset *tileset)
 
     for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
     {
-        struct tileset_tile *tile = &tileset->tiles[i];
+        const struct tileset_tile *tile = &tileset->tiles[i];
 
         if (tileset->compressed)
         {
@@ -365,13 +365,13 @@ int output_c_palette(struct output *output, const struct palette *palette)
     FILE *fds;
     uint32_t size;
 
-    header = strings_concat(output->directory, palette->name, ".h", NULL);
+    header = strings_concat(output->directory, palette->name, ".h", 0);
     if (header == NULL)
     {
         goto error;
     }
 
-    source = strings_concat(output->directory, palette->name, ".c", NULL);
+    source = strings_concat(output->directory, palette->name, ".c", 0);
     if (source == NULL)
     {
         goto error;
@@ -506,27 +506,23 @@ int output_c_include(struct output *output)
 
     for (uint32_t i = 0; i < output->nr_converts; ++i)
     {
-        struct convert *convert = output->converts[i];
-        struct tileset_group *tileset_group = convert->tileset_group;
+        const struct convert *convert = output->converts[i];
 
         fprintf(fdi, "#define %s_palette_offset %u\n",
             convert->name, convert->palette_offset);
 
         for (uint32_t j = 0; j < convert->nr_images; ++j)
         {
-            struct image *image = &convert->images[j];
+            const struct image *image = &convert->images[j];
 
             fprintf(fdi, "#include \"%s.h\"\n", image->name);
         }
 
-        if (tileset_group != NULL)
+        for (uint32_t k = 0; k < convert->nr_tilesets; ++k)
         {
-            for (uint32_t k = 0; k < tileset_group->nr_tilesets; ++k)
-            {
-                struct tileset *tileset = &tileset_group->tilesets[k];
+            const struct tileset *tileset = &convert->tilesets[k];
 
-                fprintf(fdi, "#include \"%s.h\"\n", tileset->image.name);
-            }
+            fprintf(fdi, "#include \"%s.h\"\n", tileset->image.name);
         }
     }
 

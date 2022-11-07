@@ -51,7 +51,7 @@ int output_bin_image(struct output *output, const struct image *image)
     FILE *fds;
     int ret;
 
-    source = strings_concat(output->directory, image->name, ".bin", NULL);
+    source = strings_concat(output->directory, image->name, ".bin", 0);
     if (source == NULL)
     {
         goto error;
@@ -85,7 +85,7 @@ int output_bin_tileset(struct output *output, const struct tileset *tileset)
     FILE *fds;
     uint32_t i;
 
-    source = strings_concat(output->directory, tileset->image.name, ".bin", NULL);
+    source = strings_concat(output->directory, tileset->image.name, ".bin", 0);
     if (source == NULL)
     {
         goto error;
@@ -142,7 +142,7 @@ int output_bin_palette(struct output *output, const struct palette *palette)
     FILE *fds;
     uint32_t i;
 
-    source = strings_concat(output->directory, palette->name, ".bin", NULL);
+    source = strings_concat(output->directory, palette->name, ".bin", 0);
     if (source == NULL)
     {
         goto error;
@@ -189,7 +189,6 @@ int output_bin_include(struct output *output)
     char *include_name = NULL;
     char *tmp;
     FILE *fdi;
-    uint32_t i;
 
     if (output->include_file == NULL)
     {
@@ -217,34 +216,27 @@ int output_bin_include(struct output *output)
         goto error;
     }
 
-    for (i = 0; i < output->nr_palettes; ++i)
+    for (uint32_t i = 0; i < output->nr_palettes; ++i)
     {
         fprintf(fdi, "%s.bin\n", output->palettes[i]->name);
     }
 
-    for (i = 0; i < output->nr_converts; ++i)
+    for (uint32_t i = 0; i < output->nr_converts; ++i)
     {
-        struct convert *convert = output->converts[i];
-        struct tileset_group *tileset_group = convert->tileset_group;
-        uint32_t j;
+        const struct convert *convert = output->converts[i];
 
-        for (j = 0; j < convert->nr_images; ++j)
+        for (uint32_t j = 0; j < convert->nr_images; ++j)
         {
-            struct image *image = &convert->images[j];
+            const struct image *image = &convert->images[j];
 
             fprintf(fdi, "%s.bin\n", image->name);
         }
-
-        if (tileset_group != NULL)
-        {
-            uint32_t k;
             
-            for (k = 0; k < tileset_group->nr_tilesets; ++k)
-            {
-                struct tileset *tileset = &tileset_group->tilesets[k];
+        for (uint32_t k = 0; k < convert->nr_tilesets; ++k)
+        {
+            const struct tileset *tileset = &convert->tilesets[k];
 
-                fprintf(fdi, "%s.bin\n", tileset->image.name);
-            }
+            fprintf(fdi, "%s.bin\n", tileset->image.name);
         }
     }
 

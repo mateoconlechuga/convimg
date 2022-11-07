@@ -28,48 +28,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TILESET_H
-#define TILESET_H
+#ifndef MEMORY_H
+#define MEMORY_H
 
-#include "image.h"
-
-#include <stdbool.h>
+#include <string.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct tileset_tile
-{
-    uint8_t *data;
-    uint32_t data_size;
-};
+void *memory_alloc(size_t size);
 
-struct tileset
-{
-    struct image image;
-    struct tileset_tile *tiles;
-    uint32_t nr_tiles;
+void *memory_realloc(void *ptr, size_t size);
 
-    /* duplicate parameters from parent */
-    uint32_t tile_height;
-    uint32_t tile_width;
-    bool p_table;
-
-    /* set by convert */
-    bool rlet;
-    bool gfx;
-    bool compressed;
-    bool bad_alpha;
-
-    /* set by output */
-    uint32_t appvar_index;
-};
-
-int tileset_alloc_tiles(struct tileset *tileset, uint32_t nr_tiles);
-
-void tileset_free_tiles(struct tileset *tileset);
+void *memory_realloc_array(void *ptr, size_t nelem, size_t elsize);
 
 #ifdef __cplusplus
 }

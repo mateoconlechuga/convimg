@@ -29,8 +29,10 @@
  */
 
 #include "strings.h"
+#include "memory.h"
 #include "log.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -43,11 +45,10 @@ char *strings_dup(const char *str)
     char *copy;
 
     size = strlen(str) + 1;
-    copy = malloc(size);
+    copy = memory_alloc(size);
 
     if (copy == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
@@ -56,25 +57,35 @@ char *strings_dup(const char *str)
 
 char *strings_concat(char const *first, ...)
 {
+    char *result = NULL;
+
     if (first == NULL)
+    {
+        return NULL;
+    }
+
+    result = memory_alloc(1);
+    if (result == NULL)
     {
         return NULL;
     }
 
     va_list ap;
     va_start(ap, first);
-    char *result = NULL;
     size_t size = 0;
 
-    for (char const *ptr = first; ptr != NULL; ptr = va_arg(ap, char const *))
+    for (char const *ptr = first; ptr != 0; ptr = va_arg(ap, char const *))
     {
-        size_t len = strlen(ptr);
+        if (ptr == NULL)
+        {
+            continue;
+        }
 
         /* +1 for null terminator */
-        result = realloc(result, size + len + 1);
+        size_t len = strlen(ptr);
+        result = memory_realloc(result, size + len + 1);
         if (result == NULL)
         {
-            LOG_ERROR("Out of memory.\n");
             va_end(ap);
             return NULL;
         }
@@ -180,7 +191,7 @@ char *strings_find_images(const char *full_path, glob_t *globbuf)
 
     if (!strcmp("", suffix))
     {
-        path = strings_concat(full_path, ".png", NULL);
+        path = strings_concat(full_path, ".png", 0);
     }
     else
     {

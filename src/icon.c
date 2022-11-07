@@ -30,6 +30,7 @@
 
 #include "icon.h"
 #include "image.h"
+#include "memory.h"
 #include "log.h"
 
 #include "deps/libimagequant/libimagequant.h"
@@ -114,10 +115,9 @@ int icon_convert(struct icon *icon)
         }
 
         size = image.width * image.height;
-        data = malloc(size);
+        data = memory_alloc(size);
         if (data == NULL)
         {
-            LOG_ERROR("Out of memory.\n");
             goto fail;
         }
 

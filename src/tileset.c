@@ -29,32 +29,13 @@
  */
 
 #include "tileset.h"
+#include "memory.h"
 #include "log.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-struct tileset_group *tileset_group_alloc(void)
-{
-    struct tileset_group *tileset_group;
-
-    tileset_group = malloc(sizeof(struct tileset_group));
-    if (tileset_group == NULL)
-    {
-        LOG_ERROR("Out of memory.\n");
-        return NULL;
-    }
-
-    tileset_group->tilesets = NULL;
-    tileset_group->nr_tilesets = 0;
-    tileset_group->tile_height = 16;
-    tileset_group->tile_width = 16;
-    tileset_group->p_table = true;
-
-    return tileset_group;
-}
-
-void tileset_free(struct tileset *tileset)
+void tileset_free_tiles(struct tileset *tileset)
 {
     for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
     {
@@ -71,42 +52,31 @@ void tileset_free(struct tileset *tileset)
     image_free(&tileset->image);
 }
 
-int tileset_alloc_tiles(struct tileset *tileset)
+int tileset_alloc_tiles(struct tileset *tileset, uint32_t nr_tiles)
 {
-    tileset->tiles =
-        malloc(tileset->nr_tiles * sizeof(struct tileset_tile));
+    tileset->tiles = memory_realloc_array(NULL, nr_tiles, sizeof(struct tileset_tile));
     if (tileset->tiles == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return -1;
     }
 
-    for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
+    for (uint32_t i = 0; i < nr_tiles; ++i)
     {
-        tileset->tiles[i].data_size = 0;
-        tileset->tiles[i].data = NULL;
+        uint32_t tile_dim = tileset->tile_width * tileset->tile_height;
+        uint32_t tile_data_size = tile_dim * sizeof(uint32_t);
+        uint8_t *tile_data;
+
+        tile_data = memory_alloc(tile_data_size);
+        if (tile_data == NULL)
+        {
+            return -1;
+        }
+
+        tileset->tiles[i].data_size = tile_data_size;
+        tileset->tiles[i].data = tile_data;
     }
+
+    tileset->nr_tiles = nr_tiles;
 
     return 0;
-}
-
-void tileset_group_free(struct tileset_group *tileset_group)
-{
-    if (tileset_group == NULL)
-    {
-        return;
-    }
-
-    for (uint32_t i = 0; i < tileset_group->nr_tilesets; ++i)
-    {
-        if (tileset_group->tilesets != NULL)
-        {
-            tileset_free(&tileset_group->tilesets[i]);
-        }
-    }
-
-    free(tileset_group->tilesets);
-    tileset_group->tilesets = NULL;
-
-    tileset_group->nr_tilesets = 0;
 }

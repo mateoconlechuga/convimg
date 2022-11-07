@@ -28,51 +28,45 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TILESET_H
-#define TILESET_H
+#include "memory.h"
+#include "log.h"
 
-#include "image.h"
+#include <stdlib.h>
 
-#include <stdbool.h>
-#include <stdint.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct tileset_tile
+void *memory_alloc(size_t size)
 {
-    uint8_t *data;
-    uint32_t data_size;
-};
+    void *ret = malloc(size);
+    
+    if (ret == NULL)
+    {
+        LOG_ERROR("Out of memory.\n");
+    }
 
-struct tileset
-{
-    struct image image;
-    struct tileset_tile *tiles;
-    uint32_t nr_tiles;
-
-    /* duplicate parameters from parent */
-    uint32_t tile_height;
-    uint32_t tile_width;
-    bool p_table;
-
-    /* set by convert */
-    bool rlet;
-    bool gfx;
-    bool compressed;
-    bool bad_alpha;
-
-    /* set by output */
-    uint32_t appvar_index;
-};
-
-int tileset_alloc_tiles(struct tileset *tileset, uint32_t nr_tiles);
-
-void tileset_free_tiles(struct tileset *tileset);
-
-#ifdef __cplusplus
+    return ret;
 }
-#endif
 
-#endif
+void *memory_realloc(void *ptr, size_t size)
+{
+    void *ret = realloc(ptr, size);
+
+    /* normal realloc doesn't free on failure */
+    if (ret == NULL)
+    {
+        LOG_ERROR("Out of memory.\n");
+        free(ptr);
+    }
+
+    return ret;
+}
+
+void *memory_realloc_array(void *ptr, size_t nelem, size_t elsize)
+{
+    size_t bytes;
+
+    if (__builtin_mul_overflow(nelem, elsize, &bytes))
+    {
+        return NULL;
+    }
+
+    return memory_realloc(ptr, bytes);
+}

@@ -303,7 +303,7 @@ static int parse_palette_entry(struct palette_entry *entry, yaml_document_t *doc
         }
     }
 
-    LOG_DEBUG("Adding fixed color: i: %u r: %d g: %d b: %d exact: %s\n",
+    LOG_DEBUG("Adding fixed color: i: %u r: %u g: %u b: %u exact: %s\n",
         entry->index,
         entry->color.r,
         entry->color.g,

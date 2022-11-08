@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 CC := gcc
-CFLAGS = -Wall -Wextra -Wno-unused-but-set-variable -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3 -flto
+CFLAGS = -Wall -Wextra -Wno-unused-but-set-variable -O3 -DNDEBUG -DLOG_BUILD_LEVEL=5 -flto
 CFLAGS_LIQ = -Wall -std=c99 -O3 -DNDEBUG -fno-math-errno -funroll-loops -fomit-frame-pointer -Wno-unknown-pragmas -Wno-attributes -flto
 CFLAGS_LIBYAML = -Wall -std=gnu99 -O3 -DYAML_VERSION_MAJOR=1 -DYAML_VERSION_MINOR=0 -DYAML_VERSION_PATCH=0 -DYAML_VERSION_STRING="\"1.0.0\"" -flto
 LDFLAGS = -flto

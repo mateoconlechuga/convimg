@@ -572,9 +572,9 @@ static int parse_palette(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
             if (parse_str_cmp("max-entries", key))
             {
                 tmpi = strtol(value, NULL, 0);
-                if (tmpi > 255 || tmpi < 2)
+                if (tmpi > 256 || tmpi < 2)
                 {
-                    LOG_ERROR("Invalid maxium entries.\n");
+                    LOG_ERROR("Invalid palette \'max-entries\' parameter.\n");
                     parser_show_mark_error(keyn->start_mark);
                     return -1;
                 }
@@ -585,7 +585,7 @@ static int parse_palette(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
                 tmpi = strtol(value, NULL, 0);
                 if (tmpi > 10 || tmpi < 1)
                 {
-                    LOG_ERROR("Invalid quantization speed.\n");
+                    LOG_ERROR("Invalid palette \'speed\' parameter.\n");
                     parser_show_mark_error(keyn->start_mark);
                     return -1;
                 }
@@ -617,7 +617,7 @@ static int parse_palette(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
                 tmpi = strtol(value, NULL, 0);
                 if (tmpi > 10 || tmpi < 1)
                 {
-                    LOG_ERROR("Invalid quantization quality.\n");
+                    LOG_ERROR("Invalid palette \'quality\' parameter.\n");
                     parser_show_mark_error(keyn->start_mark);
                     return -1;
                 }

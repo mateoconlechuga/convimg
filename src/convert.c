@@ -448,7 +448,7 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
 
 int convert_generate(struct convert *convert, struct palette **palettes, uint32_t nr_palettes)
 {
-    if (convert->nr_images == 0 || convert->nr_tilesets == 0)
+    if (convert->nr_images == 0 && convert->nr_tilesets == 0)
     {
         LOG_WARNING("No images or tilesets in convert \'%s\'\n",
             convert->name);

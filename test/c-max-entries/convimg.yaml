@@ -1,7 +1,7 @@
 palettes:
   - name: palette
     images: automatic
-    max-entries: 6
+    max-entries: 256
     fixed-entries:
       - color: {index:  0, r:   0, g: 206, b:   0, exact: true}
       - color: {index:  1, r: 148, g:  93, b:  58, exact: true}

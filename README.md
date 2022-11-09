@@ -73,8 +73,8 @@ It primarily is used for the TI-84+CE and related calculator series, however can
                                       : Required parameter.
 
            max-entries: <num>         : Number of maximum colors available
-                                      : in the palette. Default is 256,
-                                      : range is 1-256.
+                                      : in the palette. Range is 2-256.
+                                      : Default is 256.
 
            fixed-entries:             : Adds fixed color entries to the
                                       : palette. The format is:
@@ -336,3 +336,4 @@ It primarily is used for the TI-84+CE and related calculator series, however can
             libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx0,zx7: (c) 2012-2021 by Einar Saukas.
+

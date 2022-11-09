@@ -113,8 +113,8 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : Required parameter.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       max-entries: <num>         : Number of maximum colors available\n");
-    LOG_PRINT("                                  : in the palette. Default is 256,\n");
-    LOG_PRINT("                                  : range is 1-256.\n");
+    LOG_PRINT("                                  : in the palette. Range is 2-256.\n");
+    LOG_PRINT("                                  : Default is 256.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       fixed-entries:             : Adds fixed color entries to the\n");
     LOG_PRINT("                                  : palette. The format is:\n");

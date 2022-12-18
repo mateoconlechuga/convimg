@@ -50,6 +50,8 @@ const char *strings_file_suffix(const char *path);
 
 char *strings_trim(char *str);
 
+char *strings_sanitize_alnum(char *str);
+
 int strings_utf8_to_iso8859_1(const char *in, int inlen, char *out, int maxlen);
 
 #ifdef __cplusplus

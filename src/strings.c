@@ -208,6 +208,23 @@ char *strings_find_images(const char *full_path, glob_t *globbuf)
     return path;
 }
 
+char *strings_sanitize_alnum(char *str)
+{
+    char *result = str;
+
+    while (*str)
+    {
+        if (!isalnum(*str))
+        {
+            *str = '_';
+        }
+
+        str++;
+    }
+
+    return result;
+}
+
 int strings_utf8_to_iso8859_1(const char *in, int inlen, char *out, int maxlen)
 {
     unsigned int codepoint = 0;

@@ -491,8 +491,8 @@ int output_c_include(struct output *output)
         goto error;
     }
 
-    fprintf(fdi, "#ifndef %s_include_file\n", include_name);
-    fprintf(fdi, "#define %s_include_file\n", include_name);
+    fprintf(fdi, "#ifndef %s_include_file\n", strings_sanitize_alnum(include_name));
+    fprintf(fdi, "#define %s_include_file\n", strings_sanitize_alnum(include_name));
     fprintf(fdi, "\n");
     fprintf(fdi, "#ifdef __cplusplus\n");
     fprintf(fdi, "extern \"C\" {\n");

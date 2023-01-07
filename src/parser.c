@@ -250,7 +250,6 @@ static int parse_palette_entry(struct palette_entry *entry, yaml_document_t *doc
         yaml_node_t *keyn = yaml_document_get_node(doc, pair->key);
         char *value;
         char *key;
-        int tmpi;
 
         if (keyn == NULL || valuen == NULL)
         {
@@ -267,29 +266,58 @@ static int parse_palette_entry(struct palette_entry *entry, yaml_document_t *doc
             return -1;
         }
 
-        tmpi = strtol(value, NULL, 0);
-        if (tmpi > 255 || tmpi < 0)
-        {
-            LOG_ERROR("Invalid fixed color option.\n");
-            parser_show_mark_error(keyn->start_mark);
-            return -1;
-        }
-
         if (parse_str_cmp("i", key) || parse_str_cmp("index", key))
         {
+            int tmpi = strtol(value, NULL, 0);
+            if (tmpi > 255 || tmpi < 0)
+            {
+                LOG_ERROR("Invalid fixed color index.\n");
+                parser_show_mark_error(keyn->start_mark);
+                return -1;
+            }
             entry->index = tmpi;
         }
         else if (parse_str_cmp("r", key) || parse_str_cmp("red", key))
         {
+            int tmpi = strtol(value, NULL, 0);
+            if (tmpi > 255 || tmpi < 0)
+            {
+                LOG_ERROR("Invalid fixed color red value.\n");
+                parser_show_mark_error(keyn->start_mark);
+                return -1;
+            }
             entry->color.r = tmpi;
         }
         else if (parse_str_cmp("g", key) || parse_str_cmp("green", key))
         {
+            int tmpi = strtol(value, NULL, 0);
+            if (tmpi > 255 || tmpi < 0)
+            {
+                LOG_ERROR("Invalid fixed color green value.\n");
+                parser_show_mark_error(keyn->start_mark);
+                return -1;
+            }
             entry->color.g = tmpi;
         }
         else if (parse_str_cmp("b", key) || parse_str_cmp("blue", key))
         {
+            int tmpi = strtol(value, NULL, 0);
+            if (tmpi > 255 || tmpi < 0)
+            {
+                LOG_ERROR("Invalid fixed color blue value.\n");
+                parser_show_mark_error(keyn->start_mark);
+                return -1;
+            }
             entry->color.b = tmpi;
+        }
+        else if (parse_str_cmp("hex", key))
+        {
+            if (!strings_hex_color(value, &entry->color))
+            {
+                LOG_ERROR("Invalid fixed color hex value.\n");
+                parser_show_mark_error(keyn->start_mark);
+                return -1;
+            }
         }
         else if (parse_str_cmp("exact", key))
         {

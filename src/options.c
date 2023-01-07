@@ -122,6 +122,8 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  :  fixed-entries:\n");
     LOG_PRINT("                                  :    - color: {index: 0, r: 9, g: 10, b: 0}\n");
     LOG_PRINT("                                  :    - color: {index: 1, r: 2, g: 83, b: 5}\n");
+    LOG_PRINT("                                  :    - color: {index: 2, hex: \"#945D3A\"}\n");
+    LOG_PRINT("                                  :    - color: {index: 3, hex: \"#C54DCE\"}\n");
     LOG_PRINT("                                  :\n");
     LOG_PRINT("                                  : Note the spaces between key/value pairs.\n");
     LOG_PRINT("                                  : \'index\' represents the palette entry\n");
@@ -129,6 +131,8 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : g is the green amound, and b is the blue\n");
     LOG_PRINT("                                  : amount of the color. This is often\n");
     LOG_PRINT("                                  : called the \"rgb\" value of a color.\n");
+    LOG_PRINT("                                  : A quoted \"hex\" string beginning with \'#\'\n");
+    LOG_PRINT("                                  : can also be used instead.\n");
     LOG_PRINT("                                  : \'exact\' is used to match colors exactly\n");
     LOG_PRINT("                                  : to the input color before quantization.\n");
     LOG_PRINT("                                  : It is an optional parameter, defaults to\n");

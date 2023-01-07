@@ -31,18 +31,21 @@
 #ifndef STRINGS_H
 #define STRINGS_H
 
+#include "color.h"
+
+#include <glob.h>
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <glob.h>
 
 char *strings_dup(const char *str);
 
 /* must pass 0 as final arg */
 char *strings_concat(char const *first, ...);
 
-char *strings_find_images(const char *fullPath, glob_t *globbuf);
+char *strings_find_images(const char *full_path, glob_t *globbuf);
 
 char *strings_basename(const char *path);
 
@@ -53,6 +56,8 @@ char *strings_trim(char *str);
 char *strings_sanitize_alnum(char *str);
 
 int strings_utf8_to_iso8859_1(const char *in, int inlen, char *out, int maxlen);
+
+bool strings_hex_color(const char *str, struct color *color);
 
 #ifdef __cplusplus
 }

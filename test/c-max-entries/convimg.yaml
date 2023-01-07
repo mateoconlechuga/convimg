@@ -3,12 +3,12 @@ palettes:
     images: automatic
     max-entries: 256
     fixed-entries:
-      - color: {index:  0, r:   0, g: 206, b:   0, exact: true}
-      - color: {index:  1, r: 148, g:  93, b:  58, exact: true}
-      - color: {index:  2, r: 107, g:  61, b:  25, exact: true}
-      - color: {index:  3, r: 197, g:  77, b: 206, exact: true}
-      - color: {index:  4, r: 181, g:  65, b: 181, exact: true}
-      - color: {index:  6, r: 156, g:  77, b: 132, exact: true}
+      - color: {index:  0, hex: "#00CE00", exact: true}
+      - color: {index:  1, hex: "#945D3A", exact: true}
+      - color: {index:  2, hex: "#6B3D19", exact: true}
+      - color: {index:  3, hex: "#C54DCE", exact: true}
+      - color: {index:  4, hex: "#B541B5", exact: true}
+      - color: {index:  6, hex: "#9C4D84", exact: true}
 
 converts:
   - name: convert

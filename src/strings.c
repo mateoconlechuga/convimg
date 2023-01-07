@@ -274,3 +274,97 @@ int strings_utf8_to_iso8859_1(const char *in, int inlen, char *out, int maxlen)
 
     return len;
 }
+
+static int h2i(char hex)
+{
+    if (hex >= '0' && hex <= '9')
+    {
+        return hex - '0';
+    }
+    if (hex >= 'a' && hex <= 'f')
+    {
+        return hex - 'a' + 10;
+    }
+    if (hex >= 'A' && hex <= 'F')
+    {
+        return hex - 'A' + 10;
+    }
+    return -1;
+}
+
+static int hstr2int(const char *s)
+{
+    return (h2i(s[0]) << 4) | h2i(s[1]);
+}
+ 
+static int hch2int(char s)
+{
+    int h = h2i(s);
+    return (h << 4) | h;
+}
+
+bool strings_hex_color(const char *str, struct color *color)
+{
+    char value[13] = {0};
+
+    if (color == NULL || str == NULL)
+    {
+        return false;
+    }
+
+    if (str[0] != '#')
+    {
+        return false;
+    }
+
+    /* ensures always a zero terminator */
+    memcpy(value, &str[1], 12);
+
+    int len = strlen(value);
+    int r;
+    int g;
+    int b;
+
+    switch (len)
+    {
+        case 12:
+            r = hstr2int(value);
+            g = hstr2int(value + 4);
+            b = hstr2int(value + 8);
+            break;
+
+        case 9:
+            r = hstr2int(value);
+            g = hstr2int(value + 3);
+            b = hstr2int(value + 6);
+            break;
+
+        case 6:
+            r = hstr2int(value);
+            g = hstr2int(value + 2);
+            b = hstr2int(value + 4);
+            break;
+
+        case 3:
+            r = hch2int(value[0]);
+            g = hch2int(value[1]);
+            b = hch2int(value[2]);
+            break;
+
+        default:
+            return false;
+    }
+
+    if ((unsigned int)r > 255 ||
+        (unsigned int)g > 255 ||
+        (unsigned int)b > 255)
+    {
+        return false;
+    }
+
+    color->r = r;
+    color->g = g;
+    color->b = b;
+
+    return true;
+}

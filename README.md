@@ -82,6 +82,8 @@ It primarily is used for the TI-84+CE and related calculator series, however can
                                       :  fixed-entries:
                                       :    - color: {index: 0, r: 9, g: 10, b: 0}
                                       :    - color: {index: 1, r: 2, g: 83, b: 5}
+                                      :    - color: {index: 2, hex: "#945D3A"}
+                                      :    - color: {index: 3, hex: "#C54DCE"}
                                       :
                                       : Note the spaces between key/value pairs.
                                       : 'index' represents the palette entry
@@ -89,6 +91,8 @@ It primarily is used for the TI-84+CE and related calculator series, however can
                                       : g is the green amound, and b is the blue
                                       : amount of the color. This is often
                                       : called the "rgb" value of a color.
+                                      : A quoted "hex" string beginning with '#'
+                                      : can also be used instead.
                                       : 'exact' is used to match colors exactly
                                       : to the input color before quantization.
                                       : It is an optional parameter, defaults to
@@ -336,4 +340,3 @@ It primarily is used for the TI-84+CE and related calculator series, however can
             libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
             zx0,zx7: (c) 2012-2022 by Einar Saukas.
-

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2023 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -369,13 +369,13 @@ static void options_show(const char *prgm)
     LOG_PRINT("--------------------------------------------------------------------------------\n");
     LOG_PRINT("\n");
     LOG_PRINT("Credits:\n");
-    LOG_PRINT("    (c) 2017-2022 by Matt \"MateoConLechuga\" Waltz.\n");
+    LOG_PRINT("    (c) 2017-2023 by Matt \"MateoConLechuga\" Waltz.\n");
     LOG_PRINT("\n");
     LOG_PRINT("    This program utilizes the following libraries:\n");
     LOG_PRINT("        libimagequant: (c) 2009-2022 by Kornel Lesiński.\n");
     LOG_PRINT("        libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.\n");
     LOG_PRINT("        stb: (c) 2017 by Sean Barrett.\n");
-    LOG_PRINT("        zx0,zx7: (c) 2012-2021 by Einar Saukas.\n");
+    LOG_PRINT("        zx0,zx7: (c) 2012-2022 by Einar Saukas.\n");
 }
 
 static int options_write_new(void)
@@ -526,13 +526,13 @@ int options_get(int argc, char *argv[], struct options *options)
             {"icon-format",      required_argument, 0, 0},
             {"clean",            no_argument,       0, 'c'},
             {"new",              no_argument,       0, 'n'},
-            {"input",            required_argument, 0, 'i'},
             {"help",             no_argument,       0, 'h'},
             {"version",          no_argument,       0, 'v'},
+            {"input",            required_argument, 0, 'i'},
             {"log-level",        required_argument, 0, 'l'},
             {0, 0, 0, 0}
         };
-        int c = getopt_long(argc, argv, "ci:l:nhv", long_options, &optidx);
+        int c = getopt_long(argc, argv, "cnhvi:l:", long_options, &optidx);
 
         if (c == -1)
         {

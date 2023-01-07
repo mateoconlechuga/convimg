@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2023 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,6 +32,6 @@
 #define VERSION_H
 
 #define PRGM_NAME "convimg"
-#define VERSION_STRING "9.0"
+#define VERSION_STRING "9.1"
 
 #endif

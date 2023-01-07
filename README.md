@@ -329,11 +329,11 @@ It primarily is used for the TI-84+CE and related calculator series, however can
     --------------------------------------------------------------------------------
 
     Credits:
-        (c) 2017-2022 by Matt "MateoConLechuga" Waltz.
+        (c) 2017-2023 by Matt "MateoConLechuga" Waltz.
 
         This program utilizes the following libraries:
             libimagequant: (c) 2009-2022 by Kornel Lesiński.
             libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
-            zx0,zx7: (c) 2012-2021 by Einar Saukas.
+            zx0,zx7: (c) 2012-2022 by Einar Saukas.
 

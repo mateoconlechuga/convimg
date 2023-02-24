@@ -508,8 +508,6 @@ int options_get(int argc, char *argv[], struct options *options)
     bool clean = false;
     int ret;
 
-    log_set_level(LOG_BUILD_LEVEL);
-
     if (argc < 1 || argv == NULL || options == NULL)
     {
         options_show(argc < 1 || argv == NULL ? PRGM_NAME : argv[0]);
@@ -534,9 +532,10 @@ int options_get(int argc, char *argv[], struct options *options)
             {"version",          no_argument,       0, 'v'},
             {"input",            required_argument, 0, 'i'},
             {"log-level",        required_argument, 0, 'l'},
+            {"log-color",        required_argument, 0, 'x'},
             {0, 0, 0, 0}
         };
-        int c = getopt_long(argc, argv, "cnhvi:l:", long_options, &optidx);
+        int c = getopt_long(argc, argv, "cnhvi:l:x:", long_options, &optidx);
 
         if (c == -1)
         {
@@ -607,6 +606,14 @@ int options_get(int argc, char *argv[], struct options *options)
                     break;
                 }
                 log_set_level((log_level_t)strtoul(optarg, NULL, 0));
+                break;
+
+            case 'x':
+                if (optarg == NULL)
+                {
+                    break;
+                }
+                log_set_color(strtoul(optarg, NULL, 0) ? true : false);
                 break;
 
             case 'h':

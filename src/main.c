@@ -80,6 +80,8 @@ int main(int argc, char *argv[])
     static struct options options;
     int ret;
 
+    log_init();
+
     switch (options_get(argc, argv, &options))
     {
         default:

@@ -32,6 +32,7 @@
 #define LOG_H
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,16 +51,9 @@ typedef enum
     LOG_LVL_DEBUG = 4
 } log_level_t;
 
-extern log_level_t log_level;
-extern const char *log_strings[];
-
 #define LOG(level, fmt, ...) \
 do { \
-    if (level <= LOG_BUILD_LEVEL && level <= log_level) \
-    { \
-        fprintf(stdout, "[%s] " fmt, log_strings[level], ##__VA_ARGS__); \
-        fflush(stdout); \
-    } \
+    log_msg(level, fmt, ##__VA_ARGS__); \
 } while(0)
 
 #define LOG_DEBUG(fmt, ...) LOG(LOG_LVL_DEBUG, fmt, ##__VA_ARGS__)
@@ -69,15 +63,18 @@ do { \
 
 #define LOG_PRINT(fmt, ...) \
 do { \
-    if (LOG_LVL_INFO <= LOG_BUILD_LEVEL && \
-        LOG_LVL_INFO <= log_level) \
-    { \
-        fprintf(stdout, fmt, ##__VA_ARGS__); \
-        fflush(stdout); \
-    } \
+    log_printf(fmt, ##__VA_ARGS__); \
 } while(0)
 
+void log_init(void);
+
 void log_set_level(log_level_t level);
+
+void log_set_color(bool colors);
+
+void log_msg(log_level_t level, const char *str, ...);
+
+void log_printf(const char *str, ...);
 
 #ifdef __cplusplus
 }

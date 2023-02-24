@@ -475,6 +475,26 @@ int image_quantize(struct image *image, const struct palette *palette)
         return -1;
     }
 
+    bad_alpha = false;
+
+    /* loop through each input pixel and round if transparent */
+    for (uint32_t i = 0; i < image->width * image->height; ++i)
+    {
+        uint8_t *a = &image->data[(i * 4) + 3];
+
+        if (*a != 0 && *a != 255)
+        {
+            *a = *a < 128 ? 0 : 255;
+            bad_alpha = true;
+        }
+    }
+
+    if (bad_alpha)
+    {
+        LOG_WARNING("Partially transparent pixels were rounded to fully transparent or fully opaque.\n");
+        LOG_WARNING("This may result in incorrect image conversion.\n");
+    }
+
     liq_set_speed(liqattr, image->quantize_speed);
     liq_set_max_colors(liqattr, palette->nr_entries);
     liqimage = liq_image_create_rgba(liqattr,
@@ -527,8 +547,6 @@ int image_quantize(struct image *image, const struct palette *palette)
 
     liq_write_remapped_image(liqresult, liqimage, new_data, new_size);
 
-    bad_alpha = false;
-
     /* loop through each input pixel and insert exact fixed colors */
     for (uint32_t i = 0; i < image->width * image->height; ++i)
     {
@@ -543,12 +561,6 @@ int image_quantize(struct image *image, const struct palette *palette)
         {
             new_data[i] = image->transparent_index;
             continue;
-        }
-
-        /* otherwise, the user might get bad colors */
-        if (a != 255)
-        {
-            bad_alpha = true;
         }
 
         for (uint32_t j = 0; j < palette->nr_fixed_entries; ++j)
@@ -576,12 +588,6 @@ int image_quantize(struct image *image, const struct palette *palette)
     free(image->data);
     image->data = new_data;
     image->data_size = new_size;
-
-    if (bad_alpha)
-    {
-        LOG_WARNING("Image has pixels with an alpha not 0 or 255.\n");
-        LOG_WARNING("This may result in incorrect color conversion.\n");
-    }
 
     return 0;
 }

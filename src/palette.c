@@ -417,11 +417,8 @@ int palette_generate_with_images(struct palette *palette)
             color.b = image->data[image_offset + 2];
             alphach = image->data[image_offset + 3];
 
-            /* don't add transparent pixels to the palette */
-            if (alphach == 0)
-            {
-                continue;
-            }
+            /* clamp transparent/semi-transparent pixels */
+            alphach = alphach < 128 ? 0 : 255;
 
             /* don't add exact fixed colors to the palette */
             if (palette_is_exact_fixed_entry(palette, &color))

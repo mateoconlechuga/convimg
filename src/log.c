@@ -33,6 +33,10 @@
 #include <stdarg.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #define COLOR_RESET "\e[0m"
 
 static const char *color_strings[] =
@@ -63,6 +67,19 @@ void log_init(void)
 {
     log.level = LOG_BUILD_LEVEL;
     log.colors = isatty(1);
+
+#ifdef _WIN32
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        DWORD mode = 0;
+        if (GetConsoleMode(handle, &mode)) {
+
+            mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            SetConsoleMode(handle, mode);
+        }
+    }
+#endif
 }
 
 void log_set_level(log_level_t level)

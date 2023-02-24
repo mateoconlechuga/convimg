@@ -59,11 +59,11 @@ int output_bin_tileset(struct output *output, const struct tileset *tileset);
 int output_bin_palette(struct output *output, const struct palette *palette);
 int output_bin_include(struct output *output);
 
-int output_ice_init(struct output *output);
-int output_ice_image(struct output *output, const struct image *image);
-int output_ice_tileset(struct output *output, const struct tileset *tileset);
-int output_ice_palette(struct output *output, const struct palette *palette);
-int output_ice_include(struct output *output);
+int output_basic_init(struct output *output);
+int output_basic_image(struct output *output, const struct image *image);
+int output_basic_tileset(struct output *output, const struct tileset *tileset);
+int output_basic_palette(struct output *output, const struct palette *palette);
+int output_basic_include(struct output *output);
 
 int output_appvar_init(struct output *output);
 int output_appvar_image(struct output *output, const struct image *image);
@@ -232,8 +232,8 @@ static int output_init(struct output *output)
         case OUTPUT_FORMAT_BIN:
             return output_bin_init(output);
 
-        case OUTPUT_FORMAT_ICE:
-            return output_ice_init(output);
+        case OUTPUT_FORMAT_BASIC:
+            return output_basic_init(output);
 
         case OUTPUT_FORMAT_APPVAR:
             return output_appvar_init(output);
@@ -326,8 +326,8 @@ static int output_image(struct output *output, const struct image *image)
         case OUTPUT_FORMAT_ASM:
             return output_asm_image(output, image);
 
-        case OUTPUT_FORMAT_ICE:
-            return output_ice_image(output, image);
+        case OUTPUT_FORMAT_BASIC:
+            return output_basic_image(output, image);
 
         case OUTPUT_FORMAT_APPVAR:
             return output_appvar_image(output, image);
@@ -353,8 +353,8 @@ static int output_tileset(struct output *output, const struct tileset *tileset)
         case OUTPUT_FORMAT_BIN:
             return output_bin_tileset(output, tileset);
 
-        case OUTPUT_FORMAT_ICE:
-            return output_ice_tileset(output, tileset);
+        case OUTPUT_FORMAT_BASIC:
+            return output_basic_tileset(output, tileset);
 
         case OUTPUT_FORMAT_APPVAR:
             return output_appvar_tileset(output, tileset);
@@ -377,8 +377,8 @@ static int output_palette(struct output *output, const struct palette *palette)
         case OUTPUT_FORMAT_BIN:
             return output_bin_palette(output, palette);
 
-        case OUTPUT_FORMAT_ICE:
-            return output_ice_palette(output, palette);
+        case OUTPUT_FORMAT_BASIC:
+            return output_basic_palette(output, palette);
 
         case OUTPUT_FORMAT_APPVAR:
             return output_appvar_palette(output, palette);
@@ -406,8 +406,8 @@ static int output_include(struct output *output)
         case OUTPUT_FORMAT_BIN:
             return output_bin_include(output);
 
-        case OUTPUT_FORMAT_ICE:
-            return output_ice_include(output);
+        case OUTPUT_FORMAT_BASIC:
+            return output_basic_include(output);
 
         case OUTPUT_FORMAT_APPVAR:
             return output_appvar_include(output);

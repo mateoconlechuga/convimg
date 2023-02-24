@@ -182,8 +182,13 @@ static struct output *parser_alloc_output(struct yaml *yaml, void *type)
     }
     else if (parse_str_cmp("ice", type))
     {
-        output->format = OUTPUT_FORMAT_ICE;
+        output->format = OUTPUT_FORMAT_BASIC;
         include_file = "ice.txt";
+    }
+    else if (parse_str_cmp("basic", type))
+    {
+        output->format = OUTPUT_FORMAT_BASIC;
+        include_file = "basic.txt";
     }
     else if (parse_str_cmp("appvar", type))
     {

@@ -52,7 +52,7 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(SRCDIR)/output-asm.c \
           $(SRCDIR)/output-bin.c \
           $(SRCDIR)/output-c.c \
-          $(SRCDIR)/output-ice.c \
+          $(SRCDIR)/output-basic.c \
           $(SRCDIR)/output.c \
           $(SRCDIR)/palette.c \
           $(SRCDIR)/strings.c \

@@ -256,15 +256,15 @@ It primarily is used for the TI-84+CE and related calculator series, however can
          - type: c                    : C source and header files
          - type: asm                  : Assembly and include files
          - type: bin                  : Binary and listing files
-         - type: ice                  : Single ICE compiler formatted file
+         - type: basic                : Single string formatted file
          - type: appvar               : TI archived AppVar format
 
         The different options available for outputs are:
 
            include-file: <file>       : Output file containing all the graphics
                                       : Defaults to "gfx.h", "gfx.inc",
-                                      : "bin.txt", and "ice.txt" for C, Asm,
-                                      : Binary, and ICE formats respectively.
+                                      : "bin.txt", and "basic.txt" for C, Asm,
+                                      : Binary, and BASIC formats respectively.
 
            palettes:                  : A list of generated palettes, separated
                                       : by a newline and indented with the '-'

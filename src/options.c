@@ -296,15 +296,15 @@ static void options_show(const char *prgm)
     LOG_PRINT("     - type: c                    : C source and header files\n");
     LOG_PRINT("     - type: asm                  : Assembly and include files\n");
     LOG_PRINT("     - type: bin                  : Binary and listing files\n");
-    LOG_PRINT("     - type: ice                  : Single ICE compiler formatted file\n");
+    LOG_PRINT("     - type: basic                : Single string formatted file\n");
     LOG_PRINT("     - type: appvar               : TI archived AppVar format\n");
     LOG_PRINT("\n");
     LOG_PRINT("    The different options available for outputs are:\n");
     LOG_PRINT("\n");
     LOG_PRINT("       include-file: <file>       : Output file containing all the graphics\n");
     LOG_PRINT("                                  : Defaults to \"gfx.h\", \"gfx.inc\",\n");
-    LOG_PRINT("                                  : \"bin.txt\", and \"ice.txt\" for C, Asm,\n");
-    LOG_PRINT("                                  : Binary, and ICE formats respectively.\n");
+    LOG_PRINT("                                  : \"bin.txt\", and \"basic.txt\" for C, Asm,\n");
+    LOG_PRINT("                                  : Binary, and BASIC formats respectively.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       palettes:                  : A list of generated palettes, separated\n");
     LOG_PRINT("                                  : by a newline and indented with the \'-\'\n");

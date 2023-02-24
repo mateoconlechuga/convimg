@@ -40,7 +40,7 @@
 #include <errno.h>
 #include <string.h>
 
-static int output_ice_array(unsigned char *data, uint32_t size, FILE *fd)
+static int output_basic_array(unsigned char *data, uint32_t size, FILE *fd)
 {
     uint32_t i;
 
@@ -56,7 +56,7 @@ static int output_ice_array(unsigned char *data, uint32_t size, FILE *fd)
     return 0;
 }
 
-int output_ice_image(struct output *output, const struct image *image)
+int output_basic_image(struct output *output, const struct image *image)
 {
     FILE *fd;
 
@@ -68,16 +68,16 @@ int output_ice_image(struct output *output, const struct image *image)
     }
 
     fprintf(fd, "%s | %u bytes\n", image->name, image->data_size);
-    output_ice_array(image->data, image->data_size, fd);
+    output_basic_array(image->data, image->data_size, fd);
 
     fclose(fd);
 
     return 0;
 }
 
-int output_ice_tileset(struct output *output, const struct tileset *tileset)
+int output_basic_tileset(struct output *output, const struct tileset *tileset)
 {
-    LOG_ERROR("Tilesets are not supported for ICE output.\n");
+    LOG_ERROR("Tilesets are not supported for this output format.\n");
 
     (void)output;
     (void)tileset;
@@ -85,7 +85,7 @@ int output_ice_tileset(struct output *output, const struct tileset *tileset)
     return -1;
 }
 
-int output_ice_palette(struct output *output, const struct palette *palette)
+int output_basic_palette(struct output *output, const struct palette *palette)
 {
     unsigned int size;
     FILE *fd;
@@ -118,7 +118,7 @@ int output_ice_palette(struct output *output, const struct palette *palette)
     return 0;
 }
 
-int output_ice_include(struct output *output)
+int output_basic_include(struct output *output)
 {
     FILE *fd;
 
@@ -136,12 +136,20 @@ int output_ice_include(struct output *output)
     return 0;
 }
 
-int output_ice_init(struct output *output)
+int output_basic_init(struct output *output)
 {
-    if (remove(output->include_file))
+    FILE *fd;
+
+    fd = fopen(output->include_file, "rt");
+    if (fd != NULL)
     {
-        LOG_WARNING("Could not remove \'%s\'.\n",
-            output->include_file);
+        fclose(fd);
+
+        if (remove(output->include_file))
+        {
+            LOG_WARNING("Could not remove \'%s\'.\n",
+                output->include_file);
+        }
     }
 
     return 0;

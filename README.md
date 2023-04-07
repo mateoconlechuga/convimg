@@ -1,4 +1,4 @@
-# convimg [![Build Status](https://github.com/mateoconlechuga/convimg/actions/workflows/make.yml/badge.svg)](https://github.com/mateoconlechuga/convimg/actions/workflows/make.yml) [![Coverity Scan](https://scan.coverity.com/projects/23542/badge.svg)](https://scan.coverity.com/projects/mateoconlechuga-convimg) [![Codiga Analysis](https://api.codiga.io/project/34938/status/svg)](https://app.codiga.io/hub/project/34938/convimg)
+# convimg [![Build Status](https://github.com/mateoconlechuga/convimg/actions/workflows/make.yml/badge.svg)](https://github.com/mateoconlechuga/convimg/actions/workflows/make.yml) [![Coverity Scan](https://scan.coverity.com/projects/23542/badge.svg)](https://scan.coverity.com/projects/mateoconlechuga-convimg)
 
 This program is used to convert images to particular color formats and source includes.
 It primarily is used for the TI-84+CE and related calculator series, however can be used as a standalone program.

@@ -390,7 +390,7 @@ static int parse_palette_image(struct palette *palette, const char *path)
             goto fail;
         }
 
-        if (palette->nr_fixed_entries > PALETTE_MAX_ENTRIES - 1)
+        if (palette->nr_fixed_entries > PALETTE_MAX_ENTRIES)
         {
             LOG_ERROR("Too many fixed colors for palette \'%s\'.\n",
                 palette->name);
@@ -455,7 +455,7 @@ static int parse_palette_fixed_entry(struct palette *palette, yaml_document_t *d
         {
             size_t j;
 
-            if (palette->nr_fixed_entries >= 255)
+            if (palette->nr_fixed_entries > PALETTE_MAX_ENTRIES)
             {
                 LOG_ERROR("Too many fixed colors for palette \'%s\'.\n", palette->name);
                 return -1;

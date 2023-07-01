@@ -836,10 +836,17 @@ static int parse_convert_tilesets(struct convert *convert, yaml_document_t *doc,
 
         if (parse_str_cmp("tile-width", key))
         {
-            int tmpi = strtol(value, NULL, 0);
+            int tmpi;
+            if (convert->tile_width)
+            {
+                LOG_ERROR("Tileset tile-width can only be specified once per convert.\n");
+                parser_show_mark_error(keyn->start_mark);
+                return -1;
+            }
+            tmpi = strtol(value, NULL, 0);
             if (tmpi < 1)
             {
-                LOG_ERROR("Invalid tileset tile width: %d\n", tmpi);
+                LOG_ERROR("Invalid tileset tile-width: %d\n", tmpi);
                 parser_show_mark_error(keyn->start_mark);
                 return -1;
             }
@@ -847,10 +854,17 @@ static int parse_convert_tilesets(struct convert *convert, yaml_document_t *doc,
         }
         else if (parse_str_cmp("tile-height", key))
         {
-            int tmpi = strtol(value, NULL, 0);
+            int tmpi;
+            if (convert->tile_height)
+            {
+                LOG_ERROR("Tileset tile-height can only be specified once per convert.\n");
+                parser_show_mark_error(keyn->start_mark);
+                return -1;
+            }
+            tmpi = strtol(value, NULL, 0);
             if (tmpi < 1)
             {
-                LOG_ERROR("Invalid tileset tile height: %d\n", tmpi);
+                LOG_ERROR("Invalid tileset tile-height: %d\n", tmpi);
                 parser_show_mark_error(keyn->start_mark);
                 return -1;
             }

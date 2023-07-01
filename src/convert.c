@@ -66,8 +66,8 @@ struct convert *convert_alloc(void)
     convert->flip_y = false;
     convert->tilesets = NULL;
     convert->nr_tilesets = 0;
-    convert->tile_height = 16;
-    convert->tile_width = 16;
+    convert->tile_height = 0;
+    convert->tile_width = 0;
     convert->p_table = true;
 
     return convert;
@@ -362,13 +362,13 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
     uint32_t x;
     uint32_t y;
 
-    if (tileset->image.width % tileset->tile_width)
+    if (!tileset->tile_width || tileset->image.width % tileset->tile_width)
     {
         LOG_ERROR("Image dimensions do not support tile width.\n");
         return -1;
     }
 
-    if (tileset->image.height % tileset->tile_height)
+    if (!tileset->tile_height || tileset->image.height % tileset->tile_height)
     {
         LOG_ERROR("Image dimensions do not support tile height.\n");
         return -1;

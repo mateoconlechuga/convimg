@@ -32,6 +32,6 @@
 #define VERSION_H
 
 #define PRGM_NAME "convimg"
-#define VERSION_STRING "9.2-dev"
+#define VERSION_STRING "9.2"
 
 #endif

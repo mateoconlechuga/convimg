@@ -407,7 +407,6 @@ int palette_generate_with_images(struct palette *palette)
         for (uint32_t j = 0; j < image->width * image->height; ++j)
         {
             struct color color;
-            bool add_color;
 
             color.rgba = image_rgba[j];
 
@@ -422,47 +421,33 @@ int palette_generate_with_images(struct palette *palette)
 
             color_normalize(&color, palette->color_fmt);
 
-            /* check if this color already exists in the color array */
-            add_color = true;
-            for (uint32_t k = 0; k < nr_colors; ++k)
+            if (nr_colors == MAX_NR_COLORS)
             {
-                if (colors[k] == color.rgba)
-                {
-                    add_color = false;
-                    break;
-                }
+                LOG_ERROR("Too many colors to quantize\n");
+                free(colors);
+                return -1;
             }
 
-            if (add_color)
+            if (nr_colors == nr_colors_alloc)
             {
-                if (nr_colors == MAX_NR_COLORS)
+                /* multiply by 1.5 for best space allocation */
+                nr_colors_alloc *= 3;
+                nr_colors_alloc /= 2;
+
+                LOG_DEBUG("%u colors, realloc %u\n",
+                    nr_colors,
+                    nr_colors_alloc);
+
+                colors = memory_realloc_array(colors, nr_colors_alloc, 4);
+                if (colors == NULL)
                 {
-                    LOG_ERROR("Too many colors to quantize\n");
-                    free(colors);
                     return -1;
                 }
-
-                if (nr_colors == nr_colors_alloc)
-                {
-                    /* multiply by 1.5 for best space allocation */
-                    nr_colors_alloc *= 3;
-                    nr_colors_alloc /= 2;
-
-                    LOG_DEBUG("%u colors, realloc %u\n",
-                        nr_colors,
-                        nr_colors_alloc);
-
-                    colors = memory_realloc_array(colors, nr_colors_alloc, 4);
-                    if (colors == NULL)
-                    {
-                        return -1;
-                    }
-                }
-
-                colors[nr_colors] = color.rgba;
-
-                nr_colors++;
             }
+
+            colors[nr_colors] = color.rgba;
+
+            nr_colors++;
         }
     }
 

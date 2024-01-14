@@ -36,7 +36,7 @@
 
 #include <string.h>
 
-static int compress_zx7(uint8_t *data, size_t *size)
+static uint8_t *compress_zx7(uint8_t *data, size_t *size)
 {
     zx7_Optimal *opt;
     uint8_t *compressed_data;
@@ -45,14 +45,14 @@ static int compress_zx7(uint8_t *data, size_t *size)
 
     if (size == NULL || data == NULL)
     {
-        return -1;
+        return NULL;
     }
 
     opt = zx7_optimize(data, *size, 0);
     if (opt == NULL)
     {
         LOG_ERROR("Could not optimize zx7.\n");
-        return -1;
+        return NULL;
     }
 
     compressed_data = zx7_compress(opt, data, *size, 0, &new_size, &delta);
@@ -60,15 +60,14 @@ static int compress_zx7(uint8_t *data, size_t *size)
     if (compressed_data == NULL)
     {
         LOG_ERROR("Out of memory.\n");
-        return -1;
+        return NULL;
     }
 
-    memcpy(data, compressed_data, new_size);
+    LOG_DEBUG("Compressed size: %u -> %u\n", *size, new_size);
+
     *size = new_size;
 
-    free(compressed_data);
-
-    return 0;
+    return compressed_data;
 }
 
 static void compress_zx0_progress(void)
@@ -76,7 +75,7 @@ static void compress_zx0_progress(void)
     LOG_PRINT(".");
 }
 
-static int compress_zx0(uint8_t *data, size_t *size)
+static uint8_t *compress_zx0(uint8_t *data, size_t *size)
 {
     zx0_BLOCK *optimal;
     uint8_t *compressed_data;
@@ -85,7 +84,7 @@ static int compress_zx0(uint8_t *data, size_t *size)
 
     if (size == NULL || data == NULL)
     {
-        return -1;
+        return NULL;
     }
 
     LOG_PRINT("[info] Compressing [");
@@ -95,7 +94,7 @@ static int compress_zx0(uint8_t *data, size_t *size)
     {
         LOG_ERROR("Out of memory]\n");
         zx0_free();
-        return -1;
+        return NULL;
     }
 
     compressed_data = zx0_compress(optimal, data, *size, 0, 0, 1, &new_size, &delta);
@@ -106,25 +105,22 @@ static int compress_zx0(uint8_t *data, size_t *size)
     {
         LOG_ERROR("Out of memory.\n");
         zx0_free();
-        return -1;
+        return NULL;
     }
 
-    memcpy(data, compressed_data, new_size);
+    LOG_DEBUG("Compressed size: %u -> %u\n", *size, new_size);
+
     *size = new_size;
 
-    free(compressed_data);
     zx0_free();
 
-    return 0;
+    return compressed_data;
 }
 
-int compress_array(uint8_t *data, size_t *size, compress_mode_t mode)
+uint8_t *compress_array(uint8_t *data, size_t *size, compress_mode_t mode)
 {
     switch (mode)
     {
-        case COMPRESS_NONE:
-            return 0;
-
         case COMPRESS_ZX7:
             return compress_zx7(data, size);
 
@@ -132,8 +128,6 @@ int compress_array(uint8_t *data, size_t *size, compress_mode_t mode)
             return compress_zx0(data, size);
 
         default:
-            break;
+            return NULL;
     }
-
-    return -1;
 }

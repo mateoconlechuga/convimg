@@ -447,14 +447,21 @@ nextbyte:
 
 int image_compress(struct image *image, compress_mode_t mode)
 {
-    size_t size = image->data_size;
-
-    if (compress_array(image->data, &size, mode))
+    if (mode != COMPRESS_NONE)
     {
-        return -1;
-    }
+        size_t size = image->data_size;
+        void *original_data = image->data;
 
-    image->data_size = size;
+        image->data = compress_array(original_data, &size, mode);
+        free(original_data);
+
+        if (image->data == NULL)
+        {
+            return -1;
+        }
+
+        image->data_size = size;
+    }
 
     return 0;
 }

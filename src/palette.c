@@ -43,9 +43,6 @@
 #include <string.h>
 #include <glob.h>
 
-/* one mebibyte */
-#define MIB_1 1048576
-
 /* maximum number of colors that can be quantized */
 #define MAX_NR_COLORS 536870912
 
@@ -388,7 +385,8 @@ int palette_generate_with_images(struct palette *palette)
         }
     }
 
-    colors = NULL;
+    size_t nr_colors_alloc = 8192;
+    colors = memory_realloc_array(NULL, nr_colors_alloc, 4);
     nr_colors = 0;
 
     /* quantize the images into a palette */
@@ -433,9 +431,17 @@ int palette_generate_with_images(struct palette *palette)
                 return -1;
             }
 
-            if (nr_colors % MIB_1 == 0)
+            if (nr_colors == nr_colors_alloc)
             {
-                colors = memory_realloc_array(colors, MIB_1, 4);
+                /* multiple by 1.5 for best performance */
+                nr_colors_alloc *= 3;
+                nr_colors_alloc /= 2;
+
+                LOG_DEBUG("%u colors, allocating %u more\n",
+                    nr_colors,
+                    nr_colors_alloc);
+
+                colors = memory_realloc_array(colors, nr_colors_alloc, 4);
                 if (colors == NULL)
                 {
                     return -1;
@@ -454,6 +460,8 @@ int palette_generate_with_images(struct palette *palette)
             nr_colors++;
         }
     }
+
+    LOG_DEBUG("%u colors in palette before quantization\n", nr_colors);
 
     if (nr_colors > 0)
     {
@@ -578,20 +586,23 @@ int palette_generate_with_images(struct palette *palette)
         {
             uint32_t j;
 
-            for (j = 0; j < nr_max_entries; ++j)
+            if (nr_max_entries)
             {
-                if (!palette->entries[j].valid)
+                for (j = 0; j < nr_max_entries; ++j)
                 {
-                    break;
+                    if (!palette->entries[j].valid)
+                    {
+                        break;
+                    }
                 }
-            }
 
-            if (j == nr_max_entries)
-            {
-                 LOG_ERROR("Could not find a valid fixed entry location.\n");
-                 liq_histogram_destroy(hist);
-                 liq_attr_destroy(attr);
-                 return -1;
+                if (j == nr_max_entries)
+                {
+                     LOG_ERROR("Could not find a valid fixed entry location.\n");
+                     liq_histogram_destroy(hist);
+                     liq_attr_destroy(attr);
+                     return -1;
+                }
             }
 
             palette->entries[j] = palette->entries[fixed_entry->index];

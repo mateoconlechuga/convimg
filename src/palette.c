@@ -324,12 +324,10 @@ int palette_generate_with_images(struct palette *palette)
     liq_error liqerr;
     liq_attr *attr;
     liq_histogram *hist;
-    uint8_t *colors;
     uint32_t max_index;
     uint32_t nr_exact_entries;
     uint32_t nr_max_entries;
     uint32_t nr_unused_entries;
-    uint32_t nr_colors;
     
     attr = liq_attr_create();
 
@@ -385,9 +383,9 @@ int palette_generate_with_images(struct palette *palette)
         }
     }
 
-    size_t nr_colors_alloc = 8192;
-    colors = memory_realloc_array(NULL, nr_colors_alloc, 4);
-    nr_colors = 0;
+    size_t nr_colors_alloc = 4096;
+    uint32_t *colors = memory_realloc_array(NULL, nr_colors_alloc, 4);
+    uint32_t nr_colors = 0;
 
     /* quantize the images into a palette */
     for (uint32_t i = 0; i < palette->nr_images; ++i)
@@ -404,19 +402,17 @@ int palette_generate_with_images(struct palette *palette)
             return -1;
         }
 
+        const uint32_t *image_rgba = (uint32_t*)image->data;
+
         for (uint32_t j = 0; j < image->width * image->height; ++j)
         {
-            const uint32_t image_offset = j * 4;
             struct color color;
-            uint8_t alphach;
+            bool add_color;
 
-            color.r = image->data[image_offset + 0];
-            color.g = image->data[image_offset + 1];
-            color.b = image->data[image_offset + 2];
-            alphach = image->data[image_offset + 3];
+            color.rgba = image_rgba[j];
 
             /* clamp transparent/semi-transparent pixels */
-            alphach = alphach < 128 ? 0 : 255;
+            color.a = color.a < 128 ? 0 : 255;
 
             /* don't add exact fixed colors to the palette */
             if (palette_is_exact_fixed_entry(palette, &color))
@@ -424,40 +420,49 @@ int palette_generate_with_images(struct palette *palette)
                 continue;
             }
 
-            if (nr_colors >= MAX_NR_COLORS)
+            color_normalize(&color, palette->color_fmt);
+
+            /* check if this color already exists in the color array */
+            add_color = true;
+            for (uint32_t k = 0; k < nr_colors; ++k)
             {
-                LOG_ERROR("Too many colors to quantize\n");
-                free(colors);
-                return -1;
-            }
-
-            if (nr_colors == nr_colors_alloc)
-            {
-                /* multiple by 1.5 for best performance */
-                nr_colors_alloc *= 3;
-                nr_colors_alloc /= 2;
-
-                LOG_DEBUG("%u colors, allocating %u more\n",
-                    nr_colors,
-                    nr_colors_alloc);
-
-                colors = memory_realloc_array(colors, nr_colors_alloc, 4);
-                if (colors == NULL)
+                if (colors[k] == color.rgba)
                 {
-                    return -1;
+                    add_color = false;
+                    break;
                 }
             }
 
-            const uint32_t colors_offset = nr_colors * 4;
+            if (add_color)
+            {
+                if (nr_colors == MAX_NR_COLORS)
+                {
+                    LOG_ERROR("Too many colors to quantize\n");
+                    free(colors);
+                    return -1;
+                }
 
-            color_normalize(&color, palette->color_fmt);
+                if (nr_colors == nr_colors_alloc)
+                {
+                    /* multiply by 1.5 for best space allocation */
+                    nr_colors_alloc *= 3;
+                    nr_colors_alloc /= 2;
 
-            colors[colors_offset + 0] = color.r;
-            colors[colors_offset + 1] = color.g;
-            colors[colors_offset + 2] = color.b;
-            colors[colors_offset + 3] = alphach;
+                    LOG_DEBUG("%u colors, realloc %u\n",
+                        nr_colors,
+                        nr_colors_alloc);
 
-            nr_colors++;
+                    colors = memory_realloc_array(colors, nr_colors_alloc, 4);
+                    if (colors == NULL)
+                    {
+                        return -1;
+                    }
+                }
+
+                colors[nr_colors] = color.rgba;
+
+                nr_colors++;
+            }
         }
     }
 
@@ -511,6 +516,7 @@ int palette_generate_with_images(struct palette *palette)
             color.r = liqpalette->entries[i].r;
             color.g = liqpalette->entries[i].g;
             color.b = liqpalette->entries[i].b;
+            color.a = 255;
 
             color_normalize(&color, palette->color_fmt);
 

@@ -516,7 +516,7 @@ int options_get(int argc, char *argv[], struct options *options)
     options_set_default(options);
     options->prgm = argv[0];
 
-    for( ;; )
+    for (;;)
     {
         int optidx = 0;
         static struct option long_options[] =

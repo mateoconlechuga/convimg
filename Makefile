@@ -26,8 +26,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+PRGM_NAME = convimg
+VERSION_STRING = $(shell git describe --abbrev=8 --dirty --always --tags)
+
 CC := gcc
-CFLAGS = -Wall -Wextra -Wno-unused-but-set-variable -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3 -flto
+CFLAGS = -Wall -Wextra -Wno-unused-but-set-variable -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3 -DPRGM_NAME="\"$(PRGM_NAME)\"" -DVERSION_STRING="\"$(VERSION_STRING)\"" -flto
 CFLAGS_LIQ = -Wall -std=c99 -O3 -DNDEBUG -fno-math-errno -funroll-loops -fomit-frame-pointer -Wno-unknown-pragmas -Wno-attributes -flto
 CFLAGS_LIBYAML = -Wall -std=gnu99 -O3 -DYAML_VERSION_MAJOR=1 -DYAML_VERSION_MINOR=0 -DYAML_VERSION_PATCH=0 -DYAML_VERSION_STRING="\"1.0.0\"" -flto
 LDFLAGS = -flto
@@ -78,7 +81,7 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(DEPDIR)/libyaml/src/scanner.c
 
 ifeq ($(OS),Windows_NT)
-  TARGET ?= convimg.exe
+  TARGET ?= $(PRGM_NAME).exe
   SHELL = cmd.exe
   NATIVEPATH = $(subst /,\,$1)
   RMDIR = ( rmdir /s /q $1 2>nul || call )
@@ -101,7 +104,7 @@ ifeq ($(OS),Windows_NT)
   CFLAGS_LIBYAML += -static
   LDFLAGS += -static
 else
-  TARGET ?= convimg
+  TARGET ?= $(PRGM_NAME)
   NATIVEPATH = $(subst \,/,$1)
   MKDIR = mkdir -p $1
   RMDIR = rm -rf $1

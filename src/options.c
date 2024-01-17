@@ -29,7 +29,6 @@
  */
 
 #include "options.h"
-#include "version.h"
 #include "clean.h"
 #include "log.h"
 
@@ -597,7 +596,7 @@ int options_get(int argc, char *argv[], struct options *options)
                 break;
 
             case 'v':
-                LOG_PRINT("%s v%s by mateoconlechuga\n", PRGM_NAME, VERSION_STRING);
+                LOG_PRINT(VERSION_STRING "\n");
                 return OPTIONS_IGNORE;
 
             case 'l':

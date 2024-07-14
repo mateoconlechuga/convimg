@@ -174,10 +174,11 @@ It primarily is used for the TI-84+CE and related calculator series, however can
                                       : of 16 pixels. Tile numbers are determined
                                       : starting from the top left, moving right
                                       : to the bottom-right.
-                                      : Another optional boolean field is
-                                      : 'pointer-table', which will output
-                                      : pointers to each tile.
-                                      : Default is 'true'.
+                                      : Optional fields are:
+                                      :   'tile-rotate': rotate tiles 90, 180, 270.
+                                      :   'tile-flip-x': flip tiles across x axis.
+                                      :   'tile-flip-y': flip tiles across y axis.
+                                      :   'pointer-table': output tile pointers
 
            transparent-index: <index> : Transparent color index in the palette
                                       : that represents a transparent color.

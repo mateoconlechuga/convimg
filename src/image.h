@@ -91,6 +91,12 @@ int image_direct_convert(struct image *image, color_format_t fmt);
 
 void image_free(struct image *image);
 
+void image_flip_y(uint32_t *data, uint32_t width, uint32_t height);
+
+void image_flip_x(uint32_t *data, uint32_t width, uint32_t height);
+
+int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height);
+
 #ifdef __cplusplus
 }
 #endif

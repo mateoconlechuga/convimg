@@ -46,7 +46,7 @@ static void swap_pixel(uint32_t *a, uint32_t *b)
     *b = temp;
 }
 
-static void image_flip_y(uint32_t *data, uint32_t width, uint32_t height)
+void image_flip_y(uint32_t *data, uint32_t width, uint32_t height)
 {
     for (uint32_t r = 0; r < height; ++r)
     {
@@ -60,7 +60,7 @@ static void image_flip_y(uint32_t *data, uint32_t width, uint32_t height)
     }
 }
 
-static void image_flip_x(uint32_t *data, uint32_t width, uint32_t height)
+void image_flip_x(uint32_t *data, uint32_t width, uint32_t height)
 {
     for (uint32_t c = 0; c < width; ++c)
     {
@@ -72,7 +72,7 @@ static void image_flip_x(uint32_t *data, uint32_t width, uint32_t height)
     }
 }
 
-static int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height)
+int image_rotate_90(uint32_t *data, uint32_t width, uint32_t height)
 {
     uint32_t *new_data;
     uint32_t data_size;
@@ -323,7 +323,7 @@ int image_set_bpp(struct image *image, bpp_t bpp, uint32_t nr_palette_entries)
             shift_mult = 1;
             inc = 8;
             break;
-            
+
         case BPP_2:
             if (nr_palette_entries > 4)
             {
@@ -422,7 +422,7 @@ int image_remove_omits(struct image *image, const uint8_t *omit_indices, uint32_
     }
 
     for (uint32_t i = 0; i < image->data_size; ++i)
-    {        
+    {
         for (uint32_t j = 0; j < nr_omit_indices; ++j)
         {
             if (image->data[i] == omit_indices[j])
@@ -665,7 +665,7 @@ int image_direct_convert(struct image *image, color_format_t fmt)
                 *dst++ = target & 255;
                 *dst++ = (target >> 8) & 255;
                 break;
-            
+
             case COLOR_565_BGR:
                 target = color_to_565_bgr(&color);
                 *dst++ = target & 255;

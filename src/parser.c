@@ -874,6 +874,25 @@ static int parse_convert_tilesets(struct convert *convert, yaml_document_t *doc,
         {
             convert->p_table = parse_str_bool(value);
         }
+        else if (parse_str_cmp("tile-rotate", key))
+        {
+            int tmpi = strtol(value, NULL, 10);
+            if (tmpi != 0 && tmpi != 90 && tmpi != 180 && tmpi != 270)
+            {
+                LOG_ERROR("Invalid rotate parameter, must be 0, 90, 180, or 270.\n");
+                parser_show_mark_error(keyn->start_mark);
+                return -1;
+            }
+            convert->tile_rotate = tmpi;
+        }
+        else if (parse_str_cmp("tile-flip-x", key))
+        {
+            convert->tile_flip_x = parse_str_bool(value);
+        }
+        else if (parse_str_cmp("tile-flip-y", key))
+        {
+            convert->tile_flip_y = parse_str_bool(value);
+        }
         else if (parse_str_cmp("images", key))
         {
             if (parse_convert_tilesets_images(convert, doc, valuen))
@@ -1680,7 +1699,7 @@ int parser_open(struct yaml *yaml, const char *path)
     {
         ret = parser_validate(yaml);
     }
-    
+
     return ret;
 }
 

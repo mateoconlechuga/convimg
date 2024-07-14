@@ -74,6 +74,9 @@ struct convert
     bool add_width_height;
     bool flip_x;
     bool flip_y;
+    uint32_t tile_rotate;
+    bool tile_flip_x;
+    bool tile_flip_y;
     bpp_t bpp;
 };
 

@@ -213,10 +213,11 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : of 16 pixels. Tile numbers are determined\n");
     LOG_PRINT("                                  : starting from the top left, moving right\n");
     LOG_PRINT("                                  : to the bottom-right.\n");
-    LOG_PRINT("                                  : Another optional boolean field is\n");
-    LOG_PRINT("                                  : \'pointer-table\', which will output\n");
-    LOG_PRINT("                                  : pointers to each tile.\n");
-    LOG_PRINT("                                  : Default is \'true\'.\n");
+    LOG_PRINT("                                  : Optional fields are:\n");
+    LOG_PRINT("                                  :   \'tile-rotate\': rotate tiles 90, 180, 270.\n");
+    LOG_PRINT("                                  :   \'tile-flip-x\': flip tiles across x axis.\n");
+    LOG_PRINT("                                  :   \'tile-flip-y\': flip tiles across y axis.\n");
+    LOG_PRINT("                                  :   \'pointer-table\': output tile pointers\n");
     LOG_PRINT("\n");
     LOG_PRINT("       transparent-index: <index> : Transparent color index in the palette\n");
     LOG_PRINT("                                  : that represents a transparent color.\n");
@@ -457,7 +458,7 @@ static int options_clean(const char *path)
         LOG_ERROR("Clean failed.\n");
         return -1;
     }
-    
+
     LOG_INFO("Clean complete.\n");
 
     return 0;

@@ -34,6 +34,7 @@
 #include "memory.h"
 #include "tileset.h"
 #include "log.h"
+#include "image.h"
 
 #include <string.h>
 #include <glob.h>
@@ -68,6 +69,9 @@ struct convert *convert_alloc(void)
     convert->nr_tilesets = 0;
     convert->tile_height = 0;
     convert->tile_width = 0;
+    convert->tile_rotate = 0;
+    convert->tile_flip_x = false;
+    convert->tile_flip_y = false;
     convert->p_table = true;
 
     return convert;
@@ -342,7 +346,7 @@ static int convert_image(struct convert *convert, struct image *image)
     }
 
     image->uncompressed_size = image->data_size;
-    
+
     if (convert->compress != COMPRESS_NONE)
     {
         if (image_compress(image, convert->compress))
@@ -395,7 +399,7 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
         uint32_t tile_data_size = tile_dim * sizeof(uint32_t);
         uint32_t tile_stride = tileset->tile_width * sizeof(uint32_t);
         uint32_t image_stride = tileset->image.width * sizeof(uint32_t);
-        uint8_t *tile_data;
+        void *tile_data;
         uint8_t *dst;
 
         tile_data = memory_alloc(tile_data_size);
@@ -425,6 +429,48 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
             dst += tile_stride;
         }
 
+        if (tileset->tile_flip_x)
+        {
+            image_flip_x(tile_data, tile.width, tile.height);
+        }
+
+        if (tileset->tile_flip_y)
+        {
+            image_flip_y(tile_data, tile.width, tile.height);
+        }
+
+        switch (tileset->tile_rotate)
+        {
+            default:
+            case 0:
+                break;
+
+            case 90:
+                tile.width = tileset->tile_height;
+                tile.height = tileset->tile_width;
+                if (image_rotate_90(tile_data, tile.width, tile.height))
+                {
+                    goto error;
+                }
+                break;
+
+            case 180:
+                image_flip_y(tile_data, tile.width, tile.height);
+                image_flip_x(tile_data, tile.width, tile.height);
+                break;
+
+            case 270:
+                tile.width = tileset->tile_height;
+                tile.height = tileset->tile_width;
+                if (image_rotate_90(tile_data, tile.width, tile.height))
+                {
+                    goto error;
+                }
+                image_flip_y(tile_data, tile.width, tile.height);
+                image_flip_x(tile_data, tile.width, tile.height);
+                break;
+        }
+
         x += tile_stride;
 
         if (x >= image_stride)
@@ -435,6 +481,7 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
 
         if (convert_image(convert, &tile))
         {
+error:
             free(tile.data);
             return -1;
         }
@@ -468,7 +515,7 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
     for (uint32_t i = 0; i < convert->nr_images; ++i)
     {
         struct image *image = &convert->images[i];
-        
+
         /* assign image constants from convert */
         image->quantize_speed = convert->quantize_speed;
         image->dither = convert->dither;
@@ -524,6 +571,9 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         /* assign tileset constants from convert */
         tileset->tile_height = convert->tile_height;
         tileset->tile_width = convert->tile_width;
+        tileset->tile_rotate = convert->tile_rotate;
+        tileset->tile_flip_x = convert->tile_flip_x;
+        tileset->tile_flip_y = convert->tile_flip_y;
         tileset->p_table = convert->p_table;
 
         /* assign image constants from convert */

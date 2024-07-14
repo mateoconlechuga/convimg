@@ -62,6 +62,9 @@ struct tileset
     bool gfx;
     bool compressed;
     bool bad_alpha;
+    uint32_t tile_rotate;
+    bool tile_flip_x;
+    bool tile_flip_y;
 
     /* set by output */
     uint32_t appvar_index;

@@ -24,10 +24,11 @@ jobs:
     runs-on: ${{matrix.runs-on}}-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        submodules: true
-        fetch-depth: 1
+        submodules: recursive
+        fetch-depth: 0
+        fetch-tags: true
 
     - name: Build project
       run: make release
@@ -37,7 +38,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: ${{matrix.os-name}}-convimg
         path: bin/convimg${{matrix.exe}}
@@ -92,21 +93,21 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: recursive
         fetch-depth: 1
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: cpp
         config-file: ./.github/codeql/codeql-config.yml
 
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+      uses: github/codeql-action/autobuild@v3
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"

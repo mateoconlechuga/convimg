@@ -28,6 +28,7 @@ converts:
     style: rlet
     transparent-color-index: 0
     append: _flipped
+    flip-y: true
     tilesets:
       tile-width: 16
       tile-height: 27

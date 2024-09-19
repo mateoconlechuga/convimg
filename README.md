@@ -248,7 +248,10 @@ It primarily is used for the TI-84+CE and related calculator series, however can
                                       : by a custom drawing routine. A comma
                                       : separated list in [] should be provided.
 
-           append: <string>           : Appends the output files of this convert
+           prefix: <string>           : Prefixes the output files of this convert
+                                      : with a string defined by <string>.
+
+           suffix: <string>           : Suffixes the output files of this convert
                                       : with a string defined by <string>.
 
     --------------------------------------------------------------------------------

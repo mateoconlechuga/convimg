@@ -59,6 +59,8 @@ struct convert *convert_alloc(void)
     convert->bpp = BPP_8;
     convert->color_fmt = COLOR_565_RGB;
     convert->name = NULL;
+    convert->prefix_string = NULL;
+    convert->suffix_string = NULL;
     convert->palette_name = NULL;
     convert->quantize_speed = CONVERT_DEFAULT_QUANTIZE_SPEED;
     convert->dither = 0;
@@ -524,7 +526,15 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         image->flip_y = convert->flip_y;
         image->transparent_index = convert->transparent_index;
         image->rlet = convert->style == CONVERT_STYLE_RLET;
-        image->name = strings_concat(image->name, convert->append_string, 0);
+
+        if (convert->prefix_string != NULL)
+        {
+            image->name = strings_concat(convert->prefix_string, image->name, 0);
+        }
+        if (convert->suffix_string != NULL)
+        {
+            image->name = strings_concat(image->name, convert->suffix_string, 0);
+        }
 
         image->gfx = false;
         if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)
@@ -585,7 +595,15 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         image->flip_y = convert->flip_y;
         image->transparent_index = convert->transparent_index;
         image->rlet = convert->style == CONVERT_STYLE_RLET;
-        image->name = strings_concat(image->name, convert->append_string, 0);
+
+        if (convert->prefix_string != NULL)
+        {
+            image->name = strings_concat(convert->prefix_string, image->name, 0);
+        }
+        if (convert->suffix_string != NULL)
+        {
+            image->name = strings_concat(image->name, convert->suffix_string, 0);
+        }
 
         image->gfx = false;
         if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)

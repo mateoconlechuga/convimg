@@ -53,7 +53,8 @@ struct convert
 {
     char *name;
     char *palette_name;
-    char *append_string;
+    char *prefix_string;
+    char *suffix_string;
     const struct palette *palette;
     uint8_t palette_offset;
     uint8_t omit_indices[PALETTE_MAX_ENTRIES];

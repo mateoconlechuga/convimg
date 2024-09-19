@@ -22,12 +22,27 @@ converts:
     images:
       - thwomp.png
 
-  - name: flipped_sprites
+  - name: flipped_sprites_prefix
     palette: mypalette
     palette-offset: 25
     style: rlet
     transparent-color-index: 0
-    append: _flipped
+    prefix: flipped_
+    flip-y: true
+    tilesets:
+      tile-width: 16
+      tile-height: 27
+      images:
+        - oiram.png
+    images:
+      - thwomp.png
+
+  - name: flipped_sprites_suffix
+    palette: mypalette
+    palette-offset: 25
+    style: rlet
+    transparent-color-index: 0
+    suffix: _flipped
     flip-y: true
     tilesets:
       tile-width: 16
@@ -44,4 +59,5 @@ outputs:
       - mypalette
     converts:
       - sprites
-      - flipped_sprites
+      - flipped_sprites_suffix
+      - flipped_sprites_prefix

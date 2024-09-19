@@ -1148,10 +1148,15 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
                 return -1;
             }
         }
-        else if (parse_str_cmp("append", key))
+        else if (parse_str_cmp("prefix", key))
         {
-            convert->append_string = strings_dup(value);
-            LOG_DEBUG("append string: \'%s\'\n", convert->append_string);
+            convert->prefix_string = strings_dup(value);
+            LOG_DEBUG("prefix string: \'%s\'\n", convert->prefix_string);
+        }
+        else if (parse_str_cmp("suffix", key))
+        {
+            convert->suffix_string = strings_dup(value);
+            LOG_DEBUG("suffix string: \'%s\'\n", convert->suffix_string);
         }
         else
         {

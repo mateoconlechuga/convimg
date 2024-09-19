@@ -1,0 +1,46 @@
+palettes:
+  - name: mypalette
+    fixed-entries:
+      - color: {index:  0, r:   0, g: 206, b:   0, exact: false}
+      - color: {index:  1, r: 148, g:  93, b:  58, exact: false}
+      - color: {index:  2, r: 107, g:  61, b:  25, exact: true}
+      - color: {index:  3, r: 197, g:  77, b: 206, exact: true}
+      - color: {index:  4, r: 181, g:  65, b: 181, exact: true}
+      - color: {index:  6, r: 156, g:  77, b: 132, exact: true}
+
+converts:
+  - name: sprites
+    palette: mypalette
+    palette-offset: 25
+    style: rlet
+    transparent-color-index: 0
+    tilesets:
+      tile-width: 16
+      tile-height: 27
+      images:
+        - oiram.png
+    images:
+      - thwomp.png
+
+  - name: flipped_sprites
+    palette: mypalette
+    palette-offset: 25
+    style: rlet
+    transparent-color-index: 0
+    append: _flipped
+    tilesets:
+      tile-width: 16
+      tile-height: 27
+      images:
+        - oiram.png
+    images:
+      - thwomp.png
+
+outputs:
+  - type: c
+    include-file: gfx.h
+    palettes:
+      - mypalette
+    converts:
+      - sprites
+      - flipped_sprites

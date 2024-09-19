@@ -1148,6 +1148,11 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
                 return -1;
             }
         }
+        else if (parse_str_cmp("append", key))
+        {
+            convert->append_string = strings_dup(value);
+            LOG_DEBUG("append string: \'%s\'\n", convert->append_string);
+        }
         else
         {
             LOG_ERROR("Unknown convert option: \'%s\'\n", key);

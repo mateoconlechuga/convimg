@@ -524,6 +524,7 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         image->flip_y = convert->flip_y;
         image->transparent_index = convert->transparent_index;
         image->rlet = convert->style == CONVERT_STYLE_RLET;
+        image->name = strings_concat(image->name, convert->append_string, 0);
 
         image->gfx = false;
         if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)
@@ -584,6 +585,7 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         image->flip_y = convert->flip_y;
         image->transparent_index = convert->transparent_index;
         image->rlet = convert->style == CONVERT_STYLE_RLET;
+        image->name = strings_concat(image->name, convert->append_string, 0);
 
         image->gfx = false;
         if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)

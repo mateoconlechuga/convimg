@@ -43,6 +43,44 @@ jobs:
         name: ${{matrix.os-name}}-convimg
         path: bin/convimg${{matrix.exe}}
 
+  nightly-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Download Linux
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-convimg
+          path: ${{github.workspace}}/linux/
+      - name: Download CEdev Windows
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-convimg
+          path: ${{github.workspace}}/windows/
+      - name: Download CEdev macOS
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-convimg
+          path: ${{github.workspace}}/macos/
+
+      - name: Create Zips
+        run: |
+          cd ${{github.workspace}}/linux && zip -r9 linux-convimg.zip *
+          cd ${{github.workspace}}/windows && zip -r9 windows-convimg.zip *
+          cd ${{github.workspace}}/macos && zip -r9 macos-convimg.zip *
+
+      - name: Update nightly release
+        uses: pyTooling/Actions/releaser@main
+        with:
+          tag: nightly
+          rm: true
+          token: ${{secrets.GITHUB_TOKEN}}
+          files: |
+            linux/linux-convimg.zip
+            windows/windows-convimg.zip
+            macos/macos-convimg.zip
+
   coverity-scan:
     runs-on: ubuntu-latest
     if: "contains(github.event.head_commit.message, 'coverity')"

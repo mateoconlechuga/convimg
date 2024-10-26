@@ -245,6 +245,7 @@ void convert_free(struct convert *convert)
     {
         tileset_free_tiles(&convert->tilesets[i]);
     }
+    free(convert->tilesets);
     convert->nr_tilesets = 0;
 
     free(convert->images);
@@ -255,6 +256,12 @@ void convert_free(struct convert *convert)
 
     free(convert->palette_name);
     convert->palette_name = NULL;
+
+    free(convert->prefix_string);
+    convert->prefix_string = NULL;
+
+    free(convert->suffix_string);
+    convert->suffix_string = NULL;
 }
 
 static int convert_find_palette(struct convert *convert, struct palette **palettes, uint32_t nr_palettes)
@@ -395,20 +402,14 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
     y = 0;
     x = 0;
 
-    for (uint32_t i = 0; i < nr_tiles; ++i)
+    for (uint32_t i = 0; i < tileset->nr_tiles; ++i)
     {
         uint32_t tile_dim = tileset->tile_width * tileset->tile_height;
         uint32_t tile_data_size = tile_dim * sizeof(uint32_t);
         uint32_t tile_stride = tileset->tile_width * sizeof(uint32_t);
         uint32_t image_stride = tileset->image.width * sizeof(uint32_t);
-        void *tile_data;
+        void *tile_data = tileset->tiles[i].data;
         uint8_t *dst;
-
-        tile_data = memory_alloc(tile_data_size);
-        if (tile_data == NULL)
-        {
-            return -1;
-        }
 
         struct image tile =
         {
@@ -527,13 +528,17 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         image->transparent_index = convert->transparent_index;
         image->rlet = convert->style == CONVERT_STYLE_RLET;
 
-        if (convert->prefix_string != NULL)
+        if (convert->prefix_string)
         {
-            image->name = strings_concat(convert->prefix_string, image->name, 0);
+            char *tmp = strings_concat(convert->prefix_string, image->name, 0);
+            free(image->name);
+            image->name = tmp;
         }
-        if (convert->suffix_string != NULL)
+        if (convert->suffix_string)
         {
-            image->name = strings_concat(image->name, convert->suffix_string, 0);
+            char *tmp = strings_concat(image->name, convert->suffix_string, 0);
+            free(image->name);
+            image->name = tmp;
         }
 
         image->gfx = false;
@@ -596,13 +601,17 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         image->transparent_index = convert->transparent_index;
         image->rlet = convert->style == CONVERT_STYLE_RLET;
 
-        if (convert->prefix_string != NULL)
+        if (convert->prefix_string)
         {
-            image->name = strings_concat(convert->prefix_string, image->name, 0);
+            char *tmp = strings_concat(convert->prefix_string, image->name, 0);
+            free(image->name);
+            image->name = tmp;
         }
-        if (convert->suffix_string != NULL)
+        if (convert->suffix_string)
         {
-            image->name = strings_concat(image->name, convert->suffix_string, 0);
+            char *tmp = strings_concat(image->name, convert->suffix_string, 0);
+            free(image->name);
+            image->name = tmp;
         }
 
         image->gfx = false;

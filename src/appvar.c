@@ -58,7 +58,6 @@ int appvar_write(struct appvar *a, const char *path)
     static uint8_t output[APPVAR_MAX_FILE_SIZE];
     uint32_t checksum;
     FILE *fdv = NULL;
-    size_t name_size;
     size_t file_size;
     size_t data_size;
     size_t varb_size;
@@ -76,39 +75,16 @@ int appvar_write(struct appvar *a, const char *path)
 
     memset(output, 0, sizeof output);
 
-    if (a->compress != COMPRESS_NONE)
-    {
-        size_t size = a->size;
-
-        LOG_INFO("    - Size before compression: %u bytes\n", (unsigned int)a->size);
-
-        if (compress_array(a->data, &size, a->compress))
-        {
-            LOG_ERROR("Failed to compress data for AppVar \'%s\'.\n", a->name);
-            goto error;
-        }
-
-        a->size = size;
-
-        LOG_INFO("    - Size after compression: %u bytes\n", (unsigned int)a->size);
-    }
-
-    if (a->size > APPVAR_MAX_DATA_SIZE)
-    {
-        LOG_ERROR("Too much data for AppVar \'%s\'.\n", a->name);
-        goto error;
-    }
-
     file_size = a->size + APPVAR_DATA_POS + APPVAR_CHECKSUM_LEN;
     data_size = a->size + APPVAR_VAR_HEADER_LEN + APPVAR_VARB_SIZE_LEN;
     var_size = a->size + APPVAR_VARB_SIZE_LEN;
     varb_size = a->size;
 
-    name_size = strlen(a->name) > 8 ? 8 : strlen(a->name);
-
     memcpy(output + APPVAR_FILE_HEADER_POS, file_header, sizeof file_header);
-    memcpy(output + APPVAR_NAME_POS, a->name, name_size);
+    memcpy(output + APPVAR_COMMENT_POS, a->comment, APPVAR_MAX_COMMENT_SIZE);
+    memcpy(output + APPVAR_NAME_POS, a->name, APPVAR_MAX_NAME_SIZE);
     memcpy(output + APPVAR_DATA_POS, a->data, varb_size);
+
 
     output[APPVAR_VAR_HEADER_POS] = APPVAR_MAGIC;
     output[APPVAR_TYPE_POS] = APPVAR_TYPE_FLAG;

@@ -370,6 +370,8 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : \'false\' leaves it unarchived.\n");
     LOG_PRINT("                                  : Default is \'false\'.\n");
     LOG_PRINT("\n");
+    LOG_PRINT("       comment: <string>          : AppVar 8xv comment section string\n");
+    LOG_PRINT("\n");
     LOG_PRINT("--------------------------------------------------------------------------------\n");
     LOG_PRINT("\n");
     LOG_PRINT("Credits:\n");

@@ -91,7 +91,6 @@ struct output *output_alloc(void)
     output->order = OUTPUT_PALETTES_FIRST;
     output->format = OUTPUT_FORMAT_INVALID;
     output->constant = "";
-    output->appvar.name = NULL;
     output->appvar.archived = true;
     output->appvar.init = true;
     output->appvar.source = APPVAR_SOURCE_NONE;
@@ -102,6 +101,9 @@ struct output *output_alloc(void)
     output->appvar.header_size = 0;
     output->appvar.entry_size = 3;
     output->appvar.data = NULL;
+
+    memset(output->appvar.comment, 0, APPVAR_MAX_COMMENT_SIZE + 1);
+    memset(output->appvar.name, 0, APPVAR_MAX_NAME_SIZE + 1);
 
     output->directory = strings_dup("");
     if (output->directory == NULL)
@@ -191,9 +193,6 @@ void output_free(struct output *output)
 
     free(output->palette_names);
     output->palette_names = NULL;
-
-    free(output->appvar.name);
-    output->appvar.name = NULL;
 
     free(output->appvar.header);
     output->appvar.header = NULL;

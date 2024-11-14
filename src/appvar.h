@@ -43,6 +43,8 @@ extern "C" {
 #define APPVAR_MAX_FILE_SIZE (64 * 1024 + 300)
 #define APPVAR_MAX_DATA_SIZE (65505)
 #define APPVAR_MAX_BEFORE_COMPRESSION_SIZE (65505*4)
+#define APPVAR_MAX_COMMENT_SIZE 42
+#define APPVAR_MAX_NAME_SIZE 8
 
 #define APPVAR_TYPE_FLAG 21
 #define APPVAR_ARCHIVE_FLAG 128
@@ -53,6 +55,7 @@ extern "C" {
 #define APPVAR_FILE_HEADER_LEN 55
 
 #define APPVAR_FILE_HEADER_POS 0x00
+#define APPVAR_COMMENT_POS 0x0B
 #define APPVAR_DATA_SIZE_POS 0x35
 #define APPVAR_VAR_HEADER_POS 0x37
 #define APPVAR_VAR_SIZE0_POS 0x39
@@ -75,18 +78,20 @@ typedef enum
 
 struct appvar
 {
-    char *name;
+    char name[APPVAR_MAX_NAME_SIZE + 1];
     char *header;
     uint8_t *data;
     bool archived;
     bool init;
     bool lut;
     uint32_t size;
+    uint32_t uncompressed_size;
     uint32_t entry_size;
     uint32_t nr_entries;
     uint32_t total_entries;
     uint32_t header_size;
     uint32_t data_offset;
+    char comment[APPVAR_MAX_COMMENT_SIZE + 1];
     appvar_source_t source;
     compress_mode_t compress;
 };

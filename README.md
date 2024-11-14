@@ -337,6 +337,8 @@ It primarily is used for the TI-84+CE and related calculator series, however can
                                       : 'false' leaves it unarchived.
                                       : Default is 'false'.
 
+           comment: <string>          : AppVar 8xv comment section string
+
     --------------------------------------------------------------------------------
 
     Credits:

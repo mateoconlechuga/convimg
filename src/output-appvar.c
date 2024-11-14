@@ -527,6 +527,17 @@ void output_appvar_c_include_file(struct output *output, FILE *fdh)
     fprintf(fdh, "#endif\n");
     fprintf(fdh, "\n");
 
+    fprintf(fdh, "#define %s_appvar_size %u\n",
+        appvar->name,
+        (unsigned int)appvar->size);
+
+    if (appvar->compress != COMPRESS_NONE)
+    {
+        fprintf(fdh, "#define %s_appvar_uncompressed_size %u\n",
+            appvar->name,
+            (unsigned int)appvar->uncompressed_size);
+    }
+
     if (output->order == OUTPUT_PALETTES_FIRST)
     {
         output_appvar_c_include_file_palettes(output, fdh, &index);
@@ -904,6 +915,17 @@ void output_appvar_asm_include_file(struct output *output, FILE *fdh)
     uint32_t nr_entries = 0;
     bool order = output->order;
 
+    fprintf(fdh, "%s_appvar_size := %u\n",
+        appvar->name,
+        (unsigned int)appvar->size);
+
+    if (appvar->compress != COMPRESS_NONE)
+    {
+        fprintf(fdh, "%s_appvar_uncompressed_size := %u\n",
+            appvar->name,
+            (unsigned int)appvar->uncompressed_size);
+    }
+
     for (uint32_t o = 0; o < 2; ++o)
     {
         if (order == OUTPUT_PALETTES_FIRST)
@@ -1068,16 +1090,37 @@ int output_appvar_include(struct output *output)
         goto error;
     }
 
+    appvar->uncompressed_size = appvar->size;
+
+    if (appvar->compress != COMPRESS_NONE)
+    {
+        size_t size = appvar->size;
+        void *original_data = appvar->data;
+
+        LOG_INFO(" - Compressing AppVar \'%s\'\n", appvar->name);
+
+        appvar->data = compress_array(original_data, &size, appvar->compress);
+        free(original_data);
+
+        if (appvar->data == NULL)
+        {
+            LOG_ERROR("Failed to compress AppVar.\n");
+            goto error;
+        }
+
+        appvar->size = size;
+    }
+
+    if (appvar->size > APPVAR_MAX_DATA_SIZE)
+    {
+        LOG_ERROR("Too much data for AppVar \'%s\'.\n", appvar->name);
+        goto error;
+    }
+
     switch (appvar->source)
     {
         case APPVAR_SOURCE_C:
         {
-            if (output->include_file == NULL)
-            {
-                LOG_ERROR("Missing \"include-file\" parameter for AppVar.\n");
-                goto error;
-            }
-
             LOG_INFO(" - Writing \'%s\'\n", output->include_file);
 
             fdh = clean_fopen(output->include_file, "wt");
@@ -1108,12 +1151,6 @@ int output_appvar_include(struct output *output)
 
         case APPVAR_SOURCE_ASM:
         {
-            if (output->include_file == NULL)
-            {
-                LOG_ERROR("Missing \"include-file\" parameter for AppVar.\n");
-                goto error;
-            }
-
             LOG_INFO(" - Writing \'%s\'\n", output->include_file);
 
             fdh = clean_fopen(output->include_file, "wt");

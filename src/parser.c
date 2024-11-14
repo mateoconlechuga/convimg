@@ -1319,18 +1319,9 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
                 parser_show_mark_error(keyn->start_mark);
                 return -1;
             }
-
             if (parse_str_cmp("name", key))
             {
-                if (output->appvar.name != NULL)
-                {
-                    free(output->appvar.name);
-                }
-                output->appvar.name = strings_dup(value);
-                if (output->appvar.name == NULL)
-                {
-                    return -1;
-                }
+                strncpy(output->appvar.name, value, APPVAR_MAX_NAME_SIZE);
             }
             else if (parse_str_cmp("archived", key))
             {
@@ -1396,6 +1387,10 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
                     parser_show_mark_error(keyn->start_mark);
                     return -1;
                 }
+            }
+            else if (parse_str_cmp("comment", key))
+            {
+                strncpy(output->appvar.comment, value, APPVAR_MAX_COMMENT_SIZE);
             }
             else if (parse_str_cmp("header-string", key))
             {

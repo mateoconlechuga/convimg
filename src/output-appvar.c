@@ -1072,12 +1072,6 @@ int output_appvar_include(struct output *output)
     FILE *fdh = NULL;
     FILE *fds = NULL;
 
-    if (appvar->name == NULL)
-    {
-        LOG_ERROR("Missing \"name\" parameter for AppVar.\n");
-        goto error;
-    }
-
     var_name = strings_concat(output->directory, appvar->name, ".8xv", 0);
     if (var_name == NULL)
     {

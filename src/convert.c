@@ -417,6 +417,9 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
             .data_size = tile_data_size,
             .width = tileset->tile_width,
             .height = tileset->tile_height,
+            .transparent_index = convert->transparent_index,
+            .quantize_speed = convert->quantize_speed,
+            .dither = convert->dither,
             .name = NULL,
             .path = NULL,
         };

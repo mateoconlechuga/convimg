@@ -33,6 +33,7 @@
 #include "image.h"
 #include "log.h"
 #include "clean.h"
+#include "memory.h"
 
 #include <errno.h>
 #include <string.h>

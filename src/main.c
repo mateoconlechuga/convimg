@@ -34,6 +34,7 @@
 #include "icon.h"
 #include "parser.h"
 #include "log.h"
+#include "thread.h"
 
 static int process_yaml(struct yaml *yaml)
 {
@@ -48,6 +49,11 @@ static int process_yaml(struct yaml *yaml)
         }
     }
 
+    if (!thread_pool_wait())
+    {
+        return -1;
+    }
+
     for (uint32_t i = 0; i < yaml->nr_converts; ++i)
     {
         if (convert_generate(
@@ -57,6 +63,11 @@ static int process_yaml(struct yaml *yaml)
         {
             return -1;
         }
+    }
+
+    if (!thread_pool_wait())
+    {
+        return -1;
     }
 
     for (uint32_t i = 0; i < yaml->nr_outputs; ++i)
@@ -70,6 +81,11 @@ static int process_yaml(struct yaml *yaml)
         {
             return -1;
         }
+    }
+
+    if (!thread_pool_wait())
+    {
+        return -1;
     }
 
     return 0;
@@ -112,6 +128,7 @@ int main(int argc, char *argv[])
 
         if (!ret)
         {
+            thread_pool_init(options.threads);
             ret = process_yaml(&yaml);
             if (!ret)
             {

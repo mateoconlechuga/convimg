@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2025 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,36 +28,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#ifndef THREAD_H
+#define THREAD_H
 
-#include "parser.h"
-#include "icon.h"
+#include <stdint.h>
+#include <stdio.h>
 
-#include <stdbool.h>
+#define THREAD_MAX 64
+#define THREAD_REAL_MAX 60
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum
-{
-    OPTIONS_SUCCESS,
-    OPTIONS_FAILED,
-    OPTIONS_IGNORE
-};
+bool thread_start(bool (*func)(void*), void *args);
 
-struct options
-{
-    const char *prgm;
-    const char *yaml_path;
-    unsigned int threads;
-    bool convert_icon;
-    bool clean;
-    struct icon icon;
-};
+bool thread_pool_wait(void);
 
-int options_get(int argc, char *argv[], struct options *options);
+void thread_pool_init(unsigned int max_count);
 
 #ifdef __cplusplus
 }

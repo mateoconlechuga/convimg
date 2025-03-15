@@ -35,9 +35,17 @@
 #include "tileset.h"
 #include "log.h"
 #include "image.h"
+#include "thread.h"
 
 #include <string.h>
 #include <glob.h>
+#include <alloca.h>
+
+struct conv
+{
+    struct convert *convert;
+    struct image *image;
+};
 
 struct convert *convert_alloc(void)
 {
@@ -288,13 +296,13 @@ error:
     return -1;
 }
 
-static int convert_image(struct convert *convert, struct image *image)
+static bool convert_image(struct convert *convert, struct image *image)
 {
     if (convert_is_palette_style(convert))
     {
         if (image_quantize(image, convert->palette))
         {
-            return -1;
+            return false;
         }
 
         if (convert->palette_offset != 0)
@@ -305,12 +313,12 @@ static int convert_image(struct convert *convert, struct image *image)
                 LOG_ERROR("Palette offset places indices out of range for "
                         "convert \'%s\'\n",
                     convert->name);
-                return -1;
+                return false;
             }
 
             if (image_add_offset(image, convert->palette_offset))
             {
-                return -1;
+                return false;
             }
         }
 
@@ -318,7 +326,7 @@ static int convert_image(struct convert *convert, struct image *image)
         {
             if (image_rlet(image, convert->transparent_index))
             {
-                return -1;
+                return false;
             }
         }
 
@@ -326,7 +334,7 @@ static int convert_image(struct convert *convert, struct image *image)
         {
             if (image_remove_omits(image, convert->omit_indices, convert->nr_omit_indices))
             {
-                return -1;
+                return false;
             }
         }
 
@@ -334,7 +342,7 @@ static int convert_image(struct convert *convert, struct image *image)
         {
             if (image_set_bpp(image, convert->bpp, convert->palette->nr_entries))
             {
-                return -1;
+                return false;
             }
         }
     }
@@ -342,7 +350,7 @@ static int convert_image(struct convert *convert, struct image *image)
     {
         if (image_direct_convert(image, convert->color_fmt))
         {
-            return -1;
+            return false;
         }
     }
 
@@ -350,7 +358,7 @@ static int convert_image(struct convert *convert, struct image *image)
     {
         if (image_add_width_and_height(image))
         {
-            return -1;
+            return false;
         }
     }
 
@@ -360,16 +368,85 @@ static int convert_image(struct convert *convert, struct image *image)
     {
         if (image_compress(image, convert->compress))
         {
-            return -1;
+            return false;
         }
 
         image->compressed = true;
     }
 
-    return 0;
+    return true;
 }
 
-static int convert_tileset(struct convert *convert, struct tileset *tileset)
+static bool convert_image_thread(void *arg)
+{
+    struct conv *conv = arg;
+    struct convert *convert = conv->convert;
+    struct image *image = conv->image;
+
+    /* assign image constants from convert */
+    image->quantize_speed = convert->quantize_speed;
+    image->dither = convert->dither;
+    image->rotate = convert->rotate;
+    image->flip_x = convert->flip_x;
+    image->flip_y = convert->flip_y;
+    image->transparent_index = convert->transparent_index;
+    image->rlet = convert->style == CONVERT_STYLE_RLET;
+
+    if (convert->prefix_string)
+    {
+        char *tmp = strings_concat(convert->prefix_string, image->name, 0);
+        free(image->name);
+        image->name = tmp;
+    }
+    if (convert->suffix_string)
+    {
+        char *tmp = strings_concat(image->name, convert->suffix_string, 0);
+        free(image->name);
+        image->name = tmp;
+    }
+
+    image->gfx = false;
+    if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)
+    {
+        image->gfx = true;
+    }
+
+    LOG_INFO(" - Reading image \'%s\'\n", image->path);
+
+    if (image_load(image))
+    {
+        return -1;
+    }
+
+    if (convert->add_width_height)
+    {
+        if (image->width > 255)
+        {
+            LOG_ERROR("Image \'%s\' width is %u. "
+                "Maximum width is 255 when using the option \'width-and-height\'.\n",
+                image->name,
+                image->width);
+            return false;
+        }
+
+        if (image->height > 255)
+        {
+            LOG_ERROR("Image \'%s\' height is %u. "
+                "Maximum height is 255 when using the option \'width-and-height\'.\n",
+                image->name,
+                image->height);
+            return false;
+        }
+    }
+
+    bool ret = convert_image(convert, image);
+
+    free(arg);
+
+    return ret;
+}
+
+static bool convert_tileset(struct convert *convert, struct tileset *tileset)
 {
     uint32_t nr_tiles;
     uint32_t x;
@@ -378,13 +455,13 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
     if (!tileset->tile_width || tileset->image.width % tileset->tile_width)
     {
         LOG_ERROR("Image dimensions do not support tile width.\n");
-        return -1;
+        return false;
     }
 
     if (!tileset->tile_height || tileset->image.height % tileset->tile_height)
     {
         LOG_ERROR("Image dimensions do not support tile height.\n");
-        return -1;
+        return false;
     }
 
     nr_tiles =
@@ -393,7 +470,7 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
 
     if (tileset_alloc_tiles(tileset, nr_tiles))
     {
-        return -1;
+        return false;
     }
 
     tileset->rlet = convert->style == CONVERT_STYLE_RLET;
@@ -485,18 +562,18 @@ static int convert_tileset(struct convert *convert, struct tileset *tileset)
             y += tileset->tile_height * image_stride;
         }
 
-        if (convert_image(convert, &tile))
+        if (!convert_image(convert, &tile))
         {
 error:
             free(tile.data);
-            return -1;
+            return false;
         }
 
         tileset->tiles[i].data_size = tile.data_size;
         tileset->tiles[i].data = tile.data;
     }
 
-    return 0;
+    return true;
 }
 
 int convert_generate(struct convert *convert, struct palette **palettes, uint32_t nr_palettes)
@@ -520,63 +597,16 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
 
     for (uint32_t i = 0; i < convert->nr_images; ++i)
     {
-        struct image *image = &convert->images[i];
-
-        /* assign image constants from convert */
-        image->quantize_speed = convert->quantize_speed;
-        image->dither = convert->dither;
-        image->rotate = convert->rotate;
-        image->flip_x = convert->flip_x;
-        image->flip_y = convert->flip_y;
-        image->transparent_index = convert->transparent_index;
-        image->rlet = convert->style == CONVERT_STYLE_RLET;
-
-        if (convert->prefix_string)
-        {
-            char *tmp = strings_concat(convert->prefix_string, image->name, 0);
-            free(image->name);
-            image->name = tmp;
-        }
-        if (convert->suffix_string)
-        {
-            char *tmp = strings_concat(image->name, convert->suffix_string, 0);
-            free(image->name);
-            image->name = tmp;
-        }
-
-        image->gfx = false;
-        if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)
-        {
-            image->gfx = true;
-        }
-
-        LOG_INFO(" - Reading image \'%s\'\n", image->path);
-
-        if (image_load(image))
+        struct conv *conv = malloc(sizeof(struct conv));
+        if (!conv)
         {
             return -1;
         }
 
-        if (convert->add_width_height)
-        {
-            if (image->width > 255)
-            {
-                LOG_ERROR("Image width is %u. "
-                    "Maximum width is 255 when using the option \'width-and-height\'.\n",
-                    image->width);
-                return -1;
-            }
+        conv->convert = convert;
+        conv->image = &convert->images[i];
 
-            if (image->height > 255)
-            {
-                LOG_ERROR("Image height is %u. "
-                    "Maximum height is 255 when using the option \'width-and-height\'.\n",
-                    image->height);
-                return -1;
-            }
-        }
-
-        if (convert_image(convert, image))
+        if (!thread_start(convert_image_thread, conv))
         {
             return -1;
         }
@@ -630,7 +660,7 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
             return -1;
         }
 
-        if (convert_tileset(convert, tileset))
+        if (!convert_tileset(convert, tileset))
         {
             return -1;
         }

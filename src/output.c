@@ -33,6 +33,7 @@
 #include "memory.h"
 #include "clean.h"
 #include "log.h"
+#include "thread.h"
 
 #include <errno.h>
 
@@ -387,8 +388,10 @@ static int output_palette(struct output *output, const struct palette *palette)
     }
 }
 
-static int output_include(struct output *output)
+static bool output_include(void *arg)
 {
+    struct output *output = arg;
+
     if (output->nr_palettes == 0 && output->nr_converts == 0)
     {
         return 0;
@@ -513,7 +516,7 @@ int output_generate(struct output *output,
         }
     }
 
-    if (output_include(output))
+    if (!thread_start(output_include, output))
     {
         return -1;
     }

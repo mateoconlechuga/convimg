@@ -30,9 +30,9 @@ PRGM_NAME = convimg
 VERSION_STRING = $(shell git describe --abbrev=8 --dirty --always --tags)
 
 CC := gcc
-CFLAGS = -Wall -Wextra -Wno-unused-but-set-variable -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3 -DPRGM_NAME="\"$(PRGM_NAME)\"" -DVERSION_STRING="\"$(VERSION_STRING)\"" -flto
-CFLAGS_LIQ = -Wall -std=c99 -O3 -DNDEBUG -fno-math-errno -funroll-loops -fomit-frame-pointer -Wno-unknown-pragmas -Wno-attributes -flto
-CFLAGS_LIBYAML = -Wall -std=gnu99 -O3 -DYAML_VERSION_MAJOR=1 -DYAML_VERSION_MINOR=0 -DYAML_VERSION_PATCH=0 -DYAML_VERSION_STRING="\"1.0.0\"" -flto
+CFLAGS = -std=gnu11 -Wall -Wextra -Wno-unused-but-set-variable -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3 -DPRGM_NAME="\"$(PRGM_NAME)\"" -DVERSION_STRING="\"$(VERSION_STRING)\"" -flto
+CFLAGS_LIQ = -Wall -std=gnu11 -O3 -DNDEBUG -fno-math-errno -funroll-loops -fomit-frame-pointer -Wno-unknown-pragmas -Wno-attributes -flto
+CFLAGS_LIBYAML = -Wall -std=gnu11 -O3 -DYAML_VERSION_MAJOR=1 -DYAML_VERSION_MINOR=0 -DYAML_VERSION_PATCH=0 -DYAML_VERSION_STRING="\"1.0.0\"" -flto
 LDFLAGS = -flto
 
 BINDIR := ./bin
@@ -61,6 +61,7 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(SRCDIR)/strings.c \
           $(SRCDIR)/tileset.c \
           $(SRCDIR)/parser.c \
+          $(SRCDIR)/thread.c \
           $(DEPDIR)/libimagequant/blur.c \
           $(DEPDIR)/libimagequant/kmeans.c \
           $(DEPDIR)/libimagequant/libimagequant.c \

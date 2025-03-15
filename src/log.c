@@ -32,6 +32,7 @@
 
 #include <stdarg.h>
 #include <unistd.h>
+#include <threads.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -60,6 +61,7 @@ static const char *log_strings[] =
 static struct
 {
     log_level_t level;
+    mtx_t mutex;
     bool colors;
 } log;
 
@@ -67,6 +69,8 @@ void log_init(void)
 {
     log.level = LOG_BUILD_LEVEL;
     log.colors = isatty(1);
+
+    mtx_init(&log.mutex, mtx_plain);
 
 #ifdef _WIN32
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -98,6 +102,8 @@ void log_msg(log_level_t level, const char *str, ...)
     {
         va_list arglist;
 
+        mtx_lock(&log.mutex);
+
         if (log.colors && color_strings[level])
         {
             fputs(color_strings[level], stdout);
@@ -115,6 +121,8 @@ void log_msg(log_level_t level, const char *str, ...)
         }
 
         fflush(stdout);
+
+        mtx_unlock(&log.mutex);
     }
 }
 
@@ -124,10 +132,14 @@ void log_printf(const char *str, ...)
     {
         va_list arglist;
 
+        mtx_lock(&log.mutex);
+
         va_start(arglist, str);
         vfprintf(stdout, str, arglist);
         va_end(arglist);
 
         fflush(stdout);
+
+        mtx_unlock(&log.mutex);
     }
 }

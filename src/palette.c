@@ -34,6 +34,7 @@
 #include "strings.h"
 #include "image.h"
 #include "log.h"
+#include "thread.h"
 
 #include "deps/libimagequant/libimagequant.h"
 
@@ -316,6 +317,38 @@ static bool palette_is_exact_fixed_entry(const struct palette *palette, const st
     }
 
     return false;
+}
+
+int palette_convert_colors(struct palette *palette)
+{
+    for (uint32_t i = 0; i < palette->nr_entries; ++i)
+    {
+        struct palette_entry *entry = &palette->entries[i];
+
+        /* convert the entries into the target format */
+        if (entry->valid)
+        {
+            switch (palette->color_fmt)
+            {
+                case COLOR_1555_GRGB:
+                    entry->target = color_to_1555_grgb(&entry->color);
+                    break;
+
+                case COLOR_565_BGR:
+                    entry->target = color_to_565_bgr(&entry->color);
+                    break;
+
+                case COLOR_565_RGB:
+                    entry->target = color_to_565_rgb(&entry->color);
+                    break;
+
+                default:
+                    return -1;
+            }
+        }
+    }
+
+    return 0;
 }
 
 int palette_generate_with_images(struct palette *palette)
@@ -639,6 +672,13 @@ int palette_generate_with_images(struct palette *palette)
     return 0;
 }
 
+bool palette_generate_thread(void *palette)
+{
+    return
+        !palette_generate_with_images(palette) &&
+        !palette_convert_colors(palette);
+}
+
 int palette_generate(struct palette *palette, struct convert **converts, uint32_t nr_converts)
 {
     if (!strcmp(palette->name, "xlibc"))
@@ -676,10 +716,11 @@ int palette_generate(struct palette *palette, struct convert **converts, uint32_
 
     if (palette->nr_images > 0)
     {
-        if (palette_generate_with_images(palette))
+        if (!thread_start(palette_generate_thread, palette))
         {
             return -1;
         }
+        return 0;
     }
     else
     {
@@ -716,34 +757,7 @@ int palette_generate(struct palette *palette, struct convert **converts, uint32_
                 PALETTE_MAX_ENTRIES - palette->nr_entries + palette->nr_fixed_entries);
     }
 
-    for (uint32_t i = 0; i < palette->nr_entries; ++i)
-    {
-        struct palette_entry *entry = &palette->entries[i];
-
-        /* convert the entries into the target format */
-        if (entry->valid)
-        {
-            switch (palette->color_fmt)
-            {
-                case COLOR_1555_GRGB:
-                    entry->target = color_to_1555_grgb(&entry->color);
-                    break;
-
-                case COLOR_565_BGR:
-                    entry->target = color_to_565_bgr(&entry->color);
-                    break;
-
-                case COLOR_565_RGB:
-                    entry->target = color_to_565_rgb(&entry->color);
-                    break;
-
-                default:
-                    return -1;
-            }
-        }
-    }
-
-    return 0;
+    return palette_convert_colors(palette);
 }
 
 static uint8_t palette_xlibc[] =

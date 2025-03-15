@@ -31,15 +31,17 @@
 #include "clean.h"
 #include "strings.h"
 #include "log.h"
+#include "memory.h"
 
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
+#include <threads.h>
 static struct
 {
     FILE *fd;
+    mtx_t mutex;
 } clean;
 
 static void clean_run_file(FILE *fd, bool info)
@@ -68,19 +70,26 @@ static int clean_add_path(const char *path)
 {
     int ret;
 
+    mtx_lock(&clean.mutex);
+
     ret = fputs(path, clean.fd);
     if (ret < 0)
     {
-        return -1;
+        goto fail;
     }
 
     ret = fputc('\n', clean.fd);
     if (ret != '\n')
     {
-        return -1;
+        goto fail;
     }
 
+    mtx_unlock(&clean.mutex);
     return 0;
+
+fail:
+    mtx_unlock(&clean.mutex);
+    return -1;
 }
 
 FILE *clean_fopen(const char *path, const char *mode)
@@ -94,6 +103,8 @@ int clean_begin(const char *yaml_name, uint8_t flags)
 {
     char *name;
     FILE *fd;
+
+    mtx_init(&clean.mutex, mtx_plain);
 
     name = strings_concat(yaml_name, ".lst", 0);
     if (name == NULL)

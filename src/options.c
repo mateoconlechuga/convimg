@@ -31,6 +31,7 @@
 #include "options.h"
 #include "clean.h"
 #include "log.h"
+#include "thread.h"
 
 #include <getopt.h>
 #include <string.h>
@@ -53,6 +54,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("    -h, --help               Show this screen.\n");
     LOG_PRINT("    -v, --version            Show program version.\n");
     LOG_PRINT("    -c, --clean              Deletes files listed in \'convimg.out\' and exits.\n");
+    LOG_PRINT("    -t, --threads <threads>  Set number of threads when converting. Default 4.\n");
     LOG_PRINT("    -l, --log-level <level>  Set program logging level:\n");
     LOG_PRINT("                             0=none, 1=error, 2=warning, 3=normal\n");
     LOG_PRINT("Optional icon options:\n");
@@ -475,11 +477,24 @@ static void options_set_default(struct options *options)
     options->convert_icon = false;
     options->clean = false;
     options->yaml_path = yaml_path;
+    options->threads = 4;
 }
 
 static int options_verify(struct options *options)
 {
     FILE *fd;
+
+    if (!options->threads)
+    {
+        LOG_ERROR("Invalid threads setting.\n");
+        return OPTIONS_FAILED;
+    }
+
+    if (options->threads > THREAD_REAL_MAX)
+    {
+        options->threads = THREAD_REAL_MAX;
+        LOG_WARNING("Limiting threads to %u\n", options->threads);
+    }
 
     if (options->convert_icon == true)
     {
@@ -535,9 +550,10 @@ int options_get(int argc, char *argv[], struct options *options)
             {"input",            required_argument, 0, 'i'},
             {"log-level",        required_argument, 0, 'l'},
             {"log-color",        required_argument, 0, 'x'},
+            {"threads",          required_argument, 0, 't'},
             {0, 0, 0, 0}
         };
-        int c = getopt_long(argc, argv, "cnhvi:l:x:", long_options, &optidx);
+        int c = getopt_long(argc, argv, "cnhvi:l:x:t:", long_options, &optidx);
 
         if (c == -1)
         {
@@ -616,6 +632,14 @@ int options_get(int argc, char *argv[], struct options *options)
                     break;
                 }
                 log_set_color(strtoul(optarg, NULL, 0) ? true : false);
+                break;
+
+            case 't':
+                if (optarg == NULL)
+                {
+                    break;
+                }
+                options->threads = strtoul(optarg, NULL, 0);
                 break;
 
             case 'h':

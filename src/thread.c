@@ -124,17 +124,24 @@ static int thread_func(void *t)
 
 bool thread_start(bool (*func)(void*), void *args)
 {
-    struct thread *thread = thread_pool_pop();
-
-    thread->func = func;
-    thread->args = args;
-
-    if (thrd_create(&thread->thrd, thread_func, thread) != thrd_success)
+    if (thread_pool.max_count == 1)
     {
-        LOG_ERROR("Could not start thread.");
-        thread_pool_push(thread->id);
-        thread_pool.error = true;
-        return false;
+        return func(args);
+    }
+    else
+    {
+        struct thread *thread = thread_pool_pop();
+
+        thread->func = func;
+        thread->args = args;
+
+        if (thrd_create(&thread->thrd, thread_func, thread) != thrd_success)
+        {
+            LOG_ERROR("Could not start thread.");
+            thread_pool_push(thread->id);
+            thread_pool.error = true;
+            return false;
+        }
     }
 
     return true;

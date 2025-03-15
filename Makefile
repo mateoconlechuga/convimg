@@ -1,4 +1,4 @@
-# Copyright 2017-2024 Matt "MateoConLechuga" Waltz
+# Copyright 2017-2025 Matt "MateoConLechuga" Waltz
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -73,7 +73,6 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(DEPDIR)/zx/zx7/compress.c \
           $(DEPDIR)/zx/zx7/optimize.c \
           $(DEPDIR)/zx/zx0/compress.c \
-          $(DEPDIR)/zx/zx0/optimize.c \
           $(DEPDIR)/libyaml/src/api.c \
           $(DEPDIR)/libyaml/src/dumper.c \
           $(DEPDIR)/libyaml/src/loader.c \

@@ -9,4 +9,7 @@
 	url = https://github.com/yaml/libyaml.git
 [submodule "src/deps/zx"]
 	path = src/deps/zx
-	url = https://github.com/mateoconlechuga/zx.git
+	url = git@github.com:mateoconlechuga/zx.git
+[submodule "src/deps/tinycthread"]
+	path = src/deps/tinycthread
+	url = git@github.com:tinycthread/tinycthread.git

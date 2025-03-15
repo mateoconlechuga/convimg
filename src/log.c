@@ -29,10 +29,10 @@
  */
 
 #include "log.h"
+#include "thread.h"
 
 #include <stdarg.h>
 #include <unistd.h>
-#include <threads.h>
 
 #ifdef _WIN32
 #include <windows.h>

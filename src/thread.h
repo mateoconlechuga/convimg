@@ -33,6 +33,10 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+
+#include "deps/tinycthread/source/tinycthread.h"
 
 #define THREAD_MAX 64
 #define THREAD_REAL_MAX 60

@@ -30,16 +30,17 @@ PRGM_NAME = convimg
 VERSION_STRING = $(shell git describe --abbrev=8 --dirty --always --tags)
 
 CC := gcc
-CFLAGS = -std=gnu11 -Wall -Wextra -Wno-unused-but-set-variable -O3 -DNDEBUG -DLOG_BUILD_LEVEL=3 -DPRGM_NAME="\"$(PRGM_NAME)\"" -DVERSION_STRING="\"$(VERSION_STRING)\"" -flto
-CFLAGS_LIQ = -Wall -std=gnu11 -O3 -DNDEBUG -fno-math-errno -funroll-loops -fomit-frame-pointer -Wno-unknown-pragmas -Wno-attributes -flto
-CFLAGS_LIBYAML = -Wall -std=gnu11 -O3 -DYAML_VERSION_MAJOR=1 -DYAML_VERSION_MINOR=0 -DYAML_VERSION_PATCH=0 -DYAML_VERSION_STRING="\"1.0.0\"" -flto
+CFLAGS = -std=gnu11 -O3 -Wall -Wextra -Wno-unused-but-set-variable -DNDEBUG -DLOG_BUILD_LEVEL=3 -DPRGM_NAME="\"$(PRGM_NAME)\"" -DVERSION_STRING="\"$(VERSION_STRING)\"" -flto
+CFLAGS_LIQ = -std=gnu11 -O3 -Wall -DNDEBUG -fno-math-errno -funroll-loops -fomit-frame-pointer -Wno-unknown-pragmas -Wno-attributes -flto
+CFLAGS_LIBYAML = -std=gnu11 -O3 -Wall -DYAML_VERSION_MAJOR=1 -DYAML_VERSION_MINOR=0 -DYAML_VERSION_PATCH=0 -DYAML_VERSION_STRING="\"1.0.0\"" -flto
+CFLAGS_TINYCTHREAD = -std=gnu11 -O3 -Wall -Wextra -flto
 LDFLAGS = -flto
 
 BINDIR := ./bin
 OBJDIR := ./obj
 SRCDIR := ./src
 DEPDIR := ./src/deps
-INCLUDEDIRS = $(DEPDIR)/libyaml/include
+INCLUDEDIRS = $(DEPDIR)/libyaml/include $(DEPDIR)/tinycthread/source
 SOURCES = $(SRCDIR)/appvar.c \
           $(SRCDIR)/clean.c \
           $(SRCDIR)/color.c \
@@ -78,7 +79,8 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(DEPDIR)/libyaml/src/loader.c \
           $(DEPDIR)/libyaml/src/parser.c \
           $(DEPDIR)/libyaml/src/reader.c \
-          $(DEPDIR)/libyaml/src/scanner.c
+          $(DEPDIR)/libyaml/src/scanner.c \
+          $(DEPDIR)/tinycthread/source/tinycthread.c
 
 ifeq ($(OS),Windows_NT)
   TARGET ?= $(PRGM_NAME).exe
@@ -159,6 +161,10 @@ $(OBJDIR)/deps/libimagequant/%.o: $(SRCDIR)/deps/libimagequant/%.c
 $(OBJDIR)/deps/libyaml/%.o: $(SRCDIR)/deps/libyaml/%.c
 	$(Q)$(call MKDIR,$(call NATIVEPATH,$(@D)))
 	$(Q)$(CC) -c $(call NATIVEPATH,$<) $(CFLAGS_LIBYAML) $(addprefix -I, $(INCLUDEDIRS)) -o $(call NATIVEPATH,$@)
+
+$(OBJDIR)/deps/tinycthread/%.o: $(SRCDIR)/deps/tinycthread/%.c
+	$(Q)$(call MKDIR,$(call NATIVEPATH,$(@D)))
+	$(Q)$(CC) -c $(call NATIVEPATH,$<) $(CFLAGS_TINYCTHREAD) $(addprefix -I, $(INCLUDEDIRS)) -o $(call NATIVEPATH,$@)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(Q)$(call MKDIR,$(call NATIVEPATH,$(@D)))

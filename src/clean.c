@@ -32,12 +32,13 @@
 #include "strings.h"
 #include "log.h"
 #include "memory.h"
+#include "thread.h"
 
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <threads.h>
+
 static struct
 {
     FILE *fd;

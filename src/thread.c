@@ -34,12 +34,8 @@
 #include "memory.h"
 #include "thread.h"
 
-#include <threads.h>
-#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdatomic.h>
 
 struct thread
 {

@@ -394,28 +394,28 @@ static bool output_include(void *arg)
 
     if (output->nr_palettes == 0 && output->nr_converts == 0)
     {
-        return 0;
+        return true;
     }
 
     switch (output->format)
     {
         case OUTPUT_FORMAT_C:
-            return output_c_include(output);
+            return output_c_include(output) ? false : true;
 
         case OUTPUT_FORMAT_ASM:
-            return output_asm_include(output);
+            return output_asm_include(output) ? false : true;
 
         case OUTPUT_FORMAT_BIN:
-            return output_bin_include(output);
+            return output_bin_include(output) ? false : true;
 
         case OUTPUT_FORMAT_BASIC:
-            return output_basic_include(output);
+            return output_basic_include(output) ? false : true;
 
         case OUTPUT_FORMAT_APPVAR:
-            return output_appvar_include(output);
+            return output_appvar_include(output) ? false : true;
 
         default:
-            return -1;
+            return false;
     }
 }
 

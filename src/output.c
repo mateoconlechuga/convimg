@@ -284,7 +284,8 @@ static int output_find_palettes(struct output *output, struct palette **palettes
 {
     if (palettes == NULL || nr_palettes == 0)
     {
-        goto nopalette;
+        LOG_ERROR("No palettes defined for output.\n");
+        return -1;
     }
 
     output->palettes = memory_realloc_array(NULL, output->nr_palettes, sizeof(struct palette *));
@@ -304,7 +305,6 @@ static int output_find_palettes(struct output *output, struct palette **palettes
             }
         }
 
-nopalette:
         LOG_ERROR("No matching palette name \'%s\' found for output.\n",
             output->palette_names[i]);
         return -1;

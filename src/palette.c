@@ -608,11 +608,11 @@ int palette_generate_with_images(struct palette *palette)
         /* if an entry already occupies this location */
         if (palette->entries[fixed_entry->index].valid)
         {
-            uint32_t j;
+            uint32_t j = 0;
 
             if (nr_max_entries)
             {
-                for (j = 0; j < nr_max_entries; ++j)
+                for (; j < nr_max_entries; ++j)
                 {
                     if (!palette->entries[j].valid)
                     {

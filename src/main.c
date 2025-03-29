@@ -85,6 +85,7 @@ static int process_yaml(struct yaml *yaml)
 
     if (!thread_pool_wait())
     {
+        LOG_ERROR("An error occurred, try disabling threading with -t 1\n");
         return -1;
     }
 

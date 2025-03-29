@@ -29,12 +29,13 @@
 PRGM_NAME = convimg
 VERSION_STRING = $(shell git describe --abbrev=8 --dirty --always --tags)
 
+FLTO =
 CC := gcc
-CFLAGS = -std=gnu11 -O3 -Wall -Wextra -Wno-unused-but-set-variable -DNDEBUG -DLOG_BUILD_LEVEL=3 -DPRGM_NAME="\"$(PRGM_NAME)\"" -DVERSION_STRING="\"$(VERSION_STRING)\"" -flto
-CFLAGS_LIQ = -std=gnu11 -O3 -Wall -DNDEBUG -fno-math-errno -funroll-loops -fomit-frame-pointer -Wno-unknown-pragmas -Wno-attributes -flto
+CFLAGS = -std=gnu11 -O3 -Wall -Wextra -Wshadow -Wno-unused-but-set-variable -DNDEBUG -DLOG_BUILD_LEVEL=3 -DPRGM_NAME="\"$(PRGM_NAME)\"" -DVERSION_STRING="\"$(VERSION_STRING)\"" $(FLTO)
+CFLAGS_LIQ = -std=gnu11 -O3 -Wall -DNDEBUG -fno-math-errno -funroll-loops -fomit-frame-pointer -Wno-unknown-pragmas -Wno-attributes $(FLTO)
 CFLAGS_LIBYAML = -std=gnu11 -O3 -Wall -DYAML_VERSION_MAJOR=1 -DYAML_VERSION_MINOR=0 -DYAML_VERSION_PATCH=0 -DYAML_VERSION_STRING="\"1.0.0\"" -flto
-CFLAGS_TINYCTHREAD = -std=gnu11 -O3 -Wall -Wextra -flto
-LDFLAGS = -flto
+CFLAGS_TINYCTHREAD = -std=gnu11 -O3 -Wall -Wextra $(FLTO)
+LDFLAGS = $(FLTO)
 
 BINDIR := ./bin
 OBJDIR := ./obj
@@ -72,7 +73,6 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(DEPDIR)/libimagequant/pam.c \
           $(DEPDIR)/libimagequant/remap.c \
           $(DEPDIR)/zx/zx7/compress.c \
-          $(DEPDIR)/zx/zx7/optimize.c \
           $(DEPDIR)/zx/zx0/compress.c \
           $(DEPDIR)/libyaml/src/api.c \
           $(DEPDIR)/libyaml/src/dumper.c \

@@ -1,15 +1,17 @@
 [submodule "src/deps/libimagequant"]
 	path = src/deps/libimagequant
-	url = git@github.com:mateoconlechuga/libimagequant.git
+	url = https://github.com/mateoconlechuga/libimagequant.git
+	pushurl = git@github.com:mateoconlechuga/libimagequant.git
 [submodule "src/deps/stb"]
 	path = src/deps/stb
-	url = git@github.com:nothings/stb.git
+	url = https://github.com/nothings/stb.git
 [submodule "src/deps/libyaml"]
 	path = src/deps/libyaml
-	url = git@github.com:yaml/libyaml.git
+	url = https://github.com/yaml/libyaml.git
 [submodule "src/deps/zx"]
 	path = src/deps/zx
-	url = git@github.com:mateoconlechuga/zx.git
+	url = https://github.com/mateoconlechuga/zx.git
+	pushurl = git@github.com:mateoconlechuga/zx.git
 [submodule "src/deps/tinycthread"]
 	path = src/deps/tinycthread
-	url = git@github.com:tinycthread/tinycthread.git
+	url = https://github.com/tinycthread/tinycthread.git

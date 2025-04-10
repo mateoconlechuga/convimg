@@ -57,9 +57,27 @@ static bool parse_str_cmp(const char *str, void *src)
     return false;
 }
 
-static bool parse_str_bool(void *src)
+static bool parse_str_bool(void *value)
 {
-    return parse_str_cmp("true", src);
+    return parse_str_cmp("true", value);
+}
+
+static compress_mode_t parse_compression_mode(void *value)
+{
+    if (parse_str_cmp("zx7", value))
+    {
+        return COMPRESS_ZX7;
+    }
+    else if (parse_str_cmp("zx0", value))
+    {
+        return COMPRESS_ZX0;
+    }
+    else if (parse_str_cmp("lz4", value))
+    {
+        return COMPRESS_LZ4;
+    }
+
+    return COMPRESS_NONE;
 }
 
 static void parser_show_mark_error(yaml_mark_t mark)
@@ -1019,15 +1037,8 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         }
         else if (parse_str_cmp("compress", key))
         {
-            if (parse_str_cmp("zx7", value))
-            {
-                convert->compress = COMPRESS_ZX7;
-            }
-            else if (parse_str_cmp("zx0", value))
-            {
-                convert->compress = COMPRESS_ZX0;
-            }
-            else
+            convert->compress = parse_compression_mode(value);
+            if (convert->compress == COMPRESS_NONE)
             {
                 LOG_ERROR("Invalid compression mode.\n");
                 parser_show_mark_error(keyn->start_mark);
@@ -1384,15 +1395,8 @@ static int parse_output(struct yaml *yaml, yaml_document_t *doc, yaml_node_t *ro
             }
             else if (parse_str_cmp("compress", key))
             {
-                if (parse_str_cmp("zx7", value))
-                {
-                    output->appvar.compress = COMPRESS_ZX7;
-                }
-                else if (parse_str_cmp("zx0", value))
-                {
-                    output->appvar.compress = COMPRESS_ZX0;
-                }
-                else
+                output->appvar.compress = parse_compression_mode(value);
+                if (output->appvar.compress == COMPRESS_NONE)
                 {
                     LOG_ERROR("Invalid compression mode.\n");
                     parser_show_mark_error(keyn->start_mark);

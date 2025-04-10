@@ -63,14 +63,14 @@ static struct
     log_level_t level;
     mtx_t mutex;
     bool colors;
-} log;
+} config;
 
 void log_init(void)
 {
-    log.level = LOG_BUILD_LEVEL;
-    log.colors = isatty(1);
+    config.level = LOG_BUILD_LEVEL;
+    config.colors = isatty(1);
 
-    mtx_init(&log.mutex, mtx_plain);
+    mtx_init(&config.mutex, mtx_plain);
 
 #ifdef _WIN32
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -88,23 +88,23 @@ void log_init(void)
 
 void log_set_level(log_level_t level)
 {
-    log.level = level;
+    config.level = level;
 }
 
 void log_set_color(bool colors)
 {
-    log.colors = colors;
+    config.colors = colors;
 }
 
 void log_msg(log_level_t level, const char *str, ...)
 {
-    if (level <= LOG_BUILD_LEVEL && level <= log.level)
+    if (level <= LOG_BUILD_LEVEL && level <= config.level)
     {
         va_list arglist;
 
-        mtx_lock(&log.mutex);
+        mtx_lock(&config.mutex);
 
-        if (log.colors && color_strings[level])
+        if (config.colors && color_strings[level])
         {
             fputs(color_strings[level], stdout);
         }
@@ -115,24 +115,24 @@ void log_msg(log_level_t level, const char *str, ...)
         vfprintf(stdout, str, arglist);
         va_end(arglist);
 
-        if (log.colors && color_strings[level])
+        if (config.colors && color_strings[level])
         {
             fputs(COLOR_RESET, stdout);
         }
 
         fflush(stdout);
 
-        mtx_unlock(&log.mutex);
+        mtx_unlock(&config.mutex);
     }
 }
 
 void log_printf(const char *str, ...)
 {
-    if (LOG_LVL_INFO <= LOG_BUILD_LEVEL && LOG_LVL_INFO <= log.level)
+    if (LOG_LVL_INFO <= LOG_BUILD_LEVEL && LOG_LVL_INFO <= config.level)
     {
         va_list arglist;
 
-        mtx_lock(&log.mutex);
+        mtx_lock(&config.mutex);
 
         va_start(arglist, str);
         vfprintf(stdout, str, arglist);
@@ -140,6 +140,6 @@ void log_printf(const char *str, ...)
 
         fflush(stdout);
 
-        mtx_unlock(&log.mutex);
+        mtx_unlock(&config.mutex);
     }
 }

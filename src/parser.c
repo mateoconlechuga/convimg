@@ -1125,7 +1125,18 @@ static int parse_convert(struct yaml *data, yaml_document_t *doc, yaml_node_t *r
         }
         else if (parse_str_cmp("width-and-height", key))
         {
-            convert->add_width_height = parse_str_bool(value);
+            if (parse_str_cmp("true", value))
+            {
+                convert->width_height = CONVERT_ADD_WIDTH_HEIGHT;
+            }
+            else if (parse_str_cmp("swap", value))
+            {
+                convert->width_height = CONVERT_SWAP_WIDTH_HEIGHT;
+            }
+            else
+            {
+                convert->width_height = CONVERT_NO_WIDTH_HEIGHT;
+            }
         }
         else if (parse_str_cmp("omit-indices", key))
         {

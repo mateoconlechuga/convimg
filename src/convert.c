@@ -61,7 +61,7 @@ struct convert *convert_alloc(void)
     convert->palette_offset = 0;
     convert->style = CONVERT_STYLE_PALETTE;
     convert->nr_omit_indices = 0;
-    convert->add_width_height = true;
+    convert->width_height = CONVERT_ADD_WIDTH_HEIGHT;
     convert->transparent_index = 0;
     convert->bpp = BPP_8;
     convert->color_fmt = COLOR_565_RGB;
@@ -353,9 +353,10 @@ static bool convert_image(struct convert *convert, struct image *image)
         }
     }
 
-    if (convert->add_width_height == true)
+    if (convert->width_height == CONVERT_ADD_WIDTH_HEIGHT ||
+        convert->width_height == CONVERT_SWAP_WIDTH_HEIGHT)
     {
-        if (image_add_width_and_height(image))
+        if (image_add_width_and_height(image, convert->width_height == CONVERT_SWAP_WIDTH_HEIGHT))
         {
             return false;
         }
@@ -405,7 +406,7 @@ static bool convert_image_thread(void *arg)
     }
 
     image->gfx = false;
-    if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)
+    if ((image->rlet || convert->width_height != CONVERT_NO_WIDTH_HEIGHT) && convert->bpp == BPP_8)
     {
         image->gfx = true;
     }
@@ -417,7 +418,7 @@ static bool convert_image_thread(void *arg)
         return -1;
     }
 
-    if (convert->add_width_height)
+    if (convert->width_height != CONVERT_NO_WIDTH_HEIGHT)
     {
         if (image->width > 255)
         {
@@ -647,7 +648,7 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         }
 
         image->gfx = false;
-        if ((image->rlet || convert->add_width_height) && convert->bpp == BPP_8)
+        if ((image->rlet || convert->width_height != CONVERT_NO_WIDTH_HEIGHT) && convert->bpp == BPP_8)
         {
             image->gfx = true;
         }

@@ -15,3 +15,6 @@
 [submodule "src/deps/tinycthread"]
 	path = src/deps/tinycthread
 	url = https://github.com/tinycthread/tinycthread.git
+[submodule "src/deps/lz4"]
+	path = src/deps/lz4
+	url = https://github.com/lz4/lz4.git

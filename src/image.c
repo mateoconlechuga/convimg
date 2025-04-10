@@ -226,7 +226,7 @@ void image_free(struct image *image)
     free(image->data);
 }
 
-int image_add_width_and_height(struct image *image)
+int image_add_width_and_height(struct image *image, bool swap)
 {
     image->data = memory_realloc(image->data, image->data_size + WIDTH_HEIGHT_SIZE);
     if (image->data == NULL)
@@ -236,8 +236,16 @@ int image_add_width_and_height(struct image *image)
 
     memmove(image->data + WIDTH_HEIGHT_SIZE, image->data, image->data_size);
 
-    image->data[0] = image->width;
-    image->data[1] = image->height;
+    if (!swap)
+    {
+        image->data[0] = image->width;
+        image->data[1] = image->height;
+    }
+    else
+    {
+        image->data[0] = image->height;
+        image->data[1] = image->width;
+    }
 
     image->data_size += WIDTH_HEIGHT_SIZE;
 

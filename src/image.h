@@ -75,7 +75,7 @@ int image_load(struct image *image);
 
 int image_rlet(struct image *image, uint8_t transparent_index);
 
-int image_add_width_and_height(struct image *image);
+int image_add_width_and_height(struct image *image, bool swap);
 
 int image_add_offset(struct image *image, uint8_t offset);
 

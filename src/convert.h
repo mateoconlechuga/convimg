@@ -49,6 +49,13 @@ typedef enum
     CONVERT_STYLE_DIRECT,
 } convert_style_t;
 
+typedef enum
+{
+    CONVERT_NO_WIDTH_HEIGHT,
+    CONVERT_ADD_WIDTH_HEIGHT,
+    CONVERT_SWAP_WIDTH_HEIGHT,
+} convert_width_height_t;
+
 struct convert
 {
     char *name;
@@ -73,7 +80,7 @@ struct convert
     uint32_t quantize_speed;
     float dither;
     uint32_t rotate;
-    bool add_width_height;
+    convert_width_height_t width_height;
     bool flip_x;
     bool flip_y;
     uint32_t tile_rotate;

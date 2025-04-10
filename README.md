@@ -14,6 +14,7 @@ It primarily is used for the TI-84+CE and related calculator series, however can
         -h, --help               Show this screen.
         -v, --version            Show program version.
         -c, --clean              Deletes files listed in 'convimg.out' and exits.
+        -t, --threads <count>    Set number of threads when converting. Default 4.
         -l, --log-level <level>  Set program logging level:
                                  0=none, 1=error, 2=warning, 3=normal
     Optional icon options:
@@ -217,9 +218,8 @@ It primarily is used for the TI-84+CE and related calculator series, however can
                                       : Default is 'rgb565'.
 
            compress: <mode>           : Images can be optionally compressed after
-                                      : conversion using modes 'zx0' or 'zx7'.
-                                      : The 'zx7' compression time is much faster,
-                                      : however 'zx0' usually has better results.
+                                      : conversion and quantization.
+                                      : Available compression modes are below.
 
            width-and-height: <bool>   : Optionally control if the width and
                                       : height should be placed in the converted
@@ -247,12 +247,6 @@ It primarily is used for the TI-84+CE and related calculator series, however can
                                       : from the converted image. May be useful
                                       : by a custom drawing routine. A comma
                                       : separated list in [] should be provided.
-
-           prefix: <string>           : Prefixes the output files of this convert
-                                      : with a string defined by <string>.
-
-           suffix: <string>           : Suffixes the output files of this convert
-                                      : with a string defined by <string>.
 
     --------------------------------------------------------------------------------
 
@@ -323,10 +317,10 @@ It primarily is used for the TI-84+CE and related calculator series, however can
                                       : Default is '3'.
 
            compress: <mode>           : Compress AppVar data.
-                                      : Available 'mode's: 'zx0', 'zx7'.
                                       : The AppVar then needs to be decompressed
                                       : to access image and palette data.
                                       : Optional parameter.
+                                      : Available compression modes are below.
 
            header-string: <string>    : Prepends <string> to the start of the
                                       : AppVar's data.
@@ -341,6 +335,19 @@ It primarily is used for the TI-84+CE and related calculator series, however can
 
     --------------------------------------------------------------------------------
 
+    Available Compression Modes:
+        These different compression modes can be used to achieve different results.
+        Some provide better compression ratio at the cost of slower compression,
+        and potentially slower decompression as well.
+
+           "zx0"                    : Best ratio, slowest (de)compression
+
+           "zx7"                    : Moderate ratio, moderate (de)compression
+
+           "lz4"                    : Worst ratio, fastest (de)compression
+
+    --------------------------------------------------------------------------------
+
     Credits:
         (c) 2017-2025 by Matt "MateoConLechuga" Waltz.
 
@@ -348,4 +355,6 @@ It primarily is used for the TI-84+CE and related calculator series, however can
             libimagequant: (c) 2009-2022 by Kornel Lesiński.
             libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.
             stb: (c) 2017 by Sean Barrett.
+            lz4: (c) 2011-2020 by Yann Collet.
             zx0,zx7: (c) 2012-2022 by Einar Saukas.
+

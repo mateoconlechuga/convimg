@@ -86,8 +86,8 @@ int output_asm_image(struct output *output, const struct image *image)
         goto error;
     }
 
-    fprintf(fds, "%s_width := %u\n", image->name, image->width);
-    fprintf(fds, "%s_height := %u\n", image->name, image->height);
+    fprintf(fds, "%s_width := %u\n", image->name, !image->swap_width_height ? image->width : image->height);
+    fprintf(fds, "%s_height := %u\n", image->name, !image->swap_width_height ? image->height : image->width);
     fprintf(fds, "%s_size := %u\n", image->name, image->uncompressed_size);
     if (image->compressed)
     {

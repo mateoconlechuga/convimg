@@ -392,10 +392,10 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
 
             fprintf(fdh, "#define %s_width %u\n",
                 image->name,
-                image->width);
+                !image->swap_width_height ? image->width : image->height);
             fprintf(fdh, "#define %s_height %u\n",
                 image->name,
-                image->height);
+                !image->swap_width_height ? image->height : image->width);
 
             if (image->compressed)
             {
@@ -969,12 +969,12 @@ void output_appvar_asm_include_file(struct output *output, FILE *fdh)
                         output->appvar.name,
                         convert->name,
                         image->name,
-                        image->width);
+                        !image->swap_width_height ? image->width : image->height);
                     fprintf(fdh, "%s_%s_%s_height := %u\n",
                         output->appvar.name,
                         convert->name,
                         image->name,
-                        image->height);
+                        !image->swap_width_height ? image->height : image->width);
 
                     if (image->compressed)
                     {

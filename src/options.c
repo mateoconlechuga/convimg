@@ -54,7 +54,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("    -h, --help               Show this screen.\n");
     LOG_PRINT("    -v, --version            Show program version.\n");
     LOG_PRINT("    -c, --clean              Deletes files listed in \'convimg.out\' and exits.\n");
-    LOG_PRINT("    -t, --threads <threads>  Set number of threads when converting. Default 4.\n");
+    LOG_PRINT("    -t, --threads <count>    Set number of threads when converting. Default 4.\n");
     LOG_PRINT("    -l, --log-level <level>  Set program logging level:\n");
     LOG_PRINT("                             0=none, 1=error, 2=warning, 3=normal\n");
     LOG_PRINT("Optional icon options:\n");
@@ -258,9 +258,8 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : Default is \'rgb565\'.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       compress: <mode>           : Images can be optionally compressed after\n");
-    LOG_PRINT("                                  : conversion using modes \'zx0\' or \'zx7\'.\n");
-    LOG_PRINT("                                  : The 'zx7' compression time is much faster,\n");
-    LOG_PRINT("                                  : however 'zx0' usually has better results.\n");
+    LOG_PRINT("                                  : conversion and quantization.\n");
+    LOG_PRINT("                                  : Available compression modes are below.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       width-and-height: <bool>   : Optionally control if the width and\n");
     LOG_PRINT("                                  : height should be placed in the converted\n");
@@ -358,10 +357,10 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : Default is \'3\'.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       compress: <mode>           : Compress AppVar data.\n");
-    LOG_PRINT("                                  : Available \'mode\'s: \'zx0\', \'zx7\'.\n");
     LOG_PRINT("                                  : The AppVar then needs to be decompressed\n");
     LOG_PRINT("                                  : to access image and palette data.\n");
     LOG_PRINT("                                  : Optional parameter.\n");
+    LOG_PRINT("                                  : Available compression modes are below.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       header-string: <string>    : Prepends <string> to the start of the\n");
     LOG_PRINT("                                  : AppVar's data.\n");
@@ -376,6 +375,19 @@ static void options_show(const char *prgm)
     LOG_PRINT("\n");
     LOG_PRINT("--------------------------------------------------------------------------------\n");
     LOG_PRINT("\n");
+    LOG_PRINT("Available Compression Modes:\n");
+    LOG_PRINT("    These different compression modes can be used to achieve different results.\n");
+    LOG_PRINT("    Some provide better compression ratio at the cost of slower compression,\n");
+    LOG_PRINT("    and potentially slower decompression as well.\n");
+    LOG_PRINT("\n");
+    LOG_PRINT("       \"zx0\"                    : Best ratio, slowest (de)compression\n");
+    LOG_PRINT("\n");
+    LOG_PRINT("       \"zx7\"                    : Moderate ratio, moderate (de)compression\n");
+    LOG_PRINT("\n");
+    LOG_PRINT("       \"lz4\"                    : Worst ratio, fastest (de)compression\n");
+    LOG_PRINT("\n");
+    LOG_PRINT("--------------------------------------------------------------------------------\n");
+    LOG_PRINT("\n");
     LOG_PRINT("Credits:\n");
     LOG_PRINT("    (c) 2017-2025 by Matt \"MateoConLechuga\" Waltz.\n");
     LOG_PRINT("\n");
@@ -383,6 +395,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("        libimagequant: (c) 2009-2022 by Kornel Lesiński.\n");
     LOG_PRINT("        libyaml: (c) 2006-2022 by Ingy döt Net & Kirill Simonov.\n");
     LOG_PRINT("        stb: (c) 2017 by Sean Barrett.\n");
+    LOG_PRINT("        lz4: (c) 2011-2020 by Yann Collet.\n");
     LOG_PRINT("        zx0,zx7: (c) 2012-2022 by Einar Saukas.\n");
 }
 

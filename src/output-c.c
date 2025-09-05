@@ -97,8 +97,8 @@ int output_c_image(struct output *output, const struct image *image)
     fprintf(fdh, "extern \"C\" {\n");
     fprintf(fdh, "#endif\n");
     fprintf(fdh, "\n");
-    fprintf(fdh, "#define %s_width %u\n", image->name, image->width);
-    fprintf(fdh, "#define %s_height %u\n", image->name, image->height);
+    fprintf(fdh, "#define %s_width %u\n", image->name, !image->swap_width_height ? image->width : image->height);
+    fprintf(fdh, "#define %s_height %u\n", image->name, !image->swap_width_height ? image->height : image->width);
     fprintf(fdh, "#define %s_size %u\n", image->name, image->uncompressed_size);
 
     if (image->compressed)

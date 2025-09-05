@@ -151,6 +151,7 @@ static int convert_add_tileset(struct convert *convert, const char *path)
     image->rotate = 0;
     image->flip_x = false;
     image->flip_y = false;
+    image->swap_width_height = false;
 
     return 0;
 }
@@ -389,6 +390,7 @@ static bool convert_image_thread(void *arg)
     image->rotate = convert->rotate;
     image->flip_x = convert->flip_x;
     image->flip_y = convert->flip_y;
+    image->swap_width_height = convert->width_height == CONVERT_SWAP_WIDTH_HEIGHT;
     image->transparent_index = convert->transparent_index;
     image->rlet = convert->style == CONVERT_STYLE_RLET;
 
@@ -631,6 +633,7 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         image->rotate = convert->rotate;
         image->flip_x = convert->flip_x;
         image->flip_y = convert->flip_y;
+        image->swap_width_height = convert->width_height == CONVERT_SWAP_WIDTH_HEIGHT;
         image->transparent_index = convert->transparent_index;
         image->rlet = convert->style == CONVERT_STYLE_RLET;
 

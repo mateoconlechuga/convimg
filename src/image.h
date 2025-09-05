@@ -59,6 +59,7 @@ struct image
     uint32_t quantize_speed;
     uint32_t rotate;
     uint32_t uncompressed_size;
+    bool swap_width_height;
     bool gfx;
     bool compressed;
     bool rlet;

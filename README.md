@@ -357,4 +357,3 @@ It primarily is used for the TI-84+CE and related calculator series, however can
             stb: (c) 2017 by Sean Barrett.
             lz4: (c) 2011-2020 by Yann Collet.
             zx0,zx7: (c) 2012-2022 by Einar Saukas.
-

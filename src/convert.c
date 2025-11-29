@@ -324,7 +324,7 @@ static bool convert_image(struct convert *convert, struct image *image)
 
         if (convert->style == CONVERT_STYLE_RLET)
         {
-            if (image_rlet(image, convert->transparent_index))
+            if (image_rlet(image, convert->palette_offset + convert->transparent_index))
             {
                 return false;
             }

@@ -230,9 +230,10 @@ static void options_show(const char *prgm)
     LOG_PRINT("                                  : If the alpha chanel is 0 in an pixel,\n");
     LOG_PRINT("                                  : the converted output will be assigned\n");
     LOG_PRINT("                                  : this value.\n");
-    LOG_PRINT("                                  : Generally, you want transparency to be.\n");
+    LOG_PRINT("                                  : Generally, you want transparency to be\n");
     LOG_PRINT("                                  : defined as a \'fixed-entry\' color in the\n");
     LOG_PRINT("                                  : palette instead of using this option.\n");
+    LOG_PRINT("                                  : This value is pre \'palette-offset\' addtion.\n");
     LOG_PRINT("                                  : Default is \'0\'.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       style: <mode>              : Style controls the converted format of\n");

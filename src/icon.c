@@ -144,36 +144,38 @@ int icon_convert(struct icon *icon)
             // fall through
         case ICON_FORMAT_GAS:
             fprintf(fd, "\t.assume adl=1\n\n");
-            fprintf(fd, "\t.section .init.icon\n\n");
-            fprintf(fd, "\tjp\t___prgm_init\n");
+            fprintf(fd, "\t.section .header.icon\n\n");
+            fprintf(fd, "\t.local ___icon\n");
+            fprintf(fd, "___icon_jump:\n");
+            fprintf(fd, "\tjp\t__start\n");
             if (has_icon)
             {
-                fprintf(fd, "\tdb\t$01\n");
+                fprintf(fd, "\t.db\t0x01\n");
                 fprintf(fd, "\t.global ___icon\n");
                 fprintf(fd, "___icon:\n");
-                fprintf(fd, "\tdb\t$%02X, $%02X", image.width, image.height);
+                fprintf(fd, "\t.db\t0x%02X, 0x%02X", image.width, image.height);
                 for (uint32_t y = 0; y < image.height; y++)
                 {
                     uint32_t offset = y * image.width;
                     uint32_t x;
 
-                    fprintf(fd, "\n\tdb\t");
+                    fprintf(fd, "\n\t.db\t");
                     for (x = 0; x < image.width; x++)
                     {
                         if (x + 1 == image.width)
                         {
-                            fprintf(fd, "$%02X", data[x + offset]);
+                            fprintf(fd, "0x%02X", data[x + offset]);
                         }
                         else
                         {
-                            fprintf(fd, "$%02X, ", data[x + offset]);
+                            fprintf(fd, "0x%02X, ", data[x + offset]);
                         }
                     }
                 }
             }
             else
             {
-                fprintf(fd, "\tdb\t$02\n");
+                fprintf(fd, "\t.db\t$02\n");
             }
 
             fprintf(fd, "\n");
@@ -181,16 +183,15 @@ int icon_convert(struct icon *icon)
             {
                 fprintf(fd, "\t.global ___description\n");
                 fprintf(fd, "___description:\n");
-                fprintf(fd, "\tdb\t\"%s\", 0\n", icon->description);
+                fprintf(fd, "\t.db\t\"%s\", 0\n", icon->description);
             }
             else
             {
                 fprintf(fd, "\t.global ___description\n");
                 fprintf(fd, "___description:\n");
-                fprintf(fd, "\tdb\t0\n");
+                fprintf(fd, "\t.db\t0\n");
             }
-            fprintf(fd, "\t.global ___prgm_init\n");
-            fprintf(fd, "___prgm_init:\n");
+            fprintf(fd, "\t.extern __start\n");
             break;
 
         case ICON_FORMAT_FASMG:

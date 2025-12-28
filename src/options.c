@@ -60,7 +60,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("Optional icon options:\n");
     LOG_PRINT("    --icon <file>            Create an icon for use by shell.\n");
     LOG_PRINT("    --icon-description <txt> Specify icon/program description.\n");
-    LOG_PRINT("    --icon-format <fmt>      Specify icon format, 'ice' or 'asm'.\n");
+    LOG_PRINT("    --icon-format <fmt>      Specify icon format, 'fasmg, 'gas', or 'ice'.\n");
     LOG_PRINT("    --icon-output <output>   Specify icon output filename.\n");
     LOG_PRINT("\n");
     LOG_PRINT("YAML File Format:\n");
@@ -272,6 +272,9 @@ static void options_show(const char *prgm)
     LOG_PRINT("\n");
     LOG_PRINT("       flip-y: <bool>             : Flip input images horizontally across the\n");
     LOG_PRINT("                                  : y-axis\n");
+    LOG_PRINT("\n");
+    LOG_PRINT("       dither: <float>            : Dither value between 0.0 and 1.0.\n");
+    LOG_PRINT("                                  : Default of 0.0.\n");
     LOG_PRINT("\n");
     LOG_PRINT("       rotate: <degrees>          : Rotate input images 0, 90, 180, 270 degrees\n");
     LOG_PRINT("\n");
@@ -599,7 +602,15 @@ int options_get(int argc, char *argv[], struct options *options)
                     case 3:
                         if (!strcmp(optarg, "asm"))
                         {
-                            options->icon.format = ICON_FORMAT_ASM;
+                            options->icon.format = ICON_FORMAT_FASMG;
+                        }
+                        else if (!strcmp(optarg, "fasmg"))
+                        {
+                            options->icon.format = ICON_FORMAT_FASMG;
+                        }
+                        else if (!strcmp(optarg, "gas"))
+                        {
+                            options->icon.format = ICON_FORMAT_GAS;
                         }
                         else if (!strcmp(optarg, "ice"))
                         {

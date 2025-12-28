@@ -40,7 +40,8 @@ extern "C" {
 
 typedef enum
 {
-    ICON_FORMAT_ASM,
+    ICON_FORMAT_FASMG,
+    ICON_FORMAT_GAS,
     ICON_FORMAT_ICE
 } icon_format_t;
 

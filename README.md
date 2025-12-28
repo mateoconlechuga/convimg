@@ -20,7 +20,7 @@ It primarily is used for the TI-84+CE and related calculator series, however can
     Optional icon options:
         --icon <file>            Create an icon for use by shell.
         --icon-description <txt> Specify icon/program description.
-        --icon-format <fmt>      Specify icon format, 'ice' or 'asm'.
+        --icon-format <fmt>      Specify icon format, 'fasmg, 'gas', or 'ice'.
         --icon-output <output>   Specify icon output filename.
 
     YAML File Format:
@@ -190,9 +190,10 @@ It primarily is used for the TI-84+CE and related calculator series, however can
                                       : If the alpha chanel is 0 in an pixel,
                                       : the converted output will be assigned
                                       : this value.
-                                      : Generally, you want transparency to be.
+                                      : Generally, you want transparency to be
                                       : defined as a 'fixed-entry' color in the
                                       : palette instead of using this option.
+                                      : This value is pre 'palette-offset' addtion.
                                       : Default is '0'.
 
            style: <mode>              : Style controls the converted format of
@@ -231,6 +232,9 @@ It primarily is used for the TI-84+CE and related calculator series, however can
 
            flip-y: <bool>             : Flip input images horizontally across the
                                       : y-axis
+
+           dither: <float>            : Dither value between 0.0 and 1.0.
+                                      : Default of 0.0.
 
            rotate: <degrees>          : Rotate input images 0, 90, 180, 270 degrees
 
@@ -357,3 +361,4 @@ It primarily is used for the TI-84+CE and related calculator series, however can
             stb: (c) 2017 by Sean Barrett.
             lz4: (c) 2011-2020 by Yann Collet.
             zx0,zx7: (c) 2012-2022 by Einar Saukas.
+

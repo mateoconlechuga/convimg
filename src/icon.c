@@ -142,7 +142,58 @@ int icon_convert(struct icon *icon)
     {
         default:
             // fall through
-        case ICON_FORMAT_ASM:
+        case ICON_FORMAT_GAS:
+            fprintf(fd, "\t.assume adl=1\n\n");
+            fprintf(fd, "\t.section .init.icon\n\n");
+            fprintf(fd, "\tjp\t___prgm_init\n");
+            if (has_icon)
+            {
+                fprintf(fd, "\tdb\t$01\n");
+                fprintf(fd, "\t.global ___icon\n");
+                fprintf(fd, "___icon:\n");
+                fprintf(fd, "\tdb\t$%02X, $%02X", image.width, image.height);
+                for (uint32_t y = 0; y < image.height; y++)
+                {
+                    uint32_t offset = y * image.width;
+                    uint32_t x;
+
+                    fprintf(fd, "\n\tdb\t");
+                    for (x = 0; x < image.width; x++)
+                    {
+                        if (x + 1 == image.width)
+                        {
+                            fprintf(fd, "$%02X", data[x + offset]);
+                        }
+                        else
+                        {
+                            fprintf(fd, "$%02X, ", data[x + offset]);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                fprintf(fd, "\tdb\t$02\n");
+            }
+
+            fprintf(fd, "\n");
+            if (icon->description != NULL && icon->description[0])
+            {
+                fprintf(fd, "\t.global ___description\n");
+                fprintf(fd, "___description:\n");
+                fprintf(fd, "\tdb\t\"%s\", 0\n", icon->description);
+            }
+            else
+            {
+                fprintf(fd, "\t.global ___description\n");
+                fprintf(fd, "___description:\n");
+                fprintf(fd, "\tdb\t0\n");
+            }
+            fprintf(fd, "\t.global ___prgm_init\n");
+            fprintf(fd, "___prgm_init:\n");
+            break;
+
+        case ICON_FORMAT_FASMG:
             fprintf(fd, "\tsection .icon\n\n");
             fprintf(fd, "\tjp\t___prgm_init\n");
             if (has_icon)

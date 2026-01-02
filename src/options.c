@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 Matt "MateoConLechuga" Waltz
+ * Copyright 2017-2026 Matt "MateoConLechuga" Waltz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -393,7 +393,7 @@ static void options_show(const char *prgm)
     LOG_PRINT("--------------------------------------------------------------------------------\n");
     LOG_PRINT("\n");
     LOG_PRINT("Credits:\n");
-    LOG_PRINT("    (c) 2017-2025 by Matt \"MateoConLechuga\" Waltz.\n");
+    LOG_PRINT("    (c) 2017-2026 by Matt \"MateoConLechuga\" Waltz.\n");
     LOG_PRINT("\n");
     LOG_PRINT("    This program utilizes the following libraries:\n");
     LOG_PRINT("        libimagequant: (c) 2009-2022 by Kornel Lesiński.\n");

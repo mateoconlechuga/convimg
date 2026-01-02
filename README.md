@@ -353,7 +353,7 @@ It primarily is used for the TI-84+CE and related calculator series, however can
     --------------------------------------------------------------------------------
 
     Credits:
-        (c) 2017-2025 by Matt "MateoConLechuga" Waltz.
+        (c) 2017-2026 by Matt "MateoConLechuga" Waltz.
 
         This program utilizes the following libraries:
             libimagequant: (c) 2009-2022 by Kornel Lesiński.

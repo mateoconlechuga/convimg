@@ -73,11 +73,11 @@ jobs:
           cd ${{github.workspace}}/macos && zip -r9 macos-convimg.zip *
 
       - name: Update nightly release
-        uses: pyTooling/Actions/releaser@main
+        uses: softprops/action-gh-release@5122b4edc95f85501a71628a57dc180a03ec7588
         with:
-          tag: nightly
-          rm: true
-          token: ${{secrets.GITHUB_TOKEN}}
+          tag_name: nightly
+          name: convimg
+          prerelease: true
           files: |
             linux/linux-convimg.zip
             windows/windows-convimg.zip

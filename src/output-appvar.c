@@ -587,6 +587,7 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
     uint32_t offset = appvar->data_offset;
 
     fprintf(fds, "#include \"%s\"\n", output->include_file);
+    fprintf(fds, "#include <stdint.h>\n");
     if (appvar->compress == COMPRESS_NONE)
     {
         fprintf(fds, "#include <fileioc.h>\n");
@@ -723,8 +724,9 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
             {
                 fprintf(fds, "unsigned char %s_init(void *addr)\n", appvar->name);
                 fprintf(fds, "{\n");
-                fprintf(fds, "    unsigned int data, i;\n\n");
-                fprintf(fds, "    data = (unsigned int)addr - (unsigned int)%s_appvar[0] + %s_HEADER_SIZE;\n", appvar->name, appvar->name);
+                fprintf(fds, "    uintptr_t data;\n");
+                fprintf(fds, "    unsigned int i;\n\n");
+                fprintf(fds, "    data = (uintptr_t)addr - (uintptr_t)%s_appvar[0] + %s_HEADER_SIZE;\n", appvar->name, appvar->name);
                 fprintf(fds, "    for (i = 0; i < %u; i++)\n", appvar->nr_entries);
                 fprintf(fds, "    {\n");
                 fprintf(fds, "        %s_appvar[i] += data;\n", appvar->name);
@@ -734,14 +736,15 @@ void output_appvar_c_source_file(struct output *output, FILE *fds)
             {
                 fprintf(fds, "unsigned char %s_init(void)\n", appvar->name);
                 fprintf(fds, "{\n");
-                fprintf(fds, "    unsigned int data, i;\n");
+                fprintf(fds, "    uintptr_t data;\n");
+                fprintf(fds, "    unsigned int i;\n");
                 fprintf(fds, "    uint8_t appvar;\n\n");
                 fprintf(fds, "    appvar = ti_Open(\"%s\", \"r\");\n", appvar->name);
                 fprintf(fds, "    if (appvar == 0)\n");
                 fprintf(fds, "    {\n");
                 fprintf(fds, "        return 0;\n");
                 fprintf(fds, "    }\n\n");
-                fprintf(fds, "    data = (unsigned int)ti_GetDataPtr(appvar) - (unsigned int)%s_appvar[0] + %s_HEADER_SIZE;\n", appvar->name, appvar->name);
+                fprintf(fds, "    data = (uintptr_t)ti_GetDataPtr(appvar) - (uintptr_t)%s_appvar[0] + %s_HEADER_SIZE;\n", appvar->name, appvar->name);
                 fprintf(fds, "    for (i = 0; i < %u; i++)\n", appvar->nr_entries);
                 fprintf(fds, "    {\n");
                 fprintf(fds, "        %s_appvar[i] += data;\n", appvar->name);

@@ -31,6 +31,7 @@
 #include "appvar.h"
 #include "clean.h"
 #include "log.h"
+#include "memory.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -55,8 +56,8 @@ int appvar_write(struct appvar *a, const char *path)
 {
     static const uint8_t file_header[11] =
         { 0x2A,0x2A,0x54,0x49,0x38,0x33,0x46,0x2A,0x1A,0x0A,0x00 };
-    static uint8_t output[APPVAR_MAX_FILE_SIZE];
     uint32_t checksum;
+    uint8_t *output = NULL;
     FILE *fdv = NULL;
     size_t file_size;
     size_t data_size;
@@ -73,18 +74,23 @@ int appvar_write(struct appvar *a, const char *path)
         goto error;
     }
 
-    memset(output, 0, sizeof output);
-
     file_size = a->size + APPVAR_DATA_POS + APPVAR_CHECKSUM_LEN;
     data_size = a->size + APPVAR_VAR_HEADER_LEN + APPVAR_VARB_SIZE_LEN;
     var_size = a->size + APPVAR_VARB_SIZE_LEN;
     varb_size = a->size;
 
+    output = memory_alloc(file_size);
+    if (output == NULL)
+    {
+        goto error;
+    }
+
+    memset(output, 0, file_size);
+
     memcpy(output + APPVAR_FILE_HEADER_POS, file_header, sizeof file_header);
     memcpy(output + APPVAR_COMMENT_POS, a->comment, APPVAR_MAX_COMMENT_SIZE);
     memcpy(output + APPVAR_NAME_POS, a->name, APPVAR_MAX_NAME_SIZE);
     memcpy(output + APPVAR_DATA_POS, a->data, varb_size);
-
 
     output[APPVAR_VAR_HEADER_POS] = APPVAR_MAGIC;
     output[APPVAR_TYPE_POS] = APPVAR_TYPE_FLAG;
@@ -117,6 +123,11 @@ int appvar_write(struct appvar *a, const char *path)
     }
 
 error:
+
+    if (output != NULL)
+    {
+        free(output);
+    }
 
     if (fdv != NULL)
     {

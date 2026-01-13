@@ -40,7 +40,6 @@
 extern "C" {
 #endif
 
-#define APPVAR_MAX_FILE_SIZE (71680) /* kind of arbitrary */
 #define APPVAR_MAX_DATA_SIZE (65505)
 #define APPVAR_MAX_BEFORE_COMPRESSION_SIZE (APPVAR_MAX_DATA_SIZE * 6)
 #define APPVAR_MAX_COMMENT_SIZE 42

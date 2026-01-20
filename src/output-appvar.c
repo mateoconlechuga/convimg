@@ -420,7 +420,7 @@ static void output_appvar_c_include_file_converts(struct output *output, FILE *f
 
                 if (image->gfx)
                 {
-                    fprintf(fdh, "#define %s ((%s*)%s_appvar[%u])\n",
+                    fprintf(fdh, "#define %s (*(%s* const*)&%s_appvar[%u])\n",
                         image->name,
                         image->rlet ? "gfx_rletsprite_t" : "gfx_sprite_t",
                         output->appvar.name,

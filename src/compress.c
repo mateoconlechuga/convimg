@@ -34,14 +34,15 @@
 
 #include "deps/zx/zx7/zx7.h"
 #include "deps/zx/zx0/zx0.h"
-#include "deps/lz4/lib/lz4.h"
+#include "deps/lz4/lib/lz4frame.h"
+#include "deps/lz4/lib/lz4hc.h"
 
 #include <string.h>
 
 static uint8_t *compress_zx7(void *data, size_t *size)
 {
     uint8_t *compressed_data;
-    int new_size;
+    int compressed_size;
     long delta;
 
     if (size == NULL || data == NULL)
@@ -49,16 +50,16 @@ static uint8_t *compress_zx7(void *data, size_t *size)
         return NULL;
     }
 
-    compressed_data = zx7_compress(data, *size, 0, &new_size, &delta);
+    compressed_data = zx7_compress(data, *size, 0, &compressed_size, &delta);
     if (compressed_data == NULL)
     {
         LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
-    LOG_DEBUG("Compressed size: %u -> %u (zx7)\n", *size, new_size);
+    LOG_DEBUG("Compressed size: %u -> %u (zx7)\n", *size, compressed_size);
 
-    *size = new_size;
+    *size = compressed_size;
 
     return compressed_data;
 }
@@ -72,7 +73,7 @@ static uint8_t *compress_zx0(void *data, size_t *size)
 {
     uint8_t *compressed_data;
     int orig_size;
-    int new_size;
+    int compressed_size;
     int delta;
 
     if (size == NULL || data == NULL)
@@ -82,52 +83,61 @@ static uint8_t *compress_zx0(void *data, size_t *size)
 
     orig_size = *size;
 
-    compressed_data = zx0_compress(data, orig_size, 0, 0, 1, &new_size, &delta, orig_size > 16384 ? compress_zx0_progress : NULL);
+    compressed_data = zx0_compress(data, orig_size, 0, 0, 1, &compressed_size, &delta, orig_size > 16384 ? compress_zx0_progress : NULL);
     if (compressed_data == NULL)
     {
         LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
-    LOG_DEBUG("Compressed size: %u -> %u (zx0)\n", orig_size, new_size);
+    LOG_DEBUG("Compressed size: %u -> %u (zx0)\n", orig_size, compressed_size);
 
-    *size = new_size;
+    *size = compressed_size;
 
     return compressed_data;
 }
 
 static uint8_t *compress_lz4(void *data, size_t *size)
 {
-    const char *input = data;
     uint8_t *compressed_data;
-    int orig_size = *size;
-    int new_size;
+    const char *input;
+    size_t orig_size;
+    size_t max_compressed_size;
+    size_t compressed_size;
+    LZ4F_preferences_t preferences = LZ4F_INIT_PREFERENCES;
 
-    if (size == NULL || input == NULL)
+    if (size == NULL || data == NULL)
     {
         return NULL;
     }
 
+    input = data;
     orig_size = *size;
-    new_size = LZ4_compressBound(orig_size);
-    compressed_data = malloc(new_size);
+
+    preferences.compressionLevel = LZ4HC_CLEVEL_MAX;
+    preferences.frameInfo.contentChecksumFlag = LZ4F_noContentChecksum;
+
+    max_compressed_size = LZ4F_compressFrameBound(orig_size, &preferences);
+    compressed_data = memory_alloc(max_compressed_size);
     if (compressed_data == NULL)
     {
-        LOG_ERROR("Out of memory.\n");
         return NULL;
     }
 
-    new_size = LZ4_compress_default(input, (char*)compressed_data, orig_size, new_size);
-    if (!new_size)
+    compressed_size = LZ4F_compressFrame(compressed_data, max_compressed_size, 
+                                         input, orig_size, &preferences);
+    
+    if (LZ4F_isError(compressed_size))
     {
         free(compressed_data);
-        LOG_ERROR("LZ4 compression failed.\n");
+        LOG_ERROR("LZ4 frame compression failed: %s\n", 
+                  LZ4F_getErrorName(compressed_size));
         return NULL;
     }
 
-    LOG_DEBUG("Compressed size: %u -> %u (lz4)\n", orig_size, new_size);
+    LOG_DEBUG("Compressed size: %zu -> %zu\n", orig_size, compressed_size);
 
-    *size = new_size;
+    *size = compressed_size;
 
     return compressed_data;
 }

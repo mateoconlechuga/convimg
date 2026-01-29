@@ -180,7 +180,7 @@ void palette_free(struct palette *palette)
         image->path = NULL;
 
         free(image->data);
-        image->path = NULL;
+        image->data = NULL;
     }
 
     free(palette->images);

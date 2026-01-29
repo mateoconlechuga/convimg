@@ -29,7 +29,7 @@
 PRGM_NAME = convimg
 VERSION_STRING = $(shell git describe --abbrev=8 --dirty --always --tags)
 
-FLTO =
+FLTO = -flto
 CC := gcc
 CFLAGS = -std=gnu11 -O3 -Wall -Wextra -Wshadow -Wno-unused-but-set-variable -DNDEBUG -DLOG_BUILD_LEVEL=3 -DPRGM_NAME="\"$(PRGM_NAME)\"" -DVERSION_STRING="\"$(VERSION_STRING)\"" $(FLTO)
 CFLAGS_LIQ = -std=gnu11 -O3 -Wall -DNDEBUG -fno-math-errno -funroll-loops -fomit-frame-pointer -Wno-unknown-pragmas -Wno-attributes $(FLTO)
@@ -76,6 +76,9 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(DEPDIR)/zx/zx0/compress.c \
           $(DEPDIR)/libyaml/src/api.c \
           $(DEPDIR)/lz4/lib/lz4.c \
+          $(DEPDIR)/lz4/lib/lz4frame.c \
+          $(DEPDIR)/lz4/lib/lz4hc.c \
+          $(DEPDIR)/lz4/lib/xxhash.c \
           $(DEPDIR)/libyaml/src/dumper.c \
           $(DEPDIR)/libyaml/src/loader.c \
           $(DEPDIR)/libyaml/src/parser.c \

@@ -397,12 +397,22 @@ static bool convert_image_thread(void *arg)
     if (convert->prefix_string)
     {
         char *tmp = strings_concat(convert->prefix_string, image->name, 0);
+        if (tmp == NULL)
+        {
+            free(arg);
+            return false;
+        }
         free(image->name);
         image->name = tmp;
     }
     if (convert->suffix_string)
     {
         char *tmp = strings_concat(image->name, convert->suffix_string, 0);
+        if (tmp == NULL)
+        {
+            free(arg);
+            return false;
+        }
         free(image->name);
         image->name = tmp;
     }
@@ -640,12 +650,20 @@ int convert_generate(struct convert *convert, struct palette **palettes, uint32_
         if (convert->prefix_string)
         {
             char *tmp = strings_concat(convert->prefix_string, image->name, 0);
+            if (tmp == NULL)
+            {
+                return -1;
+            }
             free(image->name);
             image->name = tmp;
         }
         if (convert->suffix_string)
         {
             char *tmp = strings_concat(image->name, convert->suffix_string, 0);
+            if (tmp == NULL)
+            {
+                return -1;
+            }
             free(image->name);
             image->name = tmp;
         }

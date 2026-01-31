@@ -34,10 +34,11 @@
 
 #include "deps/zx/zx7/zx7.h"
 #include "deps/zx/zx0/zx0.h"
-#include "deps/lz4/lib/lz4frame.h"
-#include "deps/lz4/lib/lz4hc.h"
+#include "deps/lz4/lib/lz4.h"
 
 #include <string.h>
+
+#define LZ4_SIZE_PREFIX_BYTES 3
 
 static uint8_t *compress_zx7(void *data, size_t *size)
 {
@@ -102,9 +103,10 @@ static uint8_t *compress_lz4(void *data, size_t *size)
     uint8_t *compressed_data;
     const char *input;
     size_t orig_size;
-    size_t max_compressed_size;
-    size_t compressed_size;
-    LZ4F_preferences_t preferences = LZ4F_INIT_PREFERENCES;
+    int input_size;
+    int max_compressed_size;
+    int compressed_size;
+    size_t total_size;
 
     if (size == NULL || data == NULL)
     {
@@ -114,30 +116,45 @@ static uint8_t *compress_lz4(void *data, size_t *size)
     input = data;
     orig_size = *size;
 
-    preferences.compressionLevel = LZ4HC_CLEVEL_MAX;
-    preferences.frameInfo.contentChecksumFlag = LZ4F_noContentChecksum;
+    if (orig_size > LZ4_MAX_INPUT_SIZE)
+    {
+        LOG_ERROR("LZ4 compression failed: input too large.\n");
+        return NULL;
+    }
 
-    max_compressed_size = LZ4F_compressFrameBound(orig_size, &preferences);
-    compressed_data = memory_alloc(max_compressed_size);
+    input_size = (int)orig_size;
+    max_compressed_size = LZ4_compressBound(input_size);
+    compressed_data = memory_alloc((size_t)max_compressed_size + LZ4_SIZE_PREFIX_BYTES);
     if (compressed_data == NULL)
     {
         return NULL;
     }
 
-    compressed_size = LZ4F_compressFrame(compressed_data, max_compressed_size, 
-                                         input, orig_size, &preferences);
-    
-    if (LZ4F_isError(compressed_size))
+    compressed_size = LZ4_compress_default(input, (char *)(compressed_data + LZ4_SIZE_PREFIX_BYTES),
+                                           input_size, max_compressed_size);
+
+    if (compressed_size <= 0)
     {
         free(compressed_data);
-        LOG_ERROR("LZ4 frame compression failed: %s\n", 
-                  LZ4F_getErrorName(compressed_size));
+        LOG_ERROR("LZ4 block compression failed.\n");
         return NULL;
     }
 
-    LOG_DEBUG("Compressed size: %zu -> %zu\n", orig_size, compressed_size);
+    if (compressed_size > 0xFFFFFF)
+    {
+        free(compressed_data);
+        LOG_ERROR("LZ4 compression failed: output too large for 3-byte size.\n");
+        return NULL;
+    }
 
-    *size = compressed_size;
+    compressed_data[0] = (uint8_t)(compressed_size & 0xFF);
+    compressed_data[1] = (uint8_t)((compressed_size >> 8) & 0xFF);
+    compressed_data[2] = (uint8_t)((compressed_size >> 16) & 0xFF);
+
+    total_size = (size_t)compressed_size + LZ4_SIZE_PREFIX_BYTES;
+    LOG_DEBUG("Compressed size: %zu -> %zu (lz4 block)\n", orig_size, total_size);
+
+    *size = total_size;
 
     return compressed_data;
 }

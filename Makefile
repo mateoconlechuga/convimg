@@ -76,9 +76,6 @@ SOURCES = $(SRCDIR)/appvar.c \
           $(DEPDIR)/zx/zx0/compress.c \
           $(DEPDIR)/libyaml/src/api.c \
           $(DEPDIR)/lz4/lib/lz4.c \
-          $(DEPDIR)/lz4/lib/lz4frame.c \
-          $(DEPDIR)/lz4/lib/lz4hc.c \
-          $(DEPDIR)/lz4/lib/xxhash.c \
           $(DEPDIR)/libyaml/src/dumper.c \
           $(DEPDIR)/libyaml/src/loader.c \
           $(DEPDIR)/libyaml/src/parser.c \

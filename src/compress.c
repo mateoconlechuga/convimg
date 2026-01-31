@@ -35,7 +35,9 @@
 #include "deps/zx/zx7/zx7.h"
 #include "deps/zx/zx0/zx0.h"
 #include "deps/lz4/lib/lz4.h"
+#include "deps/lz4/lib/lz4hc.h"
 
+#include <stdbool.h>
 #include <string.h>
 
 #define LZ4_SIZE_PREFIX_BYTES 3
@@ -98,7 +100,7 @@ static uint8_t *compress_zx0(void *data, size_t *size)
     return compressed_data;
 }
 
-static uint8_t *compress_lz4(void *data, size_t *size)
+static uint8_t *compress_lz4_block(void *data, size_t *size, bool high_compression)
 {
     uint8_t *compressed_data;
     const char *input;
@@ -130,8 +132,16 @@ static uint8_t *compress_lz4(void *data, size_t *size)
         return NULL;
     }
 
-    compressed_size = LZ4_compress_default(input, (char *)(compressed_data + LZ4_SIZE_PREFIX_BYTES),
-                                           input_size, max_compressed_size);
+    if (high_compression)
+    {
+        compressed_size = LZ4_compress_HC(input, (char *)(compressed_data + LZ4_SIZE_PREFIX_BYTES),
+                                          input_size, max_compressed_size, LZ4HC_CLEVEL_MAX);
+    }
+    else
+    {
+        compressed_size = LZ4_compress_default(input, (char *)(compressed_data + LZ4_SIZE_PREFIX_BYTES),
+                                               input_size, max_compressed_size);
+    }
 
     if (compressed_size <= 0)
     {
@@ -152,11 +162,22 @@ static uint8_t *compress_lz4(void *data, size_t *size)
     compressed_data[2] = (uint8_t)((compressed_size >> 16) & 0xFF);
 
     total_size = (size_t)compressed_size + LZ4_SIZE_PREFIX_BYTES;
-    LOG_DEBUG("Compressed size: %zu -> %zu (lz4 block)\n", orig_size, total_size);
+    LOG_DEBUG("Compressed size: %zu -> %zu (lz4%s block)\n",
+              orig_size, total_size, high_compression ? "hc" : "");
 
     *size = total_size;
 
     return compressed_data;
+}
+
+static uint8_t *compress_lz4(void *data, size_t *size)
+{
+    return compress_lz4_block(data, size, false);
+}
+
+static uint8_t *compress_lz4hc(void *data, size_t *size)
+{
+    return compress_lz4_block(data, size, true);
 }
 
 uint8_t *compress_array(uint8_t *data, size_t *size, compress_mode_t mode)
@@ -171,6 +192,9 @@ uint8_t *compress_array(uint8_t *data, size_t *size, compress_mode_t mode)
 
         case COMPRESS_LZ4:
             return compress_lz4(data, size);
+
+        case COMPRESS_LZ4HC:
+            return compress_lz4hc(data, size);
 
         default:
             return NULL;

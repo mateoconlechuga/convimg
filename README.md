@@ -343,12 +343,15 @@ It primarily is used for the TI-84+CE and related calculator series, however can
         These different compression modes can be used to achieve different results.
         Some provide better compression ratio at the cost of slower compression,
         and potentially slower decompression as well.
+        The following are ranked from best to worst exprected compression ratio.
 
-           "zx0"                    : Best ratio, slowest (de)compression
+           "zx0"                    : Slowest compression time
 
-           "zx7"                    : Moderate ratio, moderate (de)compression
+           "zx7"                    : Moderate compression time
 
-           "lz4"                    : Worst ratio, fastest (de)compression
+           "lz4hc"                  : Moderate compression time
+
+           "lz4"                    : Fastest compression time
 
     --------------------------------------------------------------------------------
 

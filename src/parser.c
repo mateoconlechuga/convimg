@@ -76,6 +76,10 @@ static compress_mode_t parse_compression_mode(void *value)
     {
         return COMPRESS_LZ4;
     }
+    else if (parse_str_cmp("lz4hc", value))
+    {
+        return COMPRESS_LZ4HC;
+    }
 
     return COMPRESS_NONE;
 }

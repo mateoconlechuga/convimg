@@ -44,6 +44,7 @@ typedef enum
     COMPRESS_ZX7,
     COMPRESS_ZX0,
     COMPRESS_LZ4,
+    COMPRESS_LZ4HC,
 } compress_mode_t;
 
 uint8_t *compress_array(uint8_t *data, size_t *size, compress_mode_t mode);

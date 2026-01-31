@@ -383,12 +383,15 @@ static void options_show(const char *prgm)
     LOG_PRINT("    These different compression modes can be used to achieve different results.\n");
     LOG_PRINT("    Some provide better compression ratio at the cost of slower compression,\n");
     LOG_PRINT("    and potentially slower decompression as well.\n");
+    LOG_PRINT("    The following are ranked from best to worst exprected compression ratio.\n");
     LOG_PRINT("\n");
-    LOG_PRINT("       \"zx0\"                    : Best ratio, slowest (de)compression\n");
+    LOG_PRINT("       \"zx0\"                    : Slowest compression time\n");
     LOG_PRINT("\n");
-    LOG_PRINT("       \"zx7\"                    : Moderate ratio, moderate (de)compression\n");
+    LOG_PRINT("       \"zx7\"                    : Moderate compression time\n");
     LOG_PRINT("\n");
-    LOG_PRINT("       \"lz4\"                    : Worst ratio, fastest (de)compression\n");
+    LOG_PRINT("       \"lz4hc\"                  : Moderate compression time\n");
+    LOG_PRINT("\n");
+    LOG_PRINT("       \"lz4\"                    : Fastest compression time\n");
     LOG_PRINT("\n");
     LOG_PRINT("--------------------------------------------------------------------------------\n");
     LOG_PRINT("\n");

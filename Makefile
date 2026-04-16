@@ -98,7 +98,7 @@ ifeq ($(OS),Windows_NT)
 
   # if windows check for arm processor (should hopefully work?)
   ifneq ($(PROCESSOR_ARCHITECTURE),ARM64)
-    CFLAGS_LIQ += -DUSE_SSE=1 -msse -mfpmath=sse
+    CFLAGS_LIQ += -DUSE_SSE=1 -msse2 -mfpmath=sse
   endif
 
   # build windows binaries statically linked
@@ -124,10 +124,10 @@ else
 
   # check for x86 support
   ifeq ($(shell uname -p),x86_64)
-    CFLAGS_LIQ += -DUSE_SSE=1 -msse -mfpmath=sse
+    CFLAGS_LIQ += -DUSE_SSE=1 -msse2 -mfpmath=sse
   else
     ifneq ($(filter %86,$(shell uname -p)),)
-      CFLAGS_LIQ += -DUSE_SSE=1 -msse -mfpmath=sse
+      CFLAGS_LIQ += -DUSE_SSE=1 -msse2 -mfpmath=sse
     endif
   endif
 

@@ -31,3 +31,22 @@ for d in ./*/
 do
     ( cd "$d" && echo "[test] `pwd`" ; ../../bin/convimg -i convimg.yaml ) || { exit 1; }
 done
+
+# thread pool stress: multithreaded output must match the single-threaded
+# reference; detection is probabilistic so run several iterations
+(
+    cd threads &&
+    echo "[test] `pwd` (thread stress)" &&
+    mkdir -p ref &&
+    ../../bin/convimg -i convimg.yaml -t 1 > /dev/null &&
+    for f in *.bin; do cp "$f" "ref/$f"; done &&
+    for i in $(seq 1 20)
+    do
+        ../../bin/convimg -i convimg.yaml -t 8 > /dev/null || { echo "[test] thread stress crashed (iteration $i)"; exit 1; }
+        for f in *.bin
+        do
+            cmp -s "$f" "ref/$f" || { echo "[test] thread stress output mismatch: $f (iteration $i)"; exit 1; }
+        done
+    done &&
+    rm -rf ref
+) || { exit 1; }

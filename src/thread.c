@@ -49,15 +49,20 @@ static struct
 {
     struct thread thread[THREAD_MAX];
     unsigned int id[THREAD_MAX];
+    mtx_t mtx;
     atomic_bool error;
-    atomic_size_t head;
-    atomic_size_t tail;
+    size_t head;
+    size_t tail;
     atomic_size_t count;
     atomic_size_t max_count;
 } thread_pool;
 
+/* called concurrently by every finishing worker thread, so the
+   head/id/count updates must be performed under the pool mutex */
 static void thread_pool_push(unsigned int id)
 {
+    mtx_lock(&thread_pool.mtx);
+
     thread_pool.id[thread_pool.head] = id;
     thread_pool.head++;
     thread_pool.count++;
@@ -65,16 +70,24 @@ static void thread_pool_push(unsigned int id)
     {
         thread_pool.head = 0;
     }
+
+    mtx_unlock(&thread_pool.mtx);
 }
 
 static struct thread *thread_pool_pop(void)
 {
-    int next;
+    size_t next;
     unsigned int id;
     struct thread *thread;
 
-    while (thread_pool.head == thread_pool.tail)
+    for (;;)
     {
+        mtx_lock(&thread_pool.mtx);
+        if (thread_pool.head != thread_pool.tail)
+        {
+            break;
+        }
+        mtx_unlock(&thread_pool.mtx);
         thrd_yield();
     }
 
@@ -87,6 +100,8 @@ static struct thread *thread_pool_pop(void)
     id = thread_pool.id[thread_pool.tail];
     thread_pool.tail = next;
     thread_pool.count--;
+
+    mtx_unlock(&thread_pool.mtx);
 
     thread = &thread_pool.thread[id];
     thread->id = id;
@@ -142,6 +157,10 @@ bool thread_start(bool (*func)(void*), void *args)
             thread_pool.error = true;
             return false;
         }
+
+        /* the pool never joins, so release the handle to avoid
+           accumulating unjoined threads */
+        thrd_detach(thread->thrd);
     }
 
     return true;
@@ -149,6 +168,7 @@ bool thread_start(bool (*func)(void*), void *args)
 
 void thread_pool_init(unsigned int max_count)
 {
+    mtx_init(&thread_pool.mtx, mtx_plain);
     for (unsigned int i = 0; i < max_count; ++i)
     {
         thread_pool_push(i);

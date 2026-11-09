@@ -9,8 +9,8 @@ converts:
       - oiram.png
 
 outputs:
-  - type: ice
-    include-file: ice.txt
+  - type: asm
+    include-file: gfx.inc
     palettes:
       - mypalette
     converts:
